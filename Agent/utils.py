@@ -754,26 +754,26 @@ Chart Code:
 
 Rate each criterion on a scale of 1-5:
 
-### 1. AXIS CORRECTNESS (Critical - Weight: 40%)
+### 1. AXIS CORRECTNESS
 Do X and Y axes use the SAME data columns as the reference?
 - Column names must match exactly (case-insensitive)
 - Axes cannot be swapped (x must be x, y must be y)
 [1=Wrong columns, 3=Partial match, 5=Exact match]
 
-### 2. CHART TYPE CORRECTNESS (Critical - Weight: 30%)
+### 2. CHART TYPE CORRECTNESS
 Is the chart type the same as the reference?
 - line, bar, scatter, area must match exactly
 - Variations within type are acceptable (e.g., grouped bar vs stacked bar)
 [1=Wrong type, 3=Similar type, 5=Exact match]
 
-### 3. FUNCTIONAL EQUIVALENCE (Important - Weight: 20%)
+### 3. FUNCTIONAL EQUIVALENCE
 Would the generated code produce a visually equivalent chart?
 - Ignore import statements and variable naming
 - Ignore code style/formatting differences
 - Focus on: Will plt.show() produce the same visual output?
 [1=Would fail/wrong output, 3=Minor visual differences, 5=Equivalent output]
 
-### 4. EXPLICIT REQUIREMENTS COMPLIANCE (Conditional - Weight: 10%)
+### 4. EXPLICIT REQUIREMENTS COMPLIANCE
 ONLY evaluate requirements that are non-null in EXPLICIT USER REQUIREMENTS.
 For each non-null requirement, check if the generated code complies.
 If all explicit requirements are null, give score of 5 (not applicable).
@@ -822,12 +822,6 @@ def _parse_vis_judge_json(raw_text: str) -> Dict:
 
 def _compute_visualization_score(evaluation: Dict) -> float:
     """Compute weighted normalized score from judge evaluation.
-
-    Weights:
-    - axis_correctness: 40% (critical)
-    - chart_type: 30% (critical)
-    - functional_equivalence: 20% (important)
-    - explicit_requirements: 10% (conditional)
 
     Returns:
         Score between 0.0 and 1.0

@@ -6,6 +6,7 @@ evaluation/csv_queries
 **/__pycache__/
 
 tesi/
+venv/
 .claude/
 shared.txt
 out/
