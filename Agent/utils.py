@@ -942,3 +942,158 @@ def judge_visualization(
     except Exception as e:
         print(f"Visualization judge error: {e}")
         return (0.0, {"error": str(e)})
+
+
+# -----------------------------
+# Evaluator Factory Functions
+# -----------------------------
+# These factory functions create evaluation functions compatible with the
+# per-step middleware. They have signature: (result: Dict, state: Dict) -> float
+
+def make_csv_evaluator(
+    ground_truth_csv_path: str,
+    iou_type: str = "rows"
+) -> callable:
+    """Factory to create CSV evaluation function for per-step execution.
+
+    Args:
+        ground_truth_csv_path: Path to the ground truth CSV file.
+        iou_type: Type of IoU to compute - 'columns', 'rows', or 'table'.
+
+    Returns:
+        Function with signature (result: Dict, state: Dict) -> float
+        that extracts data_df from result and compares to ground truth.
+    """
+    def eval_fn(result: Dict, state: Dict) -> float:
+        # Extract DataFrame from result
+        data_df = result.get("data_df")
+        if data_df is None:
+            # Try to convert text data to DataFrame
+            data_text = result.get("data", "")
+            if data_text:
+                data_df = text_to_dataframe(data_text)
+
+        if data_df is None:
+            return 0.0
+
+        # Save to temp file for comparison
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+                data_df.to_csv(f.name, index=False)
+                temp_csv = f.name
+
+            # Use existing comparison logic
+            columns_iou, rows_iou, data_iou = compare_csv(temp_csv, ground_truth_csv_path)
+
+            # Return appropriate IoU based on type
+            if iou_type == "columns":
+                score = columns_iou
+            elif iou_type == "rows":
+                score = rows_iou
+            else:  # table
+                score = data_iou
+
+            os.unlink(temp_csv)
+            return score
+
+        except Exception as e:
+            print(f"CSV evaluation error: {e}")
+            return 0.0
+
+    return eval_fn
+
+
+def make_text_evaluator(
+    ground_truth_text: str,
+    metric: str = "bleu"
+) -> callable:
+    """Factory to create text evaluation function for per-step execution.
+
+    Args:
+        ground_truth_text: Reference text to compare against.
+        metric: Evaluation metric - 'bleu', 'spice', or 'judge'.
+
+    Returns:
+        Function with signature (result: Dict, state: Dict) -> float
+        that extracts analysis text from result and compares to ground truth.
+    """
+    def eval_fn(result: Dict, state: Dict) -> float:
+        # Extract analysis text from result
+        answers = result.get("answer", [])
+        if not answers:
+            return 0.0
+
+        # First answer is typically the analysis text
+        analysis_text = answers[0] if isinstance(answers, list) else str(answers)
+
+        if not analysis_text:
+            return 0.0
+
+        try:
+            if metric == "bleu":
+                return bleu_score(analysis_text, ground_truth_text)
+            elif metric == "spice":
+                return spice_score_java(analysis_text, ground_truth_text)
+            elif metric == "judge":
+                # Use LLM judge (requires more setup)
+                score, _ = judge_analysis(analysis_text, ground_truth_text)
+                return score
+            else:
+                # Default to BLEU
+                return bleu_score(analysis_text, ground_truth_text)
+
+        except Exception as e:
+            print(f"Text evaluation error: {e}")
+            return 0.0
+
+    return eval_fn
+
+
+def make_vis_evaluator(
+    ground_truth_config: Dict,
+    ground_truth_code: str,
+    model: str = "llama3.2:3b",
+    ollama_url: Optional[str] = None
+) -> callable:
+    """Factory to create visualization evaluation function for per-step execution.
+
+    Args:
+        ground_truth_config: Expected chart configuration dict.
+        ground_truth_code: Expected chart code string.
+        model: LLM model for judge.
+        ollama_url: Ollama server URL.
+
+    Returns:
+        Function with signature (result: Dict, state: Dict) -> float
+        that extracts chart_config and code from result and evaluates.
+    """
+    def eval_fn(result: Dict, state: Dict) -> float:
+        # Extract chart config and code from result
+        chart_config = result.get("chart_config")
+        answers = result.get("answer", [])
+
+        if not chart_config:
+            return 0.0
+
+        # Chart code is typically the last answer
+        chart_code = answers[-1] if answers else None
+
+        if not chart_code:
+            return 0.0
+
+        try:
+            score, _ = judge_visualization(
+                chart_config,
+                chart_code,
+                ground_truth_config,
+                ground_truth_code,
+                model=model,
+                ollama_url=ollama_url
+            )
+            return score
+
+        except Exception as e:
+            print(f"Visualization evaluation error: {e}")
+            return 0.0
+
+    return eval_fn

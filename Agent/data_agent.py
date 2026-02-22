@@ -35,8 +35,12 @@ from langchain_openai import ChatOpenAI
 
 try:
     from Agent.utils import text_to_csv, save_csv, get_evaluation_functions
+    from Agent.config import AgentConfig, StepConfig
+    from Agent.cache import RunCache
 except ImportError:
     from utils import text_to_csv, save_csv, get_evaluation_functions
+    from config import AgentConfig, StepConfig
+    from cache import RunCache
 
 # Optional energy/emissions tracking via CodeCarbon
 try:
@@ -89,6 +93,10 @@ class State(TypedDict):
     tool_choice: NotRequired[str]
     error: NotRequired[str]
     sql_query: Optional[str]
+    # Per-step configuration and caching (Phase 1)
+    agent_config: NotRequired[Optional[Dict]]  # AgentConfig as dict (for state flow)
+    run_id: NotRequired[Optional[str]]  # Unique identifier for this execution
+    cached_step_results: NotRequired[Optional[Dict]]  # Pre-loaded results from similar past runs
 
 
 # -----------------------------
@@ -188,6 +196,183 @@ def generate_sql_query(state: State, columns: List[str], table_name: str, llm: C
     )
     print("Generated SQL Query:\n", cleaned_sql)
     return cleaned_sql
+
+# -----------------------------
+# Core Step Functions (for middleware)
+# -----------------------------
+# These *_core functions contain just the essential logic without tracing.
+# They are called by the middleware for per-step best-of-n execution.
+
+def lookup_sales_data_core(state: State, llm) -> Dict:
+    """Core lookup logic - SQL generation and data retrieval.
+
+    Args:
+        state: Conversation state; must include 'prompt'.
+        llm: LLM instance for SQL generation.
+
+    Returns:
+        Updated state containing 'data', 'data_df', 'sql_query' or 'error'.
+    """
+    table_name = "sales"
+    df = pd.read_parquet(DEFAULT_DATA_PATH)
+    duckdb.sql("DROP TABLE IF EXISTS sales")
+    duckdb.register("df", df)
+    duckdb.sql(f"CREATE TABLE {table_name} AS SELECT * FROM df")
+    sql_query = generate_sql_query(state, df.columns.tolist(), table_name, llm)
+    try:
+        result_df = duckdb.sql(sql_query).df()
+        result_str = result_df.to_string(index=False)
+        return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
+    except Exception as e:
+        print(f"Error accessing data: {str(e)}")
+        return {**state, "data": "", "sql_query": sql_query, "error": f"Error accessing data: {str(e)}"}
+
+
+def analyzing_data_core(state: State, llm) -> Dict:
+    """Core analysis logic - LLM-based data analysis.
+
+    Args:
+        state: Conversation state; should include 'data' and 'prompt'.
+        llm: LLM instance for analysis.
+
+    Returns:
+        Updated state with analysis appended to 'answer'.
+    """
+    try:
+        formatted_prompt = DATA_ANALYSIS_PROMPT.format(
+            data=state.get("data", ""), prompt=state.get("prompt", ""), sql_query=state.get("sql_query", "")
+        )
+        analysis_result = llm.invoke(formatted_prompt)
+        analysis_text = analysis_result.content if hasattr(analysis_result, "content") else str(analysis_result)
+        return {
+            **state,
+            "answer": state.get("answer", []) + [analysis_text],
+        }
+    except Exception as e:
+        print(f"Error analyzing data: {str(e)}")
+        return {**state, "error": f"Error accessing data: {str(e)}"}
+
+
+def decide_tool_core(state: State, llm) -> Dict:
+    """Core tool decision logic - LLM-based routing.
+
+    Args:
+        state: Conversation state.
+        llm: LLM instance for decision.
+
+    Returns:
+        Updated state with 'tool_choice'.
+    """
+    tools_description = """You are a workflow orchestrator managing a data analysis pipeline.
+
+## AVAILABLE TOOLS
+- lookup_sales_data: Retrieves data from the database using SQL
+- analyzing_data: Analyzes retrieved data and provides insights
+- create_visualization: Generates chart code to visualize the data
+- end: Completes the workflow
+
+## DECISION RULES (CRITICAL - Follow in order)
+1. Data prerequisite: Must run lookup_sales_data BEFORE analyzing_data or create_visualization
+2. No repetition: NEVER select a tool that has already been used
+3. Completion criteria: Select 'end' when:
+   - 2 or more answers have been generated (analysis + visualization complete)
+   - All relevant tools for the user's request have been executed
+
+## DECISION FLOWCHART
+Start → Has data? No → lookup_sales_data
+              ↓ Yes
+          Already analyzed? No → analyzing_data
+              ↓ Yes
+          Need visualization? Yes → create_visualization
+              ↓ No/Done
+          end
+    """
+
+    decision_prompt = f"""
+    {tools_description}
+
+## CURRENT STATE
+- User's request: {state.get('prompt')}
+- Answers generated so far: {state.get('answer', [])}
+- Visualization goal: {state.get('visualization_goal')}
+- Last tool used: {state.get('tool_choice')}
+
+## OUTPUT FORMAT
+Respond with ONLY the tool name: lookup_sales_data, analyzing_data, create_visualization, or end
+No explanations. Just the tool name.
+    """
+
+    try:
+        current_prompt = state.get("prompt", "")
+        current_answer = state.get("answer", [])
+        visualization_goal = state.get("visualization_goal")
+        chart_config = state.get("chart_config")
+
+        response = llm.invoke(decision_prompt)
+        tool_choice = response.content.strip().lower()
+        valid_tools = ["lookup_sales_data", "analyzing_data", "create_visualization", "end"]
+        closest_match = difflib.get_close_matches(tool_choice, valid_tools, n=1, cutoff=0.6)
+        matched_tool = closest_match[0] if closest_match else "lookup_sales_data"
+
+        if matched_tool in ["analyzing_data", "create_visualization"] and not state.get("data"):
+            matched_tool = "lookup_sales_data"
+        elif len(state.get("answer", [])) > 1:
+            matched_tool = "end"
+
+        print(f"Tool selected: {matched_tool}")
+
+        return {
+            **state,
+            "prompt": current_prompt,
+            "answer": current_answer,
+            "visualization_goal": visualization_goal,
+            "chart_config": chart_config,
+            "tool_choice": matched_tool,
+        }
+    except Exception as e:
+        print(f"Error deciding tool: {str(e)}")
+        return {**state, "error": f"Error accessing data: {str(e)}"}
+
+
+def create_visualization_core(state: State, llm) -> Dict:
+    """Core visualization logic - chart config extraction and code generation.
+
+    Args:
+        state: Conversation state; should include 'data_df' (DataFrame).
+        llm: LLM instance for config extraction and code generation.
+
+    Returns:
+        Updated state with 'chart_config' and code appended to 'answer'.
+    """
+    try:
+        data_df = state.get("data_df")
+
+        if data_df is not None:
+            print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
+        else:
+            print("Warning: No DataFrame available in state")
+
+        # Extract chart configuration
+        with_config = extract_chart_config(state, llm)
+
+        # Ensure DataFrame is in the updated state
+        with_config["data_df"] = data_df
+
+        # Generate chart code
+        code = create_chart(with_config, llm)
+
+        return {
+            **with_config,
+            "answer": with_config.get("answer", []) + [code],
+        }
+    except Exception as e:
+        print(f"Error creating visualization: {str(e)}")
+        return {**state, "error": f"Error accessing data: {str(e)}"}
+
+
+# -----------------------------
+# Original Step Functions (with tracing support)
+# -----------------------------
 
 def lookup_sales_data(state: State, llm: ChatOllama, tracer=None) -> Dict:
     """Look up sales data from a parquet file using LLM-generated SQL over DuckDB.
@@ -730,7 +915,7 @@ class SalesDataAgent:
     def __init__(
         self,
         *,
-        model: str = "llama3.2:3b",
+        model: str = "gpt-4o-mini",
         temperature: float = 0.1,
         max_tokens: int = 2000,
         streaming: bool = True,
@@ -740,13 +925,16 @@ class SalesDataAgent:
         phoenix_api_key: Optional[str] = None,
         phoenix_endpoint: Optional[str] = None,
         project_name: str = "evaluating-agent",
-        provider: str = "ollama",
+        provider: str = "openai",
         openai_api_key: Optional[str] = None,
+        # New: Per-step configuration and caching
+        agent_config: Optional[AgentConfig] = None,
+        cache_dir: Optional[str] = None,
     ) -> None:
         """Initialize the agent and compile the graph.
 
         Args:
-            model: Model name (Ollama model like "llama3.2:3b" or OpenAI model like "gpt-4o-mini").
+            model: Model name (OpenAI model like "gpt-4o-mini" or Ollama model like "llama3.2:3b").
             temperature: Sampling temperature for the LLM.
             max_tokens: Generation token limit.
             streaming: Whether to stream tokens from the LLM.
@@ -754,6 +942,8 @@ class SalesDataAgent:
             ollama_url: Optional override for Ollama base URL; defaults to OLLAMA_HOST or http://localhost:11434.
             provider: LLM provider to use ("ollama" or "openai"). Default is "ollama".
             openai_api_key: Optional OpenAI API key; defaults to OPENAI_API_KEY env var.
+            agent_config: Optional AgentConfig for per-step hyperparameter control.
+            cache_dir: Optional directory for caching run results.
         """
         self.provider = provider.lower()
 
@@ -804,6 +994,31 @@ class SalesDataAgent:
                 self.tracer = None
                 self.tracing_enabled = False
 
+        # Store model parameters for LLM factory method
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.streaming = streaming
+        self.openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+
+        # Initialize per-step configuration
+        if agent_config is not None:
+            self.agent_config = agent_config
+        else:
+            # Create default config with current parameters
+            self.agent_config = AgentConfig(
+                model=model,
+                provider=provider,
+                ollama_url=self.ollama_url or "http://localhost:11434",
+                openai_api_key=self.openai_api_key,
+            )
+
+        # Initialize result cache
+        self.cache = RunCache(cache_dir or "./cache/agent_runs")
+
+        # Track step results during execution (for caching)
+        self.current_run_step_results: Dict[str, List[Dict]] = {}
+
         self.graph = self._build_graph()
         self.run_checked = False
 
@@ -836,21 +1051,237 @@ class SalesDataAgent:
                 print(e)
                 return False
 
+    def _create_llm(
+        self,
+        temperature: float,
+        max_tokens: int,
+        top_p: float = 1.0
+    ):
+        """Factory method to create LLM instances with specific parameters.
+
+        Creates a new LLM instance instead of mutating the global self.llm,
+        which allows per-step parameter customization.
+
+        Args:
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens for generation
+            top_p: Top-p sampling parameter
+
+        Returns:
+            ChatOllama or ChatOpenAI instance configured with the given parameters
+        """
+        if self.provider == "openai":
+            return ChatOpenAI(
+                model=self.model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                streaming=self.streaming,
+                api_key=self.openai_api_key,
+            )
+        else:
+            return ChatOllama(
+                model=self.model,
+                temperature=temperature,
+                num_predict=max_tokens,
+                streaming=self.streaming,
+                base_url=self.ollama_url,
+            )
+
+    def _execute_step_with_config(
+        self,
+        step_name: str,
+        state: State,
+        core_fn,
+        config: StepConfig,
+    ) -> Dict:
+        """Execute a step with per-step best-of-n, evaluation, and caching.
+
+        This middleware method:
+        1. Checks cache if config.use_cache is True
+        2. Runs best-of-n sampling if cache miss or force_fresh
+        3. Evaluates each of N runs using config.eval_fn
+        4. Selects best result using config.selection_fn
+        5. Stores all N results for caching
+
+        Args:
+            step_name: Name of the step (for logging and caching)
+            state: Current agent state
+            core_fn: The core step function, signature: (state, llm) -> Dict
+            config: StepConfig with parameters for this step
+
+        Returns:
+            Updated state dict from the best run
+        """
+        # Check if step is enabled
+        if not config.enabled:
+            print(f"[{step_name}] Step disabled, skipping")
+            return dict(state)
+
+        # Check cache first
+        if config.use_cache and config.cache_mode != "force_fresh":
+            cached_results = state.get("cached_step_results", {})
+            if cached_results and step_name in cached_results:
+                cached = cached_results[step_name]
+                print(f"[{step_name}] Found {len(cached)} cached result(s)")
+
+                if config.cache_mode == "skip":
+                    # Use first cached result directly (previously selected best)
+                    print(f"[{step_name}] Using cached result (skip mode)")
+                    if cached:
+                        return cached[0]
+                    return dict(state)
+
+                # cache_mode == "auto": Re-evaluate cached results with current eval_fn
+                if config.eval_fn and len(cached) > 1:
+                    scores = []
+                    for r in cached:
+                        try:
+                            score = config.eval_fn(r, state)
+                        except Exception:
+                            score = 0.0
+                        scores.append(score)
+                    best_idx = config.selection_fn(scores)
+                    print(f"[{step_name}] Re-selected cached result {best_idx + 1}/{len(cached)}")
+                    return cached[best_idx]
+                elif cached:
+                    return cached[0]
+
+        # No cache or force_fresh: run the step
+        n = config.n
+        temps = config.get_temperatures()
+
+        if n == 1:
+            # Simple case: single run
+            llm = self._create_llm(
+                temperature=temps[0],
+                max_tokens=config.max_tokens,
+                top_p=config.top_p
+            )
+            try:
+                result = core_fn(state, llm)
+                result["_temperature"] = temps[0]
+                result["_run_idx"] = 0
+            except Exception as e:
+                print(f"[{step_name}] Error: {e}")
+                result = dict(state)
+                result["error"] = str(e)
+
+            self.current_run_step_results[step_name] = [result]
+            return result
+
+        # Best-of-n execution
+        results = []
+        scores = []
+
+        print(f"[{step_name}] Running best-of-{n} with temps {[f'{t:.2f}' for t in temps]}")
+
+        for i, temp in enumerate(temps):
+            llm = self._create_llm(
+                temperature=temp,
+                max_tokens=config.max_tokens,
+                top_p=config.top_p
+            )
+
+            try:
+                result = core_fn(state, llm)
+                result["_temperature"] = temp
+                result["_run_idx"] = i
+
+                # Evaluate if function provided
+                if config.eval_fn:
+                    try:
+                        score = config.eval_fn(result, state)
+                    except Exception as eval_err:
+                        print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
+                        score = 0.0
+                else:
+                    score = 0.0
+
+                results.append(result)
+                scores.append(score)
+                print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
+
+            except Exception as e:
+                print(f"  Run {i + 1}/{n} failed: {e}")
+                error_result = dict(state)
+                error_result["error"] = str(e)
+                error_result["_temperature"] = temp
+                error_result["_run_idx"] = i
+                results.append(error_result)
+                scores.append(-float('inf'))
+
+        # Store all results for caching
+        self.current_run_step_results[step_name] = results
+
+        # Select best result
+        if not scores or all(s == -float('inf') for s in scores):
+            best_result = results[0] if results else dict(state)
+        else:
+            best_idx = config.selection_fn(scores)
+            best_result = results[best_idx]
+            best_result["_best_idx"] = best_idx
+            best_result["_all_scores"] = scores
+            print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
+
+        return best_result
+
+    def _maybe_save_run_results(
+        self,
+        run_id: str,
+        prompt: str,
+        result: Dict,
+        save_results: bool
+    ) -> None:
+        """Save run results to cache if save_results is True.
+
+        Args:
+            run_id: Unique identifier for this run
+            prompt: User prompt that initiated this run
+            result: Final result from the agent
+            save_results: Whether to actually save
+        """
+        if not save_results:
+            return
+
+        try:
+            self.cache.save_run(
+                run_id=run_id,
+                prompt=prompt,
+                agent_config=self.agent_config.to_dict(),
+                step_results=self.current_run_step_results,
+                final_result=result,
+                metadata={}
+            )
+            print(f"[Agent] Run saved with ID: {run_id}")
+        except Exception as e:
+            print(f"[Agent] Warning: Failed to save run to cache: {e}")
 
     def _build_graph(self):
-        """Construct and compile the LangGraph for the agent run loop."""
+        """Construct and compile the LangGraph for the agent run loop.
+
+        Uses the middleware pattern to support per-step configuration including
+        best-of-n sampling, custom evaluation, and caching. Each node wraps
+        a *_core function with _execute_step_with_config().
+        """
         graph = StateGraph(State)
 
-        # Capture the LLM in closures so nodes accept only (state)
-        llm = self.llm
-        tracer = self.tracer
+        # Factory to create configured node functions
+        def make_configured_node(step_name: str, core_fn):
+            """Create a node function that uses per-step configuration."""
+            def node_fn(state: State) -> Dict:
+                config = self.agent_config.get_step_config(step_name)
+                return self._execute_step_with_config(step_name, state, core_fn, config)
+            return node_fn
 
-        graph.add_node("decide_tool", partial(decide_tool, llm=llm, tracer=tracer))
-        graph.add_node("lookup_sales_data", partial(lookup_sales_data, llm=llm, tracer=tracer))
-        graph.add_node("analyzing_data", partial(analyzing_data, llm=llm, tracer=tracer))
-        graph.add_node("create_visualization", partial(create_visualization, llm=llm, tracer=tracer))
+        # Add nodes with configuration wrappers
+        graph.add_node("decide_tool", make_configured_node("decide_tool", decide_tool_core))
+        graph.add_node("lookup_sales_data", make_configured_node("lookup_sales_data", lookup_sales_data_core))
+        graph.add_node("analyzing_data", make_configured_node("analyzing_data", analyzing_data_core))
+        graph.add_node("create_visualization", make_configured_node("create_visualization", create_visualization_core))
+
         graph.set_entry_point("decide_tool")
 
+        # Routing logic (unchanged)
         graph.add_conditional_edges(
             "decide_tool",
             route_to_tool,
@@ -865,7 +1296,7 @@ class SalesDataAgent:
         graph.add_edge("lookup_sales_data", "decide_tool")
         graph.add_edge("analyzing_data", "decide_tool")
         graph.add_edge("create_visualization", "decide_tool")
-        
+
         return graph.compile()
     
     def draw_graph(self) -> str:
@@ -883,19 +1314,40 @@ class SalesDataAgent:
         *,
         visualization_goal: Optional[str] = None,
         lookup_only: bool = False,
-        no_vis: bool = False
+        no_vis: bool = False,
+        # New: caching parameters
+        run_id: Optional[str] = None,
+        cached_step_results: Optional[Dict] = None,
+        save_results: bool = False,
     ) -> Dict:
         """Execute the agent for a single prompt.
 
         Args:
             prompt: Natural-language request or question.
             visualization_goal: Optional explicit goal for charts; defaults to the prompt.
+            lookup_only: Only run data lookup step.
+            no_vis: Skip visualization step.
+            run_id: Unique ID for this run (for caching).
+            cached_step_results: Pre-loaded cached results from similar past runs.
+            save_results: Whether to save this run's results to cache.
 
         Returns:
             The final state dictionary produced by the compiled graph execution.
         """
+        import uuid
+
+        # Generate run ID if not provided
+        if run_id is None:
+            run_id = str(uuid.uuid4())[:8]
+
+        # Reset step results tracker
+        self.current_run_step_results = {}
+
+        # Initialize state with caching info
         state = {
             "prompt": prompt,
+            "run_id": run_id,
+            "cached_step_results": cached_step_results or {},
         }
         if not self.run_checked:
             print("Checking the model can run locally")
@@ -919,9 +1371,15 @@ class SalesDataAgent:
                         span.set_output(result)  # type: ignore[attr-defined]
                         if StatusCode is not None:
                             span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
+                        self.current_run_step_results["lookup_sales_data"] = [dict(result)]
+                        self._maybe_save_run_results(run_id, prompt, result, save_results)
+                        result["run_id"] = run_id
                         return result
                 else:
                     result = lookup_sales_data(state, self.llm)
+                    self.current_run_step_results["lookup_sales_data"] = [dict(result)]
+                    self._maybe_save_run_results(run_id, prompt, result, save_results)
+                    result["run_id"] = run_id
                     return result
             except Exception as _e:
                 return {**state, "error": f"Lookup failed: {str(_e)}"}
@@ -937,11 +1395,19 @@ class SalesDataAgent:
                         span.set_output(result)  # type: ignore[attr-defined]
                         if StatusCode is not None:
                             span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
+                        self.current_run_step_results["lookup_sales_data"] = [dict(state)]
+                        self.current_run_step_results["analyzing_data"] = [dict(result)]
+                        self._maybe_save_run_results(run_id, prompt, result, save_results)
+                        result["run_id"] = run_id
                         return result
                 else:
                     state = lookup_sales_data(state, self.llm)
                     result = analyzing_data(state, self.llm, self.tracer)
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
+                    self.current_run_step_results["lookup_sales_data"] = [dict(state)]
+                    self.current_run_step_results["analyzing_data"] = [dict(result)]
+                    self._maybe_save_run_results(run_id, prompt, result, save_results)
+                    result["run_id"] = run_id
                     return result
             except Exception as _e:
                 print(f"Lookup failed: {str(_e)}")
@@ -961,16 +1427,22 @@ class SalesDataAgent:
                     if StatusCode is not None:
                         span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
                     print("[LangGraph] LangGraph execution completed")
+                    self._maybe_save_run_results(run_id, prompt, result, save_results)
+                    result["run_id"] = run_id
                     return result
             except Exception:
                 # Fallback to non-traced execution on any tracing error
                 result = self.graph.invoke(state)
                 print(f"\nAgent response: {result.get('answer', [])}")
+                self._maybe_save_run_results(run_id, prompt, result, save_results)
+                result["run_id"] = run_id
                 return result
         else:
             print("[LangGraph] Starting LangGraph execution")
             result = self.graph.invoke(state)
             print("[LangGraph] LangGraph execution completed")
+            self._maybe_save_run_results(run_id, prompt, result, save_results)
+            result["run_id"] = run_id
             return result
     
     def _run_with_evaluation(
@@ -1087,11 +1559,87 @@ class SalesDataAgent:
         vis_eval_fn: Optional[callable] = None,
         save_dir: Optional[str] = None,
         enable_codecarbon: bool = False,
+        # New: caching parameters
+        reuse_from: Optional[str] = None,
+        step_overrides: Optional[Dict[str, Dict]] = None,
+        save_results: bool = False,
     ) -> Dict:
+        """Run the agent with optional caching and per-step configuration.
+
+        Args:
+            prompt: User query/question.
+            visualization_goal: Optional explicit visualization goal.
+            lookup_only: Only run data lookup step.
+            no_vis: Skip visualization step.
+            best_of_n: (Deprecated) Number of agent-level runs for old best-of-n.
+                       Use step-level configuration via AgentConfig instead.
+            temp, temp_max: (Deprecated) Temperature range for old best-of-n.
+            csv_eval_fn, text_eval_fn, vis_eval_fn: (Deprecated) Evaluation functions
+                       for old agent-level best-of-n.
+            save_dir: Directory for saving results (old API).
+            enable_codecarbon: Enable carbon emissions tracking.
+            reuse_from: Run ID to load cached results from (new caching API).
+            step_overrides: Dict mapping step_name -> config overrides for this run.
+                           Example: {"analyzing_data": {"n": 10, "temp_max": 0.9}}
+            save_results: Whether to save this run's results to cache.
+
+        Returns:
+            Result dict with 'answer', 'data', 'chart_config', etc.
+            Includes 'run_id' if save_results=True.
+        """
 
         if save_dir is None:
             save_dir = tempfile.mkdtemp(prefix="agent_runs_")
         os.makedirs(save_dir, exist_ok=True)
+
+        # Apply step overrides if provided
+        original_config = None
+        if step_overrides:
+            from copy import deepcopy
+            original_config = self.agent_config
+            self.agent_config = deepcopy(self.agent_config)
+            for step_name, overrides in step_overrides.items():
+                step_config = self.agent_config.get_step_config(step_name)
+                for key, value in overrides.items():
+                    if hasattr(step_config, key):
+                        setattr(step_config, key, value)
+
+        # Find/load cached results
+        cached_step_results = {}
+        if reuse_from:
+            # Load from specific run
+            cached_step_results = self.cache.load_all_step_results(reuse_from)
+            if cached_step_results:
+                print(f"[Agent] Loaded cached results from run: {reuse_from}")
+            else:
+                print(f"[Agent] Warning: No cached results found for run: {reuse_from}")
+        elif save_results:
+            # Auto-find similar runs
+            similar_runs = self.cache.find_similar_runs(prompt, top_k=3)
+            if similar_runs:
+                print(f"[Agent] Found {len(similar_runs)} similar run(s): {similar_runs}")
+                cached_step_results = self.cache.load_all_step_results(similar_runs[0])
+
+        # Use new API if using caching features and not using old best-of-n
+        if (save_results or reuse_from) and best_of_n == 1:
+            try:
+                result = self.run_core(
+                    prompt,
+                    visualization_goal=visualization_goal,
+                    lookup_only=lookup_only,
+                    no_vis=no_vis,
+                    cached_step_results=cached_step_results,
+                    save_results=save_results,
+                )
+                return result
+            finally:
+                # Restore original config if we modified it
+                if original_config is not None:
+                    self.agent_config = original_config
+
+        # Restore original config before falling through to old API
+        if original_config is not None:
+            self.agent_config = original_config
 
         # Wrap execution with CodeCarbon if requested and available
         if enable_codecarbon and _CODECARBON_AVAILABLE:
@@ -1148,7 +1696,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--data", dest="data_path", type=str, default=DEFAULT_DATA_PATH, help="Path to parquet file")
     parser.add_argument("--goal", dest="visualization_goal", type=str, default=None, help="Optional visualization goal")
-    parser.add_argument("--model", type=str, default="llama3.2:3b", help="Ollama model name")
+    parser.add_argument("--model", type=str, default="gpt-4o-mini", help="Model name (default: gpt-4o-mini)")
        
     # Agent type options
     agent_group = parser.add_mutually_exclusive_group()
