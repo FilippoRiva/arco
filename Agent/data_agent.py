@@ -134,30 +134,86 @@ Generate a DuckDB SQL query to answer the user's question and provide data optim
 - **For trend analysis**: Include time-based grouping (daily, monthly, yearly)
 - **General**: Limit result size if needed, ensure clean column names for axis labels
 
-## EXAMPLES
+## CHAIN OF THOUGHT REASONING
+Before generating the SQL query, think step by step:
 
-Example 1 - Simple filtering for visualization:
+**Step 1: Understanding the Request**
+- What is the user really asking for?
+- What is the main entity or metric of interest?
+- What time period or filters are implied?
+
+**Step 2: Identifying Required Data**
+- Which columns from {columns} are relevant to answer this question?
+- Do I need to filter the data? If yes, on which column(s)?
+- Do I need aggregations (SUM, COUNT, AVG)? If yes, on which column(s)?
+- Do I need grouping? If yes, by which column(s)?
+
+**Step 3: Considering Visualization Needs**
+- Based on the visualization goal "{visualization_goal}", what chart type is likely?
+- For time series: Need chronological ordering and proper date format
+- For comparisons: Need categorical grouping and clear labels
+- For correlations: Need two numeric columns without aggregation
+- What should be on X-axis vs Y-axis?
+
+**Step 4: Query Structure Planning**
+- SELECT: Which columns and aggregations?
+- FROM: {table_name}
+- WHERE: What filters are needed?
+- GROUP BY: Which columns for aggregation?
+- ORDER BY: How should results be sorted?
+- LIMIT: Should I limit the result set?
+
+**Step 5: Handling Edge Cases**
+- Are there DATE columns that need CAST to VARCHAR for pattern matching?
+- Are there potential NULL values that need filtering?
+- Do column names need aliasing for better visualization labels?
+
+
+
+## EXAMPLES WITH REASONING
+
+Example 1:
 Question: "Show me sales from November 2021"
 Visualization: "Monthly sales trend"
-Columns: Date, Product_ID, Units_Sold, Revenue
+Reasoning:
+- Step 1: User wants sales data for a specific month
+- Step 2: Need Date and Revenue columns, filter by date pattern
+- Step 3: Time series chart → need dates sorted, aggregate by date
+- Step 4: SELECT Date, SUM(Revenue), WHERE date matches, GROUP BY Date, ORDER BY Date
+- Step 5: Must CAST Date to VARCHAR for LIKE pattern matching
 Query: SELECT Date, SUM(Revenue) as Total_Revenue FROM sales WHERE CAST(Date AS VARCHAR) LIKE '%2021-11%' GROUP BY Date ORDER BY Date
 
-Example 2 - Aggregation for bar chart:
+Example 2:
 Question: "What are the top 5 products by total revenue?"
 Visualization: "Compare products by revenue"
-Columns: Product_ID, Product_Name, Revenue
+Reasoning:
+- Step 1: User wants product ranking by revenue
+- Step 2: Need Product_Name and Revenue, aggregate revenue per product
+- Step 3: Bar chart → categorical comparison, needs ordering, limit to top 5
+- Step 4: SELECT Product_Name, SUM(Revenue), GROUP BY product, ORDER BY revenue DESC, LIMIT 5
+- Step 5: No special edge cases
 Query: SELECT Product_Name, SUM(Revenue) as Total_Revenue FROM sales GROUP BY Product_ID, Product_Name ORDER BY Total_Revenue DESC LIMIT 5
 
-Example 3 - Time series aggregation:
+Example 3:
 Question: "Show monthly total sales for 2021"
 Visualization: "Revenue trends over time"
-Columns: Date, Units_Sold, Revenue
+Reasoning:
+- Step 1: User wants monthly aggregation for a specific year
+- Step 2: Need Date and Revenue, filter by year, group by month
+- Step 3: Time series → need DATE_TRUNC for monthly granularity, chronological order
+- Step 4: SELECT DATE_TRUNC('month', Date), SUM(Revenue), WHERE year=2021, GROUP BY month, ORDER BY month
+- Step 5: Use EXTRACT for year filtering
 Query: SELECT DATE_TRUNC('month', Date) as Month, SUM(Revenue) as Monthly_Sales FROM sales WHERE EXTRACT(YEAR FROM Date) = 2021 GROUP BY Month ORDER BY Month
 
-Example 4 - Scatter plot data:
+Example 4:
 Question: "Analyze price vs demand relationship"
 Visualization: "Price vs demand correlation"
-Columns: Product_ID, Price, Units_Sold
+Reasoning:
+- Step 1: User wants to see correlation between two variables
+- Step 2: Need Price and Units_Sold columns, no aggregation (scatter plot)
+- Step 3: Scatter plot → need individual data points, both axes numeric
+- Step 4: SELECT Price, Units_Sold, no GROUP BY needed
+- Step 5: Filter out NULLs to avoid chart issues
 Query: SELECT Price, Units_Sold FROM sales WHERE Price IS NOT NULL AND Units_Sold IS NOT NULL
 
 ## OUTPUT FORMAT
@@ -297,6 +353,101 @@ Start → Has data? No → lookup_sales_data
 - Visualization goal: {state.get('visualization_goal')}
 - Last tool used: {state.get('tool_choice')}
 
+## CHAIN OF THOUGHT REASONING
+Before selecting the next tool, think step by step:
+
+**Step 1: Analyzing User Request**
+- What is the user asking for? (data lookup, analysis, visualization, or combination)
+- Does the request explicitly or implicitly require a chart/graph?
+- Is this a simple data retrieval or complex multi-step task?
+
+**Step 2: Checking Current Progress**
+- What tools have already been executed? (check Last tool used)
+- Do we have data available? (check if lookup_sales_data was run)
+- How many answers have been generated? (check Answers generated so far)
+- What stage of the workflow are we in?
+
+**Step 3: Identifying What's Missing**
+- If no data: Need lookup_sales_data first (Rule 1)
+- If data exists but no analysis: Need analyzing_data
+- If analysis exists but user wants visualization: Need create_visualization
+- If all required steps done: Need end
+
+**Step 4: Applying Decision Rules**
+- Rule 1 check: Do I have data before attempting analysis/visualization?
+- Rule 2 check: Am I about to repeat a tool already used?
+- Rule 3 check: Have I completed all necessary steps (2+ answers OR all relevant tools)?
+
+**Step 5: Making the Decision**
+- Based on steps 1-4, which tool should execute next?
+- Does this choice follow the DECISION FLOWCHART?
+- Is this the minimum necessary step to progress toward completion?
+
+## EXAMPLES WITH REASONING
+
+Example 1 - Initial state:
+State: prompt="Show sales data", answer=[], tool_choice=None
+
+Reasoning:
+- Step 1: User wants sales data (implies lookup needed)
+- Step 2: No tools executed yet, no data, no answers
+- Step 3: Missing everything - start with data retrieval
+- Step 4: Rule 1 applies - need data first, Rule 2 N/A (nothing used), Rule 3 not met (0 answers)
+- Step 5: Must start with lookup_sales_data
+
+Decision: lookup_sales_data (need data first)
+
+Example 2 - After data lookup:
+State: prompt="Show sales data", answer=[], tool_choice="lookup_sales_data", data exists
+
+Reasoning:
+- Step 1: User wants sales data shown (implies analysis/presentation needed)
+- Step 2: lookup_sales_data executed, data available, but 0 answers generated
+- Step 3: Have data, missing analysis
+- Step 4: Rule 1 satisfied (have data), Rule 2 check (can't repeat lookup), Rule 3 not met (0 answers)
+- Step 5: Next logical step is analyzing_data
+
+Decision: analyzing_data (have data, now analyze)
+
+Example 3 - After analysis and visualization:
+State: prompt="Show sales trends", answer=["Analysis text", "Chart code"], tool_choice="create_visualization"
+
+Reasoning:
+- Step 1: User wanted trends (implies analysis + visualization)
+- Step 2: All tools executed, 2 answers generated (analysis + chart code)
+- Step 3: Nothing missing - workflow complete
+- Step 4: Rule 1 satisfied, Rule 2 satisfied, Rule 3 MET (2+ answers generated)
+- Step 5: Should end the workflow
+
+Decision: end (2+ answers generated, workflow complete)
+
+Example 4 - After analysis only (no viz needed):
+State: prompt="What were total sales?", answer=["Total sales were $X"], tool_choice="analyzing_data"
+
+Reasoning:
+- Step 1: User wanted a simple factual answer (no visualization implied)
+- Step 2: lookup and analysis executed, 1 answer generated
+- Step 3: Question fully answered with analysis alone
+- Step 4: Rule 1 satisfied, Rule 2 satisfied, Rule 3 check (all RELEVANT tools done)
+- Step 5: No visualization needed for this query - can end
+
+Decision: end (all relevant tools executed, question answered)
+
+Example 5 - After lookup only (viz needed):
+State: prompt="Show me a chart of monthly sales", answer=[], tool_choice="lookup_sales_data", data exists
+
+Reasoning:
+- Step 1: User explicitly wants a chart (visualization required)
+- Step 2: Only lookup executed, data available, 0 answers
+- Step 3: Missing both analysis AND visualization
+- Step 4: Rule 1 satisfied (have data), Rule 2 satisfied (not repeating), Rule 3 not met (0 answers)
+- Step 5: Should analyze first, then visualize (follow flowchart)
+
+Decision: analyzing_data (analyze before visualizing)
+
+## YOUR TASK
+Based on the chain of thought reasoning above and the current state, select the next tool to execute.
+
 ## OUTPUT FORMAT
 Respond with ONLY the tool name: lookup_sales_data, analyzing_data, create_visualization, or end
 No explanations. Just the tool name.
@@ -434,18 +585,91 @@ Data:
 5. Do NOT speculate or make assumptions beyond what the data shows
 6. If the data doesn't fully answer the question, state what you can determine from the available data
 
-## EXAMPLES
+## CHAIN OF THOUGHT REASONING
+Before answering, think step by step:
+
+**Step 1: Understanding the Question**
+- What specific information is the user asking for?
+- Is it asking for a single value, a comparison, a trend, or a summary?
+- What would constitute a complete answer?
+
+**Step 2: Examining the Data Structure**
+- How many rows of data are available?
+- What columns are present in the data?
+- What is the range or distribution of values?
+- Are there any patterns or anomalies visible?
+
+**Step 3: Extracting Relevant Facts**
+- Which specific values directly answer the question?
+- Do I need to perform mental calculations (sum, average, count)?
+- What are the exact numbers, dates, or categories relevant to the answer?
+- Are there any context clues (time periods, units, categories)?
+
+**Step 4: Verifying Completeness**
+- Does the data fully answer the user's question?
+- Is there missing information that prevents a complete answer?
+- Should I mention any limitations or caveats?
+
+**Step 5: Formulating the Answer**
+- How can I state the facts concisely (2-3 sentences)?
+- Am I using specific numbers from the data?
+- Am I avoiding speculation or assumptions?
+- Is my answer direct and clear?
+
+
+
+## EXAMPLES WITH REASONING
 
 Example 1 - Good answer:
 Question: "What were the total sales in November 2021?"
 Data: Shows 45 rows with Revenue column summing to $1,234,567
+
+Reasoning:
+- Step 1: User wants total sales amount for a specific month
+- Step 2: 45 rows of data, Revenue column present
+- Step 3: Sum of Revenue = $1,234,567, time period = November 2021, transaction count = 45
+- Step 4: Data fully answers the question, no missing info
+- Step 5: State the total, mention the number of transactions, keep it factual
+
 Answer: "Based on the data, total sales in November 2021 were $1,234,567 across 45 transactions."
 
 Example 2 - Bad answer (do NOT do this):
 Question: "What were the total sales in November 2021?"
 Data: Shows 45 rows with Revenue column summing to $1,234,567
-Answer: "Sales were strong in November, likely due to holiday shopping. This trend probably continued into December and suggests the company is performing well."
-(This is bad because it speculates beyond the data)
+
+Bad Answer: "Sales were strong in November, likely due to holiday shopping. This trend probably continued into December and suggests the company is performing well."
+
+Why this is bad:
+- Violates Step 5: Adds speculation ("likely due to holiday shopping")
+- Violates instruction 5: Makes assumptions beyond data ("trend continued")
+- Violates Step 3: Doesn't state the actual number ($1,234,567)
+- Adds interpretation not supported by data ("company performing well")
+
+Example 3 - Handling incomplete data:
+Question: "How do our November 2021 sales compare to the previous year?"
+Data: Shows only November 2021 data (45 rows, $1,234,567 total)
+
+Reasoning:
+- Step 1: User wants year-over-year comparison
+- Step 2: Only 2021 data present, no 2020 data
+- Step 3: Can extract November 2021 total = $1,234,567
+- Step 4: Cannot make comparison - missing 2020 data
+- Step 5: State what we know, acknowledge limitation
+
+Answer: "The available data shows November 2021 sales totaled $1,234,567 across 45 transactions. However, the dataset does not include November 2020 data, so a year-over-year comparison cannot be made."
+
+Example 4 - Multiple data points:
+Question: "Which product had the highest revenue?"
+Data: Shows Product_Name and Revenue for 10 products, top one is "Widget Pro" with $450,000
+
+Reasoning:
+- Step 1: User wants to identify top-performing product
+- Step 2: 10 rows, columns are Product_Name and Revenue
+- Step 3: Maximum Revenue = $450,000, corresponding Product_Name = "Widget Pro"
+- Step 4: Data fully answers the question
+- Step 5: State the product name and its revenue value
+
+Answer: "Widget Pro had the highest revenue at $450,000."
 
 ## OUTPUT FORMAT
 Provide a direct, concise answer in natural language (2-3 sentences). Focus only on facts from the data.
@@ -536,22 +760,102 @@ Start → Has data? No → lookup_sales_data
 - Visualization goal: {state.get('visualization_goal')}
 - Last tool used: {state.get('tool_choice')}
 
-## EXAMPLES
+## CHAIN OF THOUGHT REASONING
+Before selecting the next tool, think step by step:
+
+**Step 1: Analyzing User Request**
+- What is the user asking for? (data lookup, analysis, visualization, or combination)
+- Does the request explicitly or implicitly require a chart/graph?
+- Is this a simple data retrieval or complex multi-step task?
+
+**Step 2: Checking Current Progress**
+- What tools have already been executed? (check Last tool used)
+- Do we have data available? (check if lookup_sales_data was run)
+- How many answers have been generated? (check Answers generated so far)
+- What stage of the workflow are we in?
+
+**Step 3: Identifying What's Missing**
+- If no data: Need lookup_sales_data first (Rule 1)
+- If data exists but no analysis: Need analyzing_data
+- If analysis exists but user wants visualization: Need create_visualization
+- If all required steps done: Need end
+
+**Step 4: Applying Decision Rules**
+- Rule 1 check: Do I have data before attempting analysis/visualization?
+- Rule 2 check: Am I about to repeat a tool already used?
+- Rule 3 check: Have I completed all necessary steps (2+ answers OR all relevant tools)?
+
+**Step 5: Making the Decision**
+- Based on steps 1-4, which tool should execute next?
+- Does this choice follow the DECISION FLOWCHART?
+- Is this the minimum necessary step to progress toward completion?
+
+
+## EXAMPLES WITH REASONING
 
 Example 1 - Initial state:
 State: prompt="Show sales data", answer=[], tool_choice=None
+
+Reasoning:
+- Step 1: User wants sales data (implies lookup needed)
+- Step 2: No tools executed yet, no data, no answers
+- Step 3: Missing everything - start with data retrieval
+- Step 4: Rule 1 applies - need data first, Rule 2 N/A (nothing used), Rule 3 not met (0 answers)
+- Step 5: Must start with lookup_sales_data
+
 Decision: lookup_sales_data (need data first)
 
 Example 2 - After data lookup:
 State: prompt="Show sales data", answer=[], tool_choice="lookup_sales_data", data exists
+
+Reasoning:
+- Step 1: User wants sales data shown (implies analysis/presentation needed)
+- Step 2: lookup_sales_data executed, data available, but 0 answers generated
+- Step 3: Have data, missing analysis
+- Step 4: Rule 1 satisfied (have data), Rule 2 check (can't repeat lookup), Rule 3 not met (0 answers)
+- Step 5: Next logical step is analyzing_data
+
 Decision: analyzing_data (have data, now analyze)
 
 Example 3 - After analysis and visualization:
 State: prompt="Show sales trends", answer=["Analysis text", "Chart code"], tool_choice="create_visualization"
+
+Reasoning:
+- Step 1: User wanted trends (implies analysis + visualization)
+- Step 2: All tools executed, 2 answers generated (analysis + chart code)
+- Step 3: Nothing missing - workflow complete
+- Step 4: Rule 1 satisfied, Rule 2 satisfied, Rule 3 MET (2+ answers generated)
+- Step 5: Should end the workflow
+
 Decision: end (2+ answers generated, workflow complete)
 
+Example 4 - After analysis only (no viz needed):
+State: prompt="What were total sales?", answer=["Total sales were $X"], tool_choice="analyzing_data"
+
+Reasoning:
+- Step 1: User wanted a simple factual answer (no visualization implied)
+- Step 2: lookup and analysis executed, 1 answer generated
+- Step 3: Question fully answered with analysis alone
+- Step 4: Rule 1 satisfied, Rule 2 satisfied, Rule 3 check (all RELEVANT tools done)
+- Step 5: No visualization needed for this query - can end
+
+Decision: end (all relevant tools executed, question answered)
+
+Example 5 - After lookup only (viz needed):
+State: prompt="Show me a chart of monthly sales", answer=[], tool_choice="lookup_sales_data", data exists
+
+Reasoning:
+- Step 1: User explicitly wants a chart (visualization required)
+- Step 2: Only lookup executed, data available, 0 answers
+- Step 3: Missing both analysis AND visualization
+- Step 4: Rule 1 satisfied (have data), Rule 2 satisfied (not repeating), Rule 3 not met (0 answers)
+- Step 5: Should analyze first, then visualize (follow flowchart)
+
+Decision: analyzing_data (analyze before visualizing)
+
 ## YOUR TASK
-Based on the current state above, select the next tool to execute.
+Based on the chain of thought reasoning above and the current state, select the next tool to execute.
+
 
 ## OUTPUT FORMAT
 Respond with ONLY the tool name: lookup_sales_data, analyzing_data, create_visualization, or end
@@ -630,17 +934,110 @@ Choose the appropriate chart type based on the data and goal:
 - y_axis: Column name for Y-axis (string)
 - title: Descriptive chart title (string)
 
-## EXAMPLES
+## CHAIN OF THOUGHT REASONING
+Before creating the configuration, think step by step:
+
+**Step 1: Understanding the Visualization Goal**
+- What story does the user want to tell with this chart?
+- Is the goal to compare, show trends, find correlations, or display distributions?
+- Are there any keywords that hint at chart type? (e.g., "over time" → line, "compare" → bar)
+
+**Step 2: Analyzing the Data Structure**
+- What columns are available in the data?
+- Which columns contain categorical data (text, discrete values)?
+- Which columns contain numerical data (integers, floats)?
+- Are there any date/time columns?
+- How many rows of data are there (affects visualization approach)?
+
+**Step 3: Selecting Chart Type**
+- For comparisons between categories → bar chart
+- For trends over time or continuous sequences → line chart
+- For showing relationships between two numeric variables → scatter plot
+- For cumulative values over time → area chart
+- Does the data structure support this chart type?
+
+**Step 4: Mapping Axes**
+- What should go on the X-axis? (independent variable, categories, or time)
+- What should go on the Y-axis? (dependent variable, values, metrics)
+- Do the chosen columns make logical sense for these axes?
+- For time series: dates on X-axis, metrics on Y-axis
+- For comparisons: categories on X-axis, values on Y-axis
+
+**Step 5: Creating the Title**
+- What concise phrase describes what the chart shows?
+- Include the key variables or metrics being displayed
+- Format: "[Metric] by/over/vs [Variable]" or similar clear structure
+- Examples: "Revenue Over Time", "Sales by Product", "Price vs Demand"
+
+Now, based on this reasoning, create the JSON configuration.
+
+## EXAMPLES WITH REASONING
 
 Example 1 - Time series data:
 Data columns: Date, Revenue
 Goal: "Show revenue trends over time"
+
+Reasoning:
+- Step 1: Goal mentions "trends over time" → time series visualization
+- Step 2: Columns: Date (temporal), Revenue (numeric), likely multiple rows
+- Step 3: "Over time" + "trends" → line chart is appropriate
+- Step 4: X-axis = Date (time progression), Y-axis = Revenue (metric being tracked)
+- Step 5: Title: "Revenue Trends Over Time" (clear, includes both variables)
+
 Output: {{"chart_type": "line", "x_axis": "Date", "y_axis": "Revenue", "title": "Revenue Trends Over Time"}}
 
 Example 2 - Categorical comparison:
 Data columns: Product_Name, Units_Sold
 Goal: "Compare products by units sold"
+
+Reasoning:
+- Step 1: Goal says "compare" → comparison visualization
+- Step 2: Columns: Product_Name (categorical), Units_Sold (numeric)
+- Step 3: Comparing discrete categories → bar chart is appropriate
+- Step 4: X-axis = Product_Name (categories), Y-axis = Units_Sold (values to compare)
+- Step 5: Title: "Units Sold by Product" (shows what's being compared)
+
 Output: {{"chart_type": "bar", "x_axis": "Product_Name", "y_axis": "Units_Sold", "title": "Units Sold by Product"}}
+
+Example 3 - Correlation analysis:
+Data columns: Price, Demand, Product_ID
+Goal: "Analyze the relationship between price and demand"
+
+Reasoning:
+- Step 1: Goal mentions "relationship between" → correlation visualization
+- Step 2: Columns: Price (numeric), Demand (numeric), Product_ID (identifier)
+- Step 3: Two numeric variables, looking for correlation → scatter plot
+- Step 4: X-axis = Price (independent variable), Y-axis = Demand (dependent variable)
+- Step 5: Title: "Price vs Demand Analysis" (shows both variables being correlated)
+
+Output: {{"chart_type": "scatter", "x_axis": "Price", "y_axis": "Demand", "title": "Price vs Demand Analysis"}}
+
+Example 4 - Cumulative values:
+Data columns: Month, Cumulative_Sales
+Goal: "Show cumulative sales growth throughout the year"
+
+Reasoning:
+- Step 1: Goal mentions "cumulative" and "growth" → volume over time
+- Step 2: Columns: Month (temporal), Cumulative_Sales (numeric, accumulating)
+- Step 3: Cumulative values over time → area chart emphasizes volume
+- Step 4: X-axis = Month (time), Y-axis = Cumulative_Sales (accumulated metric)
+- Step 5: Title: "Cumulative Sales Growth" (describes the accumulation)
+
+Output: {{"chart_type": "area", "x_axis": "Month", "y_axis": "Cumulative_Sales", "title": "Cumulative Sales Growth"}}
+
+Example 5 - Regional comparison:
+Data columns: Region, Average_Revenue, Store_Count
+Goal: "Compare average revenue across different regions"
+
+Reasoning:
+- Step 1: Goal says "compare...across" → categorical comparison
+- Step 2: Columns: Region (categorical), Average_Revenue (numeric), Store_Count (numeric)
+- Step 3: Comparing categories → bar chart
+- Step 4: X-axis = Region (categories), Y-axis = Average_Revenue (metric from goal)
+- Step 5: Title: "Average Revenue by Region" (clear comparison statement)
+
+Output: {{"chart_type": "bar", "x_axis": "Region", "y_axis": "Average_Revenue", "title": "Average Revenue by Region"}}
+
 
 ## OUTPUT FORMAT
 Return ONLY a valid JSON object. No markdown. No code fences. No backticks. No explanations. Just the JSON.
@@ -756,17 +1153,79 @@ Your code must:
 - Use plt.fill_between(x_data, y_data) for filled areas
 - Good for cumulative values
 
-## EXAMPLES
+## CRITICAL: X-AXIS LABEL OVERLAP PREVENTION
+**ALWAYS check and prevent x-axis label overlapping:**
+- For categorical data with many categories (>10): rotate labels 45° or 90° AND use ha='right'
+- For long text labels: ALWAYS rotate even if few labels
+- For dates: rotate 45° with ha='right'
+- If labels are still crowded after rotation: consider reducing font size with fontsize=8
+- Alternative strategies:
+  * Use plt.xticks(rotation=45, ha='right', fontsize=9) for crowded labels
+  * Use plt.xticks(rotation=90) for very long labels
+  * Consider abbreviating labels if possible
+  * Increase figure width with plt.figure(figsize=(12, 6)) for many data points
 
-Example 1 - Bar chart:
+## CHAIN OF THOUGHT REASONING
+Before writing the code, think step by step:
+
+**Step 1: Understanding the Configuration**
+- What chart type is requested? (bar, line, scatter, area)
+- What are the x_axis and y_axis column names?
+- What is the title for the chart?
+- Are there any special characteristics suggested by the column names?
+
+**Step 2: Planning Data Extraction**
+- How do I access the x-axis data? (data_df[config['x_axis']])
+- How do I access the y-axis data? (data_df[config['y_axis']])
+- Do I need to handle special data types (dates, categories)?
+- Should I sort or transform the data before plotting?
+
+**Step 3: Selecting Matplotlib Function**
+- For bar: plt.bar(x_data, y_data)
+- For line: plt.plot(x_data, y_data)
+- For scatter: plt.scatter(x_data, y_data)
+- For area: plt.fill_between(x_data, y_data)
+- What additional parameters improve readability? (marker, alpha, etc.)
+
+**Step 4: Adding Chart Enhancements**
+- Axis labels: plt.xlabel() and plt.ylabel() using config keys
+- Title: plt.title() using config['title']
+- **CRITICAL - Check X-axis label overlap potential:**
+  * How many data points are there?
+  * Are x-axis labels text (categorical) or dates?
+  * Are the labels likely long (product names, location names)?
+  * Decision: Apply rotation and alignment to prevent overlap
+- For time series or scatter: add grid with plt.grid(True, alpha=0.3)
+- Any other styling needed?
+
+**Step 5: Finalizing and Rendering**
+- Call plt.tight_layout() to prevent label cutoff (CRITICAL after rotation)
+- Call plt.show() to display the chart
+- Verify all requirements are met (imports, data access, chart type, labels, title)
+- Double-check no syntax errors or missing steps
+
+Now, based on this reasoning, generate the Python code.
+
+## EXAMPLES WITH REASONING
+
+Example 1 - Bar chart with categorical data:
 config = {{"chart_type": "bar", "x_axis": "Product", "y_axis": "Sales", "title": "Sales by Product"}}
 
+Reasoning:
+- Step 1: Bar chart, x=Product (categorical), y=Sales (numeric), title provided
+- Step 2: Extract data_df['Product'] and data_df['Sales'], no special handling needed
+- Step 3: Use plt.bar(x_data, y_data) for vertical bars
+- Step 4: Add labels, **Product names likely long → MUST rotate to prevent overlap**, apply rotation=45, ha='right'
+- Step 5: tight_layout() (critical for rotated labels) then show()
+
+Code:
 import matplotlib.pyplot as plt
 import pandas as pd
 
 x_data = data_df[config['x_axis']]
 y_data = data_df[config['y_axis']]
 
+plt.figure(figsize=(10, 6))
 plt.bar(x_data, y_data)
 plt.xlabel(config['x_axis'])
 plt.ylabel(config['y_axis'])
@@ -775,32 +1234,51 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-Example 2 - Line chart:
+Example 2 - Line chart with dates:
 config = {{"chart_type": "line", "x_axis": "Date", "y_axis": "Revenue", "title": "Revenue Over Time"}}
 
+Reasoning:
+- Step 1: Line chart, x=Date (temporal), y=Revenue (numeric), time series visualization
+- Step 2: Extract data, x-axis is dates
+- Step 3: Use plt.plot(x_data, y_data) with marker='o' to show data points
+- Step 4: Add labels, **dates on x-axis → rotate to prevent overlap**, add grid for trends
+- Step 5: tight_layout() then show()
+
+Code:
 import matplotlib.pyplot as plt
 import pandas as pd
 
 x_data = data_df[config['x_axis']]
 y_data = data_df[config['y_axis']]
 
+plt.figure(figsize=(12, 6))
 plt.plot(x_data, y_data, marker='o')
 plt.xlabel(config['x_axis'])
 plt.ylabel(config['y_axis'])
 plt.title(config['title'])
+plt.xticks(rotation=45, ha='right')
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-Example 3 - Scatter plot:
+Example 3 - Scatter plot (no rotation needed):
 config = {{"chart_type": "scatter", "x_axis": "Price", "y_axis": "Demand", "title": "Price vs Demand"}}
 
+Reasoning:
+- Step 1: Scatter plot, x=Price (numeric), y=Demand (numeric), correlation analysis
+- Step 2: Extract both numeric columns, no special handling
+- Step 3: Use plt.scatter(x_data, y_data) with alpha=0.6 for overlapping points
+- Step 4: Add labels, **numeric x-axis → no rotation needed**, add grid for patterns
+- Step 5: tight_layout() then show()
+
+Code:
 import matplotlib.pyplot as plt
 import pandas as pd
 
 x_data = data_df[config['x_axis']]
 y_data = data_df[config['y_axis']]
 
+plt.figure(figsize=(10, 6))
 plt.scatter(x_data, y_data, alpha=0.6)
 plt.xlabel(config['x_axis'])
 plt.ylabel(config['y_axis'])
@@ -809,10 +1287,60 @@ plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-## ERROR HANDLING TIPS
-- If x_axis is a date column, you may need: pd.to_datetime(data_df[config['x_axis']])
-- For large categorical x-axis labels, use: plt.xticks(rotation=45, ha='right')
-- For better readability, consider adding: plt.grid(True, alpha=0.3)
+Example 4 - Area chart with months:
+config = {{"chart_type": "area", "x_axis": "Month", "y_axis": "Cumulative_Sales", "title": "Cumulative Sales Growth"}}
+
+Reasoning:
+- Step 1: Area chart, x=Month (temporal/sequential), y=Cumulative_Sales (numeric), shows volume
+- Step 2: Extract data, ensure x is in proper order
+- Step 3: Use plt.fill_between(x_data, y_data) to create filled area
+- Step 4: Add labels, **month names (text) → rotate to prevent overlap**, grid for progression
+- Step 5: tight_layout() then show()
+
+Code:
+import matplotlib.pyplot as plt
+import pandas as pd
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(12, 6))
+plt.fill_between(x_data, y_data, alpha=0.4)
+plt.plot(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right')
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+Example 5 - Bar chart with many categories:
+config = {{"chart_type": "bar", "x_axis": "Store_Location", "y_axis": "Revenue", "title": "Revenue by Store Location"}}
+
+Reasoning:
+- Step 1: Bar chart, x=Store_Location (categorical, likely many stores), y=Revenue
+- Step 2: Extract data, many categories expected
+- Step 3: Use plt.bar(x_data, y_data)
+- Step 4: **Many stores + location names (long text) → CRITICAL overlap risk**, rotate 45°, increase figure width, reduce font size
+- Step 5: tight_layout() essential for rotated labels
+
+Code:
+import matplotlib.pyplot as plt
+import pandas as pd
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(14, 6))
+plt.bar(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right', fontsize=9)
+plt.tight_layout()
+plt.show()
+
 
 ## OUTPUT FORMAT
 Return ONLY the Python code. No markdown formatting. No code fences. No explanations. Just the executable Python code.
