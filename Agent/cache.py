@@ -70,14 +70,23 @@ class RunCache:
         """Serialize a result for JSON storage.
 
         Handles pandas DataFrames and other non-serializable types.
+        DataFrames are stored as {'__dataframe__': True, 'records': [...]}
+        so they can be faithfully restored on load.
         """
         if result is None:
             return None
         if isinstance(result, dict):
             serialized = {}
             for k, v in result.items():
-                # Skip DataFrame - too large and not JSON serializable
                 if k == 'data_df':
+                    if v is not None:
+                        try:
+                            serialized[k] = {
+                                '__dataframe__': True,
+                                'records': v.to_dict(orient='records'),
+                            }
+                        except Exception:
+                            pass  # Skip if DataFrame can't be serialized
                     continue
                 serialized[k] = self._serialize_result(v)
             return serialized
@@ -89,6 +98,26 @@ class RunCache:
             return result
         except (TypeError, ValueError):
             return str(result)
+
+    def _deserialize_result(self, result: Any) -> Any:
+        """Restore a result loaded from JSON, reconstructing DataFrames.
+
+        Converts {'__dataframe__': True, 'records': [...]} back to
+        a pandas DataFrame.
+        """
+        if result is None:
+            return None
+        if isinstance(result, dict):
+            if result.get('__dataframe__') is True:
+                try:
+                    import pandas as pd
+                    return pd.DataFrame(result.get('records', []))
+                except Exception:
+                    return None
+            return {k: self._deserialize_result(v) for k, v in result.items()}
+        if isinstance(result, list):
+            return [self._deserialize_result(item) for item in result]
+        return result
 
     def save_run(
         self,
@@ -220,7 +249,8 @@ class RunCache:
         if step_file.exists():
             try:
                 with open(step_file, 'r') as f:
-                    return json.load(f)
+                    raw = json.load(f)
+                return [self._deserialize_result(r) for r in raw]
             except (json.JSONDecodeError, IOError):
                 return None
         return None

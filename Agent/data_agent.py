@@ -1652,11 +1652,19 @@ class SalesDataAgent:
                 cached = cached_results[step_name]
                 print(f"[{step_name}] Found {len(cached)} cached result(s)")
 
+                # Preserve cached_step_results from the current state so that
+                # subsequent steps can still find their own cached results.
+                # (The cached dict was produced in a previous run whose state
+                # had an empty or different cached_step_results.)
+                live_csr = state.get("cached_step_results", {})
+
                 if config.cache_mode == "skip":
                     # Use first cached result directly (previously selected best)
                     print(f"[{step_name}] Using cached result (skip mode)")
                     if cached:
-                        return cached[0]
+                        result = dict(cached[0])
+                        result["cached_step_results"] = live_csr
+                        return result
                     return dict(state)
 
                 # cache_mode == "auto": Re-evaluate cached results with current eval_fn
@@ -1670,9 +1678,13 @@ class SalesDataAgent:
                         scores.append(score)
                     best_idx = config.selection_fn(scores)
                     print(f"[{step_name}] Re-selected cached result {best_idx + 1}/{len(cached)}")
-                    return cached[best_idx]
+                    result = dict(cached[best_idx])
+                    result["cached_step_results"] = live_csr
+                    return result
                 elif cached:
-                    return cached[0]
+                    result = dict(cached[0])
+                    result["cached_step_results"] = live_csr
+                    return result
 
         # No cache or force_fresh: run the step
         n = config.n
@@ -1914,26 +1926,24 @@ class SalesDataAgent:
         if no_vis:
             print("[Agent] Running agent without visualization")
             try:
+                lookup_cfg = self.agent_config.get_step_config("lookup_sales_data")
+                analyzing_cfg = self.agent_config.get_step_config("analyzing_data")
                 if self.tracing_enabled and self.tracer is not None:
                     with self.tracer.start_as_current_span("AgentRun_NoVis", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
                         span.set_input(state)  # type: ignore[attr-defined]
-                        state = lookup_sales_data(state, self.llm, self.tracer)
-                        result = analyzing_data(state, self.llm, self.tracer)
+                        state = self._execute_step_with_config("lookup_sales_data", state, lookup_sales_data_core, lookup_cfg)
+                        result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                         print(f"\nAgent response: {result.get('answer', [None])[0]}")
                         span.set_output(result)  # type: ignore[attr-defined]
                         if StatusCode is not None:
                             span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-                        self.current_run_step_results["lookup_sales_data"] = [dict(state)]
-                        self.current_run_step_results["analyzing_data"] = [dict(result)]
                         self._maybe_save_run_results(run_id, prompt, result, save_results)
                         result["run_id"] = run_id
                         return result
                 else:
-                    state = lookup_sales_data(state, self.llm)
-                    result = analyzing_data(state, self.llm, self.tracer)
+                    state = self._execute_step_with_config("lookup_sales_data", state, lookup_sales_data_core, lookup_cfg)
+                    result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
-                    self.current_run_step_results["lookup_sales_data"] = [dict(state)]
-                    self.current_run_step_results["analyzing_data"] = [dict(result)]
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
                     return result
