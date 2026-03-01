@@ -37,10 +37,12 @@ try:
     from Agent.utils import text_to_csv, save_csv, get_evaluation_functions
     from Agent.config import AgentConfig, StepConfig
     from Agent.cache import RunCache
+    from Agent.schema import DatabaseSchema, TableSchema, ColumnSchema
 except ImportError:
     from utils import text_to_csv, save_csv, get_evaluation_functions
     from config import AgentConfig, StepConfig
     from cache import RunCache
+    from schema import DatabaseSchema, TableSchema, ColumnSchema
 
 # Optional energy/emissions tracking via CodeCarbon
 try:
@@ -103,14 +105,98 @@ class State(TypedDict):
 # LLM Helpers
 # -----------------------------
 
+TABLE_SELECTION_PROMPT = """You are a database architect helping identify which tables are needed to answer a user's question.
+
+## TASK
+From the list of available tables, select only the tables needed to answer the user's question.
+
+## AVAILABLE TABLES
+{compact_schema}
+
+## USER QUESTION
+{prompt}
+
+## CHAIN OF THOUGHT REASONING
+Before selecting tables, think step by step:
+
+**Step 1: Understanding the Question**
+- What is the user really asking for?
+- What entities or concepts are mentioned? (e.g., products, sales, customers, dates)
+- What metrics or dimensions does the answer require?
+
+**Step 2: Mapping Concepts to Tables**
+- Which table descriptions match the entities mentioned in the question?
+- Is the question asking about relationships between multiple entities (implies a JOIN)?
+- Are any tables clearly irrelevant (different domain, different subject)?
+
+**Step 3: Identifying Required Joins**
+- If multiple entities are needed, which tables contain them?
+- Do any tables serve as lookup/dimension tables needed to label results?
+- Is there a fact table that connects the needed entities?
+
+**Step 4: Checking Completeness**
+- Do the selected tables together contain all the data needed to answer the question?
+- Is any additional table needed for filtering or context?
+- Are there redundant tables containing the same data?
+
+**Step 5: Final Selection**
+- List only the table names that are necessary and sufficient to answer the question
+- When in doubt, include a table rather than exclude it (extra context is better than missing data)
+- Use only table names exactly as listed in AVAILABLE TABLES
+
+## OUTPUT FORMAT
+Return ONLY a comma-separated list of table names. No explanations. No markdown. Just table names.
+Example: sales,products
+"""
+
+
+def select_relevant_tables(state: "State", schema: "DatabaseSchema", llm) -> List[str]:
+    """Use the LLM to select relevant tables from a large schema.
+
+    Called when schema.should_use_table_selection() is True (more tables than
+    compact_threshold). Passes only table names and descriptions to the LLM,
+    then returns the selected table names so full column details for only those
+    tables are included in the SQL generation prompt.
+
+    Args:
+        state: Conversation state containing the user prompt.
+        schema: DatabaseSchema with all available tables.
+        llm: LLM instance for table selection.
+
+    Returns:
+        List of selected table names. Falls back to all table names if the LLM
+        output cannot be parsed (safe degradation).
+    """
+    formatted_prompt = TABLE_SELECTION_PROMPT.format(
+        compact_schema=schema.get_compact_summary(),
+        prompt=state["prompt"],
+    )
+    response = llm.invoke(formatted_prompt)
+    raw = response.content if hasattr(response, "content") else str(response)
+    raw = raw.strip()
+
+    all_names = {t.name for t in schema.tables}
+    selected = []
+    for token in raw.split(","):
+        name = token.strip()
+        if name in all_names:
+            selected.append(name)
+
+    if not selected:
+        print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
+        return [t.name for t in schema.tables]
+
+    print(f"[select_relevant_tables] Selected tables: {selected}")
+    return selected
+
+
 SQL_GENERATION_PROMPT = """You are an expert SQL developer specializing in DuckDB queries for data analysis and visualization.
 
 ## TASK
 Generate a DuckDB SQL query to answer the user's question and provide data optimized for visualization.
 
 ## AVAILABLE DATA
-- Table name: {table_name}
-- Available columns: {columns}
+{schema_context}
 
 ## USER QUESTION
 {prompt}
@@ -121,8 +207,8 @@ Generate a DuckDB SQL query to answer the user's question and provide data optim
 ## INSTRUCTIONS
 1. Analyze the user's question to identify what data is needed
 2. Consider the visualization goal to structure the query output appropriately
-3. Select appropriate columns from the available columns
-4. Use proper SQL syntax for filtering, aggregation, and sorting
+3. Select appropriate columns from the schema above
+4. Use proper SQL syntax for filtering, aggregation, sorting, and joins across tables
 5. For DATE columns with pattern matching, CAST to VARCHAR: CAST(date_column AS VARCHAR) LIKE '%2021-11%'
 6. Handle NULL values appropriately
 7. Use DuckDB-specific functions when beneficial
@@ -143,7 +229,8 @@ Before generating the SQL query, think step by step:
 - What time period or filters are implied?
 
 **Step 2: Identifying Required Data**
-- Which columns from {columns} are relevant to answer this question?
+- Which columns from the schema above are relevant to answer this question?
+- Do I need data from multiple tables? If yes, what JOIN keys connect them?
 - Do I need to filter the data? If yes, on which column(s)?
 - Do I need aggregations (SUM, COUNT, AVG)? If yes, on which column(s)?
 - Do I need grouping? If yes, by which column(s)?
@@ -157,7 +244,7 @@ Before generating the SQL query, think step by step:
 
 **Step 4: Query Structure Planning**
 - SELECT: Which columns and aggregations?
-- FROM: {table_name}
+- FROM: Which table(s)? Use JOINs if data spans multiple tables
 - WHERE: What filters are needed?
 - GROUP BY: Which columns for aggregation?
 - ORDER BY: How should results be sorted?
@@ -167,6 +254,7 @@ Before generating the SQL query, think step by step:
 - Are there DATE columns that need CAST to VARCHAR for pattern matching?
 - Are there potential NULL values that need filtering?
 - Do column names need aliasing for better visualization labels?
+- Are table aliases needed for clarity in multi-table queries?
 
 
 
@@ -177,7 +265,7 @@ Question: "Show me sales from November 2021"
 Visualization: "Monthly sales trend"
 Reasoning:
 - Step 1: User wants sales data for a specific month
-- Step 2: Need Date and Revenue columns, filter by date pattern
+- Step 2: Need Date and Revenue columns from sales table, filter by date pattern
 - Step 3: Time series chart → need dates sorted, aggregate by date
 - Step 4: SELECT Date, SUM(Revenue), WHERE date matches, GROUP BY Date, ORDER BY Date
 - Step 5: Must CAST Date to VARCHAR for LIKE pattern matching
@@ -210,11 +298,25 @@ Question: "Analyze price vs demand relationship"
 Visualization: "Price vs demand correlation"
 Reasoning:
 - Step 1: User wants to see correlation between two variables
-- Step 2: Need Price and Units_Sold columns, no aggregation (scatter plot)
+- Step 2: Need Price and Units_Sold columns from the same table, no aggregation (scatter plot)
 - Step 3: Scatter plot → need individual data points, both axes numeric
 - Step 4: SELECT Price, Units_Sold, no GROUP BY needed
 - Step 5: Filter out NULLs to avoid chart issues
 Query: SELECT Price, Units_Sold FROM sales WHERE Price IS NOT NULL AND Units_Sold IS NOT NULL
+
+Example 5 (multi-table):
+Question: "Show total revenue by product category for 2023"
+Visualization: "Bar chart of revenue by category"
+Schema:
+  Table: sales (columns: Sold_Date, SKU_Coded, Total_Sale_Value)
+  Table: products (columns: SKU_Coded, Category, Product_Name)
+Reasoning:
+- Step 1: User wants revenue aggregated by product category
+- Step 2: Revenue is in sales; Category is in products — need JOIN on SKU_Coded
+- Step 3: Bar chart → group by category, aggregate revenue, order descending
+- Step 4: SELECT p.Category, SUM(s.Total_Sale_Value) FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE year=2023 GROUP BY p.Category ORDER BY revenue DESC
+- Step 5: Use EXTRACT for year filter; alias table names for clarity
+Query: SELECT p.Category, SUM(s.Total_Sale_Value) as Total_Revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023 GROUP BY p.Category ORDER BY Total_Revenue DESC
 
 ## OUTPUT FORMAT
 Return ONLY the SQL query as plain text. No explanations. No markdown formatting. No code fences. Just the SQL query.
@@ -222,26 +324,25 @@ Return ONLY the SQL query as plain text. No explanations. No markdown formatting
 
 
 
-def generate_sql_query(state: State, columns: List[str], table_name: str, llm: ChatOllama) -> str:
-    """Generate a parameterized SQL query with the LLM based on the user prompt and visualization goal.
+def generate_sql_query(state: State, schema_context: str, llm) -> str:
+    """Generate a DuckDB SQL query from the user prompt and schema context.
 
     Args:
         state: Conversation state containing the user prompt and optionally visualization_goal.
-        columns: Available column names in the table.
-        table_name: Name of the temporary DuckDB table to query.
-        llm: ChatOllama instance used to generate the SQL.
+        schema_context: Full schema string produced by DatabaseSchema.get_full_schema_str().
+                        Includes table names, descriptions, and column details for all
+                        relevant tables.
+        llm: LLM instance used to generate the SQL.
 
     Returns:
         A plain SQL string suitable for DuckDB. Any markdown fences are stripped.
     """
-    # Extract visualization goal from state, default to prompt if not specified
     visualization_goal = state.get("visualization_goal") or state.get("prompt", "general data analysis")
 
     formatted_prompt = SQL_GENERATION_PROMPT.format(
         prompt=state["prompt"],
-        columns=columns,
-        table_name=table_name,
-        visualization_goal=visualization_goal
+        schema_context=schema_context,
+        visualization_goal=visualization_goal,
     )
     response = llm.invoke(formatted_prompt)
     sql_query = response.content if hasattr(response, "content") else str(response)
@@ -259,24 +360,56 @@ def generate_sql_query(state: State, columns: List[str], table_name: str, llm: C
 # These *_core functions contain just the essential logic without tracing.
 # They are called by the middleware for per-step best-of-n execution.
 
-def lookup_sales_data_core(state: State, llm) -> Dict:
+def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchema"] = None) -> Dict:
     """Core lookup logic - SQL generation and data retrieval.
+
+    Supports both single-table (legacy) and multi-table (new) modes.
+
+    When schema is None, falls back to the legacy behavior of loading DEFAULT_DATA_PATH
+    as a single "sales" table, auto-building a minimal DatabaseSchema from it.
+
+    When schema has more tables than compact_threshold, a two-step approach is used:
+    first the LLM selects which tables are relevant, then full column details for only
+    those tables are passed to SQL generation. This keeps prompts manageable for 10+
+    table schemas.
 
     Args:
         state: Conversation state; must include 'prompt'.
-        llm: LLM instance for SQL generation.
+        llm: LLM instance for SQL generation (and optional table selection).
+        schema: DatabaseSchema describing available tables. If None, auto-builds
+                a minimal schema from DEFAULT_DATA_PATH for backward compatibility.
 
     Returns:
         Updated state containing 'data', 'data_df', 'sql_query' or 'error'.
     """
-    table_name = "sales"
-    df = pd.read_parquet(DEFAULT_DATA_PATH)
-    duckdb.sql("DROP TABLE IF EXISTS sales")
-    duckdb.register("df", df)
-    duckdb.sql(f"CREATE TABLE {table_name} AS SELECT * FROM df")
-    sql_query = generate_sql_query(state, df.columns.tolist(), table_name, llm)
+    # --- Build schema if not provided (backward compat) ---
+    if schema is None:
+        df = pd.read_parquet(DEFAULT_DATA_PATH)
+        schema = DatabaseSchema(tables=[TableSchema(
+            name="sales",
+            description="Sales data",
+            file_path=DEFAULT_DATA_PATH,
+            columns=[ColumnSchema(name=c, description=c) for c in df.columns.tolist()],
+        )])
+
+    # --- Register all tables in a fresh per-call DuckDB connection ---
+    con = duckdb.connect()
+    for table in schema.tables:
+        df_t = pd.read_parquet(table.file_path)
+        con.register(f"_df_{table.name}", df_t)
+        con.execute(f"CREATE TABLE {table.name} AS SELECT * FROM _df_{table.name}")
+
+    # --- Build schema context (two-step when many tables) ---
+    if schema.should_use_table_selection():
+        selected_names = select_relevant_tables(state, schema, llm)
+        schema_context = schema.get_full_schema_str(table_names=selected_names)
+    else:
+        schema_context = schema.get_full_schema_str()
+
+    # --- Generate and execute SQL ---
+    sql_query = generate_sql_query(state, schema_context, llm)
     try:
-        result_df = duckdb.sql(sql_query).df()
+        result_df = con.execute(sql_query).df()
         result_str = result_df.to_string(index=False)
         return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
     except Exception as e:
@@ -525,43 +658,34 @@ def create_visualization_core(state: State, llm) -> Dict:
 # Original Step Functions (with tracing support)
 # -----------------------------
 
-def lookup_sales_data(state: State, llm: ChatOllama, tracer=None) -> Dict:
-    """Look up sales data from a parquet file using LLM-generated SQL over DuckDB.
+def lookup_sales_data(state: State, llm, tracer=None, *, schema: Optional["DatabaseSchema"] = None) -> Dict:
+    """Look up data using LLM-generated SQL over DuckDB.
 
-    This function registers the parquet data as a temporary DuckDB table, asks the
-    LLM to generate an SQL query from the user's prompt and available columns, then
-    executes the query and stores a text-formatted table in state['data'].
+    Delegates to lookup_sales_data_core for the core logic, then wraps the result
+    in a tracing span if a tracer is provided.
 
     Args:
         state: Conversation state; must include 'prompt'.
-        data_path: Filesystem path to the parquet dataset. // ADD LATER
-        llm: ChatOllama instance used for prompt-to-SQL generation.
+        llm: LLM instance used for prompt-to-SQL generation.
+        tracer: Optional Phoenix/OpenInference tracer for observability.
+        schema: DatabaseSchema describing available tables. If None, falls back to
+                loading DEFAULT_DATA_PATH as a single "sales" table.
 
     Returns:
-        Updated state containing 'data' (string table) or 'error'.
+        Updated state containing 'data' (string table), 'data_df', 'sql_query', or 'error'.
     """
-    table_name = "sales"
-    df = pd.read_parquet(DEFAULT_DATA_PATH)
-    duckdb.sql("DROP TABLE IF EXISTS sales")
-    duckdb.register("df", df)
-    duckdb.sql(f"CREATE TABLE {table_name} AS SELECT * FROM df")
-    sql_query = generate_sql_query(state, df.columns.tolist(), table_name, llm)
-    try:
-        result_df = duckdb.sql(sql_query).df()
-        result_str = result_df.to_string(index=False)
-        if tracer is not None:
-            try:
-                with tracer.start_as_current_span("sql_query_exec", openinference_span_kind="tool") as span:  # type: ignore[attr-defined]
-                    span.set_input(state.get("prompt", ""))  # type: ignore[attr-defined]
-                    span.set_output(result_str)  # type: ignore[attr-defined]
-                    if StatusCode is not None:
-                        span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-            except Exception:
-                pass
-        return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
-    except Exception as e: # If the SQL fails, return empty results
-        print(f"Error accessing data: {str(e)}")
-        return {**state, "data": "", "sql_query": sql_query, "error": f"Error accessing data: {str(e)}"}
+    result = lookup_sales_data_core(state, llm, schema=schema)
+    if tracer is not None:
+        try:
+            result_str = result.get("data", "")
+            with tracer.start_as_current_span("sql_query_exec", openinference_span_kind="tool") as span:  # type: ignore[attr-defined]
+                span.set_input(state.get("prompt", ""))  # type: ignore[attr-defined]
+                span.set_output(result_str)  # type: ignore[attr-defined]
+                if StatusCode is not None:
+                    span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    return result
 
 DATA_ANALYSIS_PROMPT = """You are a professional data analyst providing insights from query results.
 
@@ -1448,6 +1572,7 @@ class SalesDataAgent:
         max_tokens: int = 2000,
         streaming: bool = True,
         data_path: Optional[str] = None,
+        schema: Optional["DatabaseSchema"] = None,
         ollama_url: Optional[str] = None,
         enable_tracing: bool = False,
         phoenix_api_key: Optional[str] = None,
@@ -1466,7 +1591,10 @@ class SalesDataAgent:
             temperature: Sampling temperature for the LLM.
             max_tokens: Generation token limit.
             streaming: Whether to stream tokens from the LLM.
-            data_path: Optional override for the parquet dataset path.
+            data_path: Optional override for the parquet dataset path (single-table legacy mode).
+            schema: Optional DatabaseSchema for multi-table support. When provided, takes
+                    precedence over data_path for query execution. If None, auto-builds a
+                    minimal schema from data_path at query time.
             ollama_url: Optional override for Ollama base URL; defaults to OLLAMA_HOST or http://localhost:11434.
             provider: LLM provider to use ("ollama" or "openai"). Default is "ollama".
             openai_api_key: Optional OpenAI API key; defaults to OPENAI_API_KEY env var.
@@ -1498,6 +1626,8 @@ class SalesDataAgent:
             )
 
         self.data_path = data_path or DEFAULT_DATA_PATH
+        # Multi-table schema. None means single-table legacy mode (auto-built at query time).
+        self.schema = schema
 
         # Optional Phoenix/OpenInference tracing integration
         self.tracer = None
@@ -1813,9 +1943,13 @@ class SalesDataAgent:
                 return self._execute_step_with_config(step_name, state, core_fn, config)
             return node_fn
 
+        # Bind schema into lookup_sales_data_core via partial so the middleware
+        # signature core_fn(state, llm) is preserved.
+        lookup_core_with_schema = partial(lookup_sales_data_core, schema=self.schema)
+
         # Add nodes with configuration wrappers
         graph.add_node("decide_tool", make_configured_node("decide_tool", decide_tool_core))
-        graph.add_node("lookup_sales_data", make_configured_node("lookup_sales_data", lookup_sales_data_core))
+        graph.add_node("lookup_sales_data", make_configured_node("lookup_sales_data", lookup_core_with_schema))
         graph.add_node("analyzing_data", make_configured_node("analyzing_data", analyzing_data_core))
         graph.add_node("create_visualization", make_configured_node("create_visualization", create_visualization_core))
 
@@ -1907,7 +2041,7 @@ class SalesDataAgent:
                 if self.tracing_enabled and self.tracer is not None:
                     with self.tracer.start_as_current_span("AgentRun_LookupOnly", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
                         span.set_input(state)  # type: ignore[attr-defined]
-                        result = lookup_sales_data(state, self.llm, self.tracer)
+                        result = lookup_sales_data(state, self.llm, self.tracer, schema=self.schema)
                         span.set_output(result)  # type: ignore[attr-defined]
                         if StatusCode is not None:
                             span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
@@ -1916,7 +2050,7 @@ class SalesDataAgent:
                         result["run_id"] = run_id
                         return result
                 else:
-                    result = lookup_sales_data(state, self.llm)
+                    result = lookup_sales_data(state, self.llm, schema=self.schema)
                     self.current_run_step_results["lookup_sales_data"] = [dict(result)]
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
@@ -1928,10 +2062,11 @@ class SalesDataAgent:
             try:
                 lookup_cfg = self.agent_config.get_step_config("lookup_sales_data")
                 analyzing_cfg = self.agent_config.get_step_config("analyzing_data")
+                lookup_core = partial(lookup_sales_data_core, schema=self.schema)
                 if self.tracing_enabled and self.tracer is not None:
                     with self.tracer.start_as_current_span("AgentRun_NoVis", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
                         span.set_input(state)  # type: ignore[attr-defined]
-                        state = self._execute_step_with_config("lookup_sales_data", state, lookup_sales_data_core, lookup_cfg)
+                        state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
                         result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                         print(f"\nAgent response: {result.get('answer', [None])[0]}")
                         span.set_output(result)  # type: ignore[attr-defined]
@@ -1941,7 +2076,7 @@ class SalesDataAgent:
                         result["run_id"] = run_id
                         return result
                 else:
-                    state = self._execute_step_with_config("lookup_sales_data", state, lookup_sales_data_core, lookup_cfg)
+                    state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
                     result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
                     self._maybe_save_run_results(run_id, prompt, result, save_results)

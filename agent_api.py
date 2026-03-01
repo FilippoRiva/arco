@@ -4,6 +4,51 @@ import os
 import tempfile
 from Agent.data_agent import SalesDataAgent
 from Agent.utils import get_evaluation_functions
+from Agent.schema import DatabaseSchema, TableSchema, ColumnSchema
+
+
+def _schema_from_dict(schema_dict: dict) -> DatabaseSchema:
+    """Parse a schema definition from an API JSON payload into a DatabaseSchema.
+
+    Expected format::
+
+        {
+          "compact_threshold": 5,
+          "tables": [
+            {
+              "name": "sales",
+              "description": "Daily sales transactions",
+              "file_path": "/data/sales.parquet",
+              "columns": [
+                {"name": "date", "description": "Transaction date", "data_type": "DATE"},
+                {"name": "revenue", "description": "Total revenue", "data_type": "FLOAT"}
+              ]
+            }
+          ]
+        }
+    """
+    tables = []
+    for t in schema_dict.get("tables", []):
+        columns = [
+            ColumnSchema(
+                name=c["name"],
+                description=c.get("description", c["name"]),
+                data_type=c.get("data_type", "VARCHAR"),
+                example_values=c.get("example_values"),
+                nullable=c.get("nullable", True),
+            )
+            for c in t.get("columns", [])
+        ]
+        tables.append(TableSchema(
+            name=t["name"],
+            description=t.get("description", t["name"]),
+            file_path=t["file_path"],
+            columns=columns,
+        ))
+    return DatabaseSchema(
+        tables=tables,
+        compact_threshold=schema_dict.get("compact_threshold", 5),
+    )
 
 app = Flask(__name__)
 
@@ -19,7 +64,14 @@ def call_agent():
     {
         "prompt": "Show me sales in Nov 2021",  # Required
         "model": "llama3.2:3b",  # Optional
-        "data_path": "/path/to/data.parquet",  # Optional
+        "data_path": "/path/to/data.parquet",  # Optional (single-table legacy)
+        "schema": {                            # Optional (multi-table)
+            "compact_threshold": 5,
+            "tables": [
+                {"name": "sales", "description": "...", "file_path": "/data/s.parquet",
+                 "columns": [{"name": "date", "description": "...", "data_type": "DATE"}]}
+            ]
+        },
         "visualization_goal": "Create a bar chart",  # Optional
         "lookup_only": false,  # Optional
         "no_vis": false,  # Optional (run without visualization)
@@ -64,6 +116,15 @@ def call_agent():
     visualization_goal = payload.get("visualization_goal") or payload.get("goal")
     data_path = payload.get("data_path") or payload.get("data")
     model = payload.get("model")
+
+    # Multi-table schema (optional)
+    schema_dict = payload.get("schema")
+    schema = None
+    if schema_dict:
+        try:
+            schema = _schema_from_dict(schema_dict)
+        except Exception as e:
+            return jsonify({"error": f"Invalid schema definition: {str(e)}"}), 400
 
     # Agent behavior flags
     lookup_only = bool(payload.get("lookup_only") or payload.get("lookup-only") or payload.get("lookupOnly", False))
@@ -112,12 +173,13 @@ def call_agent():
 
     # Create agent (use global or create new one with custom params)
     req_agent = agent
-    if model or data_path or enable_tracing:
+    if model or data_path or schema or enable_tracing:
         try:
             req_agent = SalesDataAgent(
                 model=model or "llama3.2:3b",
                 temperature=temp or 0.1,
                 data_path=data_path,
+                schema=schema,
                 enable_tracing=enable_tracing,
                 phoenix_endpoint=phoenix_endpoint,
                 project_name=project_name,
