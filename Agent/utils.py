@@ -594,31 +594,33 @@ def judge_analysis(
     sql_query: str,
     data: str,
     analysis: str,
-    judge_model: str = "gpt-oss:20b",
-    ollama_url: str = "http://localhost:11434"
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    ollama_url: str = "http://localhost:11434",
+    openai_api_key: Optional[str] = None,
 ) -> Tuple[float, Dict]:
     """Evaluate data analysis quality using LLM-as-a-Judge.
-    
+
     Args:
         prompt: Original user question
         sql_query: SQL query that was executed
         data: SQL results (ground truth)
         analysis: LLM's analysis text to evaluate
-        judge_model: Ollama model name for judging (default: llama3.1:70b)
-        ollama_url: Ollama server URL
-    
+        judge_model: Model name for judging (default: gpt-4o-mini)
+        provider: LLM provider - "openai" or "ollama" (default: openai)
+        ollama_url: Ollama server URL (only used when provider="ollama")
+        openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided)
+
     Returns:
         float: Overall score (0,1) = average of correctness, completeness, faithfulness and the detailed_evaluation of the judge
     """
-    from langchain_ollama import ChatOllama
-    
     JUDGE_PROMPT = """You are an expert evaluator assessing a data analysis response.
 For the evaluation is important you consider the information that was available for the analysis, if the SQL result is wrong or has missing data, this problem shouldn't affect the analysis score.
 
 ### CONTEXT
 USER QUESTION: {prompt}
 SQL QUERY: {sql_query}
-SQL RESULTS: 
+SQL RESULTS:
 {data}
 
 ### ANALYSIS TO EVALUATE
@@ -648,12 +650,25 @@ Return ONLY valid JSON:
 
     try:
         # Create judge LLM
-        judge_llm = ChatOllama(
-            model=judge_model,
-            temperature=0.2,
-            base_url=ollama_url,
-            max_tokens=1000
-        )
+        if provider == "openai":
+            from langchain_openai import ChatOpenAI
+            api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OpenAI API key not provided and OPENAI_API_KEY env var not set")
+            judge_llm = ChatOpenAI(
+                model=judge_model,
+                temperature=0.2,
+                api_key=api_key,
+                max_tokens=1000
+            )
+        else:
+            from langchain_ollama import ChatOllama
+            judge_llm = ChatOllama(
+                model=judge_model,
+                temperature=0.2,
+                base_url=ollama_url,
+                max_tokens=1000
+            )
         
         # Truncate data if too long
         truncated_data = data[:2000] if len(data) > 2000 else data
@@ -1004,14 +1019,22 @@ def make_csv_evaluator(
 
 
 def make_text_evaluator(
-    ground_truth_text: str,
-    metric: str = "bleu"
+    ground_truth_text: str = "",
+    metric: str = "bleu",
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    ollama_url: str = "http://localhost:11434",
+    openai_api_key: Optional[str] = None,
 ) -> callable:
     """Factory to create text evaluation function for per-step execution.
 
     Args:
-        ground_truth_text: Reference text to compare against.
+        ground_truth_text: Reference text to compare against (required for bleu/spice).
         metric: Evaluation metric - 'bleu', 'spice', or 'judge'.
+        judge_model: Model for LLM judge (default: gpt-4o-mini). Only used when metric='judge'.
+        provider: LLM provider for judge - 'openai' or 'ollama' (default: openai).
+        ollama_url: Ollama server URL. Only used when provider='ollama'.
+        openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided).
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
@@ -1035,8 +1058,16 @@ def make_text_evaluator(
             elif metric == "spice":
                 return spice_score_java(analysis_text, ground_truth_text)
             elif metric == "judge":
-                # Use LLM judge (requires more setup)
-                score, _ = judge_analysis(analysis_text, ground_truth_text)
+                score, _ = judge_analysis(
+                    prompt=state.get("prompt", ""),
+                    sql_query=state.get("sql_query", ""),
+                    data=state.get("data", ""),
+                    analysis=analysis_text,
+                    judge_model=judge_model,
+                    provider=provider,
+                    ollama_url=ollama_url,
+                    openai_api_key=openai_api_key,
+                )
                 return score
             else:
                 # Default to BLEU
