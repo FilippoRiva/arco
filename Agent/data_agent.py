@@ -103,6 +103,56 @@ class State(TypedDict):
 # LLM Helpers
 # -----------------------------
 
+_COT_SIMILARITY_THRESHOLD = 0.95
+
+
+def _extract_step_output(step_name: str, result: Dict) -> str:
+    """Extract the key textual output from a step result for CoT similarity comparison."""
+    if step_name == "lookup_sales_data":
+        return result.get("sql_query", "")
+    elif step_name == "decide_tool":
+        return result.get("tool_choice", "")
+    else:  # analyzing_data, create_visualization
+        answers = result.get("answer", [])
+        return answers[-1] if answers else ""
+
+
+class CoTRefinementLLM:
+    """Transparent LLM wrapper that appends the previous iteration's response for iterative CoT refinement.
+
+    Every call to invoke() receives the original prompt augmented with a
+    refinement block containing the previous iteration's output.  The wrapper
+    delegates all other attribute accesses to the underlying LLM so that the
+    core step functions need no changes.
+    """
+
+    _REFINEMENT_SUFFIX = """
+
+## ITERATIVE REFINEMENT
+Your previous attempt produced the following response:
+---
+{previous_response}
+---
+Carefully review your previous response.
+- If it is correct and complete, reproduce it exactly (same content, same format).
+- If you identify errors or improvements, output a revised version.
+Output only the final response with no meta-commentary.
+"""
+
+    def __init__(self, base_llm, previous_response: str) -> None:
+        self._llm = base_llm
+        self._previous_response = previous_response
+
+    def invoke(self, prompt):
+        augmented = prompt + self._REFINEMENT_SUFFIX.format(
+            previous_response=self._previous_response
+        )
+        return self._llm.invoke(augmented)
+
+    def __getattr__(self, name):
+        return getattr(self._llm, name)
+
+
 SQL_GENERATION_PROMPT = """You are an expert SQL developer specializing in DuckDB queries for data analysis and visualization.
 
 ## TASK
@@ -1615,6 +1665,67 @@ class SalesDataAgent:
                 base_url=self.ollama_url,
             )
 
+    def _apply_cot_iterations(
+        self,
+        step_name: str,
+        state: State,
+        core_fn,
+        llm,
+        initial_result: Dict,
+        cot_n: int,
+    ) -> Dict:
+        """Apply up to cot_n iterative CoT refinement steps to a single LLM call.
+
+        Starting from initial_result, repeatedly re-invokes core_fn with a
+        CoTRefinementLLM that appends the previous response to every prompt.
+        Stops early when the output converges (similarity >= _COT_SIMILARITY_THRESHOLD)
+        or after cot_n total iterations (including the initial one).
+
+        Args:
+            step_name: Name of the step (for logging and output extraction).
+            state: Current agent state (unchanged across iterations).
+            core_fn: The core step function, signature (state, llm) -> Dict.
+            llm: The base LLM instance (temperature already set by the caller).
+            initial_result: Result from the first (non-refinement) call.
+            cot_n: Maximum total number of iterations (1 = no refinement).
+
+        Returns:
+            The result from the final (or converged) iteration.
+        """
+        if cot_n <= 1:
+            return initial_result
+
+        result = initial_result
+        previous_output = _extract_step_output(step_name, result)
+
+        for cot_i in range(1, cot_n):
+            refinement_llm = CoTRefinementLLM(llm, previous_output)
+            try:
+                new_result = core_fn(state, refinement_llm)
+            except Exception as e:
+                print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n} failed: {e}")
+                break
+
+            new_output = _extract_step_output(step_name, new_result)
+            ratio = difflib.SequenceMatcher(None, previous_output, new_output).ratio()
+            print(
+                f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: "
+                f"similarity={ratio:.3f}"
+            )
+
+            result = new_result
+
+            if ratio >= _COT_SIMILARITY_THRESHOLD:
+                print(
+                    f"[{step_name}] CoT early stop: output converged "
+                    f"(similarity={ratio:.3f} >= {_COT_SIMILARITY_THRESHOLD})"
+                )
+                break
+
+            previous_output = new_output
+
+        return result
+
     def _execute_step_with_config(
         self,
         step_name: str,
@@ -1701,6 +1812,7 @@ class SalesDataAgent:
                 result = core_fn(state, llm)
                 result["_temperature"] = temps[0]
                 result["_run_idx"] = 0
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
             except Exception as e:
                 print(f"[{step_name}] Error: {e}")
                 result = dict(state)
@@ -1726,6 +1838,7 @@ class SalesDataAgent:
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
                 result["_run_idx"] = i
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
 
                 # Evaluate if function provided
                 if config.eval_fn:
@@ -2245,6 +2358,7 @@ if __name__ == "__main__":
     parser.add_argument("--best_of_n", type=int, default=1, help="Run agent N times and pick the best result")
     parser.add_argument("--temp", type=float, default=0.1, help="Temperature used to build the agent and as minimum for best-of-n")
     parser.add_argument("--temp-max", type=float, default=None, help="Max temperature for best-of-n, if not provided best-of-n runs without modifying the temperature")
+    parser.add_argument("--cot_n", type=int, default=1, help="Number of iterative CoT refinement steps per LLM call (1 = no refinement, N = up to N iterations with early stop on convergence)")
 
     # CSV evaluation options
     csv_eval_group = parser.add_mutually_exclusive_group()
@@ -2281,13 +2395,21 @@ if __name__ == "__main__":
 
     # Create agent
     agent = SalesDataAgent(
-        model=args.model, 
-        temperature=args.temp, 
+        model=args.model,
+        temperature=args.temp,
         data_path=args.data_path,
         enable_tracing=args.enable_tracing,
         phoenix_endpoint=args.phoenix_endpoint,
         project_name=args.project_name,
     )
+
+    # Apply cot_n to all step configs when requested
+    if args.cot_n > 1:
+        for _step in ['decide_tool', 'lookup_sales_data', 'analyzing_data', 'create_visualization']:
+            _cfg = agent.agent_config.get_step_config(_step)
+            _cfg.cot_n = args.cot_n
+            agent.agent_config.set_step_config(_step, _cfg)
+        print(f"[Agent] CoT iterative refinement enabled: cot_n={args.cot_n}")
 
     # Load visualization ground truth if provided
     gt_vis_config = None
