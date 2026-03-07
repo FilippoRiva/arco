@@ -139,15 +139,36 @@ Carefully review your previous response.
 Output only the final response with no meta-commentary.
 """
 
-    def __init__(self, base_llm, previous_response: str) -> None:
+    _ERROR_SUFFIX = """
+
+## ITERATIVE REFINEMENT — EXECUTION ERROR
+Your previous attempt produced the following response:
+---
+{previous_response}
+---
+When executed, it raised the following error:
+---
+{execution_error}
+---
+You MUST fix this error. Output only the corrected response with no meta-commentary.
+"""
+
+    def __init__(self, base_llm, previous_response: str, execution_error: str = "") -> None:
         self._llm = base_llm
         self._previous_response = previous_response
+        self._execution_error = execution_error
 
     def invoke(self, prompt):
-        augmented = prompt + self._REFINEMENT_SUFFIX.format(
-            previous_response=self._previous_response
-        )
-        return self._llm.invoke(augmented)
+        if self._execution_error:
+            suffix = self._ERROR_SUFFIX.format(
+                previous_response=self._previous_response,
+                execution_error=self._execution_error,
+            )
+        else:
+            suffix = self._REFINEMENT_SUFFIX.format(
+                previous_response=self._previous_response,
+            )
+        return self._llm.invoke(prompt + suffix)
 
     def __getattr__(self, name):
         return getattr(self._llm, name)
@@ -1697,14 +1718,26 @@ class SalesDataAgent:
 
         result = initial_result
         previous_output = _extract_step_output(step_name, result)
+        execution_error = result.get("error", "")
 
         for cot_i in range(1, cot_n):
-            refinement_llm = CoTRefinementLLM(llm, previous_output)
+            refinement_llm = CoTRefinementLLM(llm, previous_output, execution_error)
             try:
                 new_result = core_fn(state, refinement_llm)
             except Exception as e:
                 print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n} failed: {e}")
                 break
+
+            new_error = new_result.get("error", "")
+            if new_error:
+                print(
+                    f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: "
+                    f"execution error — {new_error}"
+                )
+                result = new_result
+                previous_output = _extract_step_output(step_name, new_result)
+                execution_error = new_error
+                continue
 
             new_output = _extract_step_output(step_name, new_result)
             ratio = difflib.SequenceMatcher(None, previous_output, new_output).ratio()
@@ -1714,6 +1747,7 @@ class SalesDataAgent:
             )
 
             result = new_result
+            execution_error = ""
 
             if ratio >= _COT_SIMILARITY_THRESHOLD:
                 print(
