@@ -43,6 +43,9 @@ class StepConfig:
     use_cache: bool = True
     cache_mode: Literal["auto", "skip", "force_fresh"] = "auto"
 
+    # CoT iterative refinement
+    cot_n: int = 1
+
     # Metadata
     enabled: bool = True
     step_name: str = ""
@@ -72,7 +75,7 @@ class StepConfig:
         # Filter out unknown keys and non-serializable fields
         valid_keys = {
             'n', 'temp_min', 'temp_max', 'max_tokens', 'top_p',
-            'use_cache', 'cache_mode', 'enabled', 'step_name'
+            'use_cache', 'cache_mode', 'enabled', 'step_name', 'cot_n'
         }
         filtered = {k: v for k, v in data.items() if k in valid_keys}
         return cls(**filtered)

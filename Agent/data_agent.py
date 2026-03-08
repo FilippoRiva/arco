@@ -105,89 +105,75 @@ class State(TypedDict):
 # LLM Helpers
 # -----------------------------
 
-TABLE_SELECTION_PROMPT = """You are a database architect helping identify which tables are needed to answer a user's question.
+_COT_SIMILARITY_THRESHOLD = 0.95
 
-## TASK
-From the list of available tables, select only the tables needed to answer the user's question.
 
-## AVAILABLE TABLES
-{compact_schema}
+def _extract_step_output(step_name: str, result: Dict) -> str:
+    """Extract the key textual output from a step result for CoT similarity comparison."""
+    if step_name == "lookup_sales_data":
+        return result.get("sql_query", "")
+    elif step_name == "decide_tool":
+        return result.get("tool_choice", "")
+    else:  # analyzing_data, create_visualization
+        answers = result.get("answer", [])
+        return answers[-1] if answers else ""
 
-## USER QUESTION
-{prompt}
 
-## CHAIN OF THOUGHT REASONING
-Before selecting tables, think step by step:
+class CoTRefinementLLM:
+    """Transparent LLM wrapper that appends the previous iteration's response for iterative CoT refinement.
 
-**Step 1: Understanding the Question**
-- What is the user really asking for?
-- What entities or concepts are mentioned? (e.g., products, sales, customers, dates)
-- What metrics or dimensions does the answer require?
+    Every call to invoke() receives the original prompt augmented with a
+    refinement block containing the previous iteration's output.  The wrapper
+    delegates all other attribute accesses to the underlying LLM so that the
+    core step functions need no changes.
+    """
 
-**Step 2: Mapping Concepts to Tables**
-- Which table descriptions match the entities mentioned in the question?
-- Is the question asking about relationships between multiple entities (implies a JOIN)?
-- Are any tables clearly irrelevant (different domain, different subject)?
+    _REFINEMENT_SUFFIX = """
 
-**Step 3: Identifying Required Joins**
-- If multiple entities are needed, which tables contain them?
-- Do any tables serve as lookup/dimension tables needed to label results?
-- Is there a fact table that connects the needed entities?
-
-**Step 4: Checking Completeness**
-- Do the selected tables together contain all the data needed to answer the question?
-- Is any additional table needed for filtering or context?
-- Are there redundant tables containing the same data?
-
-**Step 5: Final Selection**
-- List only the table names that are necessary and sufficient to answer the question
-- When in doubt, include a table rather than exclude it (extra context is better than missing data)
-- Use only table names exactly as listed in AVAILABLE TABLES
-
-## OUTPUT FORMAT
-Return ONLY a comma-separated list of table names. No explanations. No markdown. Just table names.
-Example: sales,products
+## ITERATIVE REFINEMENT
+Your previous attempt produced the following response:
+---
+{previous_response}
+---
+Carefully review your previous response.
+- If it is correct and complete, reproduce it exactly (same content, same format).
+- If you identify errors or improvements, output a revised version.
+Output only the final response with no meta-commentary.
 """
 
+    _ERROR_SUFFIX = """
 
-def select_relevant_tables(state: "State", schema: "DatabaseSchema", llm) -> List[str]:
-    """Use the LLM to select relevant tables from a large schema.
+## ITERATIVE REFINEMENT — EXECUTION ERROR
+Your previous attempt produced the following response:
+---
+{previous_response}
+---
+When executed, it raised the following error:
+---
+{execution_error}
+---
+You MUST fix this error. Output only the corrected response with no meta-commentary.
+"""
 
-    Called when schema.should_use_table_selection() is True (more tables than
-    compact_threshold). Passes only table names and descriptions to the LLM,
-    then returns the selected table names so full column details for only those
-    tables are included in the SQL generation prompt.
+    def __init__(self, base_llm, previous_response: str, execution_error: str = "") -> None:
+        self._llm = base_llm
+        self._previous_response = previous_response
+        self._execution_error = execution_error
 
-    Args:
-        state: Conversation state containing the user prompt.
-        schema: DatabaseSchema with all available tables.
-        llm: LLM instance for table selection.
+    def invoke(self, prompt):
+        if self._execution_error:
+            suffix = self._ERROR_SUFFIX.format(
+                previous_response=self._previous_response,
+                execution_error=self._execution_error,
+            )
+        else:
+            suffix = self._REFINEMENT_SUFFIX.format(
+                previous_response=self._previous_response,
+            )
+        return self._llm.invoke(prompt + suffix)
 
-    Returns:
-        List of selected table names. Falls back to all table names if the LLM
-        output cannot be parsed (safe degradation).
-    """
-    formatted_prompt = TABLE_SELECTION_PROMPT.format(
-        compact_schema=schema.get_compact_summary(),
-        prompt=state["prompt"],
-    )
-    response = llm.invoke(formatted_prompt)
-    raw = response.content if hasattr(response, "content") else str(response)
-    raw = raw.strip()
-
-    all_names = {t.name for t in schema.tables}
-    selected = []
-    for token in raw.split(","):
-        name = token.strip()
-        if name in all_names:
-            selected.append(name)
-
-    if not selected:
-        print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
-        return [t.name for t in schema.tables]
-
-    print(f"[select_relevant_tables] Selected tables: {selected}")
-    return selected
+    def __getattr__(self, name):
+        return getattr(self._llm, name)
 
 
 SQL_GENERATION_PROMPT = """You are an expert SQL developer specializing in DuckDB queries for data analysis and visualization.
@@ -1745,6 +1731,80 @@ class SalesDataAgent:
                 base_url=self.ollama_url,
             )
 
+    def _apply_cot_iterations(
+        self,
+        step_name: str,
+        state: State,
+        core_fn,
+        llm,
+        initial_result: Dict,
+        cot_n: int,
+    ) -> Dict:
+        """Apply up to cot_n iterative CoT refinement steps to a single LLM call.
+
+        Starting from initial_result, repeatedly re-invokes core_fn with a
+        CoTRefinementLLM that appends the previous response to every prompt.
+        Stops early when the output converges (similarity >= _COT_SIMILARITY_THRESHOLD)
+        or after cot_n total iterations (including the initial one).
+
+        Args:
+            step_name: Name of the step (for logging and output extraction).
+            state: Current agent state (unchanged across iterations).
+            core_fn: The core step function, signature (state, llm) -> Dict.
+            llm: The base LLM instance (temperature already set by the caller).
+            initial_result: Result from the first (non-refinement) call.
+            cot_n: Maximum total number of iterations (1 = no refinement).
+
+        Returns:
+            The result from the final (or converged) iteration.
+        """
+        if cot_n <= 1:
+            return initial_result
+
+        result = initial_result
+        previous_output = _extract_step_output(step_name, result)
+        execution_error = result.get("error", "")
+
+        for cot_i in range(1, cot_n):
+            refinement_llm = CoTRefinementLLM(llm, previous_output, execution_error)
+            try:
+                new_result = core_fn(state, refinement_llm)
+            except Exception as e:
+                print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n} failed: {e}")
+                break
+
+            new_error = new_result.get("error", "")
+            if new_error:
+                print(
+                    f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: "
+                    f"execution error — {new_error}"
+                )
+                result = new_result
+                previous_output = _extract_step_output(step_name, new_result)
+                execution_error = new_error
+                continue
+
+            new_output = _extract_step_output(step_name, new_result)
+            ratio = difflib.SequenceMatcher(None, previous_output, new_output).ratio()
+            print(
+                f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: "
+                f"similarity={ratio:.3f}"
+            )
+
+            result = new_result
+            execution_error = ""
+
+            if ratio >= _COT_SIMILARITY_THRESHOLD:
+                print(
+                    f"[{step_name}] CoT early stop: output converged "
+                    f"(similarity={ratio:.3f} >= {_COT_SIMILARITY_THRESHOLD})"
+                )
+                break
+
+            previous_output = new_output
+
+        return result
+
     def _execute_step_with_config(
         self,
         step_name: str,
@@ -1831,6 +1891,7 @@ class SalesDataAgent:
                 result = core_fn(state, llm)
                 result["_temperature"] = temps[0]
                 result["_run_idx"] = 0
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
             except Exception as e:
                 print(f"[{step_name}] Error: {e}")
                 result = dict(state)
@@ -1856,6 +1917,7 @@ class SalesDataAgent:
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
                 result["_run_idx"] = i
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
 
                 # Evaluate if function provided
                 if config.eval_fn:
@@ -2380,6 +2442,7 @@ if __name__ == "__main__":
     parser.add_argument("--best_of_n", type=int, default=1, help="Run agent N times and pick the best result")
     parser.add_argument("--temp", type=float, default=0.1, help="Temperature used to build the agent and as minimum for best-of-n")
     parser.add_argument("--temp-max", type=float, default=None, help="Max temperature for best-of-n, if not provided best-of-n runs without modifying the temperature")
+    parser.add_argument("--cot_n", type=int, default=1, help="Number of iterative CoT refinement steps per LLM call (1 = no refinement, N = up to N iterations with early stop on convergence)")
 
     # CSV evaluation options
     csv_eval_group = parser.add_mutually_exclusive_group()
@@ -2416,13 +2479,21 @@ if __name__ == "__main__":
 
     # Create agent
     agent = SalesDataAgent(
-        model=args.model, 
-        temperature=args.temp, 
+        model=args.model,
+        temperature=args.temp,
         data_path=args.data_path,
         enable_tracing=args.enable_tracing,
         phoenix_endpoint=args.phoenix_endpoint,
         project_name=args.project_name,
     )
+
+    # Apply cot_n to all step configs when requested
+    if args.cot_n > 1:
+        for _step in ['decide_tool', 'lookup_sales_data', 'analyzing_data', 'create_visualization']:
+            _cfg = agent.agent_config.get_step_config(_step)
+            _cfg.cot_n = args.cot_n
+            agent.agent_config.set_step_config(_step, _cfg)
+        print(f"[Agent] CoT iterative refinement enabled: cot_n={args.cot_n}")
 
     # Load visualization ground truth if provided
     gt_vis_config = None
