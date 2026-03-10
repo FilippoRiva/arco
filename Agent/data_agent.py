@@ -34,12 +34,12 @@ from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
 try:
-    from Agent.utils import text_to_csv, save_csv, get_evaluation_functions
+    from Agent.utils import text_to_csv, save_csv, get_evaluation_functions, make_csv_evaluator_no_gt, make_text_evaluator_no_gt, make_vis_evaluator_no_gt
     from Agent.config import AgentConfig, StepConfig
     from Agent.cache import RunCache
     from Agent.schema import DatabaseSchema, TableSchema, ColumnSchema
 except ImportError:
-    from utils import text_to_csv, save_csv, get_evaluation_functions
+    from utils import text_to_csv, save_csv, get_evaluation_functions, make_csv_evaluator_no_gt, make_text_evaluator_no_gt, make_vis_evaluator_no_gt
     from config import AgentConfig, StepConfig
     from cache import RunCache
     from schema import DatabaseSchema, TableSchema, ColumnSchema
@@ -1953,6 +1953,14 @@ class SalesDataAgent:
 
         # Store all results for caching
         self.current_run_step_results[step_name] = results
+
+        # Batch re-evaluation if batch_eval_fn is provided (e.g. consensus scoring)
+        if config.batch_eval_fn:
+            try:
+                scores = config.batch_eval_fn(results, state)
+                print(f"[{step_name}] Batch eval scores: {[f'{s:.3f}' for s in scores]}")
+            except Exception as e:
+                print(f"[{step_name}] Batch eval error: {e}")
 
         # Select best result
         if not scores or all(s == -float('inf') for s in scores):

@@ -1128,3 +1128,361 @@ def make_vis_evaluator(
             return 0.0
 
     return eval_fn
+
+
+# =========================================================
+# No-Ground-Truth Evaluator Factory Functions
+# =========================================================
+# These factory functions create evaluation functions that do NOT require
+# ground truth data. They enable meaningful best-of-N selection during
+# normal (non-evaluation) usage.
+
+
+def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame) -> float:
+    """Compute row-level IoU between two DataFrames.
+
+    Same logic as compare_csv() but operates directly on DataFrames.
+    Rows are compared as tuples over shared columns using Counter multisets.
+
+    Returns:
+        columns_iou * rows_iou (float in [0, 1])
+    """
+    if df1 is None or df2 is None or df1.empty or df2.empty:
+        return 0.0
+
+    cols1 = set(df1.columns)
+    cols2 = set(df2.columns)
+    columns_iou = len(cols1 & cols2) / len(cols1 | cols2) if cols1 | cols2 else 0.0
+
+    cols_intersection = sorted(cols1 & cols2)
+    if not cols_intersection:
+        return 0.0
+
+    rows1 = [tuple(row) for row in df1[cols_intersection].values]
+    rows2 = [tuple(row) for row in df2[cols_intersection].values]
+
+    rows_counter1 = Counter(rows1)
+    rows_counter2 = Counter(rows2)
+
+    intersection = rows_counter1 & rows_counter2
+    union = rows_counter1 | rows_counter2
+    rows_iou = sum(intersection.values()) / sum(union.values()) if union else 0.0
+
+    return columns_iou * rows_iou
+
+
+def make_csv_evaluator_no_gt() -> callable:
+    """Factory to create a consensus-based CSV evaluator (no ground truth).
+
+    Returns a batch_eval_fn with signature:
+        (results: List[Dict], state: Dict) -> List[float]
+
+    Each result's score is its average pairwise row-IoU to all other results.
+    The most "agreed upon" DataFrame wins.
+    """
+    def batch_eval_fn(results: List[Dict], state: Dict) -> List[float]:
+        # Extract DataFrames from results
+        dfs = []
+        for r in results:
+            df = r.get("data_df")
+            if df is None:
+                data_text = r.get("data", "")
+                if data_text:
+                    df = text_to_dataframe(data_text)
+            dfs.append(df)
+
+        n = len(dfs)
+        if n <= 1:
+            return [1.0] * n
+
+        # Compute pairwise IoU matrix
+        scores = [0.0] * n
+        for i in range(n):
+            if dfs[i] is None:
+                continue
+            total = 0.0
+            count = 0
+            for j in range(n):
+                if i == j or dfs[j] is None:
+                    continue
+                total += compare_dataframes_iou(dfs[i], dfs[j])
+                count += 1
+            scores[i] = total / count if count > 0 else 0.0
+
+        return scores
+
+    return batch_eval_fn
+
+
+def make_text_evaluator_no_gt(
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    ollama_url: str = "http://localhost:11434",
+    openai_api_key: Optional[str] = None,
+) -> callable:
+    """Factory to create a text evaluator without ground truth.
+
+    Uses the existing judge_analysis() which scores analysis quality
+    based on correctness, completeness, and faithfulness against the
+    SQL data — no ground truth text needed.
+
+    Returns:
+        Function with signature (result: Dict, state: Dict) -> float
+    """
+    def eval_fn(result: Dict, state: Dict) -> float:
+        answers = result.get("answer", [])
+        if not answers:
+            return 0.0
+
+        analysis_text = answers[0] if isinstance(answers, list) else str(answers)
+        if not analysis_text:
+            return 0.0
+
+        try:
+            score, _ = judge_analysis(
+                prompt=state.get("prompt", result.get("prompt", "")),
+                sql_query=state.get("sql_query", result.get("sql_query", "")),
+                data=state.get("data", result.get("data", "")),
+                analysis=analysis_text,
+                judge_model=judge_model,
+                provider=provider,
+                ollama_url=ollama_url,
+                openai_api_key=openai_api_key,
+            )
+            return score
+        except Exception as e:
+            print(f"No-GT text evaluation error: {e}")
+            return 0.0
+
+    return eval_fn
+
+
+# --- No-GT Visualization Judge ---
+
+VIS_JUDGE_NO_GT_PROMPT = """You are an expert data visualization evaluator. Assess the quality of a generated visualization based on the data and the user's goal. There is NO reference visualization — evaluate standalone quality.
+
+## VISUALIZATION GOAL
+{visualization_goal}
+
+## AVAILABLE DATA
+Columns: {data_columns}
+Sample rows:
+{data_sample}
+
+## GENERATED OUTPUT
+Chart Configuration:
+{gen_config}
+
+Chart Code:
+```python
+{gen_code}
+```
+
+## EVALUATION CRITERIA
+
+Rate each criterion on a scale of 1-5:
+
+### 1. DATA SUITABILITY
+Is the chart type appropriate for the data structure?
+- Bar/column for categorical comparisons, line for time-series trends, scatter for correlations, area for cumulative values
+- Does the data have enough points/categories for this chart type?
+[1=Wrong chart type for data, 3=Acceptable, 5=Ideal choice]
+
+### 2. AXIS MAPPING
+Are the X and Y axes using appropriate columns from the data?
+- Do the column names in the config actually exist in the data?
+- Are the axes semantically correct (e.g., time on X, measure on Y)?
+[1=Wrong/missing columns, 3=Acceptable mapping, 5=Perfect mapping]
+
+### 3. CODE QUALITY
+Will the matplotlib code execute correctly and produce a readable chart?
+- Syntactically correct Python/matplotlib
+- Proper data references, labels, and formatting
+- Would plt.show() produce a clean output?
+[1=Would fail/unreadable, 3=Minor issues, 5=Clean and correct]
+
+### 4. GOAL ALIGNMENT
+Does the visualization effectively address the user's goal?
+- Does it show the right information to answer the user's question?
+- Is the title/labeling informative?
+[1=Misses the goal, 3=Partially addresses it, 5=Fully addresses the goal]
+
+## OUTPUT FORMAT
+Return ONLY valid JSON:
+{{
+  "data_suitability": {{"score": <1-5>, "reasoning": "<brief>"}},
+  "axis_mapping": {{"score": <1-5>, "reasoning": "<brief>", "columns_exist": <true/false>}},
+  "code_quality": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
+  "goal_alignment": {{"score": <1-5>, "reasoning": "<brief>"}}
+}}"""
+
+
+def _parse_vis_no_gt_judge_json(raw_text: str) -> Dict:
+    """Parse no-GT visualization judge JSON response."""
+    try:
+        content = raw_text.strip().replace("```json", "").replace("```", "").strip()
+        if content.lower().startswith("json"):
+            content = content[4:].strip()
+
+        start = content.find("{")
+        end = content.rfind("}")
+
+        if start != -1 and end != -1:
+            parsed = json.loads(content[start:end+1])
+            for criterion in ["data_suitability", "axis_mapping", "code_quality", "goal_alignment"]:
+                if criterion not in parsed:
+                    parsed[criterion] = {"score": 1, "reasoning": "Missing"}
+            return parsed
+    except Exception as e:
+        print(f"Vis no-GT JSON parse error: {e}")
+
+    return {
+        "data_suitability": {"score": 1, "reasoning": "Parse failed"},
+        "axis_mapping": {"score": 1, "reasoning": "Parse failed", "columns_exist": False},
+        "code_quality": {"score": 1, "reasoning": "Parse failed", "would_render": False},
+        "goal_alignment": {"score": 1, "reasoning": "Parse failed"},
+    }
+
+
+def _compute_vis_no_gt_score(evaluation: Dict) -> float:
+    """Compute weighted normalized score from no-GT vis judge evaluation."""
+    weights = {
+        "data_suitability": 0.30,
+        "axis_mapping": 0.30,
+        "code_quality": 0.20,
+        "goal_alignment": 0.20,
+    }
+    total = 0.0
+    for criterion, weight in weights.items():
+        raw_score = evaluation.get(criterion, {}).get("score", 1)
+        normalized = (raw_score - 1) / 4.0
+        total += normalized * weight
+    return total
+
+
+def judge_visualization_no_gt(
+    visualization_goal: str,
+    generated_config: Dict[str, str],
+    generated_code: str,
+    data_columns: List[str],
+    data_sample: str,
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    openai_api_key: Optional[str] = None,
+    ollama_url: str = "http://localhost:11434",
+    temperature: float = 0.2,
+) -> Tuple[float, Dict]:
+    """Evaluate visualization quality without ground truth using LLM-as-a-Judge.
+
+    Args:
+        visualization_goal: User's visualization request.
+        generated_config: Agent's chart_config dictionary.
+        generated_code: Agent's matplotlib code string.
+        data_columns: List of column names available in the data.
+        data_sample: String representation of first few rows of data.
+        judge_model: Model for the judge LLM.
+        provider: "openai" or "ollama".
+        openai_api_key: OpenAI API key (uses env var if not provided).
+        ollama_url: Ollama server URL.
+        temperature: Sampling temperature for judge.
+
+    Returns:
+        Tuple of (score: float 0-1, evaluation_details: Dict)
+    """
+    try:
+        if provider == "openai":
+            from langchain_openai import ChatOpenAI
+            api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OpenAI API key not provided and OPENAI_API_KEY env var not set")
+            judge_llm = ChatOpenAI(
+                model=judge_model, temperature=temperature,
+                api_key=api_key, max_tokens=1000
+            )
+        else:
+            from langchain_ollama import ChatOllama
+            judge_llm = ChatOllama(
+                model=judge_model, temperature=temperature,
+                base_url=ollama_url, max_tokens=1000
+            )
+
+        max_code_len = 2000
+        gen_code_truncated = generated_code[:max_code_len] if len(generated_code) > max_code_len else generated_code
+
+        formatted_prompt = VIS_JUDGE_NO_GT_PROMPT.format(
+            visualization_goal=visualization_goal,
+            data_columns=", ".join(data_columns),
+            data_sample=data_sample[:1500],
+            gen_config=json.dumps(generated_config, indent=2),
+            gen_code=gen_code_truncated,
+        )
+
+        response = judge_llm.invoke(formatted_prompt)
+        raw_content = response.content if hasattr(response, "content") else str(response)
+
+        evaluation = _parse_vis_no_gt_judge_json(raw_content)
+        overall_score = _compute_vis_no_gt_score(evaluation)
+        evaluation["overall_score"] = overall_score
+
+        return overall_score, evaluation
+
+    except Exception as e:
+        print(f"No-GT visualization judge error: {e}")
+        return (0.0, {"error": str(e)})
+
+
+def make_vis_evaluator_no_gt(
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    ollama_url: str = "http://localhost:11434",
+    openai_api_key: Optional[str] = None,
+) -> callable:
+    """Factory to create a visualization evaluator without ground truth.
+
+    Uses an LLM judge to score chart quality based on data suitability,
+    axis mapping, code quality, and goal alignment.
+
+    Returns:
+        Function with signature (result: Dict, state: Dict) -> float
+    """
+    def eval_fn(result: Dict, state: Dict) -> float:
+        chart_config = result.get("chart_config")
+        answers = result.get("answer", [])
+
+        if not chart_config:
+            return 0.0
+
+        chart_code = answers[-1] if answers else None
+        if not chart_code:
+            return 0.0
+
+        # Get data columns and sample from result or state
+        data_df = result.get("data_df", state.get("data_df"))
+        if data_df is not None and hasattr(data_df, 'columns'):
+            data_columns = list(data_df.columns)
+            data_sample = data_df.head(5).to_string(index=False)
+        else:
+            data_text = result.get("data", state.get("data", ""))
+            data_columns = []
+            data_sample = data_text[:500] if data_text else ""
+
+        vis_goal = state.get("visualization_goal", state.get("prompt", ""))
+
+        try:
+            score, _ = judge_visualization_no_gt(
+                visualization_goal=vis_goal,
+                generated_config=chart_config,
+                generated_code=chart_code,
+                data_columns=data_columns,
+                data_sample=data_sample,
+                judge_model=judge_model,
+                provider=provider,
+                openai_api_key=openai_api_key,
+                ollama_url=ollama_url,
+            )
+            return score
+        except Exception as e:
+            print(f"No-GT visualization evaluation error: {e}")
+            return 0.0
+
+    return eval_fn

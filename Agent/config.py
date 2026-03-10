@@ -21,6 +21,7 @@ class StepConfig:
         max_tokens: Maximum tokens for LLM generation (default 2000)
         top_p: Top-p sampling parameter (default 1.0)
         eval_fn: Callable that scores a result, signature: (result: Dict, state: State) -> float
+        batch_eval_fn: Callable that scores all N results at once, signature: (results: List[Dict], state: Dict) -> List[float]
         selection_fn: Callable that picks best from N scores (default: argmax)
         use_cache: Whether to check cache for this step (default True)
         cache_mode: Cache behavior - "auto", "skip", or "force_fresh"
@@ -39,6 +40,7 @@ class StepConfig:
 
     # Evaluation and selection (not serialized)
     eval_fn: Optional[Callable] = None
+    batch_eval_fn: Optional[Callable] = None
     selection_fn: Optional[Callable] = None
 
     # Caching control
@@ -68,6 +70,7 @@ class StepConfig:
         d = asdict(self)
         # Remove non-serializable functions
         d.pop('eval_fn', None)
+        d.pop('batch_eval_fn', None)
         d.pop('selection_fn', None)
         return d
 
