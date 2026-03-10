@@ -1699,7 +1699,8 @@ class SalesDataAgent:
         self,
         temperature: float,
         max_tokens: int,
-        top_p: float = 1.0
+        top_p: float = 1.0,
+        top_k: Optional[int] = None,
     ):
         """Factory method to create LLM instances with specific parameters.
 
@@ -1710,6 +1711,7 @@ class SalesDataAgent:
             temperature: Sampling temperature
             max_tokens: Maximum tokens for generation
             top_p: Top-p sampling parameter
+            top_k: Top-k sampling parameter (skipped for OpenAI)
 
         Returns:
             ChatOllama or ChatOpenAI instance configured with the given parameters
@@ -1721,15 +1723,20 @@ class SalesDataAgent:
                 max_tokens=max_tokens,
                 streaming=self.streaming,
                 api_key=self.openai_api_key,
+                top_p=top_p,
             )
         else:
-            return ChatOllama(
+            kwargs = dict(
                 model=self.model,
                 temperature=temperature,
                 num_predict=max_tokens,
                 streaming=self.streaming,
                 base_url=self.ollama_url,
+                top_p=top_p,
             )
+            if top_k is not None:
+                kwargs["top_k"] = top_k
+            return ChatOllama(**kwargs)
 
     def _apply_cot_iterations(
         self,
@@ -1885,7 +1892,8 @@ class SalesDataAgent:
             llm = self._create_llm(
                 temperature=temps[0],
                 max_tokens=config.max_tokens,
-                top_p=config.top_p
+                top_p=config.top_p,
+                top_k=config.top_k,
             )
             try:
                 result = core_fn(state, llm)
@@ -1910,7 +1918,8 @@ class SalesDataAgent:
             llm = self._create_llm(
                 temperature=temp,
                 max_tokens=config.max_tokens,
-                top_p=config.top_p
+                top_p=config.top_p,
+                top_k=config.top_k,
             )
 
             try:
@@ -2295,6 +2304,7 @@ class SalesDataAgent:
         save_dir: Optional[str] = None,
         enable_codecarbon: bool = False,
         # New: caching parameters
+        run_id: Optional[str] = None,
         reuse_from: Optional[str] = None,
         step_overrides: Optional[Dict[str, Dict]] = None,
         save_results: bool = False,
@@ -2363,6 +2373,7 @@ class SalesDataAgent:
                     visualization_goal=visualization_goal,
                     lookup_only=lookup_only,
                     no_vis=no_vis,
+                    run_id=run_id,
                     cached_step_results=cached_step_results,
                     save_results=save_results,
                 )

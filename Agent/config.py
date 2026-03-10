@@ -5,7 +5,8 @@ controlling agent execution at the step level.
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Callable, Optional, Literal, Dict, Any, List
+from typing import Callable, Optional, Literal, Dict, Any, List, Tuple
+import os
 import numpy as np
 
 
@@ -34,6 +35,7 @@ class StepConfig:
     # LLM generation parameters
     max_tokens: int = 2000
     top_p: float = 1.0
+    top_k: Optional[int] = None  # Top-k sampling; skipped for OpenAI provider
 
     # Evaluation and selection (not serialized)
     eval_fn: Optional[Callable] = None
@@ -74,7 +76,7 @@ class StepConfig:
         """Create StepConfig from dict (for deserialization)."""
         # Filter out unknown keys and non-serializable fields
         valid_keys = {
-            'n', 'temp_min', 'temp_max', 'max_tokens', 'top_p',
+            'n', 'temp_min', 'temp_max', 'max_tokens', 'top_p', 'top_k',
             'use_cache', 'cache_mode', 'enabled', 'step_name', 'cot_n'
         }
         filtered = {k: v for k, v in data.items() if k in valid_keys}
@@ -198,3 +200,120 @@ class AgentConfig:
         """Create a deep copy of this configuration."""
         from copy import deepcopy
         return deepcopy(self)
+
+    @classmethod
+    def from_yaml(cls, yaml_path: str) -> Tuple['AgentConfig', Dict[str, Any], Any]:
+        """Load configuration from a YAML file.
+
+        The YAML file should have sections: agent, steps, schema, run, tracing.
+        Schema table definitions are stored in separate per-table YAML files,
+        referenced by path in schema.tables.
+
+        Args:
+            yaml_path: Path to the YAML configuration file.
+
+        Returns:
+            Tuple of (AgentConfig, run_params dict, DatabaseSchema or None).
+            run_params includes keys: prompt, visualization_goal, lookup_only,
+            no_vis, run_id, save_dir, save_results, reuse_from, enable_codecarbon,
+            and a 'tracing' sub-dict.
+        """
+        import yaml
+        from .schema import DatabaseSchema, TableSchema, ColumnSchema
+
+        with open(yaml_path, 'r') as f:
+            raw = yaml.safe_load(f)
+
+        config_dir = os.path.dirname(os.path.abspath(yaml_path))
+
+        # --- Build AgentConfig ---
+        agent_section = raw.get('agent', {})
+        steps_section = raw.get('steps', {})
+
+        config = cls()
+        config.model = agent_section.get('model', config.model)
+        config.provider = agent_section.get('provider', config.provider)
+        config.ollama_url = agent_section.get('ollama_url', config.ollama_url)
+        config.openai_api_key = agent_section.get(
+            'openai_api_key', os.environ.get('OPENAI_API_KEY')
+        )
+
+        for step_name in ['decide_tool', 'lookup_sales_data', 'analyzing_data', 'create_visualization']:
+            if step_name in steps_section:
+                step_data = dict(steps_section[step_name])
+                step_data.setdefault('step_name', step_name)
+                setattr(config, step_name, StepConfig.from_dict(step_data))
+
+        # --- Build DatabaseSchema by discovering *_schema.yaml files ---
+        schema = None
+        schema_section = raw.get('schema', {})
+        data_dir = schema_section.get('data_dir')
+        if data_dir:
+            import glob as _glob
+
+            if not os.path.isabs(data_dir):
+                data_dir = os.path.join(config_dir, data_dir)
+            data_dir = os.path.abspath(data_dir)
+
+            schema_files = sorted(_glob.glob(os.path.join(data_dir, '*_schema.yaml')))
+            tables = []
+            for table_path in schema_files:
+                with open(table_path, 'r') as tf:
+                    t = yaml.safe_load(tf)
+
+                columns = [
+                    ColumnSchema(
+                        name=c['name'],
+                        description=c.get('description', c['name']),
+                        data_type=c.get('data_type', 'VARCHAR'),
+                        example_values=c.get('example_values'),
+                        nullable=c.get('nullable', True),
+                    )
+                    for c in t.get('columns', [])
+                ]
+
+                # Resolve file_path relative to schema file directory
+                schema_dir = os.path.dirname(table_path)
+                file_path = t['file_path']
+                if not os.path.isabs(file_path):
+                    file_path = os.path.join(schema_dir, file_path)
+
+                tables.append(TableSchema(
+                    name=t['name'],
+                    description=t.get('description', t['name']),
+                    file_path=file_path,
+                    columns=columns,
+                ))
+
+            if tables:
+                schema = DatabaseSchema(
+                    tables=tables,
+                    compact_threshold=schema_section.get('compact_threshold', 5),
+                )
+
+        # --- Extract run params ---
+        run_section = raw.get('run', {})
+        agent_mode = run_section.get('agent_mode', 'full')
+        run_params: Dict[str, Any] = {
+            'prompt': run_section.get('prompt', ''),
+            'visualization_goal': run_section.get('visualization_goal'),
+            'lookup_only': agent_mode == 'lookup_only',
+            'no_vis': agent_mode in ('lookup_only', 'analysis'),
+            'run_id': run_section.get('run_id'),
+            'save_dir': run_section.get('save_dir'),
+            'enable_codecarbon': run_section.get('enable_codecarbon', False),
+            'save_results': run_section.get('save_results', False),
+            'reuse_from': run_section.get('reuse_from'),
+            'step_overrides': run_section.get('step_overrides'),
+        }
+
+        # --- Tracing config (passed separately to SalesDataAgent.__init__) ---
+        tracing_section = raw.get('tracing', {})
+        run_params['tracing'] = {
+            'enabled': tracing_section.get('enabled', False),
+            'phoenix_endpoint': tracing_section.get('phoenix_endpoint'),
+            'phoenix_api_key': tracing_section.get('phoenix_api_key'),
+            'project_name': tracing_section.get('project_name', 'evaluating-agent'),
+        }
+
+        return config, run_params, schema

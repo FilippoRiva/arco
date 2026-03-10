@@ -1,0 +1,40 @@
+name: "sales"
+description: "Daily store-level sales transactions with pricing and promotion data"
+file_path: "Store_Sales_Price_Elasticity_Promotions_Data.parquet"
+columns:
+  - name: "Store_Number"
+    description: "Unique store identifier"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "SKU_Coded"
+    description: "Encoded product SKU identifier"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "Product_Class_Code"
+    description: "Product category classification code"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "Sold_Date"
+    description: "Transaction date in YYYY-MM-DD format"
+    data_type: "VARCHAR"
+    example_values: ["2019-01-01", "2021-11-15"]
+    nullable: false
+
+  - name: "Qty_Sold"
+    description: "Number of units sold in this transaction"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "Total_Sale_Value"
+    description: "Total revenue from this transaction in USD"
+    data_type: "FLOAT"
+    nullable: false
+
+  - name: "On_Promo"
+    description: "Whether item was on promotion (1=yes, 0=no)"
+    data_type: "INTEGER"
+    example_values: ["0", "1"]
+    nullable: false

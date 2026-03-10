@@ -1,0 +1,107 @@
+# =============================================================================
+# UNIFIED RUN CONFIGURATION
+# =============================================================================
+# Single source of truth for agent settings, per-step tuning, schema, and run
+# parameters. Load with: AgentConfig.from_yaml("config/run_config.yaml")
+
+# =============================================================================
+# LLM & PROVIDER
+# =============================================================================
+agent:
+  model: "gpt-4o-mini"
+  provider: "openai"                     # "openai" or "ollama"
+  ollama_url: "http://localhost:11434"    # ignored when provider=openai
+  openai_api_key: null                   # null = read from OPENAI_API_KEY env var
+
+# =============================================================================
+# PER-STEP CONFIGURATION
+# =============================================================================
+steps:
+  decide_tool:
+    n: 1
+    temp_min: 0.1
+    temp_max: 0.1
+    max_tokens: 2000
+    top_p: 1.0
+    top_k: null            # null = provider default; skipped for openai
+    cot_n: 1
+    use_cache: false
+    cache_mode: "auto"
+    enabled: true
+
+  lookup_sales_data:
+    n: 1
+    temp_min: 0.1
+    temp_max: 0.3
+    max_tokens: 2000
+    top_p: 1.0
+    top_k: null
+    cot_n: 1
+    use_cache: true
+    cache_mode: "auto"
+    enabled: true
+
+  analyzing_data:
+    n: 1
+    temp_min: 0.1
+    temp_max: 0.7
+    max_tokens: 3000
+    top_p: 1.0
+    top_k: null
+    cot_n: 1
+    use_cache: true
+    cache_mode: "auto"
+    enabled: true
+
+  create_visualization:
+    n: 1
+    temp_min: 0.1
+    temp_max: 0.5
+    max_tokens: 2000
+    top_p: 1.0
+    top_k: null
+    cot_n: 1
+    use_cache: true
+    cache_mode: "auto"
+    enabled: true
+
+# =============================================================================
+# DATABASE SCHEMA
+# =============================================================================
+# Each entry is a path to a per-table schema YAML file.
+# Paths are resolved relative to this config file's directory.
+schema:
+  compact_threshold: 5
+  data_dir: "../data"          # scans for all *_schema.yaml files in this directory
+
+# =============================================================================
+# RUN PARAMETERS
+# =============================================================================
+run:
+  prompt: "What are the average yearly sales by store?"
+  visualization_goal: null
+  agent_mode: "full"           # "lookup_only", "analysis", or "full"
+  run_id: "test run"                 # null = auto-generate; set for reproducible caching
+  save_dir: "./output"
+  save_results: false
+  reuse_from: null             # run ID to reuse cached results from
+  enable_codecarbon: false
+
+  # Per-step overrides applied at runtime (temporary, don't modify step defaults)
+  # Example: bump analyzing_data to 5 candidates with higher temp
+  step_overrides: null
+  # step_overrides:
+  #   analyzing_data:
+  #     n: 5
+  #     temp_max: 0.9
+  #   lookup_sales_data:
+  #     cot_n: 3
+
+# =============================================================================
+# TRACING (optional)
+# =============================================================================
+tracing:
+  enabled: false
+  phoenix_endpoint: "http://localhost:6006/v1/traces"
+  phoenix_api_key: null
+  project_name: "evaluating-agent"
