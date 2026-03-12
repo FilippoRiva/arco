@@ -1138,37 +1138,63 @@ def make_vis_evaluator(
 # normal (non-evaluation) usage.
 
 
-def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame) -> float:
+def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
-    Same logic as compare_csv() but operates directly on DataFrames.
-    Rows are compared as tuples over shared columns using Counter multisets.
+    Columns are matched by position (not name) when names don't overlap,
+    so differently-aliased columns (e.g. Sale_Date vs Sold_Date) still compare.
+    Numeric values are compared with absolute tolerance ``atol``.
 
     Returns:
-        columns_iou * rows_iou (float in [0, 1])
+        rows_iou (float in [0, 1])
     """
     if df1 is None or df2 is None or df1.empty or df2.empty:
         return 0.0
 
+    # Match columns: prefer shared names, fall back to positional alignment
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
-    columns_iou = len(cols1 & cols2) / len(cols1 | cols2) if cols1 | cols2 else 0.0
+    shared = sorted(cols1 & cols2)
 
-    cols_intersection = sorted(cols1 & cols2)
-    if not cols_intersection:
+    if shared:
+        v1 = df1[shared].values
+        v2 = df2[shared].values
+    elif len(df1.columns) == len(df2.columns):
+        # Same number of columns but different names → positional match
+        v1 = df1.values
+        v2 = df2.values
+    else:
         return 0.0
 
-    rows1 = [tuple(row) for row in df1[cols_intersection].values]
-    rows2 = [tuple(row) for row in df2[cols_intersection].values]
+    def _row_matches(r1, r2):
+        """Check if two row arrays match element-wise with float tolerance."""
+        if len(r1) != len(r2):
+            return False
+        for a, b in zip(r1, r2):
+            try:
+                if abs(float(a) - float(b)) <= atol:
+                    continue
+            except (ValueError, TypeError):
+                pass
+            # Normalize: strip trailing midnight time from date strings
+            sa = str(a).replace(" 00:00:00", "")
+            sb = str(b).replace(" 00:00:00", "")
+            if sa != sb:
+                return False
+        return True
 
-    rows_counter1 = Counter(rows1)
-    rows_counter2 = Counter(rows2)
+    # Greedy matching: for each row in v1, find an unmatched row in v2
+    used = [False] * len(v2)
+    matched = 0
+    for row1 in v1:
+        for j, row2 in enumerate(v2):
+            if not used[j] and _row_matches(row1, row2):
+                used[j] = True
+                matched += 1
+                break
 
-    intersection = rows_counter1 & rows_counter2
-    union = rows_counter1 | rows_counter2
-    rows_iou = sum(intersection.values()) / sum(union.values()) if union else 0.0
-
-    return columns_iou * rows_iou
+    total = len(v1) + len(v2) - matched  # union count
+    return matched / total if total > 0 else 0.0
 
 
 def make_csv_evaluator_no_gt() -> callable:

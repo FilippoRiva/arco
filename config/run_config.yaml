@@ -26,7 +26,7 @@ steps:
     top_k: null            # null = provider default; skipped for openai
     cot_n: 1
     use_cache: false
-    cache_mode: "auto"
+    cache_mode: "skip"
     enabled: true
 
   lookup_sales_data:
@@ -38,7 +38,7 @@ steps:
     top_k: null
     cot_n: 1
     use_cache: true
-    cache_mode: "auto"
+    cache_mode: "skip"
     enabled: true
 
   analyzing_data:
@@ -50,7 +50,7 @@ steps:
     top_k: null
     cot_n: 1
     use_cache: true
-    cache_mode: "auto"
+    cache_mode: "skip"
     enabled: true
 
   create_visualization:
@@ -62,7 +62,7 @@ steps:
     top_k: null
     cot_n: 1
     use_cache: true
-    cache_mode: "auto"
+    cache_mode: "skip"
     enabled: true
 
 # =============================================================================

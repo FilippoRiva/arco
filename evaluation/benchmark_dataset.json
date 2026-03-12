@@ -1,0 +1,54 @@
+[
+  {
+    "prompt": "Show me the sales in Nov 2021",
+    "visualization_goal": "Sales trend for Nov 2021, with date as x and sales value as y",
+    "gt_sql": "SELECT Sold_Date, SUM(Total_Sale_Value) AS Total_Sales_Value FROM sales WHERE CAST(Sold_Date AS VARCHAR) LIKE '2021-11%' GROUP BY Sold_Date ORDER BY Sold_Date",
+    "gt_data": "Sold_Date,Total_Sales_Value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n",
+    "gt_analysis": "Sales in November 2021 show daily values ranging from $11,030.39 to $52,004.60, with a total of $499,984.43 across 29 days.",
+    "gt_chart_config": {
+      "chart_type": "line",
+      "x_axis": "Sale_Date",
+      "y_axis": "Total_Sales_Value",
+      "title": "Sales Trend for November 2021"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    }
+  },
+  {
+    "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+    "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+    "gt_sql": "SELECT DATE_TRUNC('month', Sold_Date) AS month_start, SUM(Total_Sale_Value) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM Sold_Date) = 2023 GROUP BY DATE_TRUNC('month', Sold_Date) ORDER BY month_start ASC",
+    "gt_data": "month_start,total_revenue,total_units\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n",
+    "gt_analysis": "The 12 months of 2023 show total revenue ranging from $353,284.21 (July) to $874,263.67 (December), with total units from 27,932 to 60,941.",
+    "gt_chart_config": {
+      "chart_type": "line",
+      "x_axis": "month_start",
+      "y_axis": "total_revenue",
+      "title": "Monthly Revenue 2023"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    }
+  },
+  {
+    "prompt": "Return the top 5 stores by total revenue; columns: Store_Number, total_revenue",
+    "visualization_goal": null,
+    "gt_sql": "SELECT Store_Number, SUM(Total_Sale_Value) AS total_revenue FROM sales GROUP BY Store_Number ORDER BY total_revenue DESC LIMIT 5",
+    "gt_data": "Store_Number,total_revenue\n2970,836341.3271910138\n3300,619660.1670180857\n1320,592832.0675794836\n1650,580443.0079528484\n1210,508393.76778540947\n",
+    "gt_analysis": "Store 2970: $836,341.33; Store 3300: $619,660.17; Store 1320: $592,832.07; Store 1650: $580,443.01; Store 1210: $508,393.77",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null
+  }
+]
