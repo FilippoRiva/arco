@@ -84,6 +84,11 @@ def main():
             print(f"\nData preview:\n{preview}")
         if "run_id" in result:
             print(f"\nRun ID: {result['run_id']}")
+        # Print GT tracking scores if available
+        if "_gt_score" in result:
+            print(f"\nGT tracking score: {result['_gt_score']:.3f}")
+        if "_all_gt_scores" in result:
+            print(f"All GT scores: {[f'{s:.3f}' for s in result['_all_gt_scores']]}")
     else:
         print(result)
 

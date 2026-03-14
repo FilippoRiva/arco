@@ -1832,6 +1832,42 @@ class SalesDataAgent:
 
         return result
 
+    @staticmethod
+    def _run_gt_eval(
+        step_name: str,
+        config: "StepConfig",
+        result: Dict,
+        state: Dict,
+        all_results: Optional[List[Dict]] = None,
+    ) -> None:
+        """Run ground-truth evaluation for tracking/logging only.
+
+        This NEVER influences selection — it only logs GT scores on the
+        already-selected result so performance can be tracked without
+        steering the agent.
+        """
+        if config.gt_eval_fn is None:
+            return
+
+        # Score the selected (best) result
+        try:
+            gt_score = config.gt_eval_fn(result, state)
+            result["_gt_score"] = gt_score
+            print(f"[{step_name}] GT tracking score: {gt_score:.3f}")
+        except Exception as e:
+            print(f"[{step_name}] GT eval error (tracking only): {e}")
+
+        # Score all N candidates for richer tracking
+        if all_results and len(all_results) > 1:
+            all_gt_scores = []
+            for r in all_results:
+                try:
+                    all_gt_scores.append(config.gt_eval_fn(r, state))
+                except Exception:
+                    all_gt_scores.append(0.0)
+            result["_all_gt_scores"] = all_gt_scores
+            print(f"[{step_name}] All GT scores: {[f'{s:.3f}' for s in all_gt_scores]}")
+
     def _execute_step_with_config(
         self,
         step_name: str,
@@ -1881,6 +1917,7 @@ class SalesDataAgent:
                     if cached:
                         result = dict(cached[0])
                         result["cached_step_results"] = live_csr
+                        self._run_gt_eval(step_name, config, result, state)
                         return result
                     return dict(state)
 
@@ -1897,10 +1934,12 @@ class SalesDataAgent:
                     print(f"[{step_name}] Re-selected cached result {best_idx + 1}/{len(cached)}")
                     result = dict(cached[best_idx])
                     result["cached_step_results"] = live_csr
+                    self._run_gt_eval(step_name, config, result, state, all_results=cached)
                     return result
                 elif cached:
                     result = dict(cached[0])
                     result["cached_step_results"] = live_csr
+                    self._run_gt_eval(step_name, config, result, state)
                     return result
 
         # No cache or force_fresh: run the step
@@ -1926,6 +1965,7 @@ class SalesDataAgent:
                 result["error"] = str(e)
 
             self.current_run_step_results[step_name] = [result]
+            self._run_gt_eval(step_name, config, result, state)
             return result
 
         # Best-of-n execution
@@ -1992,6 +2032,7 @@ class SalesDataAgent:
             best_result["_all_scores"] = scores
             print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
 
+        self._run_gt_eval(step_name, config, best_result, state, all_results=results)
         return best_result
 
     def _maybe_save_run_results(

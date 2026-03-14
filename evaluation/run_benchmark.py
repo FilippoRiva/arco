@@ -25,6 +25,9 @@ from Agent.utils import (
     compare_dataframes_iou,
     judge_analysis,
     judge_visualization,
+    make_csv_evaluator_no_gt,
+    make_text_evaluator_no_gt,
+    make_vis_evaluator_no_gt,
     save_csv,
     text_to_csv,
 )
@@ -151,25 +154,35 @@ def run_benchmark(
         print(f"Prompt: {prompt}")
         print(f"Has data GT: {has_data} | Has vis GT: {has_vis}")
 
-        # Configure step-level eval functions for this entry
+        # Configure step-level eval functions for this entry.
+        # GT eval functions are used for tracking/logging only (gt_eval_fn).
+        # Non-GT eval functions are used for best-of-n selection (eval_fn / batch_eval_fn).
         if has_data:
             config.lookup_sales_data.n = n
-            config.lookup_sales_data.eval_fn = _make_lookup_eval_fn(entry["gt_data"])
+            config.lookup_sales_data.gt_eval_fn = _make_lookup_eval_fn(entry["gt_data"])
+            config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+            config.lookup_sales_data.eval_fn = None
             config.lookup_sales_data.temp_min = 0.1
             config.lookup_sales_data.temp_max = 0.5
 
         if has_data and entry.get("gt_analysis"):
             config.analyzing_data.n = n
-            config.analyzing_data.eval_fn = _make_analysis_eval_fn(
+            config.analyzing_data.gt_eval_fn = _make_analysis_eval_fn(
                 entry["gt_analysis"], judge_model, judge_provider
+            )
+            config.analyzing_data.eval_fn = make_text_evaluator_no_gt(
+                judge_model=judge_model, provider=judge_provider
             )
             config.analyzing_data.temp_min = 0.1
             config.analyzing_data.temp_max = 0.7
 
         if has_vis:
             config.create_visualization.n = n
-            config.create_visualization.eval_fn = _make_vis_eval_fn(
+            config.create_visualization.gt_eval_fn = _make_vis_eval_fn(
                 entry, judge_model, judge_provider
+            )
+            config.create_visualization.eval_fn = make_vis_evaluator_no_gt(
+                judge_model=judge_model, provider=judge_provider
             )
             config.create_visualization.temp_min = 0.1
             config.create_visualization.temp_max = 0.5
