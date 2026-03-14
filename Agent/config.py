@@ -251,9 +251,12 @@ class AgentConfig:
             'openai_api_key', os.environ.get('OPENAI_API_KEY')
         )
 
+        # Track per-step eval settings before from_dict filters them out
+        step_eval_settings: Dict[str, str] = {}
         for step_name in ['decide_tool', 'lookup_sales_data', 'analyzing_data', 'create_visualization']:
             if step_name in steps_section:
                 step_data = dict(steps_section[step_name])
+                step_eval_settings[step_name] = step_data.pop('eval', 'default')
                 step_data.setdefault('step_name', step_name)
                 setattr(config, step_name, StepConfig.from_dict(step_data))
 
@@ -318,7 +321,34 @@ class AgentConfig:
             'save_results': run_section.get('save_results', False),
             'reuse_from': run_section.get('reuse_from'),
             'step_overrides': run_section.get('step_overrides'),
+            'interactive_config': run_section.get('interactive_config', False),
         }
+
+        # --- Default evaluation functions (attached unless eval: "none") ---
+        from .utils import (
+            make_csv_evaluator_no_gt,
+            make_text_evaluator_no_gt,
+            make_vis_evaluator_no_gt,
+        )
+
+        if step_eval_settings.get('lookup_sales_data', 'default') != 'none':
+            config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+
+        if step_eval_settings.get('analyzing_data', 'default') != 'none':
+            config.analyzing_data.eval_fn = make_text_evaluator_no_gt(
+                judge_model=config.model,
+                provider=config.provider,
+                ollama_url=config.ollama_url,
+                openai_api_key=config.openai_api_key,
+            )
+
+        if step_eval_settings.get('create_visualization', 'default') != 'none':
+            config.create_visualization.eval_fn = make_vis_evaluator_no_gt(
+                judge_model=config.model,
+                provider=config.provider,
+                ollama_url=config.ollama_url,
+                openai_api_key=config.openai_api_key,
+            )
 
         # --- Ground truth config (tracking only, never steers selection) ---
         gt_section = raw.get('ground_truth', {})

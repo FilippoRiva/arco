@@ -27,6 +27,7 @@ openinference-instrumentation-llama_index
 # --- Evaluación y visualización ---
 ipywidgets
 matplotlib
+PyQt5
 tqdm
 
 # --- SQL y almacenamiento ---

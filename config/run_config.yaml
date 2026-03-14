@@ -30,7 +30,7 @@ steps:
     enabled: true
 
   lookup_sales_data:
-    n: 1
+    n: 2
     temp_min: 0.1
     temp_max: 0.3
     max_tokens: 2000
@@ -40,6 +40,7 @@ steps:
     use_cache: true
     cache_mode: "skip"
     enabled: true
+    eval: "default"          # "default" = consensus CSV evaluator, "none" = no eval
 
   analyzing_data:
     n: 1
@@ -52,6 +53,7 @@ steps:
     use_cache: true
     cache_mode: "skip"
     enabled: true
+    eval: "default"          # "default" = LLM judge (no GT), "none" = no eval
 
   create_visualization:
     n: 1
@@ -64,6 +66,7 @@ steps:
     use_cache: true
     cache_mode: "skip"
     enabled: true
+    eval: "default"          # "default" = LLM vis judge (no GT), "none" = no eval
 
 # =============================================================================
 # DATABASE SCHEMA
@@ -78,14 +81,15 @@ schema:
 # RUN PARAMETERS
 # =============================================================================
 run:
-  prompt: "What are the average yearly sales by store?"
-  visualization_goal: null
+  prompt: "Show me the sales in Nov 2021"
+  visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"
   agent_mode: "full"           # "lookup_only", "analysis", or "full"
   run_id: "test run"                 # null = auto-generate; set for reproducible caching
   save_dir: "./output"
   save_results: false
   reuse_from: null             # run ID to reuse cached results from
   enable_codecarbon: false
+  interactive_config: false   # true = prompt for step params at runtime
 
   # Per-step overrides applied at runtime (temporary, don't modify step defaults)
   # Example: bump analyzing_data to 5 candidates with higher temp

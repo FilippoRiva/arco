@@ -1673,6 +1673,8 @@ class SalesDataAgent:
         # New: Per-step configuration and caching
         agent_config: Optional[AgentConfig] = None,
         cache_dir: Optional[str] = None,
+        # Runtime parameter provider (default: static config from YAML)
+        parameter_provider: Optional["ParameterProvider"] = None,
     ) -> None:
         """Initialize the agent and compile the graph.
 
@@ -1690,6 +1692,8 @@ class SalesDataAgent:
             openai_api_key: Optional OpenAI API key; defaults to OPENAI_API_KEY env var.
             agent_config: Optional AgentConfig for per-step hyperparameter control.
             cache_dir: Optional directory for caching run results.
+            parameter_provider: Optional ParameterProvider for runtime step config
+                overrides. When None, defaults to DefaultProvider (static YAML config).
         """
         self.provider = provider.lower()
 
@@ -1760,6 +1764,10 @@ class SalesDataAgent:
                 ollama_url=self.ollama_url or "http://localhost:11434",
                 openai_api_key=self.openai_api_key,
             )
+
+        # Initialize runtime parameter provider
+        from .parameter_provider import DefaultProvider
+        self.parameter_provider = parameter_provider or DefaultProvider()
 
         # Initialize result cache
         self.cache = RunCache(cache_dir or "./cache/agent_runs")
@@ -2039,7 +2047,12 @@ class SalesDataAgent:
         temps = config.get_temperatures()
 
         if n == 1:
-            # Simple case: single run
+            # Simple case: single run — prompt for config before execution
+            run_state = dict(state)
+            run_state["_run_idx"] = 0
+            run_state["_total_runs"] = 1
+            config = self.parameter_provider.get_step_config(step_name, config, run_state)
+            temps = config.get_temperatures()
             llm = self._create_llm(
                 temperature=temps[0],
                 max_tokens=config.max_tokens,
@@ -2066,28 +2079,34 @@ class SalesDataAgent:
         results = []
         scores = []
 
-        print(f"[{step_name}] Running best-of-{n} with temps {[f'{t:.2f}' for t in temps]}")
+        for i in range(n):
+            # Prompt for per-run config override
+            run_state = dict(state)
+            run_state["_run_idx"] = i
+            run_state["_total_runs"] = n
+            run_config = self.parameter_provider.get_step_config(step_name, config, run_state)
+            run_temps = run_config.get_temperatures()
+            temp = run_temps[min(i, len(run_temps) - 1)]
 
-        for i, temp in enumerate(temps):
             llm = self._create_llm(
                 temperature=temp,
-                max_tokens=config.max_tokens,
-                top_p=config.top_p,
-                top_k=config.top_k,
-                num_beams=config.num_beams,
-                no_repeat_ngram_size=config.no_repeat_ngram_size,
+                max_tokens=run_config.max_tokens,
+                top_p=run_config.top_p,
+                top_k=run_config.top_k,
+                num_beams=run_config.num_beams,
+                no_repeat_ngram_size=run_config.no_repeat_ngram_size,
             )
 
             try:
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
                 result["_run_idx"] = i
-                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, run_config.cot_n)
 
                 # Evaluate if function provided
-                if config.eval_fn:
+                if run_config.eval_fn:
                     try:
-                        score = config.eval_fn(result, state)
+                        score = run_config.eval_fn(result, state)
                     except Exception as eval_err:
                         print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
                         score = 0.0
@@ -2096,7 +2115,8 @@ class SalesDataAgent:
 
                 results.append(result)
                 scores.append(score)
-                print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
+                if run_config.eval_fn:
+                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
 
             except Exception as e:
                 print(f"  Run {i + 1}/{n} failed: {e}")
@@ -2175,8 +2195,8 @@ class SalesDataAgent:
         def make_configured_node(step_name: str, core_fn):
             """Create a node function that uses per-step configuration."""
             def node_fn(state: State) -> Dict:
-                config = self.agent_config.get_step_config(step_name)
-                return self._execute_step_with_config(step_name, state, core_fn, config)
+                default_config = self.agent_config.get_step_config(step_name)
+                return self._execute_step_with_config(step_name, state, core_fn, default_config)
             return node_fn
 
         # Bind schema into lookup_sales_data_core via partial so the middleware
@@ -2530,8 +2550,8 @@ class SalesDataAgent:
                 print(f"[Agent] Found {len(similar_runs)} similar run(s): {similar_runs}")
                 cached_step_results = self.cache.load_all_step_results(similar_runs[0])
 
-        # Use new API if using caching features and not using old best-of-n
-        if (save_results or reuse_from) and best_of_n == 1:
+        # Use new per-step API unless using deprecated agent-level best-of-n
+        if best_of_n == 1:
             try:
                 result = self.run_core(
                     prompt,
