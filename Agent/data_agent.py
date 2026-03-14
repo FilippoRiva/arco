@@ -613,6 +613,9 @@ def create_visualization_core(state: State, llm) -> Dict:
 
     Returns:
         Updated state with 'chart_config' and code appended to 'answer'.
+        If the generated code raises an exception when executed, the result
+        also contains an 'error' key so the CoT refinement loop can feed the
+        error message back to the LLM on the next iteration.
     """
     try:
         data_df = state.get("data_df")
@@ -631,10 +634,27 @@ def create_visualization_core(state: State, llm) -> Dict:
         # Generate chart code
         code = create_chart(with_config, llm)
 
-        return {
+        # --- Validate by executing in a headless namespace (no display) ---
+        # Replace plt.show() so no GUI window / inline figure is produced.
+        exec_code = code.replace("plt.show()", "plt.close('all')")
+        namespace: Dict = {
+            "data_df": data_df,
+            "config": with_config.get("chart_config", {}),
+        }
+        try:
+            exec(exec_code, namespace)  # noqa: S102
+            exec_error = ""
+        except Exception as e:
+            exec_error = f"{type(e).__name__}: {e}"
+            print(f"[create_visualization] Code validation error: {exec_error}")
+
+        result: Dict = {
             **with_config,
             "answer": with_config.get("answer", []) + [code],
         }
+        if exec_error:
+            result["error"] = exec_error
+        return result
     except Exception as e:
         print(f"Error creating visualization: {str(e)}")
         return {**state, "error": f"Error accessing data: {str(e)}"}
