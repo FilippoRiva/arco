@@ -1721,6 +1721,8 @@ class SalesDataAgent:
         max_tokens: int,
         top_p: float = 1.0,
         top_k: Optional[int] = None,
+        num_beams: int = 1,
+        no_repeat_ngram_size: Optional[int] = None,
     ):
         """Factory method to create LLM instances with specific parameters.
 
@@ -1732,6 +1734,8 @@ class SalesDataAgent:
             max_tokens: Maximum tokens for generation
             top_p: Top-p sampling parameter
             top_k: Top-k sampling parameter (skipped for OpenAI)
+            num_beams: Beam search width, 1 = greedy/disabled (skipped for OpenAI)
+            no_repeat_ngram_size: Prevent repeating n-grams of this size (skipped for OpenAI)
 
         Returns:
             ChatOllama or ChatOpenAI instance configured with the given parameters
@@ -1756,6 +1760,10 @@ class SalesDataAgent:
             )
             if top_k is not None:
                 kwargs["top_k"] = top_k
+            if num_beams > 1:
+                kwargs["num_beams"] = num_beams
+            if no_repeat_ngram_size is not None:
+                kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
             return ChatOllama(**kwargs)
 
     def _apply_cot_iterations(
@@ -1914,6 +1922,8 @@ class SalesDataAgent:
                 max_tokens=config.max_tokens,
                 top_p=config.top_p,
                 top_k=config.top_k,
+                num_beams=config.num_beams,
+                no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
             try:
                 result = core_fn(state, llm)
@@ -1940,6 +1950,8 @@ class SalesDataAgent:
                 max_tokens=config.max_tokens,
                 top_p=config.top_p,
                 top_k=config.top_k,
+                num_beams=config.num_beams,
+                no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
 
             try:

@@ -20,6 +20,9 @@ class StepConfig:
         temp_max: Maximum temperature for sampling (default 0.1)
         max_tokens: Maximum tokens for LLM generation (default 2000)
         top_p: Top-p sampling parameter (default 1.0)
+        top_k: Top-k sampling parameter (default None, skipped for OpenAI)
+        num_beams: Beam search width; 1 = greedy/disabled (default 1, skipped for OpenAI)
+        no_repeat_ngram_size: Prevent repeating n-grams of this size (default None, skipped for OpenAI)
         eval_fn: Callable that scores a result, signature: (result: Dict, state: State) -> float
         batch_eval_fn: Callable that scores all N results at once, signature: (results: List[Dict], state: Dict) -> List[float]
         selection_fn: Callable that picks best from N scores (default: argmax)
@@ -37,6 +40,8 @@ class StepConfig:
     max_tokens: int = 2000
     top_p: float = 1.0
     top_k: Optional[int] = None  # Top-k sampling; skipped for OpenAI provider
+    num_beams: int = 1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
+    no_repeat_ngram_size: Optional[int] = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
 
     # Evaluation and selection (not serialized)
     eval_fn: Optional[Callable] = None
@@ -80,6 +85,7 @@ class StepConfig:
         # Filter out unknown keys and non-serializable fields
         valid_keys = {
             'n', 'temp_min', 'temp_max', 'max_tokens', 'top_p', 'top_k',
+            'num_beams', 'no_repeat_ngram_size',
             'use_cache', 'cache_mode', 'enabled', 'step_name', 'cot_n'
         }
         filtered = {k: v for k, v in data.items() if k in valid_keys}
