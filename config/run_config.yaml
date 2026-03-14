@@ -98,6 +98,17 @@ run:
   #     cot_n: 3
 
 # =============================================================================
+# GROUND TRUTH (optional – for performance tracking only, never steers selection)
+# =============================================================================
+# When provided, GT evaluation scores are logged alongside each step but the
+# agent's best-of-n selection uses non-GT evaluators (consensus / LLM judge).
+# ground_truth:
+#   csv_path: "path/to/gt_data.csv"            # GT for lookup_sales_data step
+#   analysis_text: "expected analysis text"     # GT for analyzing_data step
+#   vis_config: null                            # GT chart config dict for create_visualization
+#   vis_code: null                              # GT chart code for create_visualization
+
+# =============================================================================
 # TRACING (optional)
 # =============================================================================
 tracing:

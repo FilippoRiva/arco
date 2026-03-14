@@ -48,6 +48,9 @@ class StepConfig:
     batch_eval_fn: Optional[Callable] = None
     selection_fn: Optional[Callable] = None
 
+    # Ground-truth evaluation for tracking/logging only (never used for selection)
+    gt_eval_fn: Optional[Callable] = None
+
     # Caching control
     use_cache: bool = True
     cache_mode: Literal["auto", "skip", "force_fresh"] = "auto"
@@ -77,6 +80,7 @@ class StepConfig:
         d.pop('eval_fn', None)
         d.pop('batch_eval_fn', None)
         d.pop('selection_fn', None)
+        d.pop('gt_eval_fn', None)
         return d
 
     @classmethod
@@ -315,6 +319,44 @@ class AgentConfig:
             'reuse_from': run_section.get('reuse_from'),
             'step_overrides': run_section.get('step_overrides'),
         }
+
+        # --- Ground truth config (tracking only, never steers selection) ---
+        gt_section = raw.get('ground_truth', {})
+        if gt_section:
+            from .utils import (
+                make_csv_evaluator,
+                make_csv_evaluator_no_gt,
+                make_text_evaluator,
+                make_text_evaluator_no_gt,
+                make_vis_evaluator,
+                make_vis_evaluator_no_gt,
+            )
+
+            gt_csv_path = gt_section.get('csv_path')
+            if gt_csv_path:
+                if not os.path.isabs(gt_csv_path):
+                    gt_csv_path = os.path.join(config_dir, gt_csv_path)
+                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator(gt_csv_path)
+                # Use consensus-based evaluator for actual selection
+                config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+
+            gt_analysis = gt_section.get('analysis_text')
+            if gt_analysis:
+                config.analyzing_data.gt_eval_fn = make_text_evaluator(
+                    ground_truth_text=gt_analysis,
+                )
+                # Use no-GT judge for actual selection
+                config.analyzing_data.eval_fn = make_text_evaluator_no_gt()
+
+            gt_vis_config = gt_section.get('vis_config')
+            gt_vis_code = gt_section.get('vis_code')
+            if gt_vis_config and gt_vis_code:
+                config.create_visualization.gt_eval_fn = make_vis_evaluator(
+                    ground_truth_config=gt_vis_config,
+                    ground_truth_code=gt_vis_code,
+                )
+                # Use no-GT judge for actual selection
+                config.create_visualization.eval_fn = make_vis_evaluator_no_gt()
 
         # --- Tracing config (passed separately to SalesDataAgent.__init__) ---
         tracing_section = raw.get('tracing', {})
