@@ -107,6 +107,90 @@ class State(TypedDict):
 
 _COT_SIMILARITY_THRESHOLD = 0.95
 
+TABLE_SELECTION_PROMPT = """You are a database architect helping identify which tables are needed to answer a user's question.
+
+## TASK
+From the list of available tables, select only the tables needed to answer the user's question.
+
+## AVAILABLE TABLES
+{compact_schema}
+
+## USER QUESTION
+{prompt}
+
+## CHAIN OF THOUGHT REASONING
+Before selecting tables, think step by step:
+
+**Step 1: Understanding the Question**
+- What is the user really asking for?
+- What entities or concepts are mentioned? (e.g., products, sales, customers, dates)
+- What metrics or dimensions does the answer require?
+
+**Step 2: Mapping Concepts to Tables**
+- Which table descriptions match the entities mentioned in the question?
+- Is the question asking about relationships between multiple entities (implies a JOIN)?
+- Are any tables clearly irrelevant (different domain, different subject)?
+
+**Step 3: Identifying Required Joins**
+- If multiple entities are needed, which tables contain them?
+- Do any tables serve as lookup/dimension tables needed to label results?
+- Is there a fact table that connects the needed entities?
+
+**Step 4: Checking Completeness**
+- Do the selected tables together contain all the data needed to answer the question?
+- Is any additional table needed for filtering or context?
+- Are there redundant tables containing the same data?
+
+**Step 5: Final Selection**
+- List only the table names that are necessary and sufficient to answer the question
+- When in doubt, include a table rather than exclude it (extra context is better than missing data)
+- Use only table names exactly as listed in AVAILABLE TABLES
+
+## OUTPUT FORMAT
+Return ONLY a comma-separated list of table names. No explanations. No markdown. Just table names.
+Example: sales,products
+"""
+
+
+def select_relevant_tables(state: "State", schema: "DatabaseSchema", llm) -> List[str]:
+    """Use the LLM to select relevant tables from a large schema.
+
+    Called when schema.should_use_table_selection() is True (more tables than
+    compact_threshold). Passes only table names and descriptions to the LLM,
+    then returns the selected table names so full column details for only those
+    tables are included in the SQL generation prompt.
+
+    Args:
+        state: Conversation state containing the user prompt.
+        schema: DatabaseSchema with all available tables.
+        llm: LLM instance for table selection.
+
+    Returns:
+        List of selected table names. Falls back to all table names if the LLM
+        output cannot be parsed (safe degradation).
+    """
+    formatted_prompt = TABLE_SELECTION_PROMPT.format(
+        compact_schema=schema.get_compact_summary(),
+        prompt=state["prompt"],
+    )
+    response = llm.invoke(formatted_prompt)
+    raw = response.content if hasattr(response, "content") else str(response)
+    raw = raw.strip()
+
+    name_map = {t.name.lower(): t.name for t in schema.tables}
+    selected = []
+    for token in raw.split(","):
+        normalized = token.strip().lower()
+        if normalized in name_map:
+            selected.append(name_map[normalized])
+
+    if not selected:
+        print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
+        return [t.name for t in schema.tables]
+
+    print(f"[select_relevant_tables] Selected tables: {selected}")
+    return selected
+
 
 def _extract_step_output(step_name: str, result: Dict) -> str:
     """Extract the key textual output from a step result for CoT similarity comparison."""
