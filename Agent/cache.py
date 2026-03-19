@@ -8,6 +8,7 @@ This module provides the RunCache class which manages:
 
 import json
 import os
+import re
 import hashlib
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -193,12 +194,17 @@ class RunCache:
         Returns:
             List of run_ids sorted by similarity (most similar first)
         """
-        prompt_words = set(prompt.lower().split())
+        def _tokenize(text: str):
+            # Split on whitespace and underscores, strip punctuation from each token
+            tokens = re.split(r'[\s_]+', text.lower())
+            return set(t.strip('.,?!;:()[]"\'') for t in tokens if t.strip('.,?!;:()[]"\''))
+
+        prompt_words = _tokenize(prompt)
 
         similarities = []
         for run_meta in self.index["runs"]:
             cached_prompt = run_meta.get("prompt", "")
-            cached_words = set(cached_prompt.lower().split())
+            cached_words = _tokenize(cached_prompt)
 
             # Jaccard similarity
             intersection = len(prompt_words & cached_words)
