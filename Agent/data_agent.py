@@ -480,7 +480,7 @@ def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchem
     sql_query = generate_sql_query(state, schema_context, llm)
     try:
         result_df = con.execute(sql_query).df()
-        result_str = result_df.to_string(index=False)
+        result_str = result_df.to_csv(index=False)
         return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
     except Exception as e:
         print(f"Error accessing data: {str(e)}")
@@ -503,6 +503,7 @@ def analyzing_data_core(state: State, llm) -> Dict:
         )
         analysis_result = llm.invoke(formatted_prompt)
         analysis_text = analysis_result.content if hasattr(analysis_result, "content") else str(analysis_result)
+        print(f"Analysis:\n{analysis_text}")
         return {
             **state,
             "answer": state.get("answer", []) + [analysis_text],
@@ -673,7 +674,7 @@ No explanations. Just the tool name.
         elif len(state.get("answer", [])) > 1:
             matched_tool = "end"
 
-        print(f"Tool selected: {matched_tool}")
+        print(f"\n\nTool selected: {matched_tool}")
 
         return {
             **state,
@@ -1109,7 +1110,7 @@ No explanations. Just the tool name.
             except Exception:
                 pass
 
-        print(f"Tool selected: {matched_tool}")
+        print(f"\n\nTool selected: {matched_tool}")
 
         return {
             **state,
@@ -1893,6 +1894,8 @@ class SalesDataAgent:
         execution_error = result.get("error", "")
 
         for cot_i in range(1, cot_n):
+            print()
+            print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: starting refinement...")
             refinement_llm = CoTRefinementLLM(llm, previous_output, execution_error)
             try:
                 new_result = core_fn(state, refinement_llm)
@@ -1922,10 +1925,16 @@ class SalesDataAgent:
             execution_error = ""
 
             if ratio >= _COT_SIMILARITY_THRESHOLD:
-                print(
-                    f"[{step_name}] CoT early stop: output converged "
-                    f"(similarity={ratio:.3f} >= {_COT_SIMILARITY_THRESHOLD})"
-                )
+                if cot_i < cot_n - 1:
+                    print(
+                        f"[{step_name}] CoT early stop: output converged "
+                        f"(similarity={ratio:.3f} >= {_COT_SIMILARITY_THRESHOLD})"
+                    )
+                else:
+                    print(
+                        f"[{step_name}] Output converged "
+                        f"(similarity={ratio:.3f} >= {_COT_SIMILARITY_THRESHOLD})"
+                    )
                 break
 
             previous_output = new_output
@@ -2058,6 +2067,8 @@ class SalesDataAgent:
                 no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
             try:
+                if config.cot_n > 1:
+                    print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
                 result = core_fn(state, llm)
                 result["_temperature"] = temps[0]
                 result["_run_idx"] = 0
@@ -2078,6 +2089,9 @@ class SalesDataAgent:
         print(f"[{step_name}] Running best-of-{n} with temps {[f'{t:.2f}' for t in temps]}")
 
         for i, temp in enumerate(temps):
+            if i > 0:
+                print()
+                print()
             llm = self._create_llm(
                 temperature=temp,
                 max_tokens=config.max_tokens,
@@ -2088,6 +2102,8 @@ class SalesDataAgent:
             )
 
             try:
+                if config.cot_n > 1:
+                    print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
                 result["_run_idx"] = i
@@ -2100,13 +2116,16 @@ class SalesDataAgent:
                     except Exception as eval_err:
                         print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
                         score = 0.0
+                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
+                elif config.batch_eval_fn:
+                    score = 0.0
+                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score=pending (batch eval)")
                 else:
                     score = 0.0
+                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): done (no evaluator set)")
 
                 results.append(result)
                 scores.append(score)
-                if config.eval_fn:
-                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
 
             except Exception as e:
                 print(f"  Run {i + 1}/{n} failed: {e}")
@@ -2312,7 +2331,9 @@ class SalesDataAgent:
                 if self.tracing_enabled and self.tracer is not None:
                     with self.tracer.start_as_current_span("AgentRun_NoVis", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
                         span.set_input(state)  # type: ignore[attr-defined]
+                        print("\n\nTool selected: lookup_sales_data")
                         state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
+                        print("\n\nTool selected: analyzing_data")
                         result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                         print(f"\nAgent response: {result.get('answer', [None])[0]}")
                         span.set_output(result)  # type: ignore[attr-defined]
@@ -2322,7 +2343,9 @@ class SalesDataAgent:
                         result["run_id"] = run_id
                         return result
                 else:
+                    print("\n\nTool selected: lookup_sales_data")
                     state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
+                    print("\n\nTool selected: analyzing_data")
                     result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
@@ -2540,8 +2563,15 @@ class SalesDataAgent:
                 print(f"[Agent] Found {len(similar_runs)} similar run(s): {similar_runs}")
                 cached_step_results = self.cache.load_all_step_results(similar_runs[0])
 
-        # Use new per-step API unless using deprecated agent-level best-of-n
-        if best_of_n == 1:
+        # Use new API unless the caller is explicitly using the deprecated agent-level
+        # best-of-n or old-style eval functions (csv_eval_fn / text_eval_fn / vis_eval_fn).
+        use_new_api = (
+            best_of_n == 1
+            and csv_eval_fn is None
+            and text_eval_fn is None
+            and vis_eval_fn is None
+        )
+        if use_new_api:
             try:
                 result = self.run_core(
                     prompt,

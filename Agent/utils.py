@@ -268,15 +268,20 @@ def compare_csv(csv1_path, csv2_path):
         print(f"Error while loading csvs for evaluation: {e}") 
         return 0. , 0. , 0.
     
+    # Normalize column names to lowercase for case-insensitive comparison
+    # (SQL aliases are case-insensitive; e.g. "total_revenue" == "Total_Revenue")
+    df1.columns = df1.columns.str.lower()
+    df2.columns = df2.columns.str.lower()
+
     # 1. Column names IoU
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
     columns_names_iou = len(cols1 & cols2) / len(cols1 | cols2) if cols1 | cols2 else 0.0
-    
+
     # 2. Overall data IoU
     data_counter1 = Counter(df1.values.flatten())
     data_counter2 = Counter(df2.values.flatten())
-    
+
     intersection = data_counter1 & data_counter2
     union = data_counter1 | data_counter2
     data_iou = sum(intersection.values()) / sum(union.values()) if union else 0.0
@@ -285,7 +290,7 @@ def compare_csv(csv1_path, csv2_path):
     cols_intersection = list(cols1 & cols2)
     if cols_intersection:
         sorted_cols = sorted(cols_intersection)  # Sort for consistency
-        
+
         rows1 = [tuple(row) for row in df1[sorted_cols].values]
         rows2 = [tuple(row) for row in df2[sorted_cols].values]
         
@@ -965,25 +970,28 @@ def judge_visualization(
 # These factory functions create evaluation functions compatible with the
 # per-step middleware. They have signature: (result: Dict, state: Dict) -> float
 
-def make_csv_evaluator(
+def make_csv_evaluator_gt(
     ground_truth_csv_path: str,
-    iou_type: str = "rows"
 ) -> callable:
     """Factory to create CSV evaluation function for per-step execution.
 
+    Compares the agent's result DataFrame against a ground-truth CSV using
+    compare_dataframes_iou, which handles:
+    - Positional column fallback when column names differ (e.g. "Sale_Date" vs "Sold_Date")
+    - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
+
     Args:
         ground_truth_csv_path: Path to the ground truth CSV file.
-        iou_type: Type of IoU to compute - 'columns', 'rows', or 'table'.
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
-        that extracts data_df from result and compares to ground truth.
     """
+    gt_df = pd.read_csv(ground_truth_csv_path)
+    gt_df.columns = gt_df.columns.str.lower()
+
     def eval_fn(result: Dict, state: Dict) -> float:
-        # Extract DataFrame from result
         data_df = result.get("data_df")
         if data_df is None:
-            # Try to convert text data to DataFrame
             data_text = result.get("data", "")
             if data_text:
                 data_df = text_to_dataframe(data_text)
@@ -991,26 +999,11 @@ def make_csv_evaluator(
         if data_df is None:
             return 0.0
 
-        # Save to temp file for comparison
+        result_df = data_df.copy()
+        result_df.columns = result_df.columns.str.lower()
+
         try:
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-                data_df.to_csv(f.name, index=False)
-                temp_csv = f.name
-
-            # Use existing comparison logic
-            columns_iou, rows_iou, data_iou = compare_csv(temp_csv, ground_truth_csv_path)
-
-            # Return appropriate IoU based on type
-            if iou_type == "columns":
-                score = columns_iou
-            elif iou_type == "rows":
-                score = rows_iou
-            else:  # table
-                score = data_iou
-
-            os.unlink(temp_csv)
-            return score
-
+            return compare_dataframes_iou(result_df, gt_df)
         except Exception as e:
             print(f"CSV evaluation error: {e}")
             return 0.0
@@ -1018,37 +1011,121 @@ def make_csv_evaluator(
     return eval_fn
 
 
-def make_text_evaluator(
-    ground_truth_text: str = "",
-    metric: str = "bleu",
+def judge_analysis_gt(
+    generated_analysis: str,
+    gt_analysis: str,
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    ollama_url: str = "http://localhost:11434",
+    openai_api_key: Optional[str] = None,
+) -> Tuple[float, Dict]:
+    """Evaluate generated analysis against a ground truth reference using LLM-as-judge.
+
+    Unlike judge_analysis() which scores against SQL data, this function compares
+    the generated text directly to a reference (GT) text, checking whether key
+    numerical facts and conclusions are captured correctly — regardless of phrasing.
+
+    Args:
+        generated_analysis: The analysis text produced by the agent.
+        gt_analysis: The reference (ground truth) analysis text.
+        judge_model: LLM model for judging (default: gpt-4o-mini).
+        provider: LLM provider — 'openai' or 'ollama'.
+        ollama_url: Ollama server URL (only used when provider='ollama').
+        openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided).
+
+    Returns:
+        (score: float in [0, 1], evaluation: Dict with per-criterion scores and reasoning)
+    """
+    JUDGE_GT_PROMPT = """You are an expert evaluator comparing a generated data analysis to a reference (ground truth) analysis.
+
+### REFERENCE ANALYSIS (Ground Truth)
+{gt_analysis}
+
+### GENERATED ANALYSIS
+{generated_analysis}
+
+### EVALUATION RUBRIC (Rate 1-5 for each)
+
+**FACTUAL ACCURACY (1-5)**
+Do the key numerical values and facts in the generated analysis match those in the reference?
+Ignore differences in wording or style — only check whether the numbers and conclusions are correct.
+[1=Major errors or missing key numbers, 3=Mostly correct with minor deviations, 5=All key facts accurate]
+
+**COVERAGE (1-5)**
+Does the generated analysis cover the main points and conclusions present in the reference?
+[1=Missing most key points, 3=Main points covered, 5=All key points addressed]
+
+Respond ONLY with valid JSON in this exact format:
+{{
+  "factual_accuracy": <1-5>,
+  "coverage": <1-5>,
+  "reasoning": "<brief explanation>"
+}}"""
+
+    try:
+        if provider == "openai":
+            from langchain_openai import ChatOpenAI
+            api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+            judge_llm = ChatOpenAI(model=judge_model, temperature=0.0, api_key=api_key)
+        else:
+            from langchain_ollama import ChatOllama
+            judge_llm = ChatOllama(model=judge_model, temperature=0.0, base_url=ollama_url)
+
+        formatted_prompt = JUDGE_GT_PROMPT.format(
+            gt_analysis=gt_analysis,
+            generated_analysis=generated_analysis,
+        )
+        response = judge_llm.invoke(formatted_prompt)
+        raw = response.content if hasattr(response, "content") else str(response)
+
+        # Parse JSON response
+        import re as _re
+        json_match = _re.search(r'\{.*\}', raw, _re.DOTALL)
+        if not json_match:
+            raise ValueError(f"No JSON found in judge response: {raw[:200]}")
+        evaluation = json.loads(json_match.group())
+
+        factual = float(evaluation.get("factual_accuracy", 1))
+        coverage = float(evaluation.get("coverage", 1))
+        score = ((factual + coverage) / 2 - 1) / 4  # normalize [1,5] → [0,1]
+        evaluation["overall_score"] = round(score, 4)
+        return score, evaluation
+
+    except Exception as e:
+        print(f"GT analysis judge error: {e}")
+        return 0.0, {"error": str(e)}
+
+
+def make_text_evaluator_gt(
+    ground_truth_text: str,
+    metric: str = "judge_gt",
     judge_model: str = "gpt-4o-mini",
     provider: str = "openai",
     ollama_url: str = "http://localhost:11434",
     openai_api_key: Optional[str] = None,
 ) -> callable:
-    """Factory to create text evaluation function for per-step execution.
+    """Factory to create a GT-based text evaluation function for per-step execution.
 
     Args:
-        ground_truth_text: Reference text to compare against (required for bleu/spice).
-        metric: Evaluation metric - 'bleu', 'spice', or 'judge'.
-        judge_model: Model for LLM judge (default: gpt-4o-mini). Only used when metric='judge'.
-        provider: LLM provider for judge - 'openai' or 'ollama' (default: openai).
-        ollama_url: Ollama server URL. Only used when provider='ollama'.
+        ground_truth_text: Reference analysis text to compare against (required).
+        metric: Evaluation metric — 'bleu', 'spice', or 'judge_gt' (default).
+            - 'bleu'     : n-gram overlap; fast but penalises valid paraphrases.
+            - 'spice'    : semantic similarity via scene graph; requires Java.
+            - 'judge_gt' : LLM judge that checks factual accuracy and coverage
+                           against the GT text, ignoring surface-level phrasing.
+        judge_model: LLM model for judge (default: gpt-4o-mini). Used only for 'judge_gt'.
+        provider: LLM provider — 'openai' or 'ollama'. Used only for 'judge_gt'.
+        ollama_url: Ollama server URL. Used only when provider='ollama'.
         openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided).
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
-        that extracts analysis text from result and compares to ground truth.
     """
     def eval_fn(result: Dict, state: Dict) -> float:
-        # Extract analysis text from result
         answers = result.get("answer", [])
         if not answers:
             return 0.0
-
-        # First answer is typically the analysis text
         analysis_text = answers[0] if isinstance(answers, list) else str(answers)
-
         if not analysis_text:
             return 0.0
 
@@ -1057,12 +1134,10 @@ def make_text_evaluator(
                 return bleu_score(analysis_text, ground_truth_text)
             elif metric == "spice":
                 return spice_score_java(analysis_text, ground_truth_text)
-            elif metric == "judge":
-                score, _ = judge_analysis(
-                    prompt=state.get("prompt", ""),
-                    sql_query=state.get("sql_query", ""),
-                    data=state.get("data", ""),
-                    analysis=analysis_text,
+            elif metric == "judge_gt":
+                score, _ = judge_analysis_gt(
+                    generated_analysis=analysis_text,
+                    gt_analysis=ground_truth_text,
                     judge_model=judge_model,
                     provider=provider,
                     ollama_url=ollama_url,
@@ -1070,56 +1145,65 @@ def make_text_evaluator(
                 )
                 return score
             else:
-                # Default to BLEU
                 return bleu_score(analysis_text, ground_truth_text)
 
         except Exception as e:
-            print(f"Text evaluation error: {e}")
+            print(f"Text GT evaluation error: {e}")
             return 0.0
 
     return eval_fn
 
 
-def make_vis_evaluator(
+def make_vis_evaluator_gt(
     ground_truth_config: Dict,
     ground_truth_code: str,
-    model: str = "llama3.2:3b",
-    ollama_url: Optional[str] = None
+    explicit_requirements: Optional[Dict] = None,
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    openai_api_key: Optional[str] = None,
+    ollama_url: str = "http://localhost:11434",
 ) -> callable:
     """Factory to create visualization evaluation function for per-step execution.
 
     Args:
         ground_truth_config: Expected chart configuration dict.
         ground_truth_code: Expected chart code string.
-        model: LLM model for judge.
-        ollama_url: Ollama server URL.
+        explicit_requirements: Optional dict of explicit styling requirements.
+        judge_model: LLM model for the judge (default: gpt-4o-mini).
+        provider: LLM provider — 'openai' or 'ollama'.
+        openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided).
+        ollama_url: Ollama server URL (only used when provider='ollama').
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
         that extracts chart_config and code from result and evaluates.
     """
     def eval_fn(result: Dict, state: Dict) -> float:
-        # Extract chart config and code from result
         chart_config = result.get("chart_config")
         answers = result.get("answer", [])
 
         if not chart_config:
             return 0.0
 
-        # Chart code is typically the last answer
+        # Chart code is the last answer entry
         chart_code = answers[-1] if answers else None
-
         if not chart_code:
             return 0.0
 
+        visualization_goal = state.get("visualization_goal", state.get("prompt", ""))
+
         try:
             score, _ = judge_visualization(
-                chart_config,
-                chart_code,
-                ground_truth_config,
-                ground_truth_code,
-                model=model,
-                ollama_url=ollama_url
+                visualization_goal=visualization_goal,
+                generated_config=chart_config,
+                generated_code=chart_code,
+                gt_config=ground_truth_config,
+                gt_code=ground_truth_code,
+                explicit_requirements=explicit_requirements,
+                judge_model=judge_model,
+                provider=provider,
+                openai_api_key=openai_api_key,
+                ollama_url=ollama_url,
             )
             return score
 
@@ -1141,30 +1225,37 @@ def make_vis_evaluator(
 def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
-    Columns are matched by position (not name) when names don't overlap,
-    so differently-aliased columns (e.g. Sale_Date vs Sold_Date) still compare.
+    Column selection strategy:
+    - Same column count → positional comparison (covers all columns, handles
+      differently-aliased columns like "Sale_Date" vs "Sold_Date" and partial
+      name overlaps like "total_units" vs "total_units_sold").
+    - Different column count, some names shared → compare only shared columns.
+    - Different column count, no names shared → return 0.0.
+
     Numeric values are compared with absolute tolerance ``atol``.
 
     Returns:
         rows_iou (float in [0, 1])
+
+    WEAKNESS: it assumes that the column order is the same in the two dataframe
     """
     if df1 is None or df2 is None or df1.empty or df2.empty:
         return 0.0
 
-    # Match columns: prefer shared names, fall back to positional alignment
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
-    shared = sorted(cols1 & cols2)
 
-    if shared:
-        v1 = df1[shared].values
-        v2 = df2[shared].values
-    elif len(df1.columns) == len(df2.columns):
-        # Same number of columns but different names → positional match
+    if len(df1.columns) == len(df2.columns):
+        # Same structure: positional comparison covers all columns regardless of aliases
         v1 = df1.values
         v2 = df2.values
     else:
-        return 0.0
+        # Different column count: fall back to shared-name subset
+        shared = sorted(cols1 & cols2)
+        if not shared:
+            return 0.0
+        v1 = df1[shared].values
+        v2 = df2[shared].values
 
     def _row_matches(r1, r2):
         """Check if two row arrays match element-wise with float tolerance."""
