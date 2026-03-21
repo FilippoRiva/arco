@@ -92,14 +92,8 @@ class TerminalProvider:
         if not self._interactive or step_name in _SKIP_STEPS:
             return default_config
 
-        # Display current defaults with run context
-        run_idx = state.get("_run_idx")
-        total_runs = state.get("_total_runs", 1)
-        if total_runs > 1 and run_idx is not None:
-            header = f"[{step_name}] Run {run_idx + 1}/{total_runs} proposed config"
-        else:
-            header = f"[{step_name}] proposed config"
-        print(f"\n── {header} ──")
+        # Display current defaults
+        print(f"\n── [{step_name}] proposed config ──")
         for param_name, _ in _TUNABLE_PARAMS:
             value = getattr(default_config, param_name, None)
             print(f"  {param_name:20s} {value}")

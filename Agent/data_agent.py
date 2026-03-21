@@ -2042,17 +2042,13 @@ class SalesDataAgent:
                     self._run_gt_eval(step_name, config, result, state)
                     return result
 
-        # No cache or force_fresh: run the step
+        # No cache or force_fresh: prompt for config once per step execution
+        config = self.parameter_provider.get_step_config(step_name, config, state)
         n = config.n
         temps = config.get_temperatures()
 
         if n == 1:
-            # Simple case: single run — prompt for config before execution
-            run_state = dict(state)
-            run_state["_run_idx"] = 0
-            run_state["_total_runs"] = 1
-            config = self.parameter_provider.get_step_config(step_name, config, run_state)
-            temps = config.get_temperatures()
+            # Simple case: single run
             llm = self._create_llm(
                 temperature=temps[0],
                 max_tokens=config.max_tokens,
@@ -2079,34 +2075,28 @@ class SalesDataAgent:
         results = []
         scores = []
 
-        for i in range(n):
-            # Prompt for per-run config override
-            run_state = dict(state)
-            run_state["_run_idx"] = i
-            run_state["_total_runs"] = n
-            run_config = self.parameter_provider.get_step_config(step_name, config, run_state)
-            run_temps = run_config.get_temperatures()
-            temp = run_temps[min(i, len(run_temps) - 1)]
+        print(f"[{step_name}] Running best-of-{n} with temps {[f'{t:.2f}' for t in temps]}")
 
+        for i, temp in enumerate(temps):
             llm = self._create_llm(
                 temperature=temp,
-                max_tokens=run_config.max_tokens,
-                top_p=run_config.top_p,
-                top_k=run_config.top_k,
-                num_beams=run_config.num_beams,
-                no_repeat_ngram_size=run_config.no_repeat_ngram_size,
+                max_tokens=config.max_tokens,
+                top_p=config.top_p,
+                top_k=config.top_k,
+                num_beams=config.num_beams,
+                no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
 
             try:
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
                 result["_run_idx"] = i
-                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, run_config.cot_n)
+                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
 
                 # Evaluate if function provided
-                if run_config.eval_fn:
+                if config.eval_fn:
                     try:
-                        score = run_config.eval_fn(result, state)
+                        score = config.eval_fn(result, state)
                     except Exception as eval_err:
                         print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
                         score = 0.0
@@ -2115,7 +2105,7 @@ class SalesDataAgent:
 
                 results.append(result)
                 scores.append(score)
-                if run_config.eval_fn:
+                if config.eval_fn:
                     print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
 
             except Exception as e:
