@@ -268,15 +268,20 @@ def compare_csv(csv1_path, csv2_path):
         print(f"Error while loading csvs for evaluation: {e}") 
         return 0. , 0. , 0.
     
+    # Normalize column names to lowercase for case-insensitive comparison
+    # (SQL aliases are case-insensitive; e.g. "total_revenue" == "Total_Revenue")
+    df1.columns = df1.columns.str.lower()
+    df2.columns = df2.columns.str.lower()
+
     # 1. Column names IoU
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
     columns_names_iou = len(cols1 & cols2) / len(cols1 | cols2) if cols1 | cols2 else 0.0
-    
+
     # 2. Overall data IoU
     data_counter1 = Counter(df1.values.flatten())
     data_counter2 = Counter(df2.values.flatten())
-    
+
     intersection = data_counter1 & data_counter2
     union = data_counter1 | data_counter2
     data_iou = sum(intersection.values()) / sum(union.values()) if union else 0.0
@@ -285,7 +290,7 @@ def compare_csv(csv1_path, csv2_path):
     cols_intersection = list(cols1 & cols2)
     if cols_intersection:
         sorted_cols = sorted(cols_intersection)  # Sort for consistency
-        
+
         rows1 = [tuple(row) for row in df1[sorted_cols].values]
         rows2 = [tuple(row) for row in df2[sorted_cols].values]
         
@@ -967,23 +972,26 @@ def judge_visualization(
 
 def make_csv_evaluator(
     ground_truth_csv_path: str,
-    iou_type: str = "rows"
 ) -> callable:
     """Factory to create CSV evaluation function for per-step execution.
 
+    Compares the agent's result DataFrame against a ground-truth CSV using
+    compare_dataframes_iou, which handles:
+    - Positional column fallback when column names differ (e.g. "Sale_Date" vs "Sold_Date")
+    - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
+
     Args:
         ground_truth_csv_path: Path to the ground truth CSV file.
-        iou_type: Type of IoU to compute - 'columns', 'rows', or 'table'.
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
-        that extracts data_df from result and compares to ground truth.
     """
+    gt_df = pd.read_csv(ground_truth_csv_path)
+    gt_df.columns = gt_df.columns.str.lower()
+
     def eval_fn(result: Dict, state: Dict) -> float:
-        # Extract DataFrame from result
         data_df = result.get("data_df")
         if data_df is None:
-            # Try to convert text data to DataFrame
             data_text = result.get("data", "")
             if data_text:
                 data_df = text_to_dataframe(data_text)
@@ -991,26 +999,11 @@ def make_csv_evaluator(
         if data_df is None:
             return 0.0
 
-        # Save to temp file for comparison
+        result_df = data_df.copy()
+        result_df.columns = result_df.columns.str.lower()
+
         try:
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-                data_df.to_csv(f.name, index=False)
-                temp_csv = f.name
-
-            # Use existing comparison logic
-            columns_iou, rows_iou, data_iou = compare_csv(temp_csv, ground_truth_csv_path)
-
-            # Return appropriate IoU based on type
-            if iou_type == "columns":
-                score = columns_iou
-            elif iou_type == "rows":
-                score = rows_iou
-            else:  # table
-                score = data_iou
-
-            os.unlink(temp_csv)
-            return score
-
+            return compare_dataframes_iou(result_df, gt_df)
         except Exception as e:
             print(f"CSV evaluation error: {e}")
             return 0.0
@@ -1083,43 +1076,53 @@ def make_text_evaluator(
 def make_vis_evaluator(
     ground_truth_config: Dict,
     ground_truth_code: str,
-    model: str = "llama3.2:3b",
-    ollama_url: Optional[str] = None
+    explicit_requirements: Optional[Dict] = None,
+    judge_model: str = "gpt-4o-mini",
+    provider: str = "openai",
+    openai_api_key: Optional[str] = None,
+    ollama_url: str = "http://localhost:11434",
 ) -> callable:
     """Factory to create visualization evaluation function for per-step execution.
 
     Args:
         ground_truth_config: Expected chart configuration dict.
         ground_truth_code: Expected chart code string.
-        model: LLM model for judge.
-        ollama_url: Ollama server URL.
+        explicit_requirements: Optional dict of explicit styling requirements.
+        judge_model: LLM model for the judge (default: gpt-4o-mini).
+        provider: LLM provider — 'openai' or 'ollama'.
+        openai_api_key: OpenAI API key (uses OPENAI_API_KEY env var if not provided).
+        ollama_url: Ollama server URL (only used when provider='ollama').
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
         that extracts chart_config and code from result and evaluates.
     """
     def eval_fn(result: Dict, state: Dict) -> float:
-        # Extract chart config and code from result
         chart_config = result.get("chart_config")
         answers = result.get("answer", [])
 
         if not chart_config:
             return 0.0
 
-        # Chart code is typically the last answer
+        # Chart code is the last answer entry
         chart_code = answers[-1] if answers else None
-
         if not chart_code:
             return 0.0
 
+        visualization_goal = state.get("visualization_goal", state.get("prompt", ""))
+
         try:
             score, _ = judge_visualization(
-                chart_config,
-                chart_code,
-                ground_truth_config,
-                ground_truth_code,
-                model=model,
-                ollama_url=ollama_url
+                visualization_goal=visualization_goal,
+                generated_config=chart_config,
+                generated_code=chart_code,
+                gt_config=ground_truth_config,
+                gt_code=ground_truth_code,
+                explicit_requirements=explicit_requirements,
+                judge_model=judge_model,
+                provider=provider,
+                openai_api_key=openai_api_key,
+                ollama_url=ollama_url,
             )
             return score
 
@@ -1141,8 +1144,13 @@ def make_vis_evaluator(
 def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
-    Columns are matched by position (not name) when names don't overlap,
-    so differently-aliased columns (e.g. Sale_Date vs Sold_Date) still compare.
+    Column selection strategy:
+    - Same column count → positional comparison (covers all columns, handles
+      differently-aliased columns like "Sale_Date" vs "Sold_Date" and partial
+      name overlaps like "total_units" vs "total_units_sold").
+    - Different column count, some names shared → compare only shared columns.
+    - Different column count, no names shared → return 0.0.
+
     Numeric values are compared with absolute tolerance ``atol``.
 
     Returns:
@@ -1151,20 +1159,20 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1
     if df1 is None or df2 is None or df1.empty or df2.empty:
         return 0.0
 
-    # Match columns: prefer shared names, fall back to positional alignment
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
-    shared = sorted(cols1 & cols2)
 
-    if shared:
-        v1 = df1[shared].values
-        v2 = df2[shared].values
-    elif len(df1.columns) == len(df2.columns):
-        # Same number of columns but different names → positional match
+    if len(df1.columns) == len(df2.columns):
+        # Same structure: positional comparison covers all columns regardless of aliases
         v1 = df1.values
         v2 = df2.values
     else:
-        return 0.0
+        # Different column count: fall back to shared-name subset
+        shared = sorted(cols1 & cols2)
+        if not shared:
+            return 0.0
+        v1 = df1[shared].values
+        v2 = df2[shared].values
 
     def _row_matches(r1, r2):
         """Check if two row arrays match element-wise with float tolerance."""
