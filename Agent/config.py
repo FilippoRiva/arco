@@ -324,11 +324,11 @@ class AgentConfig:
         gt_section = raw.get('ground_truth', {})
         if gt_section:
             from .utils import (
-                make_csv_evaluator,
+                make_csv_evaluator_gt,
                 make_csv_evaluator_no_gt,
-                make_text_evaluator,
+                make_text_evaluator_gt,
                 make_text_evaluator_no_gt,
-                make_vis_evaluator,
+                make_vis_evaluator_gt,
                 make_vis_evaluator_no_gt,
             )
 
@@ -336,13 +336,13 @@ class AgentConfig:
             if gt_csv_path:
                 if not os.path.isabs(gt_csv_path):
                     gt_csv_path = os.path.join(config_dir, gt_csv_path)
-                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator(gt_csv_path)
+                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(gt_csv_path)
                 # Use consensus-based evaluator for actual selection
                 config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
 
             gt_analysis = gt_section.get('analysis_text')
             if gt_analysis:
-                config.analyzing_data.gt_eval_fn = make_text_evaluator(
+                config.analyzing_data.gt_eval_fn = make_text_evaluator_gt(
                     ground_truth_text=gt_analysis,
                 )
                 # Use no-GT judge for actual selection
@@ -351,7 +351,7 @@ class AgentConfig:
             gt_vis_config = gt_section.get('vis_config')
             gt_vis_code = gt_section.get('vis_code')
             if gt_vis_config and gt_vis_code:
-                config.create_visualization.gt_eval_fn = make_vis_evaluator(
+                config.create_visualization.gt_eval_fn = make_vis_evaluator_gt(
                     ground_truth_config=gt_vis_config,
                     ground_truth_code=gt_vis_code,
                 )

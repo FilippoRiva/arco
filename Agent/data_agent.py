@@ -480,7 +480,7 @@ def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchem
     sql_query = generate_sql_query(state, schema_context, llm)
     try:
         result_df = con.execute(sql_query).df()
-        result_str = result_df.to_string(index=False)
+        result_str = result_df.to_csv(index=False)
         return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
     except Exception as e:
         print(f"Error accessing data: {str(e)}")
@@ -503,6 +503,7 @@ def analyzing_data_core(state: State, llm) -> Dict:
         )
         analysis_result = llm.invoke(formatted_prompt)
         analysis_text = analysis_result.content if hasattr(analysis_result, "content") else str(analysis_result)
+        print(f"Analysis:\n{analysis_text}")
         return {
             **state,
             "answer": state.get("answer", []) + [analysis_text],
