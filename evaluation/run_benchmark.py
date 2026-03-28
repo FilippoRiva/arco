@@ -10,8 +10,7 @@ import argparse
 import json
 import os
 import sys
-import tempfile
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -21,15 +20,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from Agent.config import AgentConfig
 from Agent.data_agent import SalesDataAgent
 from Agent.utils import (
-    compare_csv,
     compare_dataframes_iou,
     judge_analysis,
     judge_visualization,
+    make_csv_evaluator_gt,
     make_csv_evaluator_no_gt,
+    make_text_evaluator_gt,
     make_text_evaluator_no_gt,
+    make_vis_evaluator_gt,
     make_vis_evaluator_no_gt,
-    save_csv,
-    text_to_csv,
 )
 
 
@@ -45,68 +44,6 @@ def load_benchmark_dataset(path: str) -> List[Dict]:
     if "gt_data" not in first and "gt_chart_config" not in first:
         raise ValueError("Dataset entries must have 'gt_data' and/or 'gt_chart_config'")
     return entries
-
-
-def _make_lookup_eval_fn(gt_data_text: str):
-    """Create a step-level eval_fn for lookup_sales_data that scores against GT data."""
-    # Parse GT data text into a DataFrame
-    gt_df = pd.read_csv(pd.io.common.StringIO(gt_data_text))
-
-    def eval_fn(result: Dict, state: Dict) -> float:
-        gen_df = result.get("data_df")
-        if gen_df is None:
-            return 0.0
-        return compare_dataframes_iou(gen_df, gt_df)
-
-    return eval_fn
-
-
-def _make_analysis_eval_fn(gt_analysis: str, judge_model: str, provider: str):
-    """Create a step-level eval_fn for analyzing_data that scores against GT analysis."""
-
-    def eval_fn(result: Dict, state: Dict) -> float:
-        answers = result.get("answer", [])
-        if not answers:
-            return 0.0
-        analysis_text = answers[0]
-        prompt = state.get("prompt", "")
-        sql_query = state.get("sql_query", "")
-        data = state.get("data", "")
-        score, _ = judge_analysis(
-            prompt=prompt,
-            sql_query=sql_query,
-            data=data,
-            analysis=analysis_text,
-            judge_model=judge_model,
-            provider=provider,
-        )
-        return score
-
-    return eval_fn
-
-
-def _make_vis_eval_fn(gt_entry: Dict, judge_model: str, provider: str):
-    """Create a step-level eval_fn for create_visualization that scores against GT."""
-
-    def eval_fn(result: Dict, state: Dict) -> float:
-        chart_config = result.get("chart_config")
-        if not chart_config:
-            return 0.0
-        answers = result.get("answer", [])
-        chart_code = answers[-1] if len(answers) >= 2 else ""
-        score, _ = judge_visualization(
-            visualization_goal=gt_entry.get("visualization_goal", ""),
-            generated_config=chart_config,
-            generated_code=chart_code,
-            gt_config=gt_entry["gt_chart_config"],
-            gt_code=gt_entry.get("gt_chart_code", ""),
-            explicit_requirements=gt_entry.get("explicit_requirements"),
-            judge_model=judge_model,
-            provider=provider,
-        )
-        return score
-
-    return eval_fn
 
 
 def run_benchmark(
@@ -159,7 +96,9 @@ def run_benchmark(
         # Non-GT eval functions are used for best-of-n selection (eval_fn / batch_eval_fn).
         if has_data:
             config.lookup_sales_data.n = n
-            config.lookup_sales_data.gt_eval_fn = _make_lookup_eval_fn(entry["gt_data"])
+            config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(
+                ground_truth_csv_text=entry["gt_data"]
+            )
             config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
             config.lookup_sales_data.eval_fn = None
             config.lookup_sales_data.temp_min = 0.1
@@ -167,8 +106,10 @@ def run_benchmark(
 
         if has_data and entry.get("gt_analysis"):
             config.analyzing_data.n = n
-            config.analyzing_data.gt_eval_fn = _make_analysis_eval_fn(
-                entry["gt_analysis"], judge_model, judge_provider
+            config.analyzing_data.gt_eval_fn = make_text_evaluator_gt(
+                ground_truth_text=entry["gt_analysis"],
+                judge_model=judge_model,
+                provider=judge_provider,
             )
             config.analyzing_data.eval_fn = make_text_evaluator_no_gt(
                 judge_model=judge_model, provider=judge_provider
@@ -178,8 +119,12 @@ def run_benchmark(
 
         if has_vis:
             config.create_visualization.n = n
-            config.create_visualization.gt_eval_fn = _make_vis_eval_fn(
-                entry, judge_model, judge_provider
+            config.create_visualization.gt_eval_fn = make_vis_evaluator_gt(
+                ground_truth_config=entry["gt_chart_config"],
+                ground_truth_code=entry.get("gt_chart_code", ""),
+                explicit_requirements=entry.get("explicit_requirements"),
+                judge_model=judge_model,
+                provider=judge_provider,
             )
             config.create_visualization.eval_fn = make_vis_evaluator_no_gt(
                 judge_model=judge_model, provider=judge_provider

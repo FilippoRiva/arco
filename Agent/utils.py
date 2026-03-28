@@ -971,7 +971,8 @@ def judge_visualization(
 # per-step middleware. They have signature: (result: Dict, state: Dict) -> float
 
 def make_csv_evaluator_gt(
-    ground_truth_csv_path: str,
+    ground_truth_csv_path: Optional[str] = None,
+    ground_truth_csv_text: Optional[str] = None,
 ) -> callable:
     """Factory to create CSV evaluation function for per-step execution.
 
@@ -982,11 +983,20 @@ def make_csv_evaluator_gt(
 
     Args:
         ground_truth_csv_path: Path to the ground truth CSV file.
+        ground_truth_csv_text: Raw CSV text to use as ground truth.
+            Exactly one of ground_truth_csv_path or ground_truth_csv_text must be provided.
 
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
     """
-    gt_df = pd.read_csv(ground_truth_csv_path)
+    if ground_truth_csv_path and ground_truth_csv_text:
+        raise ValueError("Provide exactly one of ground_truth_csv_path or ground_truth_csv_text, not both")
+    if ground_truth_csv_text:
+        gt_df = pd.read_csv(pd.io.common.StringIO(ground_truth_csv_text))
+    elif ground_truth_csv_path:
+        gt_df = pd.read_csv(ground_truth_csv_path)
+    else:
+        raise ValueError("Provide either ground_truth_csv_path or ground_truth_csv_text")
     gt_df.columns = gt_df.columns.str.lower()
 
     def eval_fn(result: Dict, state: Dict) -> float:
