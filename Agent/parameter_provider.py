@@ -57,13 +57,18 @@ class DefaultProvider:
 # Tunable parameters shown to the user, with their expected types.
 _TUNABLE_PARAMS = [
     ("n", int),
+    ("bon_param", str),
     ("temp_min", float),
     ("temp_max", float),
+    ("top_p_min", float),
+    ("top_p_max", float),
+    ("top_k_min", int),
+    ("top_k_max", int),
     ("max_tokens", int),
-    ("top_p", float),
-    ("top_k", int),
     ("cot_n", int),
 ]
+
+_BON_PARAM_VALUES = ("temperature", "top_p", "top_k")
 
 # Steps that should not be overridden interactively.
 _SKIP_STEPS = {"decide_tool"}
@@ -127,6 +132,11 @@ class TerminalProvider:
             if not raw:
                 return current_value
             try:
+                if name == "bon_param":
+                    if raw not in _BON_PARAM_VALUES:
+                        print(f"    Valid values: {', '.join(_BON_PARAM_VALUES)}. Try again.")
+                        continue
+                    return raw
                 if param_type is int:
                     if raw.lower() in ("none", "null"):
                         return None

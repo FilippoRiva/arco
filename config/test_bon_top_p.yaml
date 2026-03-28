@@ -1,0 +1,56 @@
+# Test: best-of-n varying TOP_P su tutti gli step
+# bon_param diverso tra step: lookup=top_p, analyzing=top_p, create_vis=temperature
+agent:
+  model: "gpt-4o-mini"
+  provider: "openai"
+  openai_api_key: null
+
+steps:
+  decide_tool:
+    n: 1
+    use_cache: false
+
+  lookup_sales_data:
+    n: 3
+    bon_param: "top_p"
+    temp_min: 0.3         # temperatura fissa
+    top_p_min: 0.7        # top_p iniziale (min)
+    top_p_max: 1.0        # top_p finale (max)
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+  analyzing_data:
+    n: 3
+    bon_param: "top_p"
+    temp_min: 0.3         # temperatura fissa
+    top_p_min: 0.6        # range più ampio per l'analisi
+    top_p_max: 1.0
+    max_tokens: 3000
+    use_cache: false
+    eval: "default"
+
+  create_visualization:
+    n: 3
+    bon_param: "temperature"  # step diverso usa temperature
+    temp_min: 0.1
+    temp_max: 0.7
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+schema:
+  data_dir: "../data"
+
+run:
+  prompt: >
+    For each product class, compare the average revenue per unit sold during
+    promotions vs non-promotions throughout 2021. Rank the product classes by
+    the absolute difference in average revenue per unit between the two conditions,
+    and include the total number of transactions for each group.
+  visualization_goal: >
+    Bar chart comparing average revenue per unit (promo vs non-promo) for each
+    product class in 2021, sorted by absolute difference descending.
+  agent_mode: "full"
+  run_id: "test_bon_top_p"
+  save_results: false

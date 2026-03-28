@@ -19,8 +19,8 @@ class StepConfig:
         temp_min: Minimum temperature for sampling (default 0.1)
         temp_max: Maximum temperature for sampling (default 0.1)
         max_tokens: Maximum tokens for LLM generation (default 2000)
-        top_p: Top-p sampling parameter (default 1.0)
-        top_k: Top-k sampling parameter (default None, skipped for OpenAI)
+        top_p_min: Top-p sampling parameter, lower bound (default 1.0)
+        top_k_min: Top-k sampling parameter, lower bound (default None, skipped for OpenAI)
         num_beams: Beam search width; 1 = greedy/disabled (default 1, skipped for OpenAI)
         no_repeat_ngram_size: Prevent repeating n-grams of this size (default None, skipped for OpenAI)
         eval_fn: Callable that scores a result, signature: (result: Dict, state: State) -> float
@@ -33,13 +33,16 @@ class StepConfig:
     """
     # Best-of-n sampling parameters
     n: int = 1
+    bon_param: Literal["temperature", "top_p", "top_k"] = "temperature"
     temp_min: float = 0.1
     temp_max: float = 0.1
 
     # LLM generation parameters
     max_tokens: int = 2000
-    top_p: float = 1.0
-    top_k: Optional[int] = None  # Top-k sampling; skipped for OpenAI provider
+    top_p_min: float = 1.0
+    top_p_max: float = 1.0
+    top_k_min: Optional[int] = None  # Top-k sampling; skipped for OpenAI provider
+    top_k_max: Optional[int] = None
     num_beams: int = 1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
     no_repeat_ngram_size: Optional[int] = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
 
@@ -67,11 +70,28 @@ class StepConfig:
         if self.selection_fn is None:
             self.selection_fn = lambda scores: int(np.argmax(scores)) if scores else 0
 
-    def get_temperatures(self) -> List[float]:
-        """Generate temperature values for best-of-n sampling."""
+    def get_candidate_params(self) -> List[Tuple[float, float, Optional[int]]]:
+        """Generate (temperature, top_p, top_k) tuples for each best-of-n candidate.
+
+        The parameter selected by bon_param is varied linearly; the others are fixed.
+        """
         if self.n <= 1:
-            return [self.temp_min]
-        return np.linspace(self.temp_min, self.temp_max, self.n).tolist()
+            return [(self.temp_min, self.top_p_min, self.top_k_min)]
+        if self.bon_param == "top_p":
+            top_ps = np.linspace(self.top_p_min, self.top_p_max, self.n).tolist()
+            return [(self.temp_min, p, self.top_k_min) for p in top_ps]
+        if self.bon_param == "top_k":
+            k_start = self.top_k_min if self.top_k_min is not None else 1
+            k_end = self.top_k_max if self.top_k_max is not None else k_start
+            top_ks = [int(k) for k in np.linspace(k_start, k_end, self.n)]
+            return [(self.temp_min, self.top_p_min, k) for k in top_ks]
+        # default: temperature
+        temps = np.linspace(self.temp_min, self.temp_max, self.n).tolist()
+        return [(t, self.top_p_min, self.top_k_min) for t in temps]
+
+    def get_temperatures(self) -> List[float]:
+        """Generate temperature values for best-of-n sampling. Kept for compatibility."""
+        return [t for t, _, _ in self.get_candidate_params()]
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dict (excluding non-serializable callables)."""
@@ -88,7 +108,8 @@ class StepConfig:
         """Create StepConfig from dict (for deserialization)."""
         # Filter out unknown keys and non-serializable fields
         valid_keys = {
-            'n', 'temp_min', 'temp_max', 'max_tokens', 'top_p', 'top_k',
+            'n', 'bon_param', 'temp_min', 'temp_max', 'max_tokens',
+            'top_p_min', 'top_p_max', 'top_k_min', 'top_k_max',
             'num_beams', 'no_repeat_ngram_size',
             'use_cache', 'cache_mode', 'enabled', 'step_name', 'cot_n'
         }

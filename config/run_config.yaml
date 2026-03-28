@@ -22,8 +22,8 @@ steps:
     temp_min: 0.1
     temp_max: 0.1
     max_tokens: 2000
-    top_p: 1.0
-    top_k: null            # null = provider default; skipped for openai
+    top_p_min: 1.0
+    top_k_min: null            # null = provider default; skipped for openai
     cot_n: 1
     use_cache: false
     cache_mode: "skip"
@@ -34,8 +34,8 @@ steps:
     temp_min: 0.1
     temp_max: 0.3
     max_tokens: 2000
-    top_p: 1.0
-    top_k: null
+    top_p_min: 1.0
+    top_k_min: null
     cot_n: 1
     use_cache: true
     cache_mode: "skip"
@@ -47,8 +47,8 @@ steps:
     temp_min: 0.1
     temp_max: 0.7
     max_tokens: 3000
-    top_p: 1.0
-    top_k: null
+    top_p_min: 1.0
+    top_k_min: null
     cot_n: 1
     use_cache: true
     cache_mode: "skip"
@@ -60,8 +60,8 @@ steps:
     temp_min: 0.1
     temp_max: 0.5
     max_tokens: 2000
-    top_p: 1.0
-    top_k: null
+    top_p_min: 1.0
+    top_k_min: null
     cot_n: 1
     use_cache: true
     cache_mode: "skip"

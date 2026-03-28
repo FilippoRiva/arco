@@ -2056,15 +2056,17 @@ class SalesDataAgent:
         # No cache or force_fresh: prompt for config once per step execution
         config = self.parameter_provider.get_step_config(step_name, config, state)
         n = config.n
-        temps = config.get_temperatures()
+        candidate_params = config.get_candidate_params()
+        bon_param = config.bon_param
 
         if n == 1:
             # Simple case: single run
+            temp, top_p, top_k = candidate_params[0]
             llm = self._create_llm(
-                temperature=temps[0],
+                temperature=temp,
                 max_tokens=config.max_tokens,
-                top_p=config.top_p,
-                top_k=config.top_k,
+                top_p=top_p,
+                top_k=top_k,
                 num_beams=config.num_beams,
                 no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
@@ -2072,7 +2074,9 @@ class SalesDataAgent:
                 if config.cot_n > 1:
                     print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
                 result = core_fn(state, llm)
-                result["_temperature"] = temps[0]
+                result["_temperature"] = temp
+                result["_top_p"] = top_p
+                result["_top_k"] = top_k
                 result["_run_idx"] = 0
                 result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
             except Exception as e:
@@ -2088,26 +2092,32 @@ class SalesDataAgent:
         results = []
         scores = []
 
-        print(f"[{step_name}] Running best-of-{n} with temps {[f'{t:.2f}' for t in temps]}")
+        _param_idx = {"temperature": 0, "top_p": 1, "top_k": 2}[bon_param]
+        varying_vals = [p[_param_idx] for p in candidate_params]
+        print(f"[{step_name}] Running best-of-{n} varying {bon_param}: {varying_vals}")
 
-        for i, temp in enumerate(temps):
+        for i, (temp, top_p, top_k) in enumerate(candidate_params):
             if i > 0:
                 print()
                 print()
             llm = self._create_llm(
                 temperature=temp,
                 max_tokens=config.max_tokens,
-                top_p=config.top_p,
-                top_k=config.top_k,
+                top_p=top_p,
+                top_k=top_k,
                 num_beams=config.num_beams,
                 no_repeat_ngram_size=config.no_repeat_ngram_size,
             )
+            varying_val = varying_vals[i]
 
             try:
                 if config.cot_n > 1:
                     print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
                 result = core_fn(state, llm)
                 result["_temperature"] = temp
+                result["_top_p"] = top_p
+                result["_top_k"] = top_k
+                result["_bon_param"] = bon_param
                 result["_run_idx"] = i
                 result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
 
@@ -2118,13 +2128,13 @@ class SalesDataAgent:
                     except Exception as eval_err:
                         print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
                         score = 0.0
-                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score={score:.3f}")
+                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score={score:.3f}")
                 elif config.batch_eval_fn:
                     score = 0.0
-                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): score=pending (batch eval)")
+                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score=pending (batch eval)")
                 else:
                     score = 0.0
-                    print(f"  Run {i + 1}/{n} (T={temp:.2f}): done (no evaluator set)")
+                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): done (no evaluator set)")
 
                 results.append(result)
                 scores.append(score)
@@ -2134,6 +2144,9 @@ class SalesDataAgent:
                 error_result = dict(state)
                 error_result["error"] = str(e)
                 error_result["_temperature"] = temp
+                error_result["_top_p"] = top_p
+                error_result["_top_k"] = top_k
+                error_result["_bon_param"] = bon_param
                 error_result["_run_idx"] = i
                 results.append(error_result)
                 scores.append(-float('inf'))
