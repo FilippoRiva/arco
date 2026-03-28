@@ -19,8 +19,9 @@ import requests
 import json
 import os
 import difflib
+from contextlib import contextmanager
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 import tempfile
 import numpy as np
 import argparse
@@ -82,6 +83,222 @@ print(langgraph.version)
 DEFAULT_DATA_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "data", "Store_Sales_Price_Elasticity_Promotions_Data.parquet"
 )
+
+_TRACE_TEXT_LIMIT = 1200
+_TRACE_LIST_LIMIT = 8
+_TRACE_DICT_LIMIT = 20
+
+
+def _truncate_trace_text(value: Any, limit: int = _TRACE_TEXT_LIMIT) -> str:
+    text = value if isinstance(value, str) else str(value)
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}...<truncated {len(text) - limit} chars>"
+
+
+def _summarize_dataframe(df: Optional[pd.DataFrame]) -> Dict[str, Any]:
+    if df is None:
+        return {"present": False}
+    columns = [str(col) for col in df.columns[:_TRACE_LIST_LIMIT]]
+    summary: Dict[str, Any] = {
+        "present": True,
+        "rows": int(len(df.index)),
+        "columns": columns,
+        "column_count": int(len(df.columns)),
+    }
+    if len(df.columns) > _TRACE_LIST_LIMIT:
+        summary["columns_truncated"] = True
+    return summary
+
+
+def _summarize_state_for_trace(state: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not state:
+        return {}
+    summary: Dict[str, Any] = {
+        "prompt": _truncate_trace_text(state.get("prompt", "")),
+        "visualization_goal": _truncate_trace_text(state.get("visualization_goal", "")),
+        "tool_choice": str(state.get("tool_choice", "")),
+        "answer_count": len(state.get("answer", []) or []),
+        "has_error": bool(state.get("error")),
+        "sql_query": _truncate_trace_text(state.get("sql_query", "")),
+        "chart_config": state.get("chart_config"),
+        "dataframe": _summarize_dataframe(state.get("data_df")),
+    }
+    data_text = state.get("data", "")
+    if data_text:
+        summary["data_preview"] = _truncate_trace_text(data_text)
+    cached = state.get("cached_step_results") or {}
+    if cached:
+        summary["cached_steps"] = sorted(str(key) for key in cached.keys())[:_TRACE_LIST_LIMIT]
+        summary["cached_step_count"] = len(cached)
+    run_id = state.get("run_id")
+    if run_id:
+        summary["run_id"] = str(run_id)
+    return summary
+
+
+def _summarize_result_for_trace(result: Any) -> Any:
+    if isinstance(result, pd.DataFrame):
+        return _summarize_dataframe(result)
+    if not isinstance(result, dict):
+        return _truncate_trace_text(result)
+
+    summary: Dict[str, Any] = {
+        "keys": sorted(str(key) for key in result.keys())[:_TRACE_DICT_LIMIT],
+        "tool_choice": str(result.get("tool_choice", "")),
+        "answer_count": len(result.get("answer", []) or []),
+        "has_error": bool(result.get("error")),
+        "error": _truncate_trace_text(result.get("error", "")),
+        "sql_query": _truncate_trace_text(result.get("sql_query", "")),
+        "chart_config": result.get("chart_config"),
+        "dataframe": _summarize_dataframe(result.get("data_df")),
+    }
+    answers = result.get("answer", []) or []
+    if answers:
+        summary["latest_answer"] = _truncate_trace_text(answers[-1])
+    data_text = result.get("data", "")
+    if data_text:
+        summary["data_preview"] = _truncate_trace_text(data_text)
+    for key in ("_temperature", "_top_p", "_top_k", "_run_idx", "_best_idx", "_gt_score"):
+        if key in result:
+            summary[key] = result[key]
+    if "_all_scores" in result:
+        summary["_all_scores"] = [float(score) for score in result["_all_scores"][:_TRACE_LIST_LIMIT]]
+    return summary
+
+
+class TracingHelper:
+    """Best-effort helper for Phoenix/OpenInference tracing."""
+
+    def __init__(self, tracer=None) -> None:
+        self.tracer = tracer
+
+    @property
+    def enabled(self) -> bool:
+        return self.tracer is not None
+
+    def _normalize_attributes(self, attributes: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        normalized: Dict[str, Any] = {}
+        if not attributes:
+            return normalized
+        for key, value in attributes.items():
+            if value is None:
+                continue
+            if isinstance(value, (str, bool, int, float)):
+                normalized[str(key)] = value
+            elif isinstance(value, (list, tuple)):
+                normalized[str(key)] = [_truncate_trace_text(item, 200) for item in value[:_TRACE_LIST_LIMIT]]
+            else:
+                normalized[str(key)] = _truncate_trace_text(value, 400)
+        return normalized
+
+    def set_attributes(self, span, attributes: Optional[Dict[str, Any]]) -> None:
+        if span is None or not attributes:
+            return
+        try:
+            normalized = self._normalize_attributes(attributes)
+            if normalized:
+                span.set_attributes(normalized)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+    def set_input(self, span, value: Any) -> None:
+        if span is None or value is None:
+            return
+        try:
+            if hasattr(span, "set_input"):
+                span.set_input(value)  # type: ignore[attr-defined]
+            else:
+                self.set_attributes(span, {"input": _truncate_trace_text(json.dumps(value, default=str))})
+        except Exception:
+            pass
+
+    def set_output(self, span, value: Any) -> None:
+        if span is None or value is None:
+            return
+        try:
+            if hasattr(span, "set_output"):
+                span.set_output(value)  # type: ignore[attr-defined]
+            else:
+                self.set_attributes(span, {"output": _truncate_trace_text(json.dumps(value, default=str))})
+        except Exception:
+            pass
+
+    def record_exception(self, span, exc: Exception) -> None:
+        if span is None:
+            return
+        try:
+            if hasattr(span, "record_exception"):
+                span.record_exception(exc)  # type: ignore[attr-defined]
+            self.set_attributes(
+                span,
+                {
+                    "error.type": type(exc).__name__,
+                    "error.message": _truncate_trace_text(exc),
+                },
+            )
+        except Exception:
+            pass
+
+    def set_status_ok(self, span) -> None:
+        if span is None or StatusCode is None:
+            return
+        try:
+            span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+    def set_status_error(self, span, exc: Exception) -> None:
+        if span is None or StatusCode is None:
+            return
+        try:
+            span.set_status(StatusCode.ERROR, str(exc))  # type: ignore[attr-defined]
+        except Exception:
+            try:
+                span.set_status(StatusCode.ERROR)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+
+    @contextmanager
+    def start_span(
+        self,
+        name: str,
+        *,
+        kind: Optional[str] = None,
+        attributes: Optional[Dict[str, Any]] = None,
+        input_data: Any = None,
+    ):
+        if not self.enabled:
+            yield None
+            return
+
+        span_cm = None
+        span = None
+        try:
+            kwargs = {}
+            if kind:
+                kwargs["openinference_span_kind"] = kind
+            span_cm = self.tracer.start_as_current_span(name, **kwargs)  # type: ignore[attr-defined]
+            span = span_cm.__enter__()
+            self.set_attributes(span, attributes)
+            self.set_input(span, input_data)
+        except Exception:
+            yield None
+            return
+
+        try:
+            yield span
+            self.set_status_ok(span)
+        except Exception as exc:
+            self.record_exception(span, exc)
+            self.set_status_error(span, exc)
+            raise
+        finally:
+            if span_cm is not None:
+                try:
+                    span_cm.__exit__(None, None, None)
+                except Exception:
+                    pass
 
 # -----------------------------
 # State Definition
@@ -154,7 +371,12 @@ Example: sales,products
 """
 
 
-def select_relevant_tables(state: "State", schema: "DatabaseSchema", llm) -> List[str]:
+def select_relevant_tables(
+    state: "State",
+    schema: "DatabaseSchema",
+    llm,
+    trace_helper: Optional[TracingHelper] = None,
+) -> List[str]:
     """Use the LLM to select relevant tables from a large schema.
 
     Called when schema.should_use_table_selection() is True (more tables than
@@ -171,27 +393,49 @@ def select_relevant_tables(state: "State", schema: "DatabaseSchema", llm) -> Lis
         List of selected table names. Falls back to all table names if the LLM
         output cannot be parsed (safe degradation).
     """
-    formatted_prompt = TABLE_SELECTION_PROMPT.format(
-        compact_schema=schema.get_compact_summary(),
-        prompt=state["prompt"],
-    )
-    response = llm.invoke(formatted_prompt)
-    raw = response.content if hasattr(response, "content") else str(response)
-    raw = raw.strip()
+    helper = trace_helper or TracingHelper()
+    compact_schema = schema.get_compact_summary()
+    with helper.start_span(
+        "schema_table_selection",
+        kind="tool",
+        attributes={
+            "schema.table_count": len(schema.tables),
+            "schema.compact_summary_length": len(compact_schema),
+        },
+        input_data={
+            "prompt": _truncate_trace_text(state.get("prompt", "")),
+            "table_count": len(schema.tables),
+        },
+    ) as span:
+        formatted_prompt = TABLE_SELECTION_PROMPT.format(
+            compact_schema=compact_schema,
+            prompt=state["prompt"],
+        )
+        response = llm.invoke(formatted_prompt)
+        raw = response.content if hasattr(response, "content") else str(response)
+        raw = raw.strip()
 
-    name_map = {t.name.lower(): t.name for t in schema.tables}
-    selected = []
-    for token in raw.split(","):
-        normalized = token.strip().lower()
-        if normalized in name_map:
-            selected.append(name_map[normalized])
+        name_map = {t.name.lower(): t.name for t in schema.tables}
+        selected = []
+        for token in raw.split(","):
+            normalized = token.strip().lower()
+            if normalized in name_map:
+                selected.append(name_map[normalized])
 
-    if not selected:
-        print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
-        return [t.name for t in schema.tables]
+        if not selected:
+            print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
+            selected = [t.name for t in schema.tables]
+            helper.set_attributes(span, {"selection.fallback_to_all": True})
 
-    print(f"[select_relevant_tables] Selected tables: {selected}")
-    return selected
+        helper.set_output(
+            span,
+            {
+                "raw_response": _truncate_trace_text(raw),
+                "selected_tables": selected,
+            },
+        )
+        print(f"[select_relevant_tables] Selected tables: {selected}")
+        return selected
 
 
 def _extract_step_output(step_name: str, result: Dict) -> str:
@@ -396,7 +640,12 @@ Return ONLY the SQL query as plain text. No explanations. No markdown formatting
 
 
 
-def generate_sql_query(state: State, schema_context: str, llm) -> str:
+def generate_sql_query(
+    state: State,
+    schema_context: str,
+    llm,
+    trace_helper: Optional[TracingHelper] = None,
+) -> str:
     """Generate a DuckDB SQL query from the user prompt and schema context.
 
     Args:
@@ -411,20 +660,31 @@ def generate_sql_query(state: State, schema_context: str, llm) -> str:
     """
     visualization_goal = state.get("visualization_goal") or state.get("prompt", "general data analysis")
 
-    formatted_prompt = SQL_GENERATION_PROMPT.format(
-        prompt=state["prompt"],
-        schema_context=schema_context,
-        visualization_goal=visualization_goal,
-    )
-    response = llm.invoke(formatted_prompt)
-    sql_query = response.content if hasattr(response, "content") else str(response)
-    cleaned_sql = (
-        sql_query.strip()
-        .replace("```sql", "")
-        .replace("```", "")
-    )
-    print("Generated SQL Query:\n", cleaned_sql)
-    return cleaned_sql
+    helper = trace_helper or TracingHelper()
+    with helper.start_span(
+        "sql_generation",
+        kind="tool",
+        attributes={"schema_context_length": len(schema_context)},
+        input_data={
+            "prompt": _truncate_trace_text(state.get("prompt", "")),
+            "visualization_goal": _truncate_trace_text(visualization_goal),
+        },
+    ) as span:
+        formatted_prompt = SQL_GENERATION_PROMPT.format(
+            prompt=state["prompt"],
+            schema_context=schema_context,
+            visualization_goal=visualization_goal,
+        )
+        response = llm.invoke(formatted_prompt)
+        sql_query = response.content if hasattr(response, "content") else str(response)
+        cleaned_sql = (
+            sql_query.strip()
+            .replace("```sql", "")
+            .replace("```", "")
+        )
+        helper.set_output(span, {"sql_query": _truncate_trace_text(cleaned_sql)})
+        print("Generated SQL Query:\n", cleaned_sql)
+        return cleaned_sql
 
 # -----------------------------
 # Core Step Functions (for middleware)
@@ -432,7 +692,13 @@ def generate_sql_query(state: State, schema_context: str, llm) -> str:
 # These *_core functions contain just the essential logic without tracing.
 # They are called by the middleware for per-step best-of-n execution.
 
-def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchema"] = None) -> Dict:
+def lookup_sales_data_core(
+    state: State,
+    llm,
+    trace_helper: Optional[TracingHelper] = None,
+    *,
+    schema: Optional["DatabaseSchema"] = None,
+) -> Dict:
     """Core lookup logic - SQL generation and data retrieval.
 
     Supports both single-table (legacy) and multi-table (new) modes.
@@ -454,6 +720,8 @@ def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchem
     Returns:
         Updated state containing 'data', 'data_df', 'sql_query' or 'error'.
     """
+    helper = trace_helper or TracingHelper()
+
     # --- Build schema if not provided (backward compat) ---
     if schema is None:
         df = pd.read_parquet(DEFAULT_DATA_PATH)
@@ -473,23 +741,41 @@ def lookup_sales_data_core(state: State, llm, *, schema: Optional["DatabaseSchem
 
     # --- Build schema context (two-step when many tables) ---
     if schema.should_use_table_selection():
-        selected_names = select_relevant_tables(state, schema, llm)
+        selected_names = select_relevant_tables(state, schema, llm, trace_helper=helper)
         schema_context = schema.get_full_schema_str(table_names=selected_names)
     else:
+        selected_names = [table.name for table in schema.tables]
         schema_context = schema.get_full_schema_str()
 
     # --- Generate and execute SQL ---
-    sql_query = generate_sql_query(state, schema_context, llm)
+    sql_query = generate_sql_query(state, schema_context, llm, trace_helper=helper)
     try:
-        result_df = con.execute(sql_query).df()
-        result_str = result_df.to_csv(index=False)
+        with helper.start_span(
+            "sql_execution",
+            kind="tool",
+            attributes={
+                "schema_table_count": len(schema.tables),
+                "selected_table_count": len(selected_names),
+            },
+            input_data={"sql_query": _truncate_trace_text(sql_query)},
+        ) as span:
+            result_df = con.execute(sql_query).df()
+            result_str = result_df.to_csv(index=False)
+            helper.set_output(
+                span,
+                {
+                    "selected_tables": selected_names,
+                    "dataframe": _summarize_dataframe(result_df),
+                    "data_preview": _truncate_trace_text(result_str),
+                },
+            )
         return {**state, "data": result_str, "data_df": result_df, "sql_query": sql_query}
     except Exception as e:
         print(f"Error accessing data: {str(e)}")
         return {**state, "data": "", "sql_query": sql_query, "error": f"Error accessing data: {str(e)}"}
 
 
-def analyzing_data_core(state: State, llm) -> Dict:
+def analyzing_data_core(state: State, llm, trace_helper: Optional[TracingHelper] = None) -> Dict:
     """Core analysis logic - LLM-based data analysis.
 
     Args:
@@ -515,7 +801,7 @@ def analyzing_data_core(state: State, llm) -> Dict:
         return {**state, "error": f"Error accessing data: {str(e)}"}
 
 
-def decide_tool_core(state: State, llm) -> Dict:
+def decide_tool_core(state: State, llm, trace_helper: Optional[TracingHelper] = None) -> Dict:
     """Core tool decision logic - LLM-based routing.
 
     Args:
@@ -691,7 +977,7 @@ No explanations. Just the tool name.
         return {**state, "error": f"Error accessing data: {str(e)}"}
 
 
-def create_visualization_core(state: State, llm) -> Dict:
+def create_visualization_core(state: State, llm, trace_helper: Optional[TracingHelper] = None) -> Dict:
     """Core visualization logic - chart config extraction and code generation.
 
     Args:
@@ -706,6 +992,7 @@ def create_visualization_core(state: State, llm) -> Dict:
     """
     try:
         data_df = state.get("data_df")
+        helper = trace_helper or TracingHelper()
 
         if data_df is not None:
             print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
@@ -713,13 +1000,13 @@ def create_visualization_core(state: State, llm) -> Dict:
             print("Warning: No DataFrame available in state")
 
         # Extract chart configuration
-        with_config = extract_chart_config(state, llm)
+        with_config = extract_chart_config(state, llm, trace_helper=helper)
 
         # Ensure DataFrame is in the updated state
         with_config["data_df"] = data_df
 
         # Generate chart code
-        code = create_chart(with_config, llm)
+        code = create_chart(with_config, llm, trace_helper=helper)
 
         # --- Validate by executing in a headless namespace (no display) ---
         # Switch to Agg (non-interactive) backend to avoid tkinter threading
@@ -733,8 +1020,18 @@ def create_visualization_core(state: State, llm) -> Dict:
             "config": with_config.get("chart_config", {}),
         }
         try:
-            exec(exec_code, namespace)  # noqa: S102
-            exec_error = ""
+            with helper.start_span(
+                "visualization_validation",
+                kind="tool",
+                input_data={
+                    "chart_config": with_config.get("chart_config", {}),
+                    "dataframe": _summarize_dataframe(data_df),
+                    "code": _truncate_trace_text(code),
+                },
+            ) as span:
+                exec(exec_code, namespace)  # noqa: S102
+                exec_error = ""
+                helper.set_output(span, {"validation": "passed"})
         except Exception as e:
             exec_error = f"{type(e).__name__}: {e}"
             print(f"[create_visualization] Code validation error: {exec_error}")
@@ -1100,22 +1397,6 @@ No explanations. Just the tool name.
         elif len(state.get("answer", [])) > 1:
             matched_tool = "end"
 
-        # Tracing span for tool choice (optional)
-        if tracer is not None:
-            try:
-                with tracer.start_as_current_span("tool_choice", openinference_span_kind="tool") as span:  # type: ignore[attr-defined]
-                    # Minimal, robust attributes to avoid dtype issues
-                    span.set_attributes({  # type: ignore[attr-defined]
-                        "prompt": str(current_prompt),
-                        "tool_choice": str(matched_tool),
-                    })
-                    span.set_input(str(current_prompt))  # type: ignore[attr-defined]
-                    span.set_output(str(matched_tool))  # type: ignore[attr-defined]
-                    if StatusCode is not None:
-                        span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-            except Exception:
-                pass
-
         print(f"\n\nTool selected: {matched_tool}")
 
         return {
@@ -1302,7 +1583,11 @@ def _parse_chart_config(raw_text: str) -> Dict[str, str]:
     }
 
 
-def extract_chart_config(state: State, llm: ChatOllama) -> State:
+def extract_chart_config(
+    state: State,
+    llm: ChatOllama,
+    trace_helper: Optional[TracingHelper] = None,
+) -> State:
     """Infer a compact chart configuration from the looked-up data.
 
     Prompts the LLM to return a minified JSON config and parses it into a
@@ -1319,16 +1604,32 @@ def extract_chart_config(state: State, llm: ChatOllama) -> State:
     if not data_text:
         return {**state, "chart_config": None}
 
+    helper = trace_helper or TracingHelper()
     visualization_goal = state.get("visualization_goal") or state.get("prompt", "Chart")
-    formatted_prompt = CHART_CONFIGURATION_PROMPT.format(
-        data=data_text, visualization_goal=visualization_goal
-    )
-    response = llm.invoke(formatted_prompt)
-    raw = response.content if hasattr(response, "content") else str(response)
-    chart_config = _parse_chart_config(raw)
-    # Do NOT include data in chart_config - it will be passed separately as DataFrame
-    print("This is the chart_config: "+str(chart_config))
-    return {**state, "chart_config": chart_config}
+    with helper.start_span(
+        "chart_config_extraction",
+        kind="tool",
+        input_data={
+            "visualization_goal": _truncate_trace_text(visualization_goal),
+            "data_preview": _truncate_trace_text(data_text),
+        },
+    ) as span:
+        formatted_prompt = CHART_CONFIGURATION_PROMPT.format(
+            data=data_text, visualization_goal=visualization_goal
+        )
+        response = llm.invoke(formatted_prompt)
+        raw = response.content if hasattr(response, "content") else str(response)
+        chart_config = _parse_chart_config(raw)
+        helper.set_output(
+            span,
+            {
+                "raw_response": _truncate_trace_text(raw),
+                "chart_config": chart_config,
+            },
+        )
+        # Do NOT include data in chart_config - it will be passed separately as DataFrame
+        print("This is the chart_config: "+str(chart_config))
+        return {**state, "chart_config": chart_config}
 
 
 CREATE_CHART_PROMPT = """You are a Python data visualization developer creating matplotlib charts.
@@ -1568,7 +1869,11 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
 """
 
 
-def create_chart(state: State, llm: ChatOllama) -> str:
+def create_chart(
+    state: State,
+    llm: ChatOllama,
+    trace_helper: Optional[TracingHelper] = None,
+) -> str:
     """Ask the LLM to emit matplotlib code for the given chart configuration.
 
     Args:
@@ -1579,11 +1884,19 @@ def create_chart(state: State, llm: ChatOllama) -> str:
         A Python code string (without markdown fences) that, when executed,
         renders the chart using matplotlib.
     """
-    formatted_prompt = CREATE_CHART_PROMPT.format(config=state.get("chart_config", {}))
-    response = llm.invoke(formatted_prompt)
-    code = response.content if hasattr(response, "content") else str(response)
-    # clean any accidental fences
-    return code.replace("```python", "").replace("```", "").strip()
+    helper = trace_helper or TracingHelper()
+    with helper.start_span(
+        "chart_code_generation",
+        kind="tool",
+        input_data={"chart_config": state.get("chart_config", {})},
+    ) as span:
+        formatted_prompt = CREATE_CHART_PROMPT.format(config=state.get("chart_config", {}))
+        response = llm.invoke(formatted_prompt)
+        code = response.content if hasattr(response, "content") else str(response)
+        cleaned_code = code.replace("```python", "").replace("```", "").strip()
+        helper.set_output(span, {"code": _truncate_trace_text(cleaned_code)})
+        # clean any accidental fences
+        return cleaned_code
 
     
 def create_visualization(state: State, llm: ChatOllama, tracer=None) -> State:
@@ -1752,6 +2065,7 @@ class SalesDataAgent:
             except Exception as _:
                 self.tracer = None
                 self.tracing_enabled = False
+        self.trace_helper = TracingHelper(self.tracer if self.tracing_enabled else None)
 
         # Store model parameters for LLM factory method
         self.model = model
@@ -1785,34 +2099,60 @@ class SalesDataAgent:
         self.graph = self._build_graph()
         self.run_checked = False
 
+    @staticmethod
+    def _span_name_for_step(step_name: str) -> str:
+        return {
+            "decide_tool": "tool_choice",
+            "lookup_sales_data": "sql_query_exec",
+            "analyzing_data": "data_analysis",
+            "create_visualization": "gen_visualization",
+        }.get(step_name, step_name)
+
     def check_ollama(self):
-        try:
-            self.llm.invoke("Hello, how are you?")
-            print("Ollama is running locally")
-            return True
-        except Exception as e:
-            print(e)
-            return False
+        with self.trace_helper.start_span(
+            "ollama_check",
+            kind="tool",
+            input_data={"provider": self.provider, "ollama_url": self.ollama_url},
+        ) as span:
+            try:
+                self.llm.invoke("Hello, how are you?")
+                self.trace_helper.set_output(span, {"reachable": True})
+                print("Ollama is running locally")
+                return True
+            except Exception as e:
+                self.trace_helper.set_output(span, {"reachable": False, "error": _truncate_trace_text(e)})
+                print(e)
+                return False
 
     def check_model(self):
         """Check if the model is running locally (Ollama) or accessible (OpenAI)"""
-        if self.provider == "openai":
-            try:
-                self.llm.invoke("Hello")
-                print("OpenAI API is accessible")
-                return True
-            except Exception as e:
-                print(f"OpenAI API error: {e}")
-                return False
-        else:
-            try:
-                base = self.ollama_url.rstrip("/")
-                requests.get(f"{base}/api/version", timeout=3).json()
-                print("Server is running locally")
-                return self.check_ollama()
-            except Exception as e:
-                print(e)
-                return False
+        with self.trace_helper.start_span(
+            "model_access_check",
+            kind="tool",
+            input_data={"provider": self.provider, "model": self.model},
+        ) as span:
+            if self.provider == "openai":
+                try:
+                    self.llm.invoke("Hello")
+                    self.trace_helper.set_output(span, {"reachable": True, "provider": self.provider})
+                    print("OpenAI API is accessible")
+                    return True
+                except Exception as e:
+                    self.trace_helper.set_output(span, {"reachable": False, "error": _truncate_trace_text(e)})
+                    print(f"OpenAI API error: {e}")
+                    return False
+            else:
+                try:
+                    base = self.ollama_url.rstrip("/")
+                    requests.get(f"{base}/api/version", timeout=3).json()
+                    print("Server is running locally")
+                    reachable = self.check_ollama()
+                    self.trace_helper.set_output(span, {"reachable": reachable, "provider": self.provider})
+                    return reachable
+                except Exception as e:
+                    self.trace_helper.set_output(span, {"reachable": False, "error": _truncate_trace_text(e)})
+                    print(e)
+                    return False
 
     def _create_llm(
         self,
@@ -1873,6 +2213,7 @@ class SalesDataAgent:
         llm,
         initial_result: Dict,
         cot_n: int,
+        trace_helper: Optional[TracingHelper] = None,
     ) -> Dict:
         """Apply up to cot_n iterative CoT refinement steps to a single LLM call.
 
@@ -1898,16 +2239,31 @@ class SalesDataAgent:
         result = initial_result
         previous_output = _extract_step_output(step_name, result)
         execution_error = result.get("error", "")
+        helper = trace_helper or self.trace_helper
 
         for cot_i in range(1, cot_n):
             print()
             print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n}: starting refinement...")
             refinement_llm = CoTRefinementLLM(llm, previous_output, execution_error)
-            try:
-                new_result = core_fn(state, refinement_llm)
-            except Exception as e:
-                print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n} failed: {e}")
-                break
+            with helper.start_span(
+                "cot_refinement",
+                kind="tool",
+                attributes={
+                    "step_name": step_name,
+                    "cot_iteration": cot_i + 1,
+                    "cot_total": cot_n,
+                },
+                input_data={
+                    "previous_output": _truncate_trace_text(previous_output),
+                    "execution_error": _truncate_trace_text(execution_error),
+                },
+            ) as span:
+                try:
+                    new_result = core_fn(state, refinement_llm, trace_helper=helper)
+                    helper.set_output(span, _summarize_result_for_trace(new_result))
+                except Exception as e:
+                    print(f"[{step_name}] CoT iteration {cot_i + 1}/{cot_n} failed: {e}")
+                    break
 
             new_error = new_result.get("error", "")
             if new_error:
@@ -1929,6 +2285,13 @@ class SalesDataAgent:
 
             result = new_result
             execution_error = ""
+            helper.set_attributes(
+                span,
+                {
+                    "cot_similarity": float(ratio),
+                    "cot_converged": ratio >= _COT_SIMILARITY_THRESHOLD,
+                },
+            )
 
             if ratio >= _COT_SIMILARITY_THRESHOLD:
                 if cot_i < cot_n - 1:
@@ -2008,186 +2371,280 @@ class SalesDataAgent:
         Returns:
             Updated state dict from the best run
         """
-        # Check if step is enabled
-        if not config.enabled:
-            print(f"[{step_name}] Step disabled, skipping")
-            return dict(state)
+        helper = self.trace_helper
+        span_name = self._span_name_for_step(step_name)
+        with helper.start_span(
+            span_name,
+            kind="tool",
+            attributes={
+                "step_name": step_name,
+                "config.enabled": config.enabled,
+                "config.cache_mode": getattr(config, "cache_mode", None),
+                "config.use_cache": getattr(config, "use_cache", None),
+                "config.n": getattr(config, "n", None),
+                "config.cot_n": getattr(config, "cot_n", None),
+            },
+            input_data=_summarize_state_for_trace(state),
+        ) as step_span:
+            if not config.enabled:
+                print(f"[{step_name}] Step disabled, skipping")
+                helper.set_output(step_span, {"step_skipped": True})
+                return dict(state)
 
-        # Check cache first
-        if config.use_cache and config.cache_mode != "force_fresh":
-            cached_results = state.get("cached_step_results", {})
-            if cached_results and step_name in cached_results:
-                cached = cached_results[step_name]
-                print(f"[{step_name}] Found {len(cached)} cached result(s)")
+            if config.use_cache and config.cache_mode != "force_fresh":
+                with helper.start_span(
+                    "cache_lookup",
+                    kind="tool",
+                    attributes={"step_name": step_name, "cache_mode": config.cache_mode},
+                    input_data={"cached_steps": sorted((state.get("cached_step_results") or {}).keys())},
+                ) as cache_span:
+                    cached_results = state.get("cached_step_results", {})
+                    if cached_results and step_name in cached_results:
+                        cached = cached_results[step_name]
+                        print(f"[{step_name}] Found {len(cached)} cached result(s)")
+                        helper.set_output(cache_span, {"cache_hit": True, "cached_result_count": len(cached)})
 
-                # Preserve cached_step_results from the current state so that
-                # subsequent steps can still find their own cached results.
-                # (The cached dict was produced in a previous run whose state
-                # had an empty or different cached_step_results.)
-                live_csr = state.get("cached_step_results", {})
+                        live_csr = state.get("cached_step_results", {})
 
-                if config.cache_mode == "skip":
-                    # Use first cached result directly (previously selected best)
-                    print(f"[{step_name}] Using cached result (skip mode)")
-                    if cached:
-                        result = dict(cached[0])
-                        result["cached_step_results"] = live_csr
-                        self._run_gt_eval(step_name, config, result, state)
-                        return result
-                    return dict(state)
+                        if config.cache_mode == "skip":
+                            print(f"[{step_name}] Using cached result (skip mode)")
+                            if cached:
+                                result = dict(cached[0])
+                                result["cached_step_results"] = live_csr
+                                self._run_gt_eval(step_name, config, result, state)
+                                helper.set_attributes(step_span, {"cache_hit": True, "cache_reused": True})
+                                helper.set_output(step_span, _summarize_result_for_trace(result))
+                                return result
+                            helper.set_output(step_span, {"cache_hit": True, "cached_result_count": 0})
+                            return dict(state)
 
-                # cache_mode == "auto": Re-evaluate cached results with current eval_fn
-                if config.eval_fn and len(cached) > 1:
-                    scores = []
-                    for r in cached:
-                        try:
-                            score = config.eval_fn(r, state)
-                        except Exception:
+                        if config.eval_fn and len(cached) > 1:
+                            scores = []
+                            for r in cached:
+                                try:
+                                    score = config.eval_fn(r, state)
+                                except Exception:
+                                    score = 0.0
+                                scores.append(score)
+                            best_idx = config.selection_fn(scores)
+                            print(f"[{step_name}] Re-selected cached result {best_idx + 1}/{len(cached)}")
+                            result = dict(cached[best_idx])
+                            result["cached_step_results"] = live_csr
+                            self._run_gt_eval(step_name, config, result, state, all_results=cached)
+                            helper.set_attributes(
+                                step_span,
+                                {
+                                    "cache_hit": True,
+                                    "cache_reused": True,
+                                    "selected_cached_index": best_idx,
+                                },
+                            )
+                            helper.set_output(step_span, _summarize_result_for_trace(result))
+                            return result
+                        elif cached:
+                            result = dict(cached[0])
+                            result["cached_step_results"] = live_csr
+                            self._run_gt_eval(step_name, config, result, state)
+                            helper.set_attributes(step_span, {"cache_hit": True, "cache_reused": True})
+                            helper.set_output(step_span, _summarize_result_for_trace(result))
+                            return result
+                    else:
+                        helper.set_output(cache_span, {"cache_hit": False})
+
+            config = self.parameter_provider.get_step_config(step_name, config, state)
+            n = config.n
+            candidate_params = config.get_candidate_params()
+            bon_param = config.bon_param
+            helper.set_attributes(
+                step_span,
+                {
+                    "config.n": n,
+                    "config.cot_n": config.cot_n,
+                    "config.bon_param": bon_param,
+                    "config.max_tokens": config.max_tokens,
+                },
+            )
+
+            if n == 1:
+                temp, top_p, top_k = candidate_params[0]
+                llm = self._create_llm(
+                    temperature=temp,
+                    max_tokens=config.max_tokens,
+                    top_p=top_p,
+                    top_k=top_k,
+                    num_beams=config.num_beams,
+                    no_repeat_ngram_size=config.no_repeat_ngram_size,
+                )
+                try:
+                    with helper.start_span(
+                        "step_candidate",
+                        kind="tool",
+                        attributes={
+                            "step_name": step_name,
+                            "candidate_index": 0,
+                            "temperature": temp,
+                            "top_p": top_p,
+                            "top_k": top_k,
+                        },
+                    ) as candidate_span:
+                        if config.cot_n > 1:
+                            print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
+                        result = core_fn(state, llm, trace_helper=helper)
+                        result["_temperature"] = temp
+                        result["_top_p"] = top_p
+                        result["_top_k"] = top_k
+                        result["_run_idx"] = 0
+                        result = self._apply_cot_iterations(
+                            step_name,
+                            state,
+                            core_fn,
+                            llm,
+                            result,
+                            config.cot_n,
+                            trace_helper=helper,
+                        )
+                        result["_temperature"] = temp
+                        result["_top_p"] = top_p
+                        result["_top_k"] = top_k
+                        result["_run_idx"] = 0
+                        helper.set_output(candidate_span, _summarize_result_for_trace(result))
+                except Exception as e:
+                    print(f"[{step_name}] Error: {e}")
+                    result = dict(state)
+                    result["error"] = str(e)
+
+                self.current_run_step_results[step_name] = [result]
+                self._run_gt_eval(step_name, config, result, state)
+                helper.set_output(step_span, _summarize_result_for_trace(result))
+                return result
+
+            results = []
+            scores = []
+
+            _param_idx = {"temperature": 0, "top_p": 1, "top_k": 2}[bon_param]
+            varying_vals = [p[_param_idx] for p in candidate_params]
+            print(f"[{step_name}] Running best-of-{n} varying {bon_param}: {varying_vals}")
+            helper.set_attributes(step_span, {"candidate_count": n, "varying_values": varying_vals})
+
+            for i, (temp, top_p, top_k) in enumerate(candidate_params):
+                if i > 0:
+                    print()
+                    print()
+                llm = self._create_llm(
+                    temperature=temp,
+                    max_tokens=config.max_tokens,
+                    top_p=top_p,
+                    top_k=top_k,
+                    num_beams=config.num_beams,
+                    no_repeat_ngram_size=config.no_repeat_ngram_size,
+                )
+                varying_val = varying_vals[i]
+
+                try:
+                    with helper.start_span(
+                        "step_candidate",
+                        kind="tool",
+                        attributes={
+                            "step_name": step_name,
+                            "candidate_index": i,
+                            "temperature": temp,
+                            "top_p": top_p,
+                            "top_k": top_k,
+                            bon_param: varying_val,
+                        },
+                    ) as candidate_span:
+                        if config.cot_n > 1:
+                            print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
+                        result = core_fn(state, llm, trace_helper=helper)
+                        result["_temperature"] = temp
+                        result["_top_p"] = top_p
+                        result["_top_k"] = top_k
+                        result["_bon_param"] = bon_param
+                        result["_run_idx"] = i
+                        result = self._apply_cot_iterations(
+                            step_name,
+                            state,
+                            core_fn,
+                            llm,
+                            result,
+                            config.cot_n,
+                            trace_helper=helper,
+                        )
+                        result["_temperature"] = temp
+                        result["_top_p"] = top_p
+                        result["_top_k"] = top_k
+                        result["_bon_param"] = bon_param
+                        result["_run_idx"] = i
+
+                        if config.eval_fn:
+                            try:
+                                score = config.eval_fn(result, state)
+                            except Exception as eval_err:
+                                print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
+                                score = 0.0
+                            print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score={score:.3f}")
+                        elif config.batch_eval_fn:
                             score = 0.0
+                            print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score=pending (batch eval)")
+                        else:
+                            score = 0.0
+                            print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): done (no evaluator set)")
+
+                        helper.set_attributes(candidate_span, {"candidate_score": float(score)})
+                        helper.set_output(candidate_span, _summarize_result_for_trace(result))
+                        results.append(result)
                         scores.append(score)
-                    best_idx = config.selection_fn(scores)
-                    print(f"[{step_name}] Re-selected cached result {best_idx + 1}/{len(cached)}")
-                    result = dict(cached[best_idx])
-                    result["cached_step_results"] = live_csr
-                    self._run_gt_eval(step_name, config, result, state, all_results=cached)
-                    return result
-                elif cached:
-                    result = dict(cached[0])
-                    result["cached_step_results"] = live_csr
-                    self._run_gt_eval(step_name, config, result, state)
-                    return result
+                except Exception as e:
+                    print(f"  Run {i + 1}/{n} failed: {e}")
+                    error_result = dict(state)
+                    error_result["error"] = str(e)
+                    error_result["_temperature"] = temp
+                    error_result["_top_p"] = top_p
+                    error_result["_top_k"] = top_k
+                    error_result["_bon_param"] = bon_param
+                    error_result["_run_idx"] = i
+                    results.append(error_result)
+                    scores.append(-float("inf"))
 
-        # No cache or force_fresh: prompt for config once per step execution
-        config = self.parameter_provider.get_step_config(step_name, config, state)
-        n = config.n
-        candidate_params = config.get_candidate_params()
-        bon_param = config.bon_param
+            self.current_run_step_results[step_name] = results
 
-        if n == 1:
-            # Simple case: single run
-            temp, top_p, top_k = candidate_params[0]
-            llm = self._create_llm(
-                temperature=temp,
-                max_tokens=config.max_tokens,
-                top_p=top_p,
-                top_k=top_k,
-                num_beams=config.num_beams,
-                no_repeat_ngram_size=config.no_repeat_ngram_size,
+            if step_name == "lookup_sales_data" and len(results) > 1:
+                try:
+                    from Agent.utils import standardize_candidate_columns
+                    standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                    results = standardize_candidate_columns(results, self.schema, standardize_llm)
+                    self.current_run_step_results[step_name] = results
+                    helper.set_attributes(step_span, {"standardized_candidate_columns": True})
+                except Exception as e:
+                    print(f"[{step_name}] Column standardization warning: {e}")
+
+            if config.batch_eval_fn:
+                try:
+                    scores = config.batch_eval_fn(results, state)
+                    print(f"[{step_name}] Batch eval scores: {[f'{s:.3f}' for s in scores]}")
+                except Exception as e:
+                    print(f"[{step_name}] Batch eval error: {e}")
+
+            if not scores or all(s == -float("inf") for s in scores):
+                best_result = results[0] if results else dict(state)
+                best_idx = 0 if results else None
+            else:
+                best_idx = config.selection_fn(scores)
+                best_result = results[best_idx]
+                best_result["_best_idx"] = best_idx
+                best_result["_all_scores"] = scores
+                print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
+
+            self._run_gt_eval(step_name, config, best_result, state, all_results=results)
+            helper.set_attributes(
+                step_span,
+                {
+                    "selected_candidate_index": best_idx,
+                    "all_scores": [float(score) for score in scores[:_TRACE_LIST_LIMIT]],
+                },
             )
-            try:
-                if config.cot_n > 1:
-                    print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
-                result = core_fn(state, llm)
-                result["_temperature"] = temp
-                result["_top_p"] = top_p
-                result["_top_k"] = top_k
-                result["_run_idx"] = 0
-                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
-            except Exception as e:
-                print(f"[{step_name}] Error: {e}")
-                result = dict(state)
-                result["error"] = str(e)
-
-            self.current_run_step_results[step_name] = [result]
-            self._run_gt_eval(step_name, config, result, state)
-            return result
-
-        # Best-of-n execution
-        results = []
-        scores = []
-
-        _param_idx = {"temperature": 0, "top_p": 1, "top_k": 2}[bon_param]
-        varying_vals = [p[_param_idx] for p in candidate_params]
-        print(f"[{step_name}] Running best-of-{n} varying {bon_param}: {varying_vals}")
-
-        for i, (temp, top_p, top_k) in enumerate(candidate_params):
-            if i > 0:
-                print()
-                print()
-            llm = self._create_llm(
-                temperature=temp,
-                max_tokens=config.max_tokens,
-                top_p=top_p,
-                top_k=top_k,
-                num_beams=config.num_beams,
-                no_repeat_ngram_size=config.no_repeat_ngram_size,
-            )
-            varying_val = varying_vals[i]
-
-            try:
-                if config.cot_n > 1:
-                    print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
-                result = core_fn(state, llm)
-                result["_temperature"] = temp
-                result["_top_p"] = top_p
-                result["_top_k"] = top_k
-                result["_bon_param"] = bon_param
-                result["_run_idx"] = i
-                result = self._apply_cot_iterations(step_name, state, core_fn, llm, result, config.cot_n)
-
-                # Evaluate if function provided
-                if config.eval_fn:
-                    try:
-                        score = config.eval_fn(result, state)
-                    except Exception as eval_err:
-                        print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
-                        score = 0.0
-                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score={score:.3f}")
-                elif config.batch_eval_fn:
-                    score = 0.0
-                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): score=pending (batch eval)")
-                else:
-                    score = 0.0
-                    print(f"  Run {i + 1}/{n} ({bon_param}={varying_val}): done (no evaluator set)")
-
-                results.append(result)
-                scores.append(score)
-
-            except Exception as e:
-                print(f"  Run {i + 1}/{n} failed: {e}")
-                error_result = dict(state)
-                error_result["error"] = str(e)
-                error_result["_temperature"] = temp
-                error_result["_top_p"] = top_p
-                error_result["_top_k"] = top_k
-                error_result["_bon_param"] = bon_param
-                error_result["_run_idx"] = i
-                results.append(error_result)
-                scores.append(-float('inf'))
-
-        # Store all results for caching
-        self.current_run_step_results[step_name] = results
-
-        # Standardize column names across candidates for data-producing steps
-        if step_name == "lookup_sales_data" and len(results) > 1:
-            try:
-                from Agent.utils import standardize_candidate_columns
-                standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
-                results = standardize_candidate_columns(results, self.schema, standardize_llm)
-                self.current_run_step_results[step_name] = results
-            except Exception as e:
-                print(f"[{step_name}] Column standardization warning: {e}")
-
-        # Batch re-evaluation if batch_eval_fn is provided (e.g. consensus scoring)
-        if config.batch_eval_fn:
-            try:
-                scores = config.batch_eval_fn(results, state)
-                print(f"[{step_name}] Batch eval scores: {[f'{s:.3f}' for s in scores]}")
-            except Exception as e:
-                print(f"[{step_name}] Batch eval error: {e}")
-
-        # Select best result
-        if not scores or all(s == -float('inf') for s in scores):
-            best_result = results[0] if results else dict(state)
-        else:
-            best_idx = config.selection_fn(scores)
-            best_result = results[best_idx]
-            best_result["_best_idx"] = best_idx
-            best_result["_all_scores"] = scores
-            print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
-
-        self._run_gt_eval(step_name, config, best_result, state, all_results=results)
-        return best_result
+            helper.set_output(step_span, _summarize_result_for_trace(best_result))
+            return best_result
 
     def _maybe_save_run_results(
         self,
@@ -2207,18 +2664,32 @@ class SalesDataAgent:
         if not save_results:
             return
 
-        try:
-            self.cache.save_run(
-                run_id=run_id,
-                prompt=prompt,
-                agent_config=self.agent_config.to_dict(),
-                step_results=self.current_run_step_results,
-                final_result=result,
-                metadata={}
-            )
-            print(f"[Agent] Run saved with ID: {run_id}")
-        except Exception as e:
-            print(f"[Agent] Warning: Failed to save run to cache: {e}")
+        with self.trace_helper.start_span(
+            "cache_save_run",
+            kind="tool",
+            input_data={"run_id": run_id, "prompt": _truncate_trace_text(prompt)},
+        ) as span:
+            try:
+                self.cache.save_run(
+                    run_id=run_id,
+                    prompt=prompt,
+                    agent_config=self.agent_config.to_dict(),
+                    step_results=self.current_run_step_results,
+                    final_result=result,
+                    metadata={}
+                )
+                self.trace_helper.set_output(
+                    span,
+                    {
+                        "run_id": run_id,
+                        "saved": True,
+                        "step_result_count": len(self.current_run_step_results),
+                    },
+                )
+                print(f"[Agent] Run saved with ID: {run_id}")
+            except Exception as e:
+                self.trace_helper.set_output(span, {"run_id": run_id, "saved": False, "error": _truncate_trace_text(e)})
+                print(f"[Agent] Warning: Failed to save run to cache: {e}")
 
     def _build_graph(self):
         """Construct and compile the LangGraph for the agent run loop.
@@ -2317,61 +2788,58 @@ class SalesDataAgent:
             "run_id": run_id,
             "cached_step_results": cached_step_results or {},
         }
-        if not self.run_checked:
-            print("Checking the model can run locally")
-            self.run_checked = self.check_model()
-        
-        if not self.run_checked:
-            error_msg = "Model is not accessible. " + (
-                "Remember to run 'ollama serve' for Ollama models." if self.provider == "ollama"
-                else "Check your OpenAI API key and internet connection."
-            )
-            print(error_msg)
-            return {**state, "error": error_msg}
-    
-        if lookup_only:
-            print("[Agent] Running only lookup_sales_data")
-            try:
-                if self.tracing_enabled and self.tracer is not None:
-                    with self.tracer.start_as_current_span("AgentRun_LookupOnly", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
-                        span.set_input(state)  # type: ignore[attr-defined]
-                        result = lookup_sales_data(state, self.llm, self.tracer, schema=self.schema)
-                        span.set_output(result)  # type: ignore[attr-defined]
-                        if StatusCode is not None:
-                            span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-                        self.current_run_step_results["lookup_sales_data"] = [dict(result)]
-                        self._maybe_save_run_results(run_id, prompt, result, save_results)
-                        result["run_id"] = run_id
-                        return result
-                else:
-                    result = lookup_sales_data(state, self.llm, schema=self.schema)
-                    self.current_run_step_results["lookup_sales_data"] = [dict(result)]
+        if visualization_goal:
+            state["visualization_goal"] = visualization_goal
+        run_span_name = "AgentRun_LookupOnly" if lookup_only else "AgentRun_NoVis" if no_vis else "AgentRun"
+        with self.trace_helper.start_span(
+            run_span_name,
+            kind="agent",
+            attributes={
+                "run_id": run_id,
+                "provider": self.provider,
+                "model": self.model,
+                "lookup_only": lookup_only,
+                "no_vis": no_vis,
+                "tracing_enabled": self.tracing_enabled,
+                "cached_step_count": len(cached_step_results or {}),
+            },
+            input_data=_summarize_state_for_trace(state),
+        ) as run_span:
+            if not self.run_checked:
+                print("Checking the model can run locally")
+                self.run_checked = self.check_model()
+
+            if not self.run_checked:
+                error_msg = "Model is not accessible. " + (
+                    "Remember to run 'ollama serve' for Ollama models." if self.provider == "ollama"
+                    else "Check your OpenAI API key and internet connection."
+                )
+                print(error_msg)
+                result = {**state, "error": error_msg}
+                self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
+                return result
+
+            if lookup_only:
+                print("[Agent] Running only lookup_sales_data")
+                try:
+                    lookup_cfg = self.agent_config.get_step_config("lookup_sales_data")
+                    lookup_core = partial(lookup_sales_data_core, schema=self.schema)
+                    result = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
+                    self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
                     return result
-            except Exception as _e:
-                return {**state, "error": f"Lookup failed: {str(_e)}"}
-        if no_vis:
-            print("[Agent] Running agent without visualization")
-            try:
-                lookup_cfg = self.agent_config.get_step_config("lookup_sales_data")
-                analyzing_cfg = self.agent_config.get_step_config("analyzing_data")
-                lookup_core = partial(lookup_sales_data_core, schema=self.schema)
-                if self.tracing_enabled and self.tracer is not None:
-                    with self.tracer.start_as_current_span("AgentRun_NoVis", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
-                        span.set_input(state)  # type: ignore[attr-defined]
-                        print("\n\nTool selected: lookup_sales_data")
-                        state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
-                        print("\n\nTool selected: analyzing_data")
-                        result = self._execute_step_with_config("analyzing_data", state, analyzing_data_core, analyzing_cfg)
-                        print(f"\nAgent response: {result.get('answer', [None])[0]}")
-                        span.set_output(result)  # type: ignore[attr-defined]
-                        if StatusCode is not None:
-                            span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-                        self._maybe_save_run_results(run_id, prompt, result, save_results)
-                        result["run_id"] = run_id
-                        return result
-                else:
+                except Exception as _e:
+                    result = {**state, "error": f"Lookup failed: {str(_e)}"}
+                    self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
+                    return result
+
+            if no_vis:
+                print("[Agent] Running agent without visualization")
+                try:
+                    lookup_cfg = self.agent_config.get_step_config("lookup_sales_data")
+                    analyzing_cfg = self.agent_config.get_step_config("analyzing_data")
+                    lookup_core = partial(lookup_sales_data_core, schema=self.schema)
                     print("\n\nTool selected: lookup_sales_data")
                     state = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
                     print("\n\nTool selected: analyzing_data")
@@ -2379,41 +2847,21 @@ class SalesDataAgent:
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
+                    self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
                     return result
-            except Exception as _e:
-                print(f"Lookup failed: {str(_e)}")
-                return {**state, "error": f"Lookup failed: {str(_e)}"}
-        
-        if visualization_goal:
-            state["visualization_goal"] = visualization_goal
-        print("Running the graph...")
-        if self.tracing_enabled and self.tracer is not None:
-            try:
-                with self.tracer.start_as_current_span("AgentRun", openinference_span_kind="agent") as span:  # type: ignore[attr-defined]
-                    print("[LangGraph] Starting LangGraph execution with tracing")
-                    span.set_input(state)  # type: ignore[attr-defined]
-                    result = self.graph.invoke(state)
-                    print(f"\nAgent response: {result.get('answer', [])}")
-                    span.set_output(result)  # type: ignore[attr-defined]
-                    if StatusCode is not None:
-                        span.set_status(StatusCode.OK)  # type: ignore[attr-defined]
-                    print("[LangGraph] LangGraph execution completed")
-                    self._maybe_save_run_results(run_id, prompt, result, save_results)
-                    result["run_id"] = run_id
+                except Exception as _e:
+                    print(f"Lookup failed: {str(_e)}")
+                    result = {**state, "error": f"Lookup failed: {str(_e)}"}
+                    self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
                     return result
-            except Exception:
-                # Fallback to non-traced execution on any tracing error
-                result = self.graph.invoke(state)
-                print(f"\nAgent response: {result.get('answer', [])}")
-                self._maybe_save_run_results(run_id, prompt, result, save_results)
-                result["run_id"] = run_id
-                return result
-        else:
-            print("[LangGraph] Starting LangGraph execution")
+
+            print("Running the graph...")
             result = self.graph.invoke(state)
+            print(f"\nAgent response: {result.get('answer', [])}")
             print("[LangGraph] LangGraph execution completed")
             self._maybe_save_run_results(run_id, prompt, result, save_results)
             result["run_id"] = run_id
+            self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
             return result
     
     def _run_with_evaluation(

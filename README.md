@@ -97,7 +97,7 @@ if result.get("chart_config") and result.get("answer"):
 
 ## Tracing with Phoenix (optional)
 
-You can enable OpenInference/Phoenix tracing to visualize your agent runs (spans like AgentRun, tool_choice, sql_query_exec, data_analysis, gen_visualization).
+You can enable OpenInference/Phoenix tracing to visualize your agent runs. The top-level business spans remain `AgentRun`, `tool_choice`, `sql_query_exec`, `data_analysis`, and `gen_visualization`, with nested runtime spans for candidate execution, CoT refinement, cache decisions, SQL generation/execution, chart generation, and visualization validation.
 
 ### 1) Install tracing dependencies
 ```powershell
@@ -152,6 +152,7 @@ agent = SalesDataAgent(enable_tracing=True)
 - Cloud UI: open `https://app.phoenix.arize.com`, Traces → select your project.
 
 You should see spans named: `AgentRun`, `tool_choice`, `sql_query_exec`, `data_analysis`, `gen_visualization`.
+You should also see nested spans such as `cache_lookup`, `step_candidate`, `cot_refinement`, `sql_generation`, `sql_execution`, `chart_config_extraction`, `chart_code_generation`, `visualization_validation`, and `cache_save_run`.
 
 ### Troubleshooting tracing
 - Verify the console shows: `[LangGraph] Starting LangGraph execution with tracing`.

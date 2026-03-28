@@ -116,7 +116,7 @@ run:
 # TRACING (optional)
 # =============================================================================
 tracing:
-  enabled: false
+  enabled: true
   phoenix_endpoint: "http://localhost:6006/v1/traces"
   phoenix_api_key: null
   project_name: "evaluating-agent"
