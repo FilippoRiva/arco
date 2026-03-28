@@ -2139,6 +2139,16 @@ class SalesDataAgent:
         # Store all results for caching
         self.current_run_step_results[step_name] = results
 
+        # Standardize column names across candidates for data-producing steps
+        if step_name == "lookup_sales_data" and len(results) > 1:
+            try:
+                from Agent.utils import standardize_candidate_columns
+                standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                results = standardize_candidate_columns(results, self.schema, standardize_llm)
+                self.current_run_step_results[step_name] = results
+            except Exception as e:
+                print(f"[{step_name}] Column standardization warning: {e}")
+
         # Batch re-evaluation if batch_eval_fn is provided (e.g. consensus scoring)
         if config.batch_eval_fn:
             try:

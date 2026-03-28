@@ -1222,13 +1222,89 @@ def make_vis_evaluator_gt(
 # normal (non-evaluation) usage.
 
 
+def _try_align_columns(df_ref: pd.DataFrame, df_target: pd.DataFrame) -> pd.DataFrame:
+    """Reorder df_target's columns to best match df_ref's column order.
+
+    Strategy:
+    1. If lowercased column names overlap, reorder by matching names.
+    2. If names don't overlap, try to match by dtype (numeric↔numeric, etc.).
+    3. Fallback: return df_target unchanged.
+    """
+    ref_cols = list(df_ref.columns)
+    tgt_cols = list(df_target.columns)
+
+    if len(ref_cols) != len(tgt_cols):
+        return df_target
+
+    # Strategy 1: Match by lowercased column names
+    ref_lower = [c.lower() for c in ref_cols]
+    tgt_lower = [c.lower() for c in tgt_cols]
+    tgt_lower_to_orig = {c.lower(): c for c in tgt_cols}
+
+    if set(ref_lower) == set(tgt_lower):
+        # Exact name match (case-insensitive) — reorder target to match ref order
+        new_order = [tgt_lower_to_orig[rl] for rl in ref_lower]
+        return df_target[new_order]
+
+    # Strategy 2: Match by dtype compatibility (int, float, datetime, string)
+    def _col_type_key(series):
+        """Classify a column as 'int', 'float', 'datetime', or 'string'."""
+        if pd.api.types.is_numeric_dtype(series):
+            numeric = pd.to_numeric(series, errors="coerce")
+            if numeric.notna().all() and (numeric == numeric.round(0)).all():
+                return "int"
+            return "float"
+        try:
+            numeric = pd.to_numeric(series, errors="raise")
+            if (numeric == numeric.round(0)).all():
+                return "int"
+            return "float"
+        except (ValueError, TypeError):
+            pass
+        try:
+            pd.to_datetime(series, errors="raise", format="mixed")
+            return "datetime"
+        except (ValueError, TypeError):
+            pass
+        return "string"
+
+    ref_types = [_col_type_key(df_ref[c]) for c in ref_cols]
+    tgt_types = [_col_type_key(df_target[c]) for c in tgt_cols]
+
+    # Try to build a mapping from ref position → target position by dtype
+    # First pass: exact type match (int↔int, float↔float)
+    used = [False] * len(tgt_cols)
+    mapping = [None] * len(ref_cols)
+    for i, rtype in enumerate(ref_types):
+        for j, ttype in enumerate(tgt_types):
+            if not used[j] and rtype == ttype:
+                mapping[i] = j
+                used[j] = True
+                break
+
+    # Second pass: relaxed numeric match (int↔float) for unmapped columns
+    for i, rtype in enumerate(ref_types):
+        if mapping[i] is not None:
+            continue
+        for j, ttype in enumerate(tgt_types):
+            if not used[j] and rtype in ("int", "float") and ttype in ("int", "float"):
+                mapping[i] = j
+                used[j] = True
+                break
+
+    if all(m is not None for m in mapping):
+        new_order = [tgt_cols[m] for m in mapping]
+        return df_target[new_order]
+
+    # Fallback: no reordering
+    return df_target
+
+
 def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
     Column selection strategy:
-    - Same column count → positional comparison (covers all columns, handles
-      differently-aliased columns like "Sale_Date" vs "Sold_Date" and partial
-      name overlaps like "total_units" vs "total_units_sold").
+    - Same column count → align columns by name or dtype, then positional comparison.
     - Different column count, some names shared → compare only shared columns.
     - Different column count, no names shared → return 0.0.
 
@@ -1236,17 +1312,24 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1
 
     Returns:
         rows_iou (float in [0, 1])
-
-    WEAKNESS: it assumes that the column order is the same in the two dataframe
     """
     if df1 is None or df2 is None or df1.empty or df2.empty:
         return 0.0
+
+    # Normalize values (dates, floats, ints, strings) for consistent comparison
+    df1 = normalize_dataframe_values(df1)
+    df2 = normalize_dataframe_values(df2)
+
+    # Normalize column names to lowercase for consistent matching
+    df1.columns = df1.columns.str.lower()
+    df2.columns = df2.columns.str.lower()
 
     cols1 = set(df1.columns)
     cols2 = set(df2.columns)
 
     if len(df1.columns) == len(df2.columns):
-        # Same structure: positional comparison covers all columns regardless of aliases
+        # Align columns by name/dtype before positional comparison
+        df2 = _try_align_columns(df1, df2)
         v1 = df1.values
         v2 = df2.values
     else:
@@ -1286,6 +1369,175 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1
 
     total = len(v1) + len(v2) - matched  # union count
     return matched / total if total > 0 else 0.0
+
+
+def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize cell values in a DataFrame for consistent comparison.
+
+    Per-column transformations based on auto-detected type:
+    - Numeric integers: cast float-encoded ints (e.g., 33653.0 → 33653)
+    - Numeric floats: round to 2 decimal places
+    - Dates: format as YYYY-MM-DD string
+    - Strings: strip leading/trailing whitespace
+    """
+    if df is None or df.empty:
+        return df
+
+    df = df.copy()
+    for col in df.columns:
+        series = df[col]
+
+        # Try numeric first
+        numeric = pd.to_numeric(series, errors="coerce")
+        if numeric.notna().all() and not series.isna().all():
+            # Check if all values are whole numbers → cast to int
+            if (numeric == numeric.round(0)).all():
+                df[col] = numeric.astype(int)
+            else:
+                df[col] = numeric.round(2)
+            continue
+
+        # Try datetime
+        try:
+            dt = pd.to_datetime(series, errors="coerce", format="mixed")
+            if dt.notna().all() and not series.isna().all():
+                df[col] = dt.dt.strftime("%Y-%m-%d")
+                continue
+        except Exception:
+            pass
+
+        # Fallback: string strip
+        if series.dtype == object:
+            df[col] = series.astype(str).str.strip()
+
+    return df
+
+
+COLUMN_STANDARDIZATION_PROMPT = """\
+You are a data schema expert. Given N SQL queries against the same database that \
+answer the same question, standardize their result column names and order.
+
+## Database Schema
+{schema_context}
+
+## Candidates
+{candidates_section}
+
+## Rules
+- For columns that come directly from schema tables, use the exact schema column name.
+- For aggregated/computed columns (SUM, COUNT, AVG, etc.), pick the most descriptive \
+name used by any candidate. Prefer lowercase_with_underscores.
+- All candidates MUST map to the same canonical columns in the same order.
+- Return ONLY valid JSON, no explanation or markdown fences.
+
+## Output format
+{{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
+"""
+
+
+def standardize_candidate_columns(
+    results: List[Dict],
+    schema,
+    llm,
+) -> List[Dict]:
+    """Use an LLM to standardize column names across best-of-n candidates.
+
+    After best-of-n generates N SQL results, their DataFrames may have different
+    column names and orders. This function asks the LLM to determine canonical
+    column names and reorders/renames each candidate's DataFrame to match.
+
+    Also applies normalize_dataframe_values to each DataFrame.
+
+    Args:
+        results: List of result dicts from best-of-n, each with 'data_df' and 'sql_query'.
+        schema: DatabaseSchema instance for context.
+        llm: LangChain LLM instance (should use temperature=0).
+
+    Returns:
+        Modified results list with standardized DataFrames. On error, returns
+        results unchanged.
+    """
+    import json as _json
+
+    # Collect candidate info
+    candidates_info = []
+    for i, r in enumerate(results):
+        df = r.get("data_df")
+        sql = r.get("sql_query", "N/A")
+        cols = list(df.columns) if df is not None else []
+        candidates_info.append({"idx": i, "sql": sql, "cols": cols, "df": df})
+
+    # Skip if fewer than 2 candidates have DataFrames
+    valid = [c for c in candidates_info if c["df"] is not None and len(c["cols"]) > 0]
+    if len(valid) < 2:
+        return results
+
+    # Check if all candidates already have the same columns (case-insensitive)
+    col_sets = [frozenset(c.lower() for c in ci["cols"]) for ci in valid]
+    if len(set(col_sets)) == 1:
+        col_lists = [tuple(c.lower() for c in ci["cols"]) for ci in valid]
+        if len(set(col_lists)) == 1:
+            # All candidates have identical column names and order — no LLM needed
+            return results
+
+    # Build prompt
+    schema_context = schema.get_full_schema_str() if schema else "No schema available"
+    candidates_lines = []
+    for ci in valid:
+        candidates_lines.append(
+            f"Candidate {ci['idx'] + 1}: SQL: {ci['sql']} | Columns: {ci['cols']}"
+        )
+    candidates_section = "\n".join(candidates_lines)
+
+    prompt = COLUMN_STANDARDIZATION_PROMPT.format(
+        schema_context=schema_context,
+        candidates_section=candidates_section,
+    )
+
+    # Call LLM
+    response = llm.invoke(prompt)
+    raw = response.content if hasattr(response, "content") else str(response)
+
+    # Parse JSON — strip markdown fences if present
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1]
+    if raw.endswith("```"):
+        raw = raw.rsplit("```", 1)[0]
+    raw = raw.strip()
+
+    mapping_data = _json.loads(raw)
+    canonical_cols = mapping_data["canonical_columns"]
+    mappings = mapping_data["mappings"]
+
+    if len(mappings) != len(valid):
+        print(f"[standardize] Warning: expected {len(valid)} mappings, got {len(mappings)}")
+        return results
+
+    # Apply mappings
+    for ci, col_map in zip(valid, mappings):
+        idx = ci["idx"]
+        df = results[idx]["data_df"]
+        if df is None:
+            continue
+
+        # Rename columns
+        rename_map = {old: new for old, new in col_map.items() if old in df.columns}
+        df = df.rename(columns=rename_map)
+
+        # Reorder to canonical order (only if all canonical cols are present)
+        if set(canonical_cols).issubset(set(df.columns)):
+            df = df[canonical_cols]
+
+        # Normalize values
+        df = normalize_dataframe_values(df)
+
+        # Update result
+        results[idx]["data_df"] = df
+        results[idx]["data"] = df.to_csv(index=False)
+
+    print(f"[standardize] Standardized {len(valid)} candidates → columns: {canonical_cols}")
+    return results
 
 
 def make_csv_evaluator_no_gt() -> callable:
