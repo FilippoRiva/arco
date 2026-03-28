@@ -54,3 +54,5 @@ run:
   agent_mode: "full"
   run_id: "test_bon_top_p"
   save_results: false
+  save_dir: "./runs/test_bon_top_p"
+  enable_codecarbon: true

@@ -722,8 +722,12 @@ def create_visualization_core(state: State, llm) -> Dict:
         code = create_chart(with_config, llm)
 
         # --- Validate by executing in a headless namespace (no display) ---
-        # Replace plt.show() so no GUI window / inline figure is produced.
-        exec_code = code.replace("plt.show()", "plt.close('all')")
+        # Switch to Agg (non-interactive) backend to avoid tkinter threading
+        # issues when running best-of-n from a non-main thread on Windows.
+        exec_code = (
+            "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
+            + code.replace("plt.show()", "plt.close('all')")
+        )
         namespace: Dict = {
             "data_df": data_df,
             "config": with_config.get("chart_config", {}),
@@ -2588,15 +2592,39 @@ class SalesDataAgent:
         )
         if use_new_api:
             try:
-                result = self.run_core(
-                    prompt,
-                    visualization_goal=visualization_goal,
-                    lookup_only=lookup_only,
-                    no_vis=no_vis,
-                    run_id=run_id,
-                    cached_step_results=cached_step_results,
-                    save_results=save_results,
-                )
+                tracker = None
+                if enable_codecarbon and _CODECARBON_AVAILABLE:
+                    codecarbon_dir = os.path.join(save_dir, "codecarbon")
+                    os.makedirs(codecarbon_dir, exist_ok=True)
+                    try:
+                        tracker = EmissionsTracker(  # type: ignore[call-arg]
+                            project_name="SalesDataAgent",
+                            output_dir=codecarbon_dir,
+                            save_to_file=True,
+                            measure_power_secs=1,
+                            log_level="error",
+                            allow_multiple_runs=False,
+                        )
+                        tracker.start()
+                    except Exception as e:
+                        print(f"CodeCarbon tracking failed to start: {e}, continuing without it")
+                        tracker = None
+                try:
+                    result = self.run_core(
+                        prompt,
+                        visualization_goal=visualization_goal,
+                        lookup_only=lookup_only,
+                        no_vis=no_vis,
+                        run_id=run_id,
+                        cached_step_results=cached_step_results,
+                        save_results=save_results,
+                    )
+                finally:
+                    if tracker is not None:
+                        try:
+                            tracker.stop()
+                        except Exception as e:
+                            print(f"CodeCarbon tracking failed to stop: {e}")
                 return result
             finally:
                 # Restore original config if we modified it
@@ -2618,6 +2646,7 @@ class SalesDataAgent:
                     save_to_file=True,
                     measure_power_secs=1,
                     log_level="error",
+                    allow_multiple_runs=False,
                 ):
                     return self._run_with_evaluation(
                         prompt=prompt,

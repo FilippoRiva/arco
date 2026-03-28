@@ -45,3 +45,5 @@ run:
   agent_mode: "full"
   run_id: "test_bon_temperature"
   save_results: false
+  save_dir: "./runs/test_bon_temperature"
+  enable_codecarbon: true

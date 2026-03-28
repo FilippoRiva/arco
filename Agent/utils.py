@@ -1586,7 +1586,7 @@ def make_vis_evaluator_no_gt(
         vis_goal = state.get("visualization_goal", state.get("prompt", ""))
 
         try:
-            score, _ = judge_visualization_no_gt(
+            score, evaluation = judge_visualization_no_gt(
                 visualization_goal=vis_goal,
                 generated_config=chart_config,
                 generated_code=chart_code,
@@ -1597,6 +1597,12 @@ def make_vis_evaluator_no_gt(
                 openai_api_key=openai_api_key,
                 ollama_url=ollama_url,
             )
+            for criterion, detail in evaluation.items():
+                if not isinstance(detail, dict):
+                    continue
+                raw = detail.get("score", "?")
+                reasoning = detail.get("reasoning", "")
+                print(f"  [vis eval] {criterion}: {raw}/5 — {reasoning}")
             return score
         except Exception as e:
             print(f"No-GT visualization evaluation error: {e}")
