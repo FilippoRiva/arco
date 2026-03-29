@@ -340,6 +340,7 @@ class AgentConfig:
             'save_dir': run_section.get('save_dir'),
             'enable_codecarbon': run_section.get('enable_codecarbon', False),
             'save_results': run_section.get('save_results', False),
+            'save_execution_artifacts': run_section.get('save_execution_artifacts', True),
             'reuse_from': run_section.get('reuse_from'),
             'step_overrides': run_section.get('step_overrides'),
             'interactive_config': run_section.get('interactive_config', False),

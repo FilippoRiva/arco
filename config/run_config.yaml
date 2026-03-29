@@ -87,6 +87,7 @@ run:
   run_id: "test run"                 # null = auto-generate; set for reproducible caching
   save_dir: "./output"
   save_results: false
+  save_execution_artifacts: true
   reuse_from: null             # run ID to reuse cached results from
   enable_codecarbon: false
   interactive_config: false   # true = prompt for step params at runtime
