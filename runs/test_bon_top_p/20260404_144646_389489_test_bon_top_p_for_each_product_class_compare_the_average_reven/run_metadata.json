@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-04-04T14:46:46.395486",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_bon_top_p.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_bon_top_p\\20260404_144646_389489_test_bon_top_p_for_each_product_class_compare_the_average_reven",
+  "run_id": "test_bon_top_p",
+  "prompt": "For each product class, compare the average revenue per unit sold during promotions vs non-promotions throughout 2021. Rank the product classes by the absolute difference in average revenue per unit between the two conditions, and include the total number of transactions for each group.\n",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 68.283,
+    "step_timings_sec": {
+      "decide_tool": 0.459,
+      "lookup_sales_data": 29.287,
+      "analyzing_data": 3.094,
+      "create_visualization": 28.238
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0013271057013888516,
+    "cpu_energy_kwh": 0.0011380091066666258,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.000189096594722226,
+    "emissions_kg_co2": 0.0004388977433519182,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 68.28740520000065
+  },
+  "accuracy": {
+    "type": "eval_scores",
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          0.5,
+          0.0,
+          0.5
+        ],
+        "best_idx": 0,
+        "best_score": 0.5
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          0.65,
+          0.5,
+          0.7
+        ],
+        "best_idx": 2,
+        "best_score": 0.7
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Bar chart comparing average revenue per unit (promo vs non-promo) for each product class in 2021, sorted by absolute difference descending.\n",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_bon_top_p",
+    "save_dir": "./runs/test_bon_top_p",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "For each product class, compare the average revenue per unit sold during promotions vs non-promotions throughout 2021. Rank the product classes by the absolute difference in average revenue per unit between the two conditions, and include the total number of transactions for each group.\n"
+  }
+}

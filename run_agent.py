@@ -212,19 +212,42 @@ def _write_execution_artifacts(
     with open(artifact_dir / "result.json", "w", encoding="utf-8") as f:
         json.dump(_serialize_for_json(result), f, indent=2)
 
+    # --- profiling fields extracted from result ---
+    step_timings = None
+    total_run_time = None
+    energy = None
+    accuracy = None
+    if isinstance(result, dict):
+        step_timings = result.get("_step_timings_sec")
+        total_run_time = result.get("_total_run_time_sec")
+        energy = result.get("_energy")
+        if "_gt_score" in result:
+            accuracy = {
+                "type": "ground_truth",
+                "gt_score": result["_gt_score"],
+                "all_gt_scores": result.get("_all_gt_scores"),
+            }
+        elif "_step_eval_scores" in result:
+            accuracy = {
+                "type": "eval_scores",
+                "step_eval_scores": result["_step_eval_scores"],
+            }
+
     metadata = {
         "timestamp": datetime.now().isoformat(),
         "config_path": str(Path(config_path).resolve()),
         "artifact_dir": str(artifact_dir.resolve()),
         "run_id": run_id,
         "prompt": prompt,
-        "lookup_only": run_params.get("lookup_only", False),
-        "no_vis": run_params.get("no_vis", False),
-        "reuse_from": run_params.get("reuse_from"),
-        "save_results": run_params.get("save_results", False),
-        "save_execution_artifacts": True,
         "provider": agent_config.provider,
         "model": agent_config.model,
+        # --- profiling ---
+        "timing": {
+            "total_run_time_sec": total_run_time,
+            "step_timings_sec": step_timings,
+        },
+        "energy": energy,
+        "accuracy": accuracy,
         "effective_run_params": _serialize_for_json(effective_run_params),
     }
     with open(artifact_dir / "run_metadata.json", "w", encoding="utf-8") as f:

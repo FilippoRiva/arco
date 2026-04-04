@@ -19,6 +19,7 @@ import requests
 import json
 import os
 import difflib
+import time
 from contextlib import contextmanager
 from functools import partial
 from typing import Any, Dict, List, Optional
@@ -318,6 +319,9 @@ class State(TypedDict):
     agent_config: NotRequired[Optional[Dict]]  # AgentConfig as dict (for state flow)
     run_id: NotRequired[Optional[str]]  # Unique identifier for this execution
     cached_step_results: NotRequired[Optional[Dict]]  # Pre-loaded results from similar past runs
+    # Profiling (accumulated across steps)
+    _step_timings_sec: NotRequired[Optional[Dict]]
+    _step_eval_scores: NotRequired[Optional[Dict]]
 
 
 # -----------------------------
@@ -2465,6 +2469,8 @@ class SalesDataAgent:
                 },
             )
 
+            _step_t0 = time.perf_counter()
+
             if n == 1:
                 temp, top_p, top_k = candidate_params[0]
                 llm = self._create_llm(
@@ -2515,6 +2521,30 @@ class SalesDataAgent:
 
                 self.current_run_step_results[step_name] = [result]
                 self._run_gt_eval(step_name, config, result, state)
+                _step_elapsed = time.perf_counter() - _step_t0
+                existing_timings = state.get("_step_timings_sec") or {}
+                existing_timings[step_name] = round(_step_elapsed, 3)
+                result["_step_timings_sec"] = existing_timings
+                eval_score = None
+                if config.eval_fn:
+                    try:
+                        eval_score = config.eval_fn(result, state)
+                    except Exception:
+                        pass
+                elif config.batch_eval_fn:
+                    try:
+                        batch_scores = config.batch_eval_fn([result], state)
+                        eval_score = batch_scores[0] if batch_scores else None
+                    except Exception:
+                        pass
+                if eval_score is not None:
+                    existing_eval = state.get("_step_eval_scores") or {}
+                    existing_eval[step_name] = {
+                        "scores": [round(eval_score, 4)],
+                        "best_idx": 0,
+                        "best_score": round(eval_score, 4),
+                    }
+                    result["_step_eval_scores"] = existing_eval
                 helper.set_output(step_span, _summarize_result_for_trace(result))
                 return result
 
@@ -2636,6 +2666,17 @@ class SalesDataAgent:
                 print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
 
             self._run_gt_eval(step_name, config, best_result, state, all_results=results)
+            _step_elapsed = time.perf_counter() - _step_t0
+            existing_timings = state.get("_step_timings_sec") or {}
+            existing_timings[step_name] = round(_step_elapsed, 3)
+            best_result["_step_timings_sec"] = existing_timings
+            existing_eval = state.get("_step_eval_scores") or {}
+            existing_eval[step_name] = {
+                "scores": [round(s, 4) for s in scores],
+                "best_idx": best_idx,
+                "best_score": round(scores[best_idx], 4) if best_idx is not None and scores else None,
+            }
+            best_result["_step_eval_scores"] = existing_eval
             helper.set_attributes(
                 step_span,
                 {
@@ -2781,6 +2822,7 @@ class SalesDataAgent:
 
         # Reset step results tracker
         self.current_run_step_results = {}
+        _run_t0 = time.perf_counter()
 
         # Initialize state with caching info
         state = {
@@ -2827,6 +2869,7 @@ class SalesDataAgent:
                     result = self._execute_step_with_config("lookup_sales_data", state, lookup_core, lookup_cfg)
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
+                    result["_total_run_time_sec"] = round(time.perf_counter() - _run_t0, 3)
                     self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
                     return result
                 except Exception as _e:
@@ -2847,6 +2890,7 @@ class SalesDataAgent:
                     print(f"\nAgent response: {result.get('answer', [None])[0]}")
                     self._maybe_save_run_results(run_id, prompt, result, save_results)
                     result["run_id"] = run_id
+                    result["_total_run_time_sec"] = round(time.perf_counter() - _run_t0, 3)
                     self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
                     return result
                 except Exception as _e:
@@ -2861,6 +2905,7 @@ class SalesDataAgent:
             print("[LangGraph] LangGraph execution completed")
             self._maybe_save_run_results(run_id, prompt, result, save_results)
             result["run_id"] = run_id
+            result["_total_run_time_sec"] = round(time.perf_counter() - _run_t0, 3)
             self.trace_helper.set_output(run_span, _summarize_result_for_trace(result))
             return result
     
@@ -3081,6 +3126,18 @@ class SalesDataAgent:
                     if tracker is not None:
                         try:
                             tracker.stop()
+                            if hasattr(tracker, "final_emissions_data") and tracker.final_emissions_data is not None:
+                                ed = tracker.final_emissions_data
+                                result["_energy"] = {
+                                    "energy_consumed_kwh": ed.energy_consumed,
+                                    "cpu_energy_kwh": ed.cpu_energy,
+                                    "gpu_energy_kwh": ed.gpu_energy,
+                                    "ram_energy_kwh": ed.ram_energy,
+                                    "emissions_kg_co2": ed.emissions,
+                                    "cpu_power_w": ed.cpu_power,
+                                    "gpu_power_w": ed.gpu_power,
+                                    "duration_sec": ed.duration,
+                                }
                         except Exception as e:
                             print(f"CodeCarbon tracking failed to stop: {e}")
                 return result
