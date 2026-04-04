@@ -1363,8 +1363,15 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1
             # Normalize: strip trailing midnight time from date strings
             sa = str(a).replace(" 00:00:00", "")
             sb = str(b).replace(" 00:00:00", "")
-            if sa != sb:
-                return False
+            if sa == sb:
+                continue
+            # Handle YYYY-MM vs YYYY-MM-DD: treat first-of-month as equivalent
+            if sa[:7] == sb[:7] and (
+                (len(sa) == 7 and len(sb) == 10 and sb.endswith("-01")) or
+                (len(sb) == 7 and len(sa) == 10 and sa.endswith("-01"))
+            ):
+                continue
+            return False
         return True
 
     # Greedy matching: for each row in v1, find an unmatched row in v2
@@ -1397,7 +1404,12 @@ def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         series = df[col]
 
-        # Try numeric first
+        # Handle datetime dtype first (before numeric, since datetime64 is numeric-castable)
+        if pd.api.types.is_datetime64_any_dtype(series):
+            df[col] = series.dt.strftime("%Y-%m-%d")
+            continue
+
+        # Try numeric
         numeric = pd.to_numeric(series, errors="coerce")
         if numeric.notna().all() and not series.isna().all():
             # Check if all values are whole numbers → cast to int
@@ -1407,7 +1419,7 @@ def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
                 df[col] = numeric.round(2)
             continue
 
-        # Try datetime
+        # Try datetime (for string columns like "2023-01-01")
         try:
             dt = pd.to_datetime(series, errors="coerce", format="mixed")
             if dt.notna().all() and not series.isna().all():
@@ -1669,9 +1681,12 @@ Is the chart type appropriate for the data structure?
 
 ### 2. AXIS MAPPING
 Are the X and Y axes using appropriate columns from the data?
+- The config may have 'y_axis' (single column) or 'y_axes' (list of columns for multi-series). Both are valid.
 - Do the column names in the config actually exist in the data?
+- For multi-series (y_axes): are ALL listed columns present in the data and semantically correct?
 - Are the axes semantically correct (e.g., time on X, measure on Y)?
-[1=Wrong/missing columns, 3=Acceptable mapping, 5=Perfect mapping]
+- For comparison goals (promo vs non-promo, A vs B): a single y_axis that picks only ONE of the series should score low (3 or below); y_axes with both series should score 5.
+[1=Wrong/missing columns, 3=Acceptable mapping or missing one series, 5=Perfect mapping with all required series]
 
 ### 3. CODE QUALITY
 Will the matplotlib code execute correctly and produce a readable chart?

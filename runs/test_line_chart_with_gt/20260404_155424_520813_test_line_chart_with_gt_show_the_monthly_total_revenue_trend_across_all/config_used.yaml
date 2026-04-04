@@ -1,0 +1,56 @@
+# Test 3: stesso prompt del test_line_chart ma con ground truth
+# Goal: verificare che accuracy.type = "ground_truth" venga popolato correttamente
+agent:
+  model: "gpt-4o-mini"
+  provider: "openai"
+  openai_api_key: null
+
+steps:
+  decide_tool:
+    n: 1
+    use_cache: false
+
+  lookup_sales_data:
+    n: 3
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.5
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+  analyzing_data:
+    n: 1
+    temp_min: 0.1
+    max_tokens: 3000
+    use_cache: false
+    eval: "default"
+
+  create_visualization:
+    n: 3
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.7
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+schema:
+  data_dir: "../data"
+
+# Ground truth for lookup_sales_data step (tracking only, does not steer selection)
+ground_truth:
+  csv_path: "../data/ground_truth/monthly_revenue_gt.csv"
+
+run:
+  prompt: >
+    Show the monthly total revenue trend across all available data.
+    Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.
+  visualization_goal: >
+    Line chart showing monthly total revenue over time, with month on the X-axis
+    and total revenue on the Y-axis. Single metric: Total_Revenue.
+  agent_mode: "full"
+  run_id: "test_line_chart_with_gt"
+  save_results: false
+  save_dir: "./runs/test_line_chart_with_gt"
+  enable_codecarbon: false

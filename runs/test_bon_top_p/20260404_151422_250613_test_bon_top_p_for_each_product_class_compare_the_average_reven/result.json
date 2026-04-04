@@ -1,0 +1,159 @@
+{
+  "prompt": "For each product class, compare the average revenue per unit sold during promotions vs non-promotions throughout 2021. Rank the product classes by the absolute difference in average revenue per unit between the two conditions, and include the total number of transactions for each group.\n",
+  "data": "Product_Class_Code,Avg_Revenue_Per_Unit_Promo,Avg_Revenue_Per_Unit_Non_Promo,Total_Transactions_Promo,Total_Transactions_Non_Promo,Abs_Difference\r\n24375,9.989999782337861,30.223522144530303,85,2547,20.233522362192442\r\n22900,37.668698160271894,50.193027130963934,266,2370,12.52432897069204\r\n24400,4.989999969800313,14.645266816246744,12,8018,9.65526684644643\r\n22850,7.1894832242999165,12.378386265690224,57,6338,5.188903041390308\r\n24425,9.919732062348636,13.666507355488326,377,10809,3.74677529313969\r\n22800,,14.412162013301192,0,9988,\r\n22825,,7.067716801544637,0,3342,\r\n22875,,4.213038496455296,0,8449,\r\n22925,,11.047444410362298,0,2122,\r\n22950,,5.399729095859555,0,2801,\r\n22975,,19.195544444249247,0,9948,\r\n",
+  "data_df": {
+    "__dataframe__": true,
+    "records": [
+      {
+        "Product_Class_Code": 24375,
+        "Avg_Revenue_Per_Unit_Promo": 9.989999782337861,
+        "Avg_Revenue_Per_Unit_Non_Promo": 30.223522144530303,
+        "Total_Transactions_Promo": 85,
+        "Total_Transactions_Non_Promo": 2547,
+        "Abs_Difference": 20.233522362192442
+      },
+      {
+        "Product_Class_Code": 22900,
+        "Avg_Revenue_Per_Unit_Promo": 37.668698160271894,
+        "Avg_Revenue_Per_Unit_Non_Promo": 50.193027130963934,
+        "Total_Transactions_Promo": 266,
+        "Total_Transactions_Non_Promo": 2370,
+        "Abs_Difference": 12.52432897069204
+      },
+      {
+        "Product_Class_Code": 24400,
+        "Avg_Revenue_Per_Unit_Promo": 4.989999969800313,
+        "Avg_Revenue_Per_Unit_Non_Promo": 14.645266816246744,
+        "Total_Transactions_Promo": 12,
+        "Total_Transactions_Non_Promo": 8018,
+        "Abs_Difference": 9.65526684644643
+      },
+      {
+        "Product_Class_Code": 22850,
+        "Avg_Revenue_Per_Unit_Promo": 7.1894832242999165,
+        "Avg_Revenue_Per_Unit_Non_Promo": 12.378386265690224,
+        "Total_Transactions_Promo": 57,
+        "Total_Transactions_Non_Promo": 6338,
+        "Abs_Difference": 5.188903041390308
+      },
+      {
+        "Product_Class_Code": 24425,
+        "Avg_Revenue_Per_Unit_Promo": 9.919732062348636,
+        "Avg_Revenue_Per_Unit_Non_Promo": 13.666507355488326,
+        "Total_Transactions_Promo": 377,
+        "Total_Transactions_Non_Promo": 10809,
+        "Abs_Difference": 3.74677529313969
+      },
+      {
+        "Product_Class_Code": 22800,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 14.412162013301192,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 9988,
+        "Abs_Difference": NaN
+      },
+      {
+        "Product_Class_Code": 22825,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 7.067716801544637,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 3342,
+        "Abs_Difference": NaN
+      },
+      {
+        "Product_Class_Code": 22875,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 4.213038496455296,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 8449,
+        "Abs_Difference": NaN
+      },
+      {
+        "Product_Class_Code": 22925,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 11.047444410362298,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 2122,
+        "Abs_Difference": NaN
+      },
+      {
+        "Product_Class_Code": 22950,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 5.399729095859555,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 2801,
+        "Abs_Difference": NaN
+      },
+      {
+        "Product_Class_Code": 22975,
+        "Avg_Revenue_Per_Unit_Promo": NaN,
+        "Avg_Revenue_Per_Unit_Non_Promo": 19.195544444249247,
+        "Total_Transactions_Promo": 0,
+        "Total_Transactions_Non_Promo": 9948,
+        "Abs_Difference": NaN
+      }
+    ]
+  },
+  "answer": [
+    "In 2021, the product class with the highest absolute difference in average revenue per unit sold between promotions and non-promotions was 24375, with an average revenue of $9.99 during promotions and $30.22 during non-promotions, resulting in a difference of $20.23 across 85 promotional transactions and 2,547 non-promotional transactions. The second highest was product class 22900, with a difference of $12.52, averaging $37.67 during promotions and $50.19 during non-promotions, based on 266 promotional transactions and 2,370 non-promotional transactions.",
+    "import matplotlib.pyplot as plt\nimport pandas as pd\nimport numpy as np\n\nx_labels = data_df[config['x_axis']].astype(str)\ny_axes = config['y_axes']\nn_series = len(y_axes)\nbar_width = 0.8 / n_series\nx = np.arange(len(x_labels))\n\nplt.figure(figsize=(12, 6))\nfor i, col in enumerate(y_axes):\n    offset = (i - n_series / 2 + 0.5) * bar_width\n    plt.bar(x + offset, data_df[col], width=bar_width, label=col)\n\nplt.xlabel(config['x_axis'])\nplt.ylabel('Value')\nplt.title(config['title'])\nplt.xticks(x, x_labels, rotation=45, ha='right')\nplt.legend()\nplt.grid(True, axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
+  ],
+  "visualization_goal": "Bar chart comparing average revenue per unit (promo vs non-promo) for each product class in 2021, sorted by absolute difference descending.\n",
+  "chart_config": {
+    "chart_type": "bar",
+    "x_axis": "Product_Class_Code",
+    "y_axes": [
+      "Avg_Revenue_Per_Unit_Promo",
+      "Avg_Revenue_Per_Unit_Non_Promo"
+    ],
+    "title": "Average Revenue per Unit: Promo vs Non-Promo by Product Class"
+  },
+  "tool_choice": "end",
+  "sql_query": "SELECT \n    Product_Class_Code,\n    AVG(CASE WHEN On_Promo = 1 THEN Total_Sale_Value / NULLIF(Qty_Sold, 0) END) AS Avg_Revenue_Per_Unit_Promo,\n    AVG(CASE WHEN On_Promo = 0 THEN Total_Sale_Value / NULLIF(Qty_Sold, 0) END) AS Avg_Revenue_Per_Unit_Non_Promo,\n    COUNT(CASE WHEN On_Promo = 1 THEN 1 END) AS Total_Transactions_Promo,\n    COUNT(CASE WHEN On_Promo = 0 THEN 1 END) AS Total_Transactions_Non_Promo,\n    ABS(AVG(CASE WHEN On_Promo = 1 THEN Total_Sale_Value / NULLIF(Qty_Sold, 0) END) - \n        AVG(CASE WHEN On_Promo = 0 THEN Total_Sale_Value / NULLIF(Qty_Sold, 0) END)) AS Abs_Difference\nFROM \n    sales\nWHERE \n    CAST(Sold_Date AS VARCHAR) LIKE '2021-%'\nGROUP BY \n    Product_Class_Code\nORDER BY \n    Abs_Difference DESC;",
+  "run_id": "test_bon_top_p",
+  "cached_step_results": {},
+  "_step_timings_sec": {
+    "decide_tool": 2.959,
+    "lookup_sales_data": 17.667,
+    "analyzing_data": 3.781,
+    "create_visualization": 37.987
+  },
+  "_step_eval_scores": {
+    "lookup_sales_data": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "analyzing_data": {
+      "scores": [
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "create_visualization": {
+      "scores": [
+        0.85,
+        0.95,
+        0.9
+      ],
+      "best_idx": 1,
+      "best_score": 0.95
+    }
+  },
+  "_total_run_time_sec": 68.084,
+  "_energy": {
+    "energy_consumed_kwh": 0.00132298896083333,
+    "cpu_energy_kwh": 0.0011344792383333093,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00018850972250002086,
+    "emissions_kg_co2": 0.00043753626314887723,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 68.0879918999999
+  }
+}

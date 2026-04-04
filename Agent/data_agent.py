@@ -322,6 +322,8 @@ class State(TypedDict):
     # Profiling (accumulated across steps)
     _step_timings_sec: NotRequired[Optional[Dict]]
     _step_eval_scores: NotRequired[Optional[Dict]]
+    # Ground truth scores per step (set by _run_gt_eval, propagated to final result)
+    _gt_scores_per_step: NotRequired[Optional[Dict]]
 
 
 # -----------------------------
@@ -1437,8 +1439,13 @@ Choose the appropriate chart type based on the data and goal:
 ## REQUIRED JSON KEYS
 - chart_type: One of [bar, line, area, scatter]
 - x_axis: Column name for X-axis (string)
-- y_axis: Column name for Y-axis (string)
+- y_axis: Column name for Y-axis (string) — use this for SINGLE-series charts
+- y_axes: List of column names for Y-axis (list of strings) — use this INSTEAD of y_axis when comparing multiple series (e.g., promo vs non-promo, actual vs forecast). Do NOT include both y_axis and y_axes.
 - title: Descriptive chart title (string)
+
+## WHEN TO USE y_axes vs y_axis
+- Use y_axis (single string) when showing ONE metric: revenue, count, score
+- Use y_axes (list) when the goal explicitly asks to COMPARE two or more metrics side by side on the same chart (e.g., "compare promo vs non-promo", "actual vs budget", "male vs female")
 
 ## CHAIN OF THOUGHT REASONING
 Before creating the configuration, think step by step:
@@ -1543,6 +1550,19 @@ Reasoning:
 - Step 5: Title: "Average Revenue by Region" (clear comparison statement)
 
 Output: {{"chart_type": "bar", "x_axis": "Region", "y_axis": "Average_Revenue", "title": "Average Revenue by Region"}}
+
+Example 6 - Multi-series comparison (grouped bar):
+Data columns: Product_Class, Avg_Revenue_Promo, Avg_Revenue_Non_Promo, Abs_Difference
+Goal: "Compare average revenue per unit during promotions vs non-promotions for each product class"
+
+Reasoning:
+- Step 1: Goal says "compare...vs" → TWO metrics side by side, not one
+- Step 2: Columns: Product_Class (categorical), Avg_Revenue_Promo and Avg_Revenue_Non_Promo (both numeric, both needed)
+- Step 3: Comparing two numeric series across categories → grouped bar chart
+- Step 4: X-axis = Product_Class (categories), Y-axes = [Avg_Revenue_Promo, Avg_Revenue_Non_Promo] (both series)
+- Step 5: Title clearly names both series being compared
+
+Output: {{"chart_type": "bar", "x_axis": "Product_Class", "y_axes": ["Avg_Revenue_Promo", "Avg_Revenue_Non_Promo"], "title": "Average Revenue per Unit: Promo vs Non-Promo by Product Class"}}
 
 
 ## OUTPUT FORMAT
@@ -1654,10 +1674,12 @@ Generate Python code to create a chart based on the provided configuration.
 Your code must:
 1. Import matplotlib.pyplot as plt
 2. Import pandas as pd (if needed for data manipulation)
-3. Access data using: data_df[config['x_axis']] and data_df[config['y_axis']]
+3. Check whether config has 'y_axes' (list) or 'y_axis' (string) and handle accordingly:
+   - If config has 'y_axes': produce a GROUPED BAR chart with one bar group per x value, one bar per series
+   - If config has 'y_axis': access data with data_df[config['y_axis']] as usual
 4. Create the appropriate chart type using config['chart_type']
 5. Set the chart title using config['title']
-6. Add axis labels for clarity
+6. Add axis labels, and a legend when multiple series are present
 7. Call plt.tight_layout() before plt.show()
 8. Call plt.show() at the end
 
@@ -1696,13 +1718,14 @@ Before writing the code, think step by step:
 
 **Step 1: Understanding the Configuration**
 - What chart type is requested? (bar, line, scatter, area)
-- What are the x_axis and y_axis column names?
+- Does config have 'y_axes' (list → multi-series grouped) or 'y_axis' (string → single series)?
 - What is the title for the chart?
 - Are there any special characteristics suggested by the column names?
 
 **Step 2: Planning Data Extraction**
 - How do I access the x-axis data? (data_df[config['x_axis']])
-- How do I access the y-axis data? (data_df[config['y_axis']])
+- Single series: data_df[config['y_axis']]
+- Multi-series: iterate over config['y_axes'], plot each as a separate bar group using numpy offsets
 - Do I need to handle special data types (dates, categories)?
 - Should I sort or transform the data before plotting?
 
@@ -1864,6 +1887,42 @@ plt.xlabel(config['x_axis'])
 plt.ylabel(config['y_axis'])
 plt.title(config['title'])
 plt.xticks(rotation=45, ha='right', fontsize=9)
+plt.tight_layout()
+plt.show()
+
+
+Example 6 - Grouped bar chart (multi-series, config has 'y_axes'):
+config = {{"chart_type": "bar", "x_axis": "Product_Class", "y_axes": ["Avg_Revenue_Promo", "Avg_Revenue_Non_Promo"], "title": "Promo vs Non-Promo Revenue by Product Class"}}
+
+Reasoning:
+- Step 1: Bar chart, config has 'y_axes' (list of 2) → grouped bar, multi-series
+- Step 2: x = data_df['Product_Class'], iterate y_axes for each series; sort by absolute difference if available
+- Step 3: Use numpy arange for x positions, offset each group by bar_width
+- Step 4: Add legend for series, rotate x labels, add grid
+- Step 5: tight_layout() then show()
+
+Code:
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_labels = data_df[config['x_axis']].astype(str)
+y_axes = config['y_axes']
+n_series = len(y_axes)
+bar_width = 0.8 / n_series
+x = np.arange(len(x_labels))
+
+plt.figure(figsize=(12, 6))
+for i, col in enumerate(y_axes):
+    offset = (i - n_series / 2 + 0.5) * bar_width
+    plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+plt.xlabel(config['x_axis'])
+plt.ylabel('Value')
+plt.title(config['title'])
+plt.xticks(x, x_labels, rotation=45, ha='right')
+plt.legend()
+plt.grid(True, axis='y', alpha=0.3)
 plt.tight_layout()
 plt.show()
 
@@ -2332,14 +2391,15 @@ class SalesDataAgent:
             return
 
         # Score the selected (best) result
+        gt_score = None
         try:
             gt_score = config.gt_eval_fn(result, state)
-            result["_gt_score"] = gt_score
             print(f"[{step_name}] GT tracking score: {gt_score:.3f}")
         except Exception as e:
             print(f"[{step_name}] GT eval error (tracking only): {e}")
 
         # Score all N candidates for richer tracking
+        all_gt_scores = None
         if all_results and len(all_results) > 1:
             all_gt_scores = []
             for r in all_results:
@@ -2347,8 +2407,15 @@ class SalesDataAgent:
                     all_gt_scores.append(config.gt_eval_fn(r, state))
                 except Exception:
                     all_gt_scores.append(0.0)
-            result["_all_gt_scores"] = all_gt_scores
             print(f"[{step_name}] All GT scores: {[f'{s:.3f}' for s in all_gt_scores]}")
+
+        if gt_score is not None:
+            existing = state.get("_gt_scores_per_step") or {}
+            existing[step_name] = {
+                "gt_score": round(gt_score, 4),
+                "all_gt_scores": [round(s, 4) for s in all_gt_scores] if all_gt_scores else None,
+            }
+            result["_gt_scores_per_step"] = existing
 
     def _execute_step_with_config(
         self,

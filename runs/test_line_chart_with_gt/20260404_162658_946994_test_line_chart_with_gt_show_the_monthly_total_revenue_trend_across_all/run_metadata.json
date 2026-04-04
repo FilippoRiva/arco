@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-04-04T16:26:58.952573",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_line_chart_with_gt.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_line_chart_with_gt\\20260404_162658_946994_test_line_chart_with_gt_show_the_monthly_total_revenue_trend_across_all",
+  "run_id": "test_line_chart_with_gt",
+  "prompt": "Show the monthly total revenue trend across all available data. Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.\n",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 42.029,
+    "step_timings_sec": {
+      "decide_tool": 1.01,
+      "lookup_sales_data": 5.38,
+      "analyzing_data": 2.37,
+      "create_visualization": 25.081
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0008163049386113116,
+    "cpu_energy_kwh": 0.0007002360600001944,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00011606887861111724,
+    "emissions_kg_co2": 0.00026996673668765577,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 42.033493000002636
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "gt_score": 0.0,
+    "all_gt_scores": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          0.75
+        ],
+        "best_idx": 0,
+        "best_score": 0.75
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly total revenue over time, with month on the X-axis and total revenue on the Y-axis. Single metric: Total_Revenue.\n",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_line_chart_with_gt",
+    "save_dir": "./runs/test_line_chart_with_gt",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show the monthly total revenue trend across all available data. Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.\n"
+  }
+}

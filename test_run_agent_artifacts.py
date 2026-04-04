@@ -159,8 +159,14 @@ def test_metadata_accuracy_present_when_gt_score_available(tmp_path):
     config_path, agent_config, run_params = _base_fixtures(tmp_path)
     result = {
         "run_id": "t3",
-        "_gt_score": 0.87,
-        "_all_gt_scores": [0.87, 0.72, 0.91],
+        "_gt_scores_per_step": {
+            "lookup_sales_data": {"gt_score": 0.87, "all_gt_scores": [0.87, 0.72, 0.91]},
+            "analyzing_data": {"gt_score": 0.65, "all_gt_scores": None},
+        },
+        "_step_eval_scores": {
+            "lookup_sales_data": {"scores": [0.8, 0.9, 0.7], "best_idx": 1, "best_score": 0.9},
+            "analyzing_data": {"scores": [0.75], "best_idx": 0, "best_score": 0.75},
+        },
     }
 
     artifact_dir = _write_execution_artifacts(
@@ -174,8 +180,10 @@ def test_metadata_accuracy_present_when_gt_score_available(tmp_path):
 
     metadata = json.loads((artifact_dir / "run_metadata.json").read_text(encoding="utf-8"))
     assert metadata["accuracy"]["type"] == "ground_truth"
-    assert metadata["accuracy"]["gt_score"] == 0.87
-    assert metadata["accuracy"]["all_gt_scores"] == [0.87, 0.72, 0.91]
+    assert metadata["accuracy"]["ground_truth_scores"]["lookup_sales_data"]["gt_score"] == 0.87
+    assert metadata["accuracy"]["ground_truth_scores"]["lookup_sales_data"]["all_gt_scores"] == [0.87, 0.72, 0.91]
+    assert metadata["accuracy"]["ground_truth_scores"]["analyzing_data"]["gt_score"] == 0.65
+    assert metadata["accuracy"]["step_eval_scores"]["analyzing_data"]["best_score"] == 0.75
 
 
 def test_metadata_accuracy_uses_eval_scores_when_no_gt(tmp_path):

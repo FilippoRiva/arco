@@ -155,10 +155,16 @@ def _serialize_for_json(value):
         try:
             return {
                 "__dataframe__": True,
-                "records": value.to_dict(orient="records"),
+                "records": _serialize_for_json(value.to_dict(orient="records")),
             }
         except Exception:
             return str(value)
+
+    if value.__class__.__name__ in ("Timestamp", "NaTType"):
+        return str(value)
+
+    if hasattr(value, "item"):  # numpy scalar (int64, float64, etc.)
+        return value.item()
 
     try:
         json.dumps(value)
@@ -221,11 +227,11 @@ def _write_execution_artifacts(
         step_timings = result.get("_step_timings_sec")
         total_run_time = result.get("_total_run_time_sec")
         energy = result.get("_energy")
-        if "_gt_score" in result:
+        if "_gt_scores_per_step" in result:
             accuracy = {
                 "type": "ground_truth",
-                "gt_score": result["_gt_score"],
-                "all_gt_scores": result.get("_all_gt_scores"),
+                "ground_truth_scores": result["_gt_scores_per_step"],
+                "step_eval_scores": result.get("_step_eval_scores"),
             }
         elif "_step_eval_scores" in result:
             accuracy = {
@@ -354,10 +360,11 @@ def main():
         if "run_id" in result:
             print(f"\nRun ID: {result['run_id']}")
         # Print GT tracking scores if available
-        if "_gt_score" in result:
-            print(f"\nGT tracking score: {result['_gt_score']:.3f}")
-        if "_all_gt_scores" in result:
-            print(f"All GT scores: {[f'{s:.3f}' for s in result['_all_gt_scores']]}")
+        if "_gt_scores_per_step" in result:
+            for step, scores in result["_gt_scores_per_step"].items():
+                print(f"\n[{step}] GT score: {scores['gt_score']:.3f}")
+                if scores.get("all_gt_scores"):
+                    print(f"[{step}] All GT scores: {[f'{s:.3f}' for s in scores['all_gt_scores']]}")
     else:
         print(result)
     if artifact_dir is not None:
@@ -383,6 +390,9 @@ def main():
             namespace = {
                 "data_df": result.get("data_df"),
                 "config": result.get("chart_config", {}),
+                "plt": plt,
+                "pd": __import__("pandas"),
+                "np": __import__("numpy"),
             }
             if plt is not None:
                 try:

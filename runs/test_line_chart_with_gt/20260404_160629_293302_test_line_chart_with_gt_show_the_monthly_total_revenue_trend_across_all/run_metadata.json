@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-04-04T16:06:29.299479",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_line_chart_with_gt.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_line_chart_with_gt\\20260404_160629_293302_test_line_chart_with_gt_show_the_monthly_total_revenue_trend_across_all",
+  "run_id": "test_line_chart_with_gt",
+  "prompt": "Show the monthly total revenue trend across all available data. Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.\n",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 38.857,
+    "step_timings_sec": {
+      "decide_tool": 0.55,
+      "lookup_sales_data": 5.464,
+      "analyzing_data": 2.347,
+      "create_visualization": 22.6
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0007550668241667659,
+    "cpu_energy_kwh": 0.0006476997383334189,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00010736708583334703,
+    "emissions_kg_co2": 0.0002497141899547845,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 38.87049610000031
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "gt_score": 0.0,
+    "all_gt_scores": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly total revenue over time, with month on the X-axis and total revenue on the Y-axis. Single metric: Total_Revenue.\n",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_line_chart_with_gt",
+    "save_dir": "./runs/test_line_chart_with_gt",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show the monthly total revenue trend across all available data. Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.\n"
+  }
+}

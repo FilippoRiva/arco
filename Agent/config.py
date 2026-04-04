@@ -384,12 +384,35 @@ class AgentConfig:
                 make_vis_evaluator_no_gt,
             )
 
+            # Support loading GT from benchmark_dataset.json
+            benchmark_path = gt_section.get('benchmark_path')
+            if benchmark_path:
+                import json as _json
+                if not os.path.isabs(benchmark_path):
+                    benchmark_path = os.path.join(config_dir, benchmark_path)
+                with open(benchmark_path, encoding='utf-8') as _f:
+                    benchmark = _json.load(_f)
+                idx = gt_section.get('index', 0)
+                entry = benchmark[idx]
+                # Merge benchmark fields into gt_section (explicit yaml keys take priority)
+                if entry.get('gt_data') and not gt_section.get('csv_path'):
+                    gt_section = dict(gt_section)
+                    gt_section.setdefault('gt_data', entry['gt_data'])
+                if entry.get('gt_analysis') and not gt_section.get('analysis_text'):
+                    gt_section.setdefault('analysis_text', entry['gt_analysis'])
+                if entry.get('gt_chart_config') and entry.get('gt_chart_code'):
+                    gt_section.setdefault('vis_config', entry['gt_chart_config'])
+                    gt_section.setdefault('vis_code', entry['gt_chart_code'])
+
             gt_csv_path = gt_section.get('csv_path')
+            gt_csv_text = gt_section.get('gt_data')
             if gt_csv_path:
                 if not os.path.isabs(gt_csv_path):
                     gt_csv_path = os.path.join(config_dir, gt_csv_path)
-                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(gt_csv_path)
-                # Use consensus-based evaluator for actual selection
+                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(ground_truth_csv_path=gt_csv_path)
+                config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+            elif gt_csv_text:
+                config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(ground_truth_csv_text=gt_csv_text)
                 config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
 
             gt_analysis = gt_section.get('analysis_text')
@@ -397,7 +420,6 @@ class AgentConfig:
                 config.analyzing_data.gt_eval_fn = make_text_evaluator_gt(
                     ground_truth_text=gt_analysis,
                 )
-                # Use no-GT judge for actual selection
                 config.analyzing_data.eval_fn = make_text_evaluator_no_gt()
 
             gt_vis_config = gt_section.get('vis_config')
@@ -407,7 +429,6 @@ class AgentConfig:
                     ground_truth_config=gt_vis_config,
                     ground_truth_code=gt_vis_code,
                 )
-                # Use no-GT judge for actual selection
                 config.create_visualization.eval_fn = make_vis_evaluator_no_gt()
 
         # --- Tracing config (passed separately to SalesDataAgent.__init__) ---

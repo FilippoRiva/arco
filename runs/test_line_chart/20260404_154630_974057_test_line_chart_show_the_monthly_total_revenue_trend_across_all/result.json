@@ -1,0 +1,174 @@
+{
+  "prompt": "Show the monthly total revenue trend across all available data. Aggregate Total_Sale_Value by month (YYYY-MM) and show how revenue evolved over time.\n",
+  "data": "Month,Total_Revenue\r\n2021-11-01,499984.42819294333\r\n2021-12-01,910982.1184231043\r\n2022-01-01,460090.18769825436\r\n2022-02-01,405419.07791125774\r\n2022-03-01,412956.58735114336\r\n2022-04-01,371117.70767229795\r\n2022-05-01,324769.27819830924\r\n2022-06-01,324996.18804376386\r\n2022-07-01,346132.1079858728\r\n2022-08-01,368018.05771061406\r\n2022-09-01,403554.1773197334\r\n2022-10-01,462807.7372018192\r\n2022-11-01,530981.6881502066\r\n2022-12-01,884818.39973839\r\n2023-01-01,434172.8082997259\r\n2023-02-01,411762.7182441354\r\n2023-03-01,423070.8383087404\r\n2023-04-01,384479.67831129767\r\n2023-05-01,381326.4280229807\r\n2023-06-01,364806.73785564303\r\n2023-07-01,353284.2078382373\r\n2023-08-01,401061.53772878647\r\n2023-09-01,422554.9674690459\r\n2023-10-01,454231.05710360967\r\n2023-11-01,511104.2874179352\r\n2023-12-01,874263.6683309432\r\n2024-01-01,431060.2973440811\r\n2024-02-01,364920.38778749853\r\n2024-03-01,353913.0478998702\r\n",
+  "data_df": {
+    "__dataframe__": true,
+    "records": [
+      {
+        "Month": "2021-11-01 00:00:00",
+        "Total_Revenue": 499984.42819294333
+      },
+      {
+        "Month": "2021-12-01 00:00:00",
+        "Total_Revenue": 910982.1184231043
+      },
+      {
+        "Month": "2022-01-01 00:00:00",
+        "Total_Revenue": 460090.18769825436
+      },
+      {
+        "Month": "2022-02-01 00:00:00",
+        "Total_Revenue": 405419.07791125774
+      },
+      {
+        "Month": "2022-03-01 00:00:00",
+        "Total_Revenue": 412956.58735114336
+      },
+      {
+        "Month": "2022-04-01 00:00:00",
+        "Total_Revenue": 371117.70767229795
+      },
+      {
+        "Month": "2022-05-01 00:00:00",
+        "Total_Revenue": 324769.27819830924
+      },
+      {
+        "Month": "2022-06-01 00:00:00",
+        "Total_Revenue": 324996.18804376386
+      },
+      {
+        "Month": "2022-07-01 00:00:00",
+        "Total_Revenue": 346132.1079858728
+      },
+      {
+        "Month": "2022-08-01 00:00:00",
+        "Total_Revenue": 368018.05771061406
+      },
+      {
+        "Month": "2022-09-01 00:00:00",
+        "Total_Revenue": 403554.1773197334
+      },
+      {
+        "Month": "2022-10-01 00:00:00",
+        "Total_Revenue": 462807.7372018192
+      },
+      {
+        "Month": "2022-11-01 00:00:00",
+        "Total_Revenue": 530981.6881502066
+      },
+      {
+        "Month": "2022-12-01 00:00:00",
+        "Total_Revenue": 884818.39973839
+      },
+      {
+        "Month": "2023-01-01 00:00:00",
+        "Total_Revenue": 434172.8082997259
+      },
+      {
+        "Month": "2023-02-01 00:00:00",
+        "Total_Revenue": 411762.7182441354
+      },
+      {
+        "Month": "2023-03-01 00:00:00",
+        "Total_Revenue": 423070.8383087404
+      },
+      {
+        "Month": "2023-04-01 00:00:00",
+        "Total_Revenue": 384479.67831129767
+      },
+      {
+        "Month": "2023-05-01 00:00:00",
+        "Total_Revenue": 381326.4280229807
+      },
+      {
+        "Month": "2023-06-01 00:00:00",
+        "Total_Revenue": 364806.73785564303
+      },
+      {
+        "Month": "2023-07-01 00:00:00",
+        "Total_Revenue": 353284.2078382373
+      },
+      {
+        "Month": "2023-08-01 00:00:00",
+        "Total_Revenue": 401061.53772878647
+      },
+      {
+        "Month": "2023-09-01 00:00:00",
+        "Total_Revenue": 422554.9674690459
+      },
+      {
+        "Month": "2023-10-01 00:00:00",
+        "Total_Revenue": 454231.05710360967
+      },
+      {
+        "Month": "2023-11-01 00:00:00",
+        "Total_Revenue": 511104.2874179352
+      },
+      {
+        "Month": "2023-12-01 00:00:00",
+        "Total_Revenue": 874263.6683309432
+      },
+      {
+        "Month": "2024-01-01 00:00:00",
+        "Total_Revenue": 431060.2973440811
+      },
+      {
+        "Month": "2024-02-01 00:00:00",
+        "Total_Revenue": 364920.38778749853
+      },
+      {
+        "Month": "2024-03-01 00:00:00",
+        "Total_Revenue": 353913.0478998702
+      }
+    ]
+  },
+  "answer": [
+    "The monthly total revenue trend shows fluctuations over time, with the highest revenue recorded in December 2021 at $910,982.12 and a notable peak again in December 2023 at $874,263.67. Overall, revenue generally decreased from late 2021 to mid-2023, with some recovery observed in late 2023.",
+    "x_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
+  ],
+  "visualization_goal": "Line chart showing monthly total revenue over time, with month on the X-axis and total revenue on the Y-axis. Single metric: Total_Revenue.\n",
+  "chart_config": {
+    "chart_type": "line",
+    "x_axis": "Month",
+    "y_axis": "Total_Revenue",
+    "title": "Total Revenue Over Time"
+  },
+  "tool_choice": "end",
+  "sql_query": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS Month, SUM(Total_Sale_Value) AS Total_Revenue \nFROM sales \nGROUP BY Month \nORDER BY Month;",
+  "run_id": "test_line_chart",
+  "cached_step_results": {},
+  "_step_timings_sec": {
+    "decide_tool": 0.479,
+    "lookup_sales_data": 4.967,
+    "analyzing_data": 1.619,
+    "create_visualization": 24.301
+  },
+  "_step_eval_scores": {
+    "lookup_sales_data": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "analyzing_data": {
+      "scores": [
+        0.75
+      ],
+      "best_idx": 0,
+      "best_score": 0.75
+    },
+    "create_visualization": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    }
+  },
+  "_total_run_time_sec": 37.93
+}
