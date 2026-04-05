@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Comprehensive IoU test suite — covers compare_dataframes_iou, normalize_dataframe_values,
-compare_csv, and make_csv_evaluator_no_gt with edge cases.
+"""Comprehensive IoU test suite for exact-column comparison plus value normalization.
 
-Reports BEFORE (what the old code would produce) and AFTER (current code) results.
+Covers compare_dataframes_iou, normalize_dataframe_values, compare_csv, and
+make_csv_evaluator_no_gt with edge cases under the current design, where
+column-schema harmonization is expected to happen before IoU.
 """
 
 import json
@@ -67,7 +68,7 @@ def test_exact_match(entries):
 
 
 def test_column_name_variations(entries):
-    """Column name aliasing should not affect IoU."""
+    """Column name aliasing should score low without prior schema standardization."""
     print("\n" + "=" * 70)
     print("2. COLUMN NAME VARIATIONS")
     print("=" * 70)
@@ -76,32 +77,32 @@ def test_column_name_variations(entries):
     df = gt_to_df(entries[0]["gt_data"])
     c = df.copy()
     c.columns = ["Sale_Date", "Total_Sales_Value"]
-    check("Partial rename (Sold_Date→Sale_Date)", compare_dataframes_iou(df, c), 0.95)
+    check("Partial rename (Sold_Date→Sale_Date)", compare_dataframes_iou(df, c), 0.0, 0.1)
 
     # Case 2: full rename
     c2 = df.copy()
     c2.columns = ["transaction_date", "revenue"]
-    check("Full rename to unrelated names", compare_dataframes_iou(df, c2), 0.95)
+    check("Full rename to unrelated names", compare_dataframes_iou(df, c2), 0.0, 0.1)
 
     # Case 3: case-only difference
     c3 = df.copy()
     c3.columns = ["sold_date", "total_sales_value"]
-    check("Case difference only", compare_dataframes_iou(df, c3), 0.95)
+    check("Case difference only", compare_dataframes_iou(df, c3), 0.0, 0.1)
 
     # Case 4: UPPER CASE
     c4 = df.copy()
     c4.columns = ["SOLD_DATE", "TOTAL_SALES_VALUE"]
-    check("ALL CAPS column names", compare_dataframes_iou(df, c4), 0.95)
+    check("ALL CAPS column names", compare_dataframes_iou(df, c4), 0.0, 0.1)
 
     # Case 5: 3-column dataset
     df3 = gt_to_df(entries[1]["gt_data"])
     c5 = df3.copy()
     c5.columns = ["Month", "Revenue", "Units_Sold"]
-    check("3-col rename (month_start→Month, etc.)", compare_dataframes_iou(df3, c5), 0.95)
+    check("3-col rename (month_start→Month, etc.)", compare_dataframes_iou(df3, c5), 0.0, 0.1)
 
 
 def test_column_order_variations(entries):
-    """Reversed or shuffled column order should not break IoU."""
+    """Column order changes should score low unless standardization fixed the order first."""
     print("\n" + "=" * 70)
     print("3. COLUMN ORDER VARIATIONS")
     print("=" * 70)
@@ -109,22 +110,22 @@ def test_column_order_variations(entries):
     # 2-column reverse
     df = gt_to_df(entries[0]["gt_data"])
     rev = df[df.columns[::-1]]
-    check("2-col reversed order, same names", compare_dataframes_iou(df, rev), 0.95)
+    check("2-col reversed order, same names", compare_dataframes_iou(df, rev), 0.0, 0.1)
 
     # 2-col reverse + rename
     rev2 = rev.copy()
     rev2.columns = ["revenue", "date"]
-    check("2-col reversed + renamed", compare_dataframes_iou(df, rev2), 0.95)
+    check("2-col reversed + renamed", compare_dataframes_iou(df, rev2), 0.0, 0.1)
 
     # 3-column shuffle
     df3 = gt_to_df(entries[1]["gt_data"])
     shuf = df3[["total_revenue", "total_units", "month_start"]]
-    check("3-col shuffled order", compare_dataframes_iou(df3, shuf), 0.95)
+    check("3-col shuffled order", compare_dataframes_iou(df3, shuf), 0.0, 0.1)
 
     # 3-col shuffle + rename
     shuf2 = shuf.copy()
     shuf2.columns = ["Revenue", "Units", "Month"]
-    check("3-col shuffled + renamed", compare_dataframes_iou(df3, shuf2), 0.95)
+    check("3-col shuffled + renamed", compare_dataframes_iou(df3, shuf2), 0.0, 0.1)
 
 
 def test_value_normalization(entries):
@@ -197,7 +198,7 @@ def test_subset_and_superset(entries):
 
     df3 = gt_to_df(entries[1]["gt_data"])
 
-    # Missing column (2 vs 3) — should use shared columns
+    # Missing column (2 vs 3) — compare on exact shared columns only
     sub = df3[["month_start", "total_revenue"]].copy()
     score = compare_dataframes_iou(df3, sub)
     check("Missing 1 column (2 vs 3)", score, 0.5, 1.0)

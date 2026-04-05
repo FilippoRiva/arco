@@ -978,7 +978,6 @@ def make_csv_evaluator_gt(
 
     Compares the agent's result DataFrame against a ground-truth CSV using
     compare_dataframes_iou, which handles:
-    - Positional column fallback when column names differ (e.g. "Sale_Date" vs "Sold_Date")
     - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
 
     Args:
@@ -997,7 +996,6 @@ def make_csv_evaluator_gt(
         gt_df = pd.read_csv(ground_truth_csv_path)
     else:
         raise ValueError("Provide either ground_truth_csv_path or ground_truth_csv_text")
-    gt_df.columns = gt_df.columns.str.lower()
 
     def eval_fn(result: Dict, state: Dict) -> float:
         data_df = result.get("data_df")
@@ -1010,7 +1008,6 @@ def make_csv_evaluator_gt(
             return 0.0
 
         result_df = data_df.copy()
-        result_df.columns = result_df.columns.str.lower()
 
         try:
             return compare_dataframes_iou(result_df, gt_df)
@@ -1232,91 +1229,13 @@ def make_vis_evaluator_gt(
 # normal (non-evaluation) usage.
 
 
-def _try_align_columns(df_ref: pd.DataFrame, df_target: pd.DataFrame) -> pd.DataFrame:
-    """Reorder df_target's columns to best match df_ref's column order.
-
-    Strategy:
-    1. If lowercased column names overlap, reorder by matching names.
-    2. If names don't overlap, try to match by dtype (numeric↔numeric, etc.).
-    3. Fallback: return df_target unchanged.
-    """
-    ref_cols = list(df_ref.columns)
-    tgt_cols = list(df_target.columns)
-
-    if len(ref_cols) != len(tgt_cols):
-        return df_target
-
-    # Strategy 1: Match by lowercased column names
-    ref_lower = [c.lower() for c in ref_cols]
-    tgt_lower = [c.lower() for c in tgt_cols]
-    tgt_lower_to_orig = {c.lower(): c for c in tgt_cols}
-
-    if set(ref_lower) == set(tgt_lower):
-        # Exact name match (case-insensitive) — reorder target to match ref order
-        new_order = [tgt_lower_to_orig[rl] for rl in ref_lower]
-        return df_target[new_order]
-
-    # Strategy 2: Match by dtype compatibility (int, float, datetime, string)
-    def _col_type_key(series):
-        """Classify a column as 'int', 'float', 'datetime', or 'string'."""
-        if pd.api.types.is_numeric_dtype(series):
-            numeric = pd.to_numeric(series, errors="coerce")
-            if numeric.notna().all() and (numeric == numeric.round(0)).all():
-                return "int"
-            return "float"
-        try:
-            numeric = pd.to_numeric(series, errors="raise")
-            if (numeric == numeric.round(0)).all():
-                return "int"
-            return "float"
-        except (ValueError, TypeError):
-            pass
-        try:
-            pd.to_datetime(series, errors="raise", format="mixed")
-            return "datetime"
-        except (ValueError, TypeError):
-            pass
-        return "string"
-
-    ref_types = [_col_type_key(df_ref[c]) for c in ref_cols]
-    tgt_types = [_col_type_key(df_target[c]) for c in tgt_cols]
-
-    # Try to build a mapping from ref position → target position by dtype
-    # First pass: exact type match (int↔int, float↔float)
-    used = [False] * len(tgt_cols)
-    mapping = [None] * len(ref_cols)
-    for i, rtype in enumerate(ref_types):
-        for j, ttype in enumerate(tgt_types):
-            if not used[j] and rtype == ttype:
-                mapping[i] = j
-                used[j] = True
-                break
-
-    # Second pass: relaxed numeric match (int↔float) for unmapped columns
-    for i, rtype in enumerate(ref_types):
-        if mapping[i] is not None:
-            continue
-        for j, ttype in enumerate(tgt_types):
-            if not used[j] and rtype in ("int", "float") and ttype in ("int", "float"):
-                mapping[i] = j
-                used[j] = True
-                break
-
-    if all(m is not None for m in mapping):
-        new_order = [tgt_cols[m] for m in mapping]
-        return df_target[new_order]
-
-    # Fallback: no reordering
-    return df_target
-
-
 def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
     Column selection strategy:
-    - Same column count → align columns by name or dtype, then positional comparison.
-    - Different column count, some names shared → compare only shared columns.
-    - Different column count, no names shared → return 0.0.
+    - Exact same columns in the same order → compare all columns positionally.
+    - Otherwise, compare only shared columns with exact column-name matches.
+    - If there are no shared columns, return 0.0.
 
     Numeric values are compared with absolute tolerance ``atol``.
 
@@ -1330,21 +1249,12 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1
     df1 = normalize_dataframe_values(df1)
     df2 = normalize_dataframe_values(df2)
 
-    # Normalize column names to lowercase for consistent matching
-    df1.columns = df1.columns.str.lower()
-    df2.columns = df2.columns.str.lower()
-
-    cols1 = set(df1.columns)
-    cols2 = set(df2.columns)
-
-    if len(df1.columns) == len(df2.columns):
-        # Align columns by name/dtype before positional comparison
-        df2 = _try_align_columns(df1, df2)
+    if list(df1.columns) == list(df2.columns):
         v1 = df1.values
         v2 = df2.values
     else:
-        # Different column count: fall back to shared-name subset
-        shared = sorted(cols1 & cols2)
+        # Compare only columns that already share the exact same names.
+        shared = [col for col in df1.columns if col in df2.columns]
         if not shared:
             return 0.0
         v1 = df1[shared].values
@@ -1494,13 +1404,10 @@ def standardize_candidate_columns(
     if len(valid) < 2:
         return results
 
-    # Check if all candidates already have the same columns (case-insensitive)
-    col_sets = [frozenset(c.lower() for c in ci["cols"]) for ci in valid]
-    if len(set(col_sets)) == 1:
-        col_lists = [tuple(c.lower() for c in ci["cols"]) for ci in valid]
-        if len(set(col_lists)) == 1:
-            # All candidates have identical column names and order — no LLM needed
-            return results
+    # Skip the LLM only when candidates already have the exact same columns and order.
+    col_lists = [tuple(ci["cols"]) for ci in valid]
+    if len(set(col_lists)) == 1:
+        return results
 
     # Build prompt
     schema_context = schema.get_full_schema_str() if schema else "No schema available"

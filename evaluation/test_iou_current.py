@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Diagnostic script to test current IoU behavior with synthetic column/value variations.
 
-Demonstrates weaknesses in compare_dataframes_iou when:
-- Column names differ (e.g., "Sale_Date" vs "Sold_Date")
-- Column order is reversed
-- Column case differs (e.g., "store_number" vs "Store_Number")
-- Values have minor formatting differences (dates, floats)
+The current design expects column-schema harmonization to happen before IoU,
+for example via LLM-based standardization across best-of-N candidates. This
+script highlights that compare_dataframes_iou only tolerates value-format
+differences on already-aligned columns.
 """
 
 import json
@@ -53,24 +52,24 @@ def test_case_1(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["Sale_Date", "Total_Sales_Value"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Different col name (Sold_Date→Sale_Date), same order", score, "~1.0")
+    print_result("Different col name (Sold_Date→Sale_Date), same order", score, "LOW without prior LLM standardization")
 
     # Test C: Completely different column names, same data & order
     candidate_c = gt_df.copy()
     candidate_c.columns = ["transaction_date", "revenue"]
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Completely different col names, same order", score, "~1.0")
+    print_result("Completely different col names, same order", score, "LOW without prior LLM standardization")
 
     # Test D: Same data, reversed column order
     candidate_d = gt_df[gt_df.columns[::-1]].copy()
     score = compare_dataframes_iou(gt_df, candidate_d)
-    print_result("Reversed column order, same names", score, "~1.0")
+    print_result("Reversed column order, same names", score, "LOW unless order was standardized first")
 
     # Test E: Different names AND reversed order
     candidate_e = gt_df[gt_df.columns[::-1]].copy()
     candidate_e.columns = ["revenue", "transaction_date"]
     score = compare_dataframes_iou(gt_df, candidate_e)
-    print_result("Different names + reversed order", score, "~1.0")
+    print_result("Different names + reversed order", score, "LOW without prior LLM standardization")
 
     # Test F: Date values with " 00:00:00" suffix
     candidate_f = gt_df.copy()
@@ -82,7 +81,7 @@ def test_case_1(entries):
     candidate_g = gt_df.copy()
     candidate_g.columns = ["sold_date", "total_sales_value"]
     score = compare_dataframes_iou(gt_df, candidate_g)
-    print_result("Lowercase column names", score, "~1.0")
+    print_result("Lowercase column names", score, "LOW without prior LLM standardization")
 
     # Test H: Float precision difference
     candidate_h = gt_df.copy()
@@ -109,18 +108,18 @@ def test_case_2(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["Month", "Revenue", "Units_Sold"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Different col names (Month/Revenue/Units_Sold)", score, "~1.0")
+    print_result("Different col names (Month/Revenue/Units_Sold)", score, "LOW without prior LLM standardization")
 
     # Test C: Same names, shuffled column order
     candidate_c = gt_df[["total_revenue", "month_start", "total_units"]].copy()
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Shuffled column order (rev, month, units)", score, "~1.0")
+    print_result("Shuffled column order (rev, month, units)", score, "LOW unless order was standardized first")
 
     # Test D: Different names AND shuffled order
     candidate_d = gt_df[["total_revenue", "month_start", "total_units"]].copy()
     candidate_d.columns = ["Revenue", "Month", "Units"]
     score = compare_dataframes_iou(gt_df, candidate_d)
-    print_result("Different names + shuffled order", score, "~1.0")
+    print_result("Different names + shuffled order", score, "LOW without prior LLM standardization")
 
     # Test E: Missing one column (2 cols vs 3 cols)
     candidate_e = gt_df[["month_start", "total_revenue"]].copy()
@@ -152,12 +151,12 @@ def test_case_3(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["store_number", "Total_Revenue"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Case difference (store_number/Total_Revenue)", score, "~1.0")
+    print_result("Case difference (store_number/Total_Revenue)", score, "LOW without prior LLM standardization")
 
     # Test C: Reversed column order
     candidate_c = gt_df[gt_df.columns[::-1]].copy()
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Reversed column order", score, "~1.0")
+    print_result("Reversed column order", score, "LOW unless order was standardized first")
 
     # Test D: Different row order (sorted differently)
     candidate_d = gt_df.sort_values("Store_Number").reset_index(drop=True)
@@ -207,7 +206,7 @@ def test_normalize(entries):
 
 
 def test_cross_candidate():
-    """Simulate no-GT consensus: 3 candidates with same data, different naming."""
+    """Simulate no-GT consensus before LLM standardization is applied."""
     print("\n" + "=" * 70)
     print("CROSS-CANDIDATE TEST: Simulated best-of-3 consensus")
     print("=" * 70)
@@ -231,7 +230,11 @@ def test_cross_candidate():
     pairs = [("C1 vs C2", c1, c2), ("C1 vs C3", c1, c3), ("C2 vs C3", c2, c3)]
     for label, a, b in pairs:
         score = compare_dataframes_iou(a, b)
-        print_result(f"{label} (cols: {list(a.columns)} vs {list(b.columns)})", score, "~1.0")
+        print_result(
+            f"{label} (cols: {list(a.columns)} vs {list(b.columns)})",
+            score,
+            "LOW before LLM standardization",
+        )
 
 
 if __name__ == "__main__":
@@ -244,5 +247,5 @@ if __name__ == "__main__":
     test_normalize(entries)
 
     print("\n" + "=" * 70)
-    print("SUMMARY: Any [LOW] result above indicates an IoU weakness")
+    print("SUMMARY: [LOW] is expected for schema mismatches unless LLM standardization ran first")
     print("=" * 70)
