@@ -53,6 +53,7 @@ class StepConfig:
 
     # Ground-truth evaluation for tracking/logging only (never used for selection)
     gt_eval_fn: Optional[Callable] = None
+    gt_columns: Optional[List] = None  # GT column names for standardization alignment
 
     # Caching control
     use_cache: bool = True
@@ -409,11 +410,17 @@ class AgentConfig:
             if gt_csv_path:
                 if not os.path.isabs(gt_csv_path):
                     gt_csv_path = os.path.join(config_dir, gt_csv_path)
+                import pandas as _pd
+                _gt_df = _pd.read_csv(gt_csv_path)
                 config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(ground_truth_csv_path=gt_csv_path)
                 config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+                config.lookup_sales_data.gt_columns = [c.lower() for c in _gt_df.columns]
             elif gt_csv_text:
+                import pandas as _pd, io as _io
+                _gt_df = _pd.read_csv(_io.StringIO(gt_csv_text))
                 config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(ground_truth_csv_text=gt_csv_text)
                 config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
+                config.lookup_sales_data.gt_columns = [c.lower() for c in _gt_df.columns]
 
             gt_analysis = gt_section.get('analysis_text')
             if gt_analysis:

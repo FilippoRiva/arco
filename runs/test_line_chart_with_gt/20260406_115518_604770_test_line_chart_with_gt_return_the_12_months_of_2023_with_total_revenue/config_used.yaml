@@ -1,0 +1,55 @@
+# Test 3: line chart con ground truth da benchmark_dataset.json
+# Goal: verificare accuracy.type = "ground_truth" e struttura per-step
+agent:
+  model: "gpt-4o-mini"
+  provider: "openai"
+  openai_api_key: null
+
+steps:
+  decide_tool:
+    n: 1
+    use_cache: false
+
+  lookup_sales_data:
+    n: 3
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.5
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+  analyzing_data:
+    n: 1
+    temp_min: 0.1
+    max_tokens: 3000
+    use_cache: false
+    eval: "default"
+
+  create_visualization:
+    n: 3
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.7
+    max_tokens: 2000
+    use_cache: false
+    eval: "default"
+
+schema:
+  data_dir: "../data"
+
+# Ground truth caricata da benchmark_dataset.json (index=1)
+# Prompt: "Return the 12 months of 2023 with total revenue and total units sold"
+# GT include: gt_data (CSV), gt_analysis, gt_chart_config, gt_chart_code
+ground_truth:
+  benchmark_path: "../evaluation/benchmark_dataset.json"
+  index: 1
+
+run:
+  prompt: "Return the 12 months of 2023 with total revenue and total units sold"
+  visualization_goal: "Line chart showing monthly revenue trends for 2023"
+  agent_mode: "full"
+  run_id: "test_line_chart_with_gt"
+  save_results: false
+  save_dir: "./runs/test_line_chart_with_gt"
+  enable_codecarbon: true

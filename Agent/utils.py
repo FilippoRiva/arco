@@ -1371,6 +1371,7 @@ def standardize_candidate_columns(
     results: List[Dict],
     schema,
     llm,
+    gt_columns: Optional[List[str]] = None,
 ) -> List[Dict]:
     """Use an LLM to standardize column names across best-of-n candidates.
 
@@ -1404,10 +1405,16 @@ def standardize_candidate_columns(
     if len(valid) < 2:
         return results
 
-    # Skip the LLM only when candidates already have the exact same columns and order.
+    # Skip the LLM only when candidates already have the exact same columns and order,
+    # AND those columns already match the GT (if provided).
     col_lists = [tuple(ci["cols"]) for ci in valid]
     if len(set(col_lists)) == 1:
-        return results
+        if gt_columns is None:
+            return results
+        current_lower = [c.lower() for c in valid[0]["cols"]]
+        if current_lower == [c.lower() for c in gt_columns]:
+            return results
+        # Candidates agree with each other but not with GT — still need LLM alignment
 
     # Build prompt
     schema_context = schema.get_full_schema_str() if schema else "No schema available"
@@ -1418,10 +1425,25 @@ def standardize_candidate_columns(
         )
     candidates_section = "\n".join(candidates_lines)
 
-    prompt = COLUMN_STANDARDIZATION_PROMPT.format(
-        schema_context=schema_context,
-        candidates_section=candidates_section,
-    )
+    if gt_columns:
+        gt_hint = (
+            f"\n## Required Output Column Names (Ground Truth)\n"
+            f"The canonical_columns in your output MUST be exactly: {gt_columns} (in this order).\n"
+            f"Rename each candidate column to its semantically matching entry in this list.\n"
+            f"Do NOT use schema column names or candidate names — use only these GT names."
+        )
+        prompt = COLUMN_STANDARDIZATION_PROMPT.format(
+            schema_context=schema_context,
+            candidates_section=candidates_section,
+        ) + gt_hint
+        # Override canonical_cols after LLM call to guarantee GT names are used
+        _forced_canonical = list(gt_columns)
+    else:
+        prompt = COLUMN_STANDARDIZATION_PROMPT.format(
+            schema_context=schema_context,
+            candidates_section=candidates_section,
+        )
+        _forced_canonical = None
 
     # Call LLM
     response = llm.invoke(prompt)
@@ -1439,6 +1461,11 @@ def standardize_candidate_columns(
     canonical_cols = mapping_data["canonical_columns"]
     mappings = mapping_data["mappings"]
 
+    # If GT columns were provided, force the canonical columns to be exactly those,
+    # regardless of what the LLM chose (it may ignore the hint and keep schema names).
+    if _forced_canonical is not None:
+        canonical_cols = _forced_canonical
+
     if len(mappings) != len(valid):
         print(f"[standardize] Warning: expected {len(valid)} mappings, got {len(mappings)}")
         return results
@@ -1450,9 +1477,28 @@ def standardize_candidate_columns(
         if df is None:
             continue
 
-        # Rename columns
+        # Rename columns using LLM mapping; then fix any remaining mismatches
+        # against canonical_cols using case-insensitive fallback.
         rename_map = {old: new for old, new in col_map.items() if old in df.columns}
         df = df.rename(columns=rename_map)
+
+        # If GT columns are forced, ensure remaining columns are renamed to match
+        # canonical_cols by position (when count agrees) or by case-insensitive match.
+        if _forced_canonical is not None and list(df.columns) != canonical_cols:
+            current_cols = list(df.columns)
+            if len(current_cols) == len(canonical_cols):
+                # Try case-insensitive match first
+                ci_map = {c.lower(): c for c in current_cols}
+                fixed = {}
+                for canon in canonical_cols:
+                    matched = ci_map.get(canon.lower())
+                    if matched and matched != canon:
+                        fixed[matched] = canon
+                if fixed:
+                    df = df.rename(columns=fixed)
+            # If still not matching, rename positionally as last resort
+            if list(df.columns) != canonical_cols and len(df.columns) == len(canonical_cols):
+                df.columns = canonical_cols
 
         # Reorder to canonical order (only if all canonical cols are present)
         if set(canonical_cols).issubset(set(df.columns)):

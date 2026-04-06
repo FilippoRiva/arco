@@ -2709,7 +2709,10 @@ class SalesDataAgent:
                 try:
                     from Agent.utils import standardize_candidate_columns
                     standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
-                    results = standardize_candidate_columns(results, self.schema, standardize_llm)
+                    results = standardize_candidate_columns(
+                        results, self.schema, standardize_llm,
+                        gt_columns=getattr(config, 'gt_columns', None),
+                    )
                     self.current_run_step_results[step_name] = results
                     helper.set_attributes(step_span, {"standardized_candidate_columns": True})
                 except Exception as e:

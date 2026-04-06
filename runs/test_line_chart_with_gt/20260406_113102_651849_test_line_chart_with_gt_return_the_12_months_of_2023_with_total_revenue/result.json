@@ -1,0 +1,150 @@
+{
+  "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+  "data": "Month,Total_Revenue,Total_Units_Sold\r\n2023-01-01,434172.8082997259,33653.0\r\n2023-02-01,411762.7182441354,31545.0\r\n2023-03-01,423070.8383087404,32460.0\r\n2023-04-01,384479.67831129767,30199.0\r\n2023-05-01,381326.4280229807,31154.0\r\n2023-06-01,364806.73785564303,29082.0\r\n2023-07-01,353284.2078382373,27932.0\r\n2023-08-01,401061.53772878647,31903.0\r\n2023-09-01,422554.9674690459,31847.0\r\n2023-10-01,454231.05710360967,38208.0\r\n2023-11-01,511104.2874179352,41043.0\r\n2023-12-01,874263.6683309432,60941.0\r\n",
+  "data_df": {
+    "__dataframe__": true,
+    "records": [
+      {
+        "Month": "2023-01-01 00:00:00",
+        "Total_Revenue": 434172.8082997259,
+        "Total_Units_Sold": 33653.0
+      },
+      {
+        "Month": "2023-02-01 00:00:00",
+        "Total_Revenue": 411762.7182441354,
+        "Total_Units_Sold": 31545.0
+      },
+      {
+        "Month": "2023-03-01 00:00:00",
+        "Total_Revenue": 423070.8383087404,
+        "Total_Units_Sold": 32460.0
+      },
+      {
+        "Month": "2023-04-01 00:00:00",
+        "Total_Revenue": 384479.67831129767,
+        "Total_Units_Sold": 30199.0
+      },
+      {
+        "Month": "2023-05-01 00:00:00",
+        "Total_Revenue": 381326.4280229807,
+        "Total_Units_Sold": 31154.0
+      },
+      {
+        "Month": "2023-06-01 00:00:00",
+        "Total_Revenue": 364806.73785564303,
+        "Total_Units_Sold": 29082.0
+      },
+      {
+        "Month": "2023-07-01 00:00:00",
+        "Total_Revenue": 353284.2078382373,
+        "Total_Units_Sold": 27932.0
+      },
+      {
+        "Month": "2023-08-01 00:00:00",
+        "Total_Revenue": 401061.53772878647,
+        "Total_Units_Sold": 31903.0
+      },
+      {
+        "Month": "2023-09-01 00:00:00",
+        "Total_Revenue": 422554.9674690459,
+        "Total_Units_Sold": 31847.0
+      },
+      {
+        "Month": "2023-10-01 00:00:00",
+        "Total_Revenue": 454231.05710360967,
+        "Total_Units_Sold": 38208.0
+      },
+      {
+        "Month": "2023-11-01 00:00:00",
+        "Total_Revenue": 511104.2874179352,
+        "Total_Units_Sold": 41043.0
+      },
+      {
+        "Month": "2023-12-01 00:00:00",
+        "Total_Revenue": 874263.6683309432,
+        "Total_Units_Sold": 60941.0
+      }
+    ]
+  },
+  "answer": [
+    "In 2023, the total revenue and total units sold for each month are as follows: January - $434,172.81 with 33,653 units; February - $411,762.72 with 31,545 units; March - $423,070.84 with 32,460 units; April - $384,479.68 with 30,199 units; May - $381,326.43 with 31,154 units; June - $364,806.74 with 29,082 units; July - $353,284.21 with 27,932 units; August - $401,061.54 with 31,903 units; September - $422,554.97 with 31,847 units; October - $454,231.06 with 38,208 units; November - $511,104.29 with 41,043 units; December - $874,263.67 with 60,941 units.",
+    "import matplotlib.pyplot as plt\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
+  ],
+  "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+  "chart_config": {
+    "chart_type": "line",
+    "x_axis": "Month",
+    "y_axis": "Total_Revenue",
+    "title": "Monthly Revenue Trends for 2023"
+  },
+  "tool_choice": "end",
+  "sql_query": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) as Month, SUM(Total_Sale_Value) as Total_Revenue, SUM(Qty_Sold) as Total_Units_Sold \nFROM sales \nWHERE CAST(Sold_Date AS DATE) >= '2023-01-01' AND CAST(Sold_Date AS DATE) < '2024-01-01' \nGROUP BY Month \nORDER BY Month;",
+  "run_id": "test_line_chart_with_gt",
+  "cached_step_results": {},
+  "_step_timings_sec": {
+    "decide_tool": 0.617,
+    "lookup_sales_data": 12.848,
+    "analyzing_data": 7.377,
+    "create_visualization": 51.186
+  },
+  "_step_eval_scores": {
+    "lookup_sales_data": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "analyzing_data": {
+      "scores": [
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "create_visualization": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    }
+  },
+  "_gt_scores_per_step": {
+    "lookup_sales_data": {
+      "gt_score": 0.0,
+      "all_gt_scores": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "analyzing_data": {
+      "gt_score": 1.0,
+      "all_gt_scores": null
+    },
+    "create_visualization": {
+      "gt_score": 1.0,
+      "all_gt_scores": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  },
+  "_total_run_time_sec": 82.612,
+  "_energy": {
+    "energy_consumed_kwh": 0.0016044698947222243,
+    "cpu_energy_kwh": 0.001376515966666669,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00022795392805555553,
+    "emissions_kg_co2": 0.0005306270746427446,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 82.62185369999997
+  }
+}

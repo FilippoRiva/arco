@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-04-06T12:08:38.905758",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_line_chart_with_gt.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_line_chart_with_gt\\20260406_120838_888038_test_line_chart_with_gt_return_the_12_months_of_2023_with_total_revenue",
+  "run_id": "test_line_chart_with_gt",
+  "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 76.814,
+    "step_timings_sec": {
+      "decide_tool": 0.882,
+      "lookup_sales_data": 15.572,
+      "analyzing_data": 6.997,
+      "create_visualization": 46.919
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0014919528569444637,
+    "cpu_energy_kwh": 0.0012800591650000118,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.0002118936919444524,
+    "emissions_kg_co2": 0.0004934156649429592,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 76.82674179999958
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 0.0,
+        "all_gt_scores": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_line_chart_with_gt",
+    "save_dir": "./runs/test_line_chart_with_gt",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Return the 12 months of 2023 with total revenue and total units sold"
+  }
+}
