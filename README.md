@@ -192,52 +192,6 @@ python -m Agent.data_agent "What were the sales in November 2021?" --lookup-only
 ```
 ---
 
-## Optional: Evaluate results with a C++ comparator
-
-Build the comparator (requires CMake):
-```powershell
-cd my_cpp
-cmake -S . -B build -G "Ninja"  # or "Visual Studio 17 2022" on Windows
-cmake --build build --config Release
-cd ..
-```
-
-Run the agent and compare the produced CSV with an expected CSV (C++ comparator):
-```powershell
-python -m Agent.data_agent "Weekly sales in 2021" `
-  --lookup-only `
-  --output-csv "results/weekly_sales_2021.csv" `
-  --expected-csv "C:\path\to\expected.csv" `
-  --evaluator-exe ".\my_cpp\build\resultcmp.exe" `
-  --eval-keys "week,store_id"
-```
-
-PowerShell example with backtick continuations:
-```powershell
-python -m Agent.data_agent "Weekly sales in 2021" `
-  --lookup-only `
-  --model "llama3.2:3b" `
-  --output-csv "results/weekly_sales_2021.csv" `
-  --expected-csv "C:\path\to\expected.csv" `
-  --evaluator-exe ".\my_cpp\build\resultcmp.exe" `
-  --eval-keys "week,store_id"
-```
-
-The final returned dict will include an `evaluation` field like:
-```json
-{
-  "equal": true,
-  "row_count_actual": 1245,
-  "row_count_expected": 1245,
-  "mismatched_rows": 0,
-  "mismatched_columns": [],
-  "duration_ms": 37,
-  "exit_code": 0
-}
-```
-
----
-
 ## Run with Docker
 
 Build the image (from project root):
@@ -352,10 +306,6 @@ $body = @{
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:5000/call-agent" -ContentType "application/json" -Body $body
 ```
 
-Use the C++ comparator via the API by adding:
-- `evaluator_exe`: e.g. `".\my_cpp\build\resultcmp.exe"`
-- `eval_keys`: e.g. `"week,store_id"`
-
 ---
 
 ## Optional: SPICE (Java) for analysis-text evaluation
@@ -440,51 +390,3 @@ Notes:
 - Logs are estimates; keep the machine plugged in and avoid heavy background tasks for more stable readings.
 
 
-## Building agent_config_runner
-
-### Quick Build
-
-```bash
-# Compile directly
-g++ -std=c++11 -o agent_config_runner agent_config_runner.cpp
-
-# Or with CMake
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
-```
-
-### Usage
-
-```bash
-# Use default agent_config.yaml in current directory
-./agent_config_runner
-
-# Specify custom config file
-./agent_config_runner path/to/my_config.yaml
-```
-
-### Single Query Mode
-
-Set in agent_config.yaml:
-```yaml
-prompt: "Your question"
-run_batch: false
-```
-
-### Batch Mode
-
-Set in agent_config.yaml:
-```yaml
-test_cases_json: ./test_cases.json
-run_batch: true
-```
-
-### Features
-
-✓ Efficient YAML parsing (no external dependencies)
-✓ Batch processing with progress tracking
-✓ Temporary file handling for gt_data/gt_analysis
-✓ Per-test-case save directories
-✓ Success/failure reporting
-✓ Minimal overhead

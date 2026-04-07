@@ -87,9 +87,6 @@ def call_agent():
 
         # Evaluation options
         "py_csv_eval": false,  # Use Python CSV evaluator
-        "cpp_csv_eval": false,  # Use C++ CSV evaluator
-        "evaluator_exe": "/path/to/evaluator",  # C++ evaluator path
-        "eval_keys": "col1,col2",  # Keys for C++ evaluator
         "iou_type": "rows",  # "rows", "columns", or "table"
 
         "bleu_text_eval": false,  # Use BLEU for text evaluation
@@ -150,9 +147,6 @@ def call_agent():
 
     # CSV evaluation options
     py_csv_eval = bool(payload.get("py_csv_eval") or payload.get("py-csv-eval", False))
-    cpp_csv_eval = bool(payload.get("cpp_csv_eval") or payload.get("cpp-csv-eval", False))
-    evaluator_exe = payload.get("evaluator_exe") or payload.get("evaluator-exe")
-    eval_keys = payload.get("eval_keys") or payload.get("eval-keys")
     iou_type = payload.get("iou_type", "rows")
 
     # Text evaluation options
@@ -193,9 +187,6 @@ def call_agent():
             lookup_only=lookup_only,
             gt_csv_path=gt_csv,
             py_csv_eval=py_csv_eval,
-            cpp_csv_eval=cpp_csv_eval,
-            evaluator_exe=evaluator_exe,
-            eval_keys=eval_keys,
             gt_text_path=gt_text_path,
             iou_type=iou_type,
             spice_text_eval=spice_text_eval,

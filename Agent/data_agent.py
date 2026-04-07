@@ -3292,9 +3292,6 @@ if __name__ == "__main__":
     # CSV evaluation options
     csv_eval_group = parser.add_mutually_exclusive_group()
     csv_eval_group.add_argument("--py_csv_eval", action="store_true", help="Use Python evaluator for CSV IoU")
-    csv_eval_group.add_argument("--cpp_csv_eval", action="store_true", help="Use C++ evaluator for CSV IoU")
-    parser.add_argument("--evaluator_exe", type=str, default=None, help="Path to C++ comparator executable")
-    parser.add_argument("--eval_keys", type=str, default=None, help="Comma-separated key columns for C++ comparator")
     parser.add_argument("--iou_type", type=str, default="rows", choices=["columns", "rows", "table"], help="Type of IoU to use for CSV evaluation, choose between 'columns', 'rows', 'table'")
 
     # Text evaluation options
@@ -3366,9 +3363,6 @@ if __name__ == "__main__":
         lookup_only=args.lookup_only,
         gt_csv_path=args.gt_csv,
         py_csv_eval=args.py_csv_eval,
-        cpp_csv_eval=args.cpp_csv_eval,
-        evaluator_exe=args.evaluator_exe,
-        eval_keys=args.eval_keys,
         gt_text_path=args.gt_text,
         iou_type=args.iou_type,
         spice_text_eval=args.spice_text_eval,

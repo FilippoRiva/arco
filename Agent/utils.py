@@ -119,9 +119,6 @@ def get_evaluation_functions(
     # CSV evaluation options
     gt_csv_path: Optional[str] = None,
     py_csv_eval: bool = False,
-    cpp_csv_eval: bool = False,
-    evaluator_exe: Optional[str] = None,
-    eval_keys: Optional[str] = None,
     iou_type: str = "rows",
     # Text evaluation options
     gt_text_path: Optional[str] = None,
@@ -148,9 +145,6 @@ def get_evaluation_functions(
     Args:
         lookup_only: If True, only CSV evaluation is relevant (no text analysis)
         py_csv_eval: Use Python CSV evaluator
-        cpp_csv_eval: Use C++ CSV evaluator
-        evaluator_exe: Path to C++ evaluator executable
-        eval_keys: Comma-separated key columns for comparison
         spice_text_eval: Use SPICE for text evaluation
         bleu_text_eval: Use BLEU for text evaluation
         llm_text_eval: Use LLM for text evaluation
@@ -179,25 +173,6 @@ def get_evaluation_functions(
             iou_type_map = {"columns": 0, "rows": 1, "table": 2}
             iou_index = iou_type_map.get(iou_type, 1)  # Default to rows (1)
             csv_eval_fn = lambda csv_path: compare_csv(csv_path, gt_csv_path)[iou_index]
-        elif cpp_csv_eval:
-            if evaluator_exe is None:
-                print("Cannot use --cpp_csv_eval because --evaluator-exe is not available") #TODO: make into warning
-
-            keys = [k.strip() for k in (eval_keys or "").split(",") if k.strip()] or None
-            def cpp_wrapper(csv_path):
-                try:
-                    output = run_cpp_comparator(
-                        actual_csv=csv_path,
-                        evaluator_exe=evaluator_exe,
-                        expected_csv=gt_csv_path,
-                        keys=keys
-                    )
-                    iou_type_map = {"columns": "columns_iou", "rows": "rows_iou", "table": "iou"}
-                    return output.get(iou_type_map.get(iou_type,"rows_iou"),0.0)
-                except Exception as e:
-                    print(f"[CSV Eval] C++ comparator failed: {e}")
-                    return 0.0
-            csv_eval_fn = cpp_wrapper
 
     # Load ground truth if provided
     if gt_text_path:
@@ -305,38 +280,6 @@ def compare_csv(csv1_path, csv2_path):
         final_rows_iou = 0.0
     
     return columns_names_iou, final_rows_iou, data_iou
-
-def run_cpp_comparator(
-    *,
-    evaluator_exe: str,
-    actual_csv: str,
-    expected_csv: str,
-    keys: Optional[List[str]] = None,
-    case_insensitive: bool = False,
-    stream_debug: bool = False,
-) -> Dict:
-    args = [evaluator_exe, "--actual", actual_csv, "--expected", expected_csv]
-    if keys:
-        args += ["--key", ",".join(keys)]
-    if case_insensitive:
-        args += ["--case-insensitive"]
-
-    # If stream_debug is True, inherit stderr so C++ debug (sent to stderr) prints to terminal.
-    # Keep stdout captured to parse JSON report.
-    if stream_debug:
-        proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=None, text=True)
-    else:
-        proc = subprocess.run(args, capture_output=True, text=True)
-    stdout = proc.stdout.strip()
-    try:
-        report = json.loads(stdout) if stdout else {}
-    except json.JSONDecodeError:
-        report = {"equal": False, "error": "Invalid JSON from comparator", "raw": stdout}
-    report["exit_code"] = proc.returncode
-    if proc.returncode not in (0, 1):
-        # Non-comparison error, include stderr
-        report.setdefault("error", proc.stderr.strip())
-    return report
 
 def _tokenize_for_bleu(text: str) -> List[str]:
     """Simple, dependency-free tokenization (words + numbers) for BLEU."""

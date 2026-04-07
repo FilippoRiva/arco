@@ -84,15 +84,10 @@ gt_text: null
 enable_csv_eval: false
 
 # CSV evaluation method
-csv_eval_method: "python"  # Options: python | cpp
+csv_eval_method: "python"
 
 # IoU type for CSV comparison
 csv_iou_type: "rows"  # Options: rows | columns | table
-
-# C++ evaluator settings (only used if csv_eval_method = cpp)
-cpp_evaluator:
-  executable: null  # Path to C++ evaluator binary
-  keys: null        # Comma-separated key columns (e.g., "store_id,date")
 
 # ================================================================================
 # TEXT EVALUATION
