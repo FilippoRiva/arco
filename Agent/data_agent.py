@@ -25,7 +25,6 @@ from functools import partial
 from typing import Any, Dict, List, Optional
 import tempfile
 import numpy as np
-import argparse
 
 import duckdb
 import pandas as pd
@@ -67,8 +66,6 @@ try:
 except Exception:  # pragma: no cover - tracing is optional
     StatusCode = None  # type: ignore
     _PHOENIX_AVAILABLE = False
-    #print exception
-    print(Exception)
 
 
 # Mirror utils_0.py printing of langgraph version
@@ -3265,144 +3262,3 @@ class SalesDataAgent:
         )
 
 __all__ = ["SalesDataAgent", "State"]
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description="Run the Sales Data Agent")
-    parser.add_argument("prompt", type=str, help="User prompt/question")
-    parser.add_argument("--gt_csv", type=str, default=None, help="Path to ground-truth CSV file")
-    parser.add_argument("--gt_text", type=str, default=None, help="Path to a text file containing the ground-truth")
-    parser.add_argument("--save_dir", type=str, default=None, help="Directory to save run results")
-
-    parser.add_argument("--data", dest="data_path", type=str, default=DEFAULT_DATA_PATH, help="Path to parquet file")
-    parser.add_argument("--goal", dest="visualization_goal", type=str, default=None, help="Optional visualization goal")
-    parser.add_argument("--model", type=str, default="gpt-4o-mini", help="Model name (default: gpt-4o-mini)")
-       
-    # Agent type options
-    agent_group = parser.add_mutually_exclusive_group()
-    agent_group.add_argument("--lookup_only", action="store_true", help="Only run data lookup")
-    agent_group.add_argument("--no_vis", action="store_true", help="Run lookup then analysis (no visualization)")
-
-    # Best-of-n options
-    parser.add_argument("--best_of_n", type=int, default=1, help="Run agent N times and pick the best result")
-    parser.add_argument("--temp", type=float, default=0.1, help="Temperature used to build the agent and as minimum for best-of-n")
-    parser.add_argument("--temp-max", type=float, default=None, help="Max temperature for best-of-n, if not provided best-of-n runs without modifying the temperature")
-    parser.add_argument("--cot_n", type=int, default=1, help="Number of iterative CoT refinement steps per LLM call (1 = no refinement, N = up to N iterations with early stop on convergence)")
-
-    # CSV evaluation options
-    csv_eval_group = parser.add_mutually_exclusive_group()
-    csv_eval_group.add_argument("--py_csv_eval", action="store_true", help="Use Python evaluator for CSV IoU")
-    parser.add_argument("--iou_type", type=str, default="rows", choices=["columns", "rows", "table"], help="Type of IoU to use for CSV evaluation, choose between 'columns', 'rows', 'table'")
-
-    # Text evaluation options
-    text_eval_group = parser.add_mutually_exclusive_group()
-    text_eval_group.add_argument("--spice_text_eval", action="store_true")
-    text_eval_group.add_argument("--bleu_text_eval", action="store_true")
-    text_eval_group.add_argument("--llm_text_eval", action="store_true")
-    parser.add_argument("--bleu_nltk", action="store_true", help="Use nltk for BLEU implementation instead of simple BLEU")
-    parser.add_argument("--spice_jar", type=str, default=None, help="Path to SPICE jar (e.g., spice-1.0.jar)")
-    parser.add_argument("--spice_java_bin", type=str, default="java", help="Java executable for SPICE")
-
-    # Visualization evaluation options
-    parser.add_argument("--vis_eval", action="store_true", help="Enable visualization evaluation using LLM-as-a-judge")
-    parser.add_argument("--gt_vis_path", type=str, default=None, help="Path to visualization ground truth JSON file")
-    parser.add_argument("--vis_judge_model", type=str, default="gpt-5.1", help="Model for visualization judge (default: gpt-5.1)")
-    parser.add_argument("--vis_provider", type=str, default="openai", choices=["openai", "ollama"], help="Provider for visualization judge")
-
-    # Phoenix tracking options
-    parser.add_argument("--enable_tracing", action="store_true", help="Enable Phoenix tracing/tracking")
-    parser.add_argument("--phoenix_endpoint", type=str, default="http://localhost:6006/v1/traces", help="Phoenix endpoint URL (default: https://app.phoenix.arize.com/v1/traces)")
-    parser.add_argument("--project_name", type=str, default="evaluating-agent", help="Phoenix project name")
-
-    # CodeCarbon options
-    parser.add_argument("--enable_codecarbon", action="store_true", help="Enable CodeCarbon energy/emissions tracking")
-    
-    args = parser.parse_args()
-
-    # Create agent
-    agent = SalesDataAgent(
-        model=args.model,
-        temperature=args.temp,
-        data_path=args.data_path,
-        enable_tracing=args.enable_tracing,
-        phoenix_endpoint=args.phoenix_endpoint,
-        project_name=args.project_name,
-    )
-
-    # Apply cot_n to all step configs when requested
-    if args.cot_n > 1:
-        for _step in ['decide_tool', 'lookup_sales_data', 'analyzing_data', 'create_visualization']:
-            _cfg = agent.agent_config.get_step_config(_step)
-            _cfg.cot_n = args.cot_n
-            agent.agent_config.set_step_config(_step, _cfg)
-        print(f"[Agent] CoT iterative refinement enabled: cot_n={args.cot_n}")
-
-    # Load visualization ground truth if provided
-    gt_vis_config = None
-    gt_vis_code = None
-    vis_goal = None
-    explicit_requirements = None
-    if args.gt_vis_path:
-        try:
-            with open(args.gt_vis_path, 'r', encoding='utf-8') as f:
-                vis_gt_data = json.load(f)
-                # If it's a list, use the first entry (for single-query evaluation)
-                if isinstance(vis_gt_data, list) and len(vis_gt_data) > 0:
-                    vis_gt_entry = vis_gt_data[0]
-                else:
-                    vis_gt_entry = vis_gt_data
-                gt_vis_config = vis_gt_entry.get("gt_chart_config")
-                gt_vis_code = vis_gt_entry.get("gt_chart_code")
-                vis_goal = vis_gt_entry.get("visualization_goal")
-                explicit_requirements = vis_gt_entry.get("explicit_requirements")
-        except Exception as e:
-            print(f"Failed to load visualization ground truth: {e}")
-
-    # Get evaluation functions based on arguments
-    csv_eval_fn, text_eval_fn, vis_eval_fn = get_evaluation_functions(
-        lookup_only=args.lookup_only,
-        gt_csv_path=args.gt_csv,
-        py_csv_eval=args.py_csv_eval,
-        gt_text_path=args.gt_text,
-        iou_type=args.iou_type,
-        spice_text_eval=args.spice_text_eval,
-        bleu_text_eval=args.bleu_text_eval,
-        llm_text_eval=args.llm_text_eval,
-        bleu_nltk=args.bleu_nltk,
-        spice_jar=args.spice_jar,
-        spice_java_bin=args.spice_java_bin,
-        # Visualization evaluation options
-        vis_eval=args.vis_eval,
-        gt_vis_config=gt_vis_config,
-        gt_vis_code=gt_vis_code,
-        vis_goal=vis_goal or args.visualization_goal,
-        explicit_requirements=explicit_requirements,
-        vis_judge_model=args.vis_judge_model,
-        vis_provider=args.vis_provider,
-    )
-
-    # Run agent
-    output, score_variance = agent.run(
-        args.prompt,
-        visualization_goal=args.visualization_goal,
-        lookup_only=args.lookup_only,
-        no_vis=args.no_vis,
-        best_of_n=args.best_of_n,
-        temp=args.temp,
-        temp_max=args.temp_max,
-        csv_eval_fn=csv_eval_fn,
-        text_eval_fn=text_eval_fn,
-        vis_eval_fn=vis_eval_fn,
-        save_dir=args.save_dir,
-        enable_codecarbon=args.enable_codecarbon,
-    )
-    
-    # Print results
-    print("\n" + "="*60)
-    print("FINAL RESULTS")
-    print("="*60)
-    if args.best_of_n > 1:
-        print(f"Score variance: {score_variance:.4f}")
-    print(f"Answer: {output.get('answer', [])}")
-    if args.save_dir or args.best_of_n > 1:
-        print(f"Results saved to: {args.save_dir or 'temp directory'}")
