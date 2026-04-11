@@ -220,6 +220,7 @@ Generate a DuckDB SQL query to answer the user's question and provide data optim
 5. For DATE columns with pattern matching, CAST to VARCHAR: CAST(date_column AS VARCHAR) LIKE '%2021-11%'
 6. Handle NULL values appropriately
 7. Use DuckDB-specific functions when beneficial
+8. **When using JOINs**: always qualify every column reference with its table alias (e.g. `st.region`, not `region`). In SELECT, GROUP BY, ORDER BY, and WHERE, prefix each column with the correct alias of the table it belongs to. Never reference a column by name alone when multiple tables are in scope.
 
 ## QUERY OPTIMIZATION FOR VISUALIZATION
 - **For time series plots**: Ensure dates are sorted chronologically, use DATE_TRUNC for proper granularity
@@ -325,6 +326,26 @@ Reasoning:
 - Step 4: SELECT p.Category, SUM(s.Total_Sale_Value) FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE year=2023 GROUP BY p.Category ORDER BY revenue DESC
 - Step 5: Use EXTRACT for year filter; alias table names for clarity
 Query: SELECT p.Category, SUM(s.Total_Sale_Value) as Total_Revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023 GROUP BY p.Category ORDER BY Total_Revenue DESC
+
+## IMPORTANT — "Average of aggregates" pattern
+When the question asks for "average monthly [metric]", "average daily [metric]", etc., you MUST:
+1. First aggregate raw rows to the desired period (e.g., compute monthly totals per store using SUM and GROUP BY store + month).
+2. Then wrap that result in an outer query or subquery and apply AVG to the aggregated values.
+Do NOT apply AVG directly to individual transaction/row values — that gives the average transaction size, not the average monthly metric.
+
+Example 6 (two-level aggregation — "average monthly revenue"):
+Question: "Compare average monthly revenue between store regions for 2022 and 2023"
+Visualization: "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023"
+Schema:
+  Table: sales (columns: Sold_Date, Store_Number, Total_Sale_Value)
+  Table: stores (columns: Store_Number, region)
+Reasoning:
+- Step 1: "Average monthly revenue" = compute monthly totals per store first, then average those. NOT AVG(transaction value).
+- Step 2: Revenue is in sales; region is in stores — JOIN on Store_Number. Filter years 2022-2023.
+- Step 3: Grouped bar → one row per (region, year)
+- Step 4: Subquery computes SUM(Total_Sale_Value) per (Store_Number, year, month); outer query JOINs stores and computes AVG(monthly_rev) per (region, year).
+- Step 5: Use DATE_TRUNC for monthly grouping; qualify all column references with table aliases.
+Query: SELECT st.region, s.yr AS year, ROUND(AVG(s.monthly_rev), 2) AS avg_monthly_revenue FROM (SELECT Store_Number, YEAR(CAST(Sold_Date AS DATE)) AS yr, DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month, SUM(Total_Sale_Value) AS monthly_rev FROM sales WHERE YEAR(CAST(Sold_Date AS DATE)) IN (2022, 2023) GROUP BY Store_Number, yr, month) s JOIN stores st ON s.Store_Number = st.Store_Number GROUP BY st.region, s.yr ORDER BY st.region, s.yr
 
 ## OUTPUT FORMAT
 Return ONLY the SQL query as plain text. No explanations. No markdown formatting. No code fences. Just the SQL query.
@@ -651,6 +672,10 @@ No explanations. Just the tool name.
 
         if matched_tool in ["analyzing_data", "create_visualization"] and not state.get("data"):
             matched_tool = "lookup_sales_data"
+        # Anti-loop guard: if lookup already ran but returned no data (SQL error), stop
+        if matched_tool == "lookup_sales_data" and state.get("tool_choice") == "lookup_sales_data" and not state.get("data"):
+            print("[decide_tool] lookup_sales_data already ran but returned no data — forcing end to avoid infinite loop")
+            matched_tool = "end"
         elif len(state.get("answer", [])) > 1:
             matched_tool = "end"
 
@@ -1086,6 +1111,10 @@ No explanations. Just the tool name.
 
         if matched_tool in ["analyzing_data", "create_visualization"] and not state.get("data"):
             matched_tool = "lookup_sales_data"
+        # Anti-loop guard: if lookup already ran but returned no data (SQL error), stop
+        if matched_tool == "lookup_sales_data" and state.get("tool_choice") == "lookup_sales_data" and not state.get("data"):
+            print("[decide_tool] lookup_sales_data already ran but returned no data — forcing end to avoid infinite loop")
+            matched_tool = "end"
         elif len(state.get("answer", [])) > 1:
             matched_tool = "end"
 
@@ -1102,7 +1131,7 @@ No explanations. Just the tool name.
     except Exception as e:
         print(f"Error deciding tool: {str(e)}")
         return {**state, "error": f"Error accessing data: {str(e)}"}
-    
+
 
 CHART_CONFIGURATION_PROMPT = """You are a data visualization expert designing chart configurations.
 
@@ -1125,13 +1154,15 @@ Choose the appropriate chart type based on the data and goal:
 ## REQUIRED JSON KEYS
 - chart_type: One of [bar, line, area, scatter]
 - x_axis: Column name for X-axis (string)
-- y_axis: Column name for Y-axis (string) — use this for SINGLE-series charts
-- y_axes: List of column names for Y-axis (list of strings) — use this INSTEAD of y_axis when comparing multiple series (e.g., promo vs non-promo, actual vs forecast). Do NOT include both y_axis and y_axes.
+- y_axis: Column name for Y-axis (string) — use this for SINGLE-series charts and for long-format grouped bar charts (used together with group_by)
+- y_axes: List of column names for Y-axis (list of strings) — use this INSTEAD of y_axis when the DataFrame already has one column per series (wide format). Do NOT include both y_axis and y_axes.
+- group_by: (OPTIONAL) Column name whose distinct values define the bar series in a long-format grouped bar chart. Use this together with y_axis when the data has a discriminator column (e.g., 'year', 'quarter') instead of separate columns per series. Do NOT use together with y_axes.
 - title: Descriptive chart title (string)
 
-## WHEN TO USE y_axes vs y_axis
+## WHEN TO USE y_axes vs y_axis vs group_by
 - Use y_axis (single string) when showing ONE metric: revenue, count, score
-- Use y_axes (list) when the goal explicitly asks to COMPARE two or more metrics side by side on the same chart (e.g., "compare promo vs non-promo", "actual vs budget", "male vs female")
+- Use y_axes (list) when the DataFrame already has one column per series — i.e., the series values are in separate columns (e.g., Avg_Revenue_Promo, Avg_Revenue_Non_Promo)
+- Use y_axis + group_by when data is in LONG FORMAT with a discriminator column: the same metric column (y_axis) appears for multiple groups identified by another column (group_by). Example: data has columns (region, year, avg_monthly_revenue) and you want separate bars for each year → x_axis=region, y_axis=avg_monthly_revenue, group_by=year
 
 ## CHAIN OF THOUGHT REASONING
 Before creating the configuration, think step by step:
@@ -1250,6 +1281,19 @@ Reasoning:
 
 Output: {{"chart_type": "bar", "x_axis": "Product_Class", "y_axes": ["Avg_Revenue_Promo", "Avg_Revenue_Non_Promo"], "title": "Average Revenue per Unit: Promo vs Non-Promo by Product Class"}}
 
+Example 7 - Long-format grouped bar chart (data has a discriminator column, use group_by):
+Data columns: region, year, avg_monthly_revenue (8 rows: 4 regions × 2 years, long format)
+Goal: "Compare average monthly revenue by region for 2022 vs 2023"
+
+Reasoning:
+- Step 1: "Compare...for 2022 vs 2023" → two bar series, one per year
+- Step 2: Columns: region (categorical x-axis), year (discriminator: values 2022 or 2023), avg_monthly_revenue (metric). Data is LONG FORMAT — one row per (region, year). There are NO separate columns avg_monthly_revenue_2022 / avg_monthly_revenue_2023.
+- Step 3: Two series over categories → grouped bar chart
+- Step 4: x_axis = region, y_axis = avg_monthly_revenue (the metric), group_by = year (to split into two bar series). Do NOT use y_axes here — that would require wide-format columns which don't exist.
+- Step 5: Title names both variables being compared
+
+Output: {{"chart_type": "bar", "x_axis": "region", "y_axis": "avg_monthly_revenue", "group_by": "year", "title": "Avg Monthly Revenue by Region: 2022 vs 2023"}}
+
 
 ## OUTPUT FORMAT
 Return ONLY a valid JSON object. No markdown. No code fences. No backticks. No explanations. Just the JSON.
@@ -1360,9 +1404,10 @@ Generate Python code to create a chart based on the provided configuration.
 Your code must:
 1. Import matplotlib.pyplot as plt
 2. Import pandas as pd (if needed for data manipulation)
-3. Check whether config has 'y_axes' (list) or 'y_axis' (string) and handle accordingly:
-   - If config has 'y_axes': produce a GROUPED BAR chart with one bar group per x value, one bar per series
-   - If config has 'y_axis': access data with data_df[config['y_axis']] as usual
+3. Check whether config has 'y_axes' (list), 'group_by' (string), or 'y_axis' (string) and handle accordingly:
+   - If config has 'y_axes': data is in WIDE FORMAT — produce a GROUPED BAR chart, one bar series per column in y_axes (data_df[col] for each col)
+   - If config has 'group_by': data is in LONG FORMAT — produce a GROUPED BAR chart by filtering data_df by each unique value of config['group_by'], using config['y_axis'] as the metric column. Use sorted unique values of data_df[config['group_by']] as series labels.
+   - If config has 'y_axis' only: access data with data_df[config['y_axis']] as usual (single series)
 4. Create the appropriate chart type using config['chart_type']
 5. Set the chart title using config['title']
 6. Add axis labels, and a legend when multiple series are present
@@ -1411,7 +1456,8 @@ Before writing the code, think step by step:
 **Step 2: Planning Data Extraction**
 - How do I access the x-axis data? (data_df[config['x_axis']])
 - Single series: data_df[config['y_axis']]
-- Multi-series: iterate over config['y_axes'], plot each as a separate bar group using numpy offsets
+- Wide-format multi-series (y_axes): iterate over config['y_axes'], plot data_df[col] for each, using numpy offsets
+- Long-format multi-series (group_by): get sorted unique values of data_df[config['group_by']], filter data_df by each value, extract config['y_axis'] values, plot using numpy offsets
 - Do I need to handle special data types (dates, categories)?
 - Should I sort or transform the data before plotting?
 
@@ -1605,6 +1651,48 @@ for i, col in enumerate(y_axes):
 
 plt.xlabel(config['x_axis'])
 plt.ylabel('Value')
+plt.title(config['title'])
+plt.xticks(x, x_labels, rotation=45, ha='right')
+plt.legend()
+plt.grid(True, axis='y', alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+
+Example 7 - Grouped bar from long-format data (config has 'group_by'):
+config = {{"chart_type": "bar", "x_axis": "region", "y_axis": "avg_monthly_revenue", "group_by": "year", "title": "Avg Monthly Revenue by Region: 2022 vs 2023"}}
+
+Reasoning:
+- Step 1: Bar chart, config has 'group_by' = 'year' → data is in LONG FORMAT, split into series by year value
+- Step 2: Get sorted unique year values (e.g., [2022, 2023]). For each year, filter data_df and extract avg_monthly_revenue indexed by region.
+- Step 3: Use numpy arange for x positions, offset bars for each year group
+- Step 4: Add legend with year values as labels, rotate x labels for region names
+- Step 5: tight_layout() then show()
+
+Code:
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+group_col = config['group_by']
+x_col = config['x_axis']
+y_col = config['y_axis']
+
+groups = sorted(data_df[group_col].unique())
+x_labels = sorted(data_df[x_col].unique())
+x = np.arange(len(x_labels))
+n_series = len(groups)
+bar_width = 0.8 / n_series
+
+plt.figure(figsize=(12, 6))
+for i, group_val in enumerate(groups):
+    df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+    y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+    offset = (i - n_series / 2 + 0.5) * bar_width
+    plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+plt.xlabel(x_col)
+plt.ylabel(y_col)
 plt.title(config['title'])
 plt.xticks(x, x_labels, rotation=45, ha='right')
 plt.legend()

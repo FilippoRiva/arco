@@ -721,6 +721,7 @@ Rate each criterion on a scale of 1-5:
 Do X and Y axes use the SAME data columns as the reference?
 - Column names must match exactly (case-insensitive)
 - Axes cannot be swapped (x must be x, y must be y)
+- Configs may use 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series). These are all valid multi-series approaches. If the reference uses 'group_by' and the generated uses 'y_axes' (or vice versa), focus on whether the SAME columns are ultimately visualized — not on the exact key name.
 [1=Wrong columns, 3=Partial match, 5=Exact match]
 
 ### 2. CHART TYPE CORRECTNESS
@@ -1085,7 +1086,7 @@ def make_text_evaluator_gt(
             elif metric == "spice":
                 return spice_score_java(analysis_text, ground_truth_text)
             elif metric == "judge_gt":
-                score, _ = judge_analysis_gt(
+                score, evaluation = judge_analysis_gt(
                     generated_analysis=analysis_text,
                     gt_analysis=ground_truth_text,
                     judge_model=judge_model,
@@ -1093,6 +1094,7 @@ def make_text_evaluator_gt(
                     ollama_url=ollama_url,
                     openai_api_key=openai_api_key,
                 )
+                print(f"[analyzing_data GT judge] factual_accuracy={evaluation.get('factual_accuracy')} | coverage={evaluation.get('coverage')} | reasoning: {evaluation.get('reasoning', 'N/A')}")
                 return score
             else:
                 return bleu_score(analysis_text, ground_truth_text)
@@ -1577,11 +1579,10 @@ Is the chart type appropriate for the data structure?
 
 ### 2. AXIS MAPPING
 Are the X and Y axes using appropriate columns from the data?
-- The config may have 'y_axis' (single column) or 'y_axes' (list of columns for multi-series). Both are valid.
-- Do the column names in the config actually exist in the data?
-- For multi-series (y_axes): are ALL listed columns present in the data and semantically correct?
+- The config may have 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series where series are filtered by a discriminator column). All are valid.
+- Do the column names in the config actually exist in the data? For 'y_axes', each listed column must exist. For 'y_axis'+'group_by', both y_axis and group_by must exist as actual data columns.
 - Are the axes semantically correct (e.g., time on X, measure on Y)?
-- For comparison goals (promo vs non-promo, A vs B): a single y_axis that picks only ONE of the series should score low (3 or below); y_axes with both series should score 5.
+- For comparison goals (A vs B for different years/categories): a single y_axis with group_by pointing to the discriminator column is correct; y_axes with columns that DON'T exist in data should score low.
 [1=Wrong/missing columns, 3=Acceptable mapping or missing one series, 5=Perfect mapping with all required series]
 
 ### 3. CODE QUALITY

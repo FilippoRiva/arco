@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-04-11T14:56:05.946516",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_region_revenue_grouped_bar.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_region_revenue_grouped_bar\\20260411_145605_942174_test_region_revenue_grouped_bar_compare_average_monthly_revenue_between_store_re",
+  "run_id": "test_region_revenue_grouped_bar",
+  "prompt": "Compare average monthly revenue between store regions for 2022 and 2023",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 14.166,
+    "step_timings_sec": {
+      "decide_tool": 0.578,
+      "lookup_sales_data": 11.012
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0002752834091667662,
+    "cpu_energy_kwh": 0.0002361287466667515,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 3.915466250001474e-05,
+    "emissions_kg_co2": 9.104117851281458e-05,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 14.17115080000076
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 0.0,
+        "all_gt_scores": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "best_idx": 0,
+        "best_score": 0.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_region_revenue_grouped_bar",
+    "save_dir": "./runs/test_region_revenue_grouped_bar",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Compare average monthly revenue between store regions for 2022 and 2023"
+  }
+}

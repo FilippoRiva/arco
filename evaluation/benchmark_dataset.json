@@ -50,5 +50,48 @@
     "gt_chart_config": null,
     "gt_chart_code": null,
     "explicit_requirements": null
+  },
+  {
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart",
+    "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
+    "gt_sql": "SELECT p.brand, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE YEAR(CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.brand ORDER BY total_revenue DESC",
+    "gt_data": "brand,total_revenue\nGoldenCrust,1237536.46\nCreamyFarm,1116963.6\nCleanHome,985063.32\nCoolSip,942234.79\nGlowUp,682053.43\nCrunchTime,452267.33\n",
+    "gt_analysis": "In 2023, GoldenCrust leads with $1,237,536.46 in total revenue, followed by CreamyFarm ($1,116,963.60) and CleanHome ($985,063.32). CrunchTime has the lowest revenue at $452,267.33.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "brand",
+      "y_axis": "total_revenue",
+      "title": "Total Revenue by Brand (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    }
+  },
+  {
+    "prompt": "Compare average monthly revenue between store regions for 2022 and 2023",
+    "visualization_goal": "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+    "gt_sql": "SELECT st.region, s.yr AS year, ROUND(AVG(s.monthly_rev), 2) AS avg_monthly_revenue FROM (SELECT Store_Number, YEAR(CAST(Sold_Date AS DATE)) AS yr, DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month, SUM(Total_Sale_Value) AS monthly_rev FROM sales WHERE YEAR(CAST(Sold_Date AS DATE)) IN (2022, 2023) GROUP BY Store_Number, yr, month) s JOIN stores st ON s.Store_Number = st.Store_Number GROUP BY st.region, s.yr ORDER BY st.region, s.yr",
+    "gt_data": "region,year,avg_monthly_revenue\nMidwest,2022,10522.09\nMidwest,2023,10821.44\nNortheast,2022,17703.52\nNortheast,2023,14970.11\nSouth,2022,14925.39\nSouth,2023,14578.71\nWest,2022,12241.59\nWest,2023,12129.5\n",
+    "gt_analysis": "Northeast has the highest average monthly revenue in both years ($17,703.52 in 2022, $14,970.11 in 2023), although it declined year-over-year. Midwest is the lowest but shows growth from $10,522.09 to $10,821.44. South dropped from $14,925.39 to $14,578.71 and West from $12,241.59 to $12,129.50, both showing a slight decline from 2022 to 2023.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "region",
+      "y_axis": "avg_monthly_revenue",
+      "group_by": "year",
+      "title": "Avg Monthly Revenue by Region: 2022 vs 2023"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nregions = data_df['region'].unique()\nx = np.arange(len(regions))\nwidth = 0.35\n\ndf_2022 = data_df[data_df['year'] == 2022].set_index('region')\ndf_2023 = data_df[data_df['year'] == 2023].set_index('region')\n\nfig, ax = plt.subplots()\nax.bar(x - width/2, [df_2022.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2022', color='steelblue')\nax.bar(x + width/2, [df_2023.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2023', color='darkorange')\n\nax.set_xlabel('region')\nax.set_ylabel('avg_monthly_revenue')\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels(regions)\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    }
   }
 ]
