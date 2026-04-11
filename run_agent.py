@@ -186,7 +186,7 @@ def _build_execution_artifact_dir(save_root, run_id, prompt, timestamp=None):
 
 def _write_execution_artifacts(
     *,
-    config_path,
+    config_path=None,
     save_root,
     prompt,
     result,
@@ -199,7 +199,8 @@ def _write_execution_artifacts(
         run_id = result.get("run_id")
     artifact_dir = _build_execution_artifact_dir(save_root, run_id, prompt)
 
-    shutil.copy2(config_path, artifact_dir / "config_used.yaml")
+    if config_path and os.path.isfile(config_path):
+        shutil.copy2(config_path, artifact_dir / "config_used.yaml")
 
     effective_run_params = dict(run_params)
     effective_run_params["prompt"] = prompt
@@ -263,6 +264,106 @@ def _write_execution_artifacts(
 
 
 # ---------------------------------------------------------------------------
+# Non-interactive single-run entry point (used by run_benchmark + bulk_runner)
+# ---------------------------------------------------------------------------
+
+def run_single(
+    agent_config,
+    prompt: str,
+    schema=None,
+    *,
+    config_path=None,
+    visualization_goal=None,
+    no_vis: bool = False,
+    lookup_only: bool = False,
+    run_id=None,
+    save_dir: str = "./output",
+    save_results: bool = False,
+    save_execution_artifacts: bool = True,
+    enable_codecarbon: bool = False,
+    reuse_from=None,
+    step_overrides=None,
+    tracing: dict = None,
+    parameter_provider=None,
+) -> dict:
+    """Run the agent for a single prompt without any interactive prompts.
+
+    This is the non-interactive core of main().  Both run_agent.main() and
+    run_benchmark call this function so agent construction, artifact saving,
+    and result extraction live in one place.
+
+    Args:
+        agent_config: Fully configured AgentConfig (step params + eval fns already set).
+        prompt: Natural language query.
+        schema: DatabaseSchema to pass to SalesDataAgent (multi-table support).
+            If None, SalesDataAgent falls back to single-table legacy mode.
+        config_path: Path to the YAML that produced agent_config, copied into the
+            artifact directory when save_execution_artifacts=True. May be None.
+        visualization_goal: Description of the desired chart (forwarded to agent.run).
+        no_vis: Skip visualization step.
+        lookup_only: Skip analysis and visualization steps.
+        run_id: Stable identifier for caching / reproducibility.
+        save_dir: Root directory for execution artifacts.
+        save_results: Passed through to agent.run().
+        save_execution_artifacts: Whether to write run_metadata.json + result.json.
+        enable_codecarbon: Enable CodeCarbon energy tracking.
+        reuse_from: Run ID to reuse cached results from.
+        step_overrides: Temporary per-step config overrides (dict).
+        tracing: Tracing config dict (keys: enabled, phoenix_endpoint, …).
+
+    Returns:
+        Result dict from agent.run() (same structure as run_metadata.json captures).
+    """
+    if tracing is None:
+        tracing = {}
+
+    agent = SalesDataAgent(
+        model=agent_config.model,
+        temperature=agent_config.lookup_sales_data.temp_min,
+        max_tokens=agent_config.lookup_sales_data.max_tokens,
+        provider=agent_config.provider,
+        ollama_url=agent_config.ollama_url,
+        openai_api_key=agent_config.openai_api_key,
+        schema=schema,
+        agent_config=agent_config,
+        enable_tracing=tracing.get("enabled", False),
+        phoenix_endpoint=tracing.get("phoenix_endpoint"),
+        phoenix_api_key=tracing.get("phoenix_api_key"),
+        project_name=tracing.get("project_name", "evaluating-agent"),
+        parameter_provider=parameter_provider,
+    )
+
+    run_kwargs = dict(
+        visualization_goal=visualization_goal,
+        no_vis=no_vis or lookup_only,
+        lookup_only=lookup_only,
+        run_id=run_id,
+        save_dir=save_dir,
+        save_results=save_results,
+        enable_codecarbon=enable_codecarbon,
+        reuse_from=reuse_from,
+        step_overrides=step_overrides,
+    )
+
+    raw_result = agent.run(prompt, **run_kwargs)
+    result = raw_result[0] if isinstance(raw_result, tuple) else raw_result
+
+    if save_execution_artifacts:
+        artifact_dir = _write_execution_artifacts(
+            config_path=config_path,
+            save_root=save_dir,
+            prompt=prompt,
+            result=result,
+            agent_config=agent_config,
+            run_params=run_kwargs,
+        )
+        if isinstance(result, dict):
+            result["_artifact_dir"] = str(artifact_dir)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -288,30 +389,13 @@ def main():
         sys.exit(1)
 
     save_execution_artifacts = run_params.pop('save_execution_artifacts', True)
-
-    # Always use interactive provider when running from a terminal
     run_params.pop('interactive_config', None)
+
+    # Interactive provider for terminal use (None in non-interactive/benchmark runs)
     parameter_provider = None
     if sys.stdin.isatty():
         from Agent.parameter_provider import TerminalProvider
         parameter_provider = TerminalProvider()
-
-    # Build agent
-    agent = SalesDataAgent(
-        model=agent_config.model,
-        temperature=agent_config.lookup_sales_data.temp_min,
-        max_tokens=agent_config.lookup_sales_data.max_tokens,
-        provider=agent_config.provider,
-        ollama_url=agent_config.ollama_url,
-        openai_api_key=agent_config.openai_api_key,
-        schema=schema,
-        agent_config=agent_config,
-        enable_tracing=tracing.get('enabled', False),
-        phoenix_endpoint=tracing.get('phoenix_endpoint'),
-        phoenix_api_key=tracing.get('phoenix_api_key'),
-        project_name=tracing.get('project_name', 'evaluating-agent'),
-        parameter_provider=parameter_provider,
-    )
 
     print(f"Provider: {agent_config.provider} | Model: {agent_config.model}")
     print(f"Prompt: {prompt}")
@@ -320,26 +404,26 @@ def main():
         print(f"Run ID: {run_params['run_id']}")
     print("-" * 60)
 
-    raw_result = agent.run(prompt, **run_params)
+    result = run_single(
+        agent_config,
+        prompt,
+        schema,
+        config_path=config_path,
+        visualization_goal=run_params.pop('visualization_goal', None),
+        no_vis=run_params.pop('no_vis', False),
+        lookup_only=run_params.pop('lookup_only', False),
+        run_id=run_params.pop('run_id', None),
+        save_dir=run_params.pop('save_dir', './output'),
+        save_results=run_params.pop('save_results', False),
+        save_execution_artifacts=save_execution_artifacts,
+        enable_codecarbon=run_params.pop('enable_codecarbon', False),
+        reuse_from=run_params.pop('reuse_from', None),
+        step_overrides=run_params.pop('step_overrides', None),
+        tracing=tracing,
+        parameter_provider=parameter_provider,
+    )
 
-    # run() returns a dict when using caching API, or (dict, score_variance) tuple
-    # from the old best-of-n path
-    if isinstance(raw_result, tuple):
-        result, score_variance = raw_result
-        print(f"Score variance: {score_variance:.4f}")
-    else:
-        result = raw_result
-
-    artifact_dir = None
-    if save_execution_artifacts:
-        artifact_dir = _write_execution_artifacts(
-            config_path=config_path,
-            save_root=run_params.get("save_dir"),
-            prompt=prompt,
-            result=result,
-            agent_config=agent_config,
-            run_params=run_params,
-        )
+    artifact_dir = result.get("_artifact_dir") if isinstance(result, dict) else None
 
     # Output results
     print("=" * 60)

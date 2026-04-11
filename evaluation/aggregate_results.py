@@ -96,16 +96,24 @@ def aggregate_bulk_results(
     # --- Build detail view: merge config params into result rows ---
     detail = all_results.merge(configs_df, on="config_id", how="left")
 
-    # Reorder: config_id first, then scores, then config params
-    score_cols = [c for c in ("csv_iou", "text_score", "vis_score") if c in detail.columns]
+    # Reorder: config_id first, then GT scores, then no-GT scores, timing, then config params
+    gt_score_cols   = [c for c in ("csv_iou", "text_score", "vis_score") if c in detail.columns]
+    eval_score_cols = [c for c in ("csv_eval_score", "text_eval_score", "vis_eval_score") if c in detail.columns]
+    timing_cols     = [c for c in ("elapsed_sec", "lookup_time_sec", "analyzing_time_sec", "vis_time_sec") if c in detail.columns]
+    score_cols      = gt_score_cols + eval_score_cols + timing_cols
     config_param_cols = [c for c in detail.columns if c not in ("config_id",) + tuple(score_cols)]
     ordered_cols = ["config_id"] + score_cols + config_param_cols
     detail = detail[[c for c in ordered_cols if c in detail.columns]]
 
     # --- Build summary view: one row per config ---
-    agg_fns = {col: ["mean", "std"] for col in score_cols}
+    # Aggregate GT scores, no-GT scores, and timing
+    agg_cols = [c for c in (
+        "csv_iou", "text_score", "vis_score",
+        "csv_eval_score", "text_eval_score", "vis_eval_score",
+        "elapsed_sec",
+    ) if c in all_results.columns]
     summary_scores = (
-        all_results.groupby("config_id")[score_cols]
+        all_results.groupby("config_id")[agg_cols]
         .agg(["mean", "std"])
     )
     summary_scores.columns = [f"{col}_{stat}" for col, stat in summary_scores.columns]
