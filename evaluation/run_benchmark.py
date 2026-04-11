@@ -49,6 +49,7 @@ def load_benchmark_dataset(path: str) -> List[Dict]:
 def run_benchmark(
     dataset_path: str,
     *,
+    agent_config: Optional[AgentConfig] = None,
     config_path: Optional[str] = None,
     n: int = 1,
     judge_model: str = "gpt-4o-mini",
@@ -59,10 +60,17 @@ def run_benchmark(
 
     Args:
         dataset_path: Path to the benchmark JSON file.
+        agent_config: Pre-built AgentConfig to use directly. When provided,
+            sampling parameters (n, temp, top_p) are preserved as-is; only
+            eval functions are attached from the benchmark GT data.
+            Mutually exclusive with config_path / n.
         config_path: Optional path to run_config.yaml for base AgentConfig.
-        n: Best-of-N per step.
+            Ignored when agent_config is provided.
+        n: Best-of-N per step. Ignored when agent_config is provided.
         judge_model: Model for LLM-as-judge evaluations.
+            Defaults to agent_config.model when agent_config is provided.
         judge_provider: Provider for judge model.
+            Defaults to agent_config.provider when agent_config is provided.
         save_dir: Directory to save results CSV.
 
     Returns:
@@ -71,8 +79,13 @@ def run_benchmark(
     entries = load_benchmark_dataset(dataset_path)
     print(f"Loaded {len(entries)} test cases from {dataset_path}")
 
-    # Create base config
-    if config_path:
+    # Determine base config and judge identity
+    _external_config = agent_config is not None
+    if _external_config:
+        config = agent_config
+        judge_model = config.model
+        judge_provider = config.provider
+    elif config_path:
         config, _run_params, _schema = AgentConfig.from_yaml(config_path)
     else:
         config = AgentConfig(model=judge_model, provider=judge_provider)
@@ -94,18 +107,23 @@ def run_benchmark(
         # Configure step-level eval functions for this entry.
         # GT eval functions are used for tracking/logging only (gt_eval_fn).
         # Non-GT eval functions are used for best-of-n selection (eval_fn / batch_eval_fn).
+        # When _external_config=True, sampling params (n, temp, top_p) are NOT overridden.
         if has_data:
-            config.lookup_sales_data.n = n
+            if not _external_config:
+                config.lookup_sales_data.n = n
+                config.lookup_sales_data.temp_min = 0.1
+                config.lookup_sales_data.temp_max = 0.5
             config.lookup_sales_data.gt_eval_fn = make_csv_evaluator_gt(
                 ground_truth_csv_text=entry["gt_data"]
             )
             config.lookup_sales_data.batch_eval_fn = make_csv_evaluator_no_gt()
             config.lookup_sales_data.eval_fn = None
-            config.lookup_sales_data.temp_min = 0.1
-            config.lookup_sales_data.temp_max = 0.5
 
         if has_data and entry.get("gt_analysis"):
-            config.analyzing_data.n = n
+            if not _external_config:
+                config.analyzing_data.n = n
+                config.analyzing_data.temp_min = 0.1
+                config.analyzing_data.temp_max = 0.7
             config.analyzing_data.gt_eval_fn = make_text_evaluator_gt(
                 ground_truth_text=entry["gt_analysis"],
                 judge_model=judge_model,
@@ -114,11 +132,12 @@ def run_benchmark(
             config.analyzing_data.eval_fn = make_text_evaluator_no_gt(
                 judge_model=judge_model, provider=judge_provider
             )
-            config.analyzing_data.temp_min = 0.1
-            config.analyzing_data.temp_max = 0.7
 
         if has_vis:
-            config.create_visualization.n = n
+            if not _external_config:
+                config.create_visualization.n = n
+                config.create_visualization.temp_min = 0.1
+                config.create_visualization.temp_max = 0.5
             config.create_visualization.gt_eval_fn = make_vis_evaluator_gt(
                 ground_truth_config=entry["gt_chart_config"],
                 ground_truth_code=entry.get("gt_chart_code", ""),
@@ -129,8 +148,6 @@ def run_benchmark(
             config.create_visualization.eval_fn = make_vis_evaluator_no_gt(
                 judge_model=judge_model, provider=judge_provider
             )
-            config.create_visualization.temp_min = 0.1
-            config.create_visualization.temp_max = 0.5
 
         # Run agent
         agent = SalesDataAgent(agent_config=config)

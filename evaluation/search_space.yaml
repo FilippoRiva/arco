@@ -1,0 +1,53 @@
+# =============================================================================
+# RANDOM SEARCH SPACE
+# =============================================================================
+# Defines hyperparameter ranges for random search over AgentConfig.
+# seed=42 is used globally for reproducibility.
+#
+# Per-parameter spec formats:
+#   scalar value  → fixed (not varied)
+#   [a, b, c]     → discrete uniform choice from the list
+#   {low: x, high: y} → continuous uniform in [x, y]
+# =============================================================================
+
+global:
+  seed: 42
+
+# decide_tool is kept fixed (n=1, routing doesn't benefit from BoN)
+
+steps:
+  lookup_sales_data:
+    n: [1, 2, 3, 4, 5]
+    bon_param: ["temperature", "top_p"]
+    # temperature mode
+    temp_min: 0.0
+    temp_max: {low: 0.2, high: 1.0}
+    # top_p mode (temp_min used as fixed temp when bon_param=top_p)
+    top_p_min: {low: 0.5, high: 0.95}
+    top_p_max: 1.0
+    # fixed
+    max_tokens: 2000
+
+  analyzing_data:
+    n: [1, 2, 3]
+    bon_param: ["temperature", "top_p"]
+    # temperature mode
+    temp_min: 0.1
+    temp_max: {low: 0.3, high: 1.0}
+    # top_p mode
+    top_p_min: {low: 0.5, high: 0.95}
+    top_p_max: 1.0
+    # fixed
+    max_tokens: 3000
+
+  create_visualization:
+    n: [1, 2, 3, 4, 5]
+    bon_param: ["temperature", "top_p"]
+    # temperature mode
+    temp_min: 0.0
+    temp_max: {low: 0.2, high: 0.8}
+    # top_p mode
+    top_p_min: {low: 0.5, high: 0.95}
+    top_p_max: 1.0
+    # fixed
+    max_tokens: 2000
