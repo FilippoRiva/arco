@@ -5,7 +5,6 @@ evaluation/csv_queries
 **/.vscode
 **/__pycache__/
 
-tesi/
 venv/
 .claude/
 shared.txt
