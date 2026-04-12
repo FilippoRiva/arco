@@ -749,7 +749,7 @@ class SalesDataAgent:
 
             self.current_run_step_results[step_name] = results
 
-            if step_name == "lookup_sales_data" and len(results) > 1:
+            if step_name == "lookup_sales_data" and (len(results) > 1 or getattr(config, 'gt_columns', None)):
                 try:
                     from Agent.utils import standardize_candidate_columns
                     standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)

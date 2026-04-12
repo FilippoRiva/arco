@@ -242,7 +242,7 @@ def _write_execution_artifacts(
 
     metadata = {
         "timestamp": datetime.now().isoformat(),
-        "config_path": str(Path(config_path).resolve()),
+        "config_path": str(Path(config_path).resolve()) if config_path else None,
         "artifact_dir": str(artifact_dir.resolve()),
         "run_id": run_id,
         "prompt": prompt,

@@ -36,6 +36,7 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from Agent.config import AgentConfig  # noqa: E402
+from evaluation.aggregate_results import aggregate_bulk_results  # noqa: E402
 from evaluation.run_benchmark import run_benchmark  # noqa: E402
 from evaluation.search_space import SearchSpace  # noqa: E402
 
@@ -169,12 +170,12 @@ def run_bulk_benchmark(
             dataset_path,
             agent_config=agent_config,
             save_dir=str(config_dir),
+            save_execution_artifacts=True,
         )
         elapsed = time.perf_counter() - t_start
 
-        # Tag with config metadata
+        # Tag with config id (elapsed_sec already populated per-prompt by run_benchmark)
         df_config["config_id"] = config_idx
-        df_config["elapsed_sec"] = round(elapsed, 2)
 
         df_config.to_csv(config_dir / "benchmark_results.csv", index=False)
         all_results.append(df_config)
@@ -187,14 +188,12 @@ def run_bulk_benchmark(
             print(f"Think time: sleeping {t_sleep:.1f}s before next config…")
             time.sleep(t_sleep)
 
-    # --- Build & save summary ---
+    # --- Aggregate & save consolidated outputs ---
     if not all_results:
         print("No results to aggregate.")
         return pd.DataFrame()
 
-    summary = _build_summary(all_results, records)
-    summary_path = save_path / "summary.csv"
-    summary.to_csv(summary_path, index=False)
+    _, summary = aggregate_bulk_results(str(save_path), save=True)
 
     print(f"\n{'='*70}")
     print("BULK RUN COMPLETE")
@@ -204,46 +203,6 @@ def run_bulk_benchmark(
     _print_summary_table(summary)
 
     return summary
-
-
-# ---------------------------------------------------------------------------
-# Summary aggregation
-# ---------------------------------------------------------------------------
-
-def _build_summary(
-    all_results: List[pd.DataFrame],
-    config_records: List[dict],
-) -> pd.DataFrame:
-    """Aggregate per-config DataFrames into a single summary DataFrame.
-
-    Each row = one config.  Columns include mean/std of csv_iou, text_score,
-    vis_score across all test cases, plus all config parameters.
-    """
-    rows = []
-    for cfg_rec in config_records:
-        config_id = cfg_rec["config_id"]
-        # Find matching result frame
-        df = next((r for r in all_results if int(r["config_id"].iloc[0]) == config_id), None)
-        if df is None:
-            continue
-
-        row = dict(cfg_rec)  # all config params
-
-        for metric in ("csv_iou", "text_score", "vis_score"):
-            if metric in df.columns:
-                valid = df[metric].dropna()
-                row[f"{metric}_mean"] = round(valid.mean(), 4) if not valid.empty else None
-                row[f"{metric}_std"] = round(valid.std(), 4) if len(valid) > 1 else 0.0
-            else:
-                row[f"{metric}_mean"] = None
-                row[f"{metric}_std"] = None
-
-        if "elapsed_sec" in df.columns:
-            row["elapsed_sec"] = round(df["elapsed_sec"].iloc[0], 2)
-
-        rows.append(row)
-
-    return pd.DataFrame(rows)
 
 
 def _print_summary_table(summary: pd.DataFrame) -> None:

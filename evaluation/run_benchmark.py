@@ -95,6 +95,7 @@ def run_benchmark(
     judge_provider: str = "openai",
     save_dir: str = "./evaluation/results",
     data_dir: Optional[str] = None,
+    save_execution_artifacts: bool = False,
 ) -> pd.DataFrame:
     """Run benchmark against a unified GT dataset.
 
@@ -217,8 +218,9 @@ def run_benchmark(
             schema,
             visualization_goal=vis_goal,
             no_vis=not has_vis,
+            save_dir=save_dir,
             save_results=False,
-            save_execution_artifacts=False,
+            save_execution_artifacts=save_execution_artifacts,
         )
 
         # --- Extract scores from result (same path as run_agent.py) ---

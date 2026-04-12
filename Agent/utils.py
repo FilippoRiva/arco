@@ -952,9 +952,13 @@ def make_csv_evaluator_gt(
             return 0.0
 
         result_df = data_df.copy()
+        result_df.columns = [c.lower() for c in result_df.columns]
+
+        gt_df_cmp = gt_df.copy()
+        gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
         try:
-            return compare_dataframes_iou(result_df, gt_df)
+            return compare_dataframes_iou(result_df, gt_df_cmp)
         except Exception as e:
             print(f"CSV evaluation error: {e}")
             return 0.0
@@ -1347,11 +1351,41 @@ def standardize_candidate_columns(
 
     # Skip if fewer than 2 candidates have DataFrames
     valid = [c for c in candidates_info if c["df"] is not None and len(c["cols"]) > 0]
+
+    def _apply_gt_alignment(df: pd.DataFrame, canonical_cols: list) -> pd.DataFrame:
+        """Rename and reorder df columns to match canonical_cols without LLM."""
+        df = df.copy()
+        current_cols = list(df.columns)
+        if len(current_cols) == len(canonical_cols):
+            # Case-insensitive rename
+            ci_map = {c.lower(): c for c in current_cols}
+            fixed = {ci_map[canon.lower()]: canon
+                     for canon in canonical_cols
+                     if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon}
+            if fixed:
+                df = df.rename(columns=fixed)
+            # Positional rename as last resort
+            if list(df.columns) != canonical_cols and len(df.columns) == len(canonical_cols):
+                df.columns = canonical_cols
+        # Reorder to canonical order if all columns present
+        if set(canonical_cols).issubset(set(df.columns)):
+            df = df[canonical_cols]
+        return normalize_dataframe_values(df)
+
     if len(valid) < 2:
+        # Special case: single candidate + gt_columns → apply GT column alignment without LLM
+        if len(valid) == 1 and gt_columns:
+            ci = valid[0]
+            idx = ci["idx"]
+            df = _apply_gt_alignment(results[idx]["data_df"], list(gt_columns))
+            results[idx]["data_df"] = df
+            results[idx]["data"] = df.to_csv(index=False)
+            print(f"[standardize] Single-candidate GT alignment → columns: {list(df.columns)}")
         return results
 
-    # Skip the LLM only when candidates already have the exact same columns and order,
-    # AND those columns already match the GT (if provided).
+    # When all candidates share the same columns AND gt_columns is provided but
+    # column names don't already match GT → apply GT alignment directly to all
+    # candidates without calling the LLM (no inter-candidate disagreement to resolve).
     col_lists = [tuple(ci["cols"]) for ci in valid]
     if len(set(col_lists)) == 1:
         if gt_columns is None:
@@ -1359,7 +1393,15 @@ def standardize_candidate_columns(
         current_lower = [c.lower() for c in valid[0]["cols"]]
         if current_lower == [c.lower() for c in gt_columns]:
             return results
-        # Candidates agree with each other but not with GT — still need LLM alignment
+        # All candidates agree but names don't match GT → rename all without LLM
+        canonical_cols = list(gt_columns)
+        for ci in valid:
+            idx = ci["idx"]
+            df = _apply_gt_alignment(results[idx]["data_df"], canonical_cols)
+            results[idx]["data_df"] = df
+            results[idx]["data"] = df.to_csv(index=False)
+        print(f"[standardize] Multi-candidate GT alignment (same cols) → columns: {canonical_cols}")
+        return results
 
     # Build prompt
     schema_context = schema.get_full_schema_str() if schema else "No schema available"
