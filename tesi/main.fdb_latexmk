@@ -1,0 +1,17 @@
+# Fdb version 4
+["pdflatex"] 1776028351.41696 "/home/oss/Desktop/DataAgent/tesi/main.tex" "main.pdf" "main" 1776028351.67277 0
+  "/home/oss/Desktop/DataAgent/tesi/main.tex" 1776028351.2236 100 8dd7f3f80eedd7f754af485d602f1acd ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/article.cls" 1775001600 20144 d5ecf0a5140c8d8d8b72cbe86e320eff ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo" 1775001600 8448 c33a4e1cb35cee9b33c2b21033b73e39 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def" 1673989714 30429 213676d4c7327a21d91ddaed900e7b81 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1775001600 40900 887e0dc8cac988a9e9c574af364cf837 ""
+  "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1776027454.92552 4602002 62dba5fc29055c16380d7393a2adb07a ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1776027084 7753795 79a0c1006aae1fd43d235dae0a520f82 ""
+  "main.aux" 1776028351.6351 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "main.tex" 1776028351.2236 100 8dd7f3f80eedd7f754af485d602f1acd ""
+  (generated)
+  "main.aux"
+  "main.log"
+  "main.pdf"
+  (rewritten before read)
