@@ -96,6 +96,8 @@ def run_benchmark(
     save_dir: str = "./evaluation/results",
     data_dir: Optional[str] = None,
     save_execution_artifacts: bool = False,
+    enable_codecarbon: bool = False,
+    max_prompts: Optional[int] = None,
 ) -> pd.DataFrame:
     """Run benchmark against a unified GT dataset.
 
@@ -118,6 +120,8 @@ def run_benchmark(
         DataFrame with per-test-case scores.
     """
     entries = load_benchmark_dataset(dataset_path)
+    if max_prompts is not None:
+        entries = entries[:max_prompts]
     print(f"Loaded {len(entries)} test cases from {dataset_path}")
 
     # Load schema once (covers all tables: sales, stores, products, ...)
@@ -221,6 +225,7 @@ def run_benchmark(
             save_dir=save_dir,
             save_results=False,
             save_execution_artifacts=save_execution_artifacts,
+            enable_codecarbon=enable_codecarbon,
         )
 
         # --- Extract scores from result (same path as run_agent.py) ---
@@ -233,10 +238,13 @@ def run_benchmark(
         step_timings = result.get("_step_timings_sec", {})
         total_time = result.get("_total_run_time_sec")
 
+        # --- Energy (populated only when enable_codecarbon=True) ---
+        energy = result.get("_energy") or {}
+
         row = {
             "test_case_id": idx,
             "prompt": prompt,
-            "gen_sql": result.get("sql_query", ""),
+            "gen_sql": " ".join((result.get("sql_query", "") or "").split()),
             # GT scores — same source as run_metadata.json accuracy.ground_truth_scores
             "csv_iou":    gt_scores.get("lookup_sales_data", {}).get("gt_score") if has_data else None,
             "text_score": gt_scores.get("analyzing_data", {}).get("gt_score") if entry.get("gt_analysis") else None,
@@ -246,10 +254,16 @@ def run_benchmark(
             "text_eval_score": eval_scores.get("analyzing_data", {}).get("best_score") if entry.get("gt_analysis") else None,
             "vis_eval_score":  eval_scores.get("create_visualization", {}).get("best_score") if has_vis else None,
             # Per-prompt timing
-            "elapsed_sec":       round(total_time, 2) if total_time is not None else None,
-            "lookup_time_sec":   round(step_timings.get("lookup_sales_data", 0), 2),
+            "elapsed_sec":        round(total_time, 2) if total_time is not None else None,
+            "lookup_time_sec":    round(step_timings.get("lookup_sales_data", 0), 2),
             "analyzing_time_sec": round(step_timings.get("analyzing_data", 0), 2),
-            "vis_time_sec":      round(step_timings.get("create_visualization", 0), 2),
+            "vis_time_sec":       round(step_timings.get("create_visualization", 0), 2),
+            # Energy (None when CodeCarbon disabled or unavailable)
+            "energy_consumed_kwh": energy.get("energy_consumed_kwh"),
+            "cpu_energy_kwh":      energy.get("cpu_energy_kwh"),
+            "gpu_energy_kwh":      energy.get("gpu_energy_kwh"),
+            "ram_energy_kwh":      energy.get("ram_energy_kwh"),
+            "emissions_kg_co2":    energy.get("emissions_kg_co2"),
         }
 
         results.append(row)

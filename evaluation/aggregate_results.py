@@ -79,6 +79,13 @@ def aggregate_bulk_results(
             continue
         df = pd.read_csv(results_csv)
 
+        # Normalize gen_sql: collapse newlines/tabs/extra spaces to a single space
+        # so that the column never spans multiple CSV lines.
+        if "gen_sql" in df.columns:
+            df["gen_sql"] = df["gen_sql"].apply(
+                lambda v: " ".join(str(v).split()) if pd.notna(v) else v
+            )
+
         # Infer config_id from directory name (config_0000 → 0)
         try:
             config_id = int(config_dir.name.split("_")[-1])

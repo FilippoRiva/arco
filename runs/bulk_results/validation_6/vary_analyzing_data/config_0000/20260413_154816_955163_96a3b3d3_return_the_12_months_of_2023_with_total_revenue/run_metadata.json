@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-04-13T15:48:16.957166",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_6\\vary_analyzing_data\\config_0000\\20260413_154816_955163_96a3b3d3_return_the_12_months_of_2023_with_total_revenue",
+  "run_id": "96a3b3d3",
+  "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 32.337,
+    "step_timings_sec": {
+      "decide_tool": 0.563,
+      "lookup_sales_data": 2.998,
+      "analyzing_data": 12.694,
+      "create_visualization": 7.531
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0006282314877776115,
+    "cpu_energy_kwh": 0.0005389334083331658,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 8.929807944444593e-05,
+    "emissions_kg_co2": 0.00020776746117483614,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 32.34253779999926
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_6\\vary_analyzing_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Return the 12 months of 2023 with total revenue and total units sold"
+  }
+}

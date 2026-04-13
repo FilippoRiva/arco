@@ -113,6 +113,8 @@ def _run_phase(
     think_time_mean: float,
     base_config: AgentConfig,
     resume: bool,
+    enable_codecarbon: bool = False,
+    max_prompts: Optional[int] = None,
 ) -> pd.DataFrame:
     """Run one ablation phase: vary only *vary_step*, others fixed at default.
 
@@ -168,6 +170,8 @@ def _run_phase(
             agent_config=agent_config,
             save_dir=str(config_dir),
             save_execution_artifacts=True,
+            enable_codecarbon=enable_codecarbon,
+            max_prompts=max_prompts,
         )
         elapsed = time.perf_counter() - t_start
 
@@ -208,6 +212,8 @@ def run_bulk_benchmark(
     save_dir: str = "./evaluation/bulk_results",
     resume: bool = False,
     vary_step: Optional[str] = None,
+    enable_codecarbon: bool = True,
+    max_prompts: Optional[int] = None,
 ) -> pd.DataFrame:
     """Run the 3-phase ablation benchmark.
 
@@ -266,6 +272,10 @@ def run_bulk_benchmark(
     # save directly into save_dir to maintain backward compatibility.
     use_subdirs = len(steps_to_run) > 1
 
+    # Separate RNG for inter-phase think times (seed+99 to stay independent
+    # from the per-config think RNG used inside each phase, which uses seed+1)
+    inter_phase_rng = np.random.RandomState(seed + 99)
+
     phase_details: List[pd.DataFrame] = []
     phase_summaries: List[pd.DataFrame] = []
 
@@ -287,6 +297,8 @@ def run_bulk_benchmark(
             think_time_mean=think_time_mean,
             base_config=base_config,
             resume=resume,
+            enable_codecarbon=enable_codecarbon,
+            max_prompts=max_prompts,
         )
 
         if not summary.empty:
@@ -296,6 +308,10 @@ def run_bulk_benchmark(
         detail_path = phase_dir / "detail.csv"
         if detail_path.exists():
             df_detail = pd.read_csv(detail_path)
+            if "gen_sql" in df_detail.columns:
+                df_detail["gen_sql"] = df_detail["gen_sql"].apply(
+                    lambda v: " ".join(str(v).split()) if pd.notna(v) else v
+                )
             df_detail["vary_step"] = step
             phase_details.append(df_detail)
 
@@ -303,8 +319,8 @@ def run_bulk_benchmark(
 
         # Think time between phases (not after the last one)
         if use_subdirs and phase_idx < len(steps_to_run) - 1 and think_time_mean > 0:
-            inter_phase_sleep = think_time_mean
-            print(f"\nInter-phase pause: {inter_phase_sleep:.1f}s…")
+            inter_phase_sleep = _exponential_think_time(think_time_mean, inter_phase_rng)
+            print(f"\nInter-phase pause: sleeping {inter_phase_sleep:.1f}s…")
             time.sleep(inter_phase_sleep)
 
     # --- Combined output (only when all 3 phases ran) ---
@@ -313,6 +329,9 @@ def run_bulk_benchmark(
         combined_path = save_path / "detail_combined.csv"
         combined_detail.to_csv(combined_path, index=False)
         print(f"\nCombined detail ({len(combined_detail)} rows) → {combined_path}")
+        xlsx_path = save_path / "detail_combined.xlsx"
+        combined_detail.to_excel(xlsx_path, index=False)
+        print(f"Excel version → {xlsx_path}")
 
     print(f"\n{'#'*70}")
     print("ALL PHASES COMPLETE")
@@ -375,6 +394,17 @@ def main() -> None:
             "Omit to run all three phases in sequence (default behaviour)."
         ),
     )
+    parser.add_argument(
+        "--no-codecarbon",
+        action="store_true",
+        help="Disable CodeCarbon energy/emissions tracking (enabled by default)",
+    )
+    parser.add_argument(
+        "--max-prompts",
+        type=int,
+        default=None,
+        help="Limit to the first N prompts of the benchmark dataset (default: all)",
+    )
 
     args = parser.parse_args()
 
@@ -389,6 +419,8 @@ def main() -> None:
         save_dir=args.save_dir,
         resume=args.resume,
         vary_step=args.vary_step,
+        enable_codecarbon=not args.no_codecarbon,
+        max_prompts=args.max_prompts,
     )
 
 

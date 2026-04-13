@@ -97,6 +97,7 @@ class SearchSpace:
         step_spec: Dict[str, Any],
         rng: np.random.RandomState,
         provider: str = "openai",
+        forced_bon_param: Optional[str] = None,
     ) -> StepConfig:
         """Sample one StepConfig for a given step.
 
@@ -121,7 +122,10 @@ class SearchSpace:
         bon_choices = list(step_spec.get("bon_param", ["temperature"]))
         if not is_openai:
             bon_choices = bon_choices + list(step_spec.get("bon_param_extra", []))
-        bon_param = str(rng.choice(bon_choices))
+        if forced_bon_param is not None:
+            bon_param = forced_bon_param  # stratified assignment from sample()
+        else:
+            bon_param = str(rng.choice(bon_choices))
 
         sc = StepConfig(step_name=step_name, n=n, bon_param=bon_param, max_tokens=max_tokens)
         sc.use_cache = False  # always fresh in experiments
@@ -193,6 +197,7 @@ class SearchSpace:
         rng: np.random.RandomState,
         base_config: Optional[AgentConfig] = None,
         vary_step: Optional[str] = None,
+        forced_bon_param: Optional[str] = None,
     ) -> AgentConfig:
         """Sample one AgentConfig from the search space.
 
@@ -205,6 +210,9 @@ class SearchSpace:
         vary_step : str, optional
             If provided, only this step's hyperparameters are sampled.
             Other steps use default StepConfig (n=1).
+        forced_bon_param : str, optional
+            When set, overrides the random bon_param draw for *vary_step*.
+            Used by sample() for stratified coverage.
 
         Returns
         -------
@@ -218,7 +226,10 @@ class SearchSpace:
                 sc = StepConfig(step_name=step_name)
                 sc.use_cache = False
             else:
-                sc = self._sample_step(step_name, step_spec, rng, provider=provider)
+                sc = self._sample_step(
+                    step_name, step_spec, rng, provider=provider,
+                    forced_bon_param=forced_bon_param if step_name == vary_step else None,
+                )
             config.set_step_config(step_name, sc)
 
         return config
@@ -230,9 +241,34 @@ class SearchSpace:
         base_config: Optional[AgentConfig] = None,
         vary_step: Optional[str] = None,
     ) -> List[AgentConfig]:
-        """Sample *n_configs* AgentConfigs from the search space."""
+        """Sample *n_configs* AgentConfigs from the search space.
+
+        When *vary_step* is specified, bon_param values are assigned with
+        stratified cycling before random sampling so that all choices appear
+        at least once even for small n_configs.  The cycle order is shuffled
+        with the same RNG seed, preserving reproducibility.
+        """
         rng = np.random.RandomState(seed if seed is not None else self.default_seed)
-        return [self.sample_one(rng, base_config=base_config, vary_step=vary_step) for _ in range(n_configs)]
+
+        # Pre-assign bon_param with stratified cycling for the varied step
+        bon_assignments: List[Optional[str]] = [None] * n_configs
+        if vary_step is not None and vary_step in self._steps:
+            step_spec = self._steps[vary_step]
+            provider = (base_config.provider if base_config else "openai")
+            is_openai = provider in _OPENAI_PROVIDERS
+            bon_choices = list(step_spec.get("bon_param", ["temperature"]))
+            if not is_openai:
+                bon_choices = bon_choices + list(step_spec.get("bon_param_extra", []))
+            if len(bon_choices) > 1:
+                shuffled = bon_choices.copy()
+                rng.shuffle(shuffled)
+                bon_assignments = [shuffled[i % len(shuffled)] for i in range(n_configs)]
+
+        return [
+            self.sample_one(rng, base_config=base_config, vary_step=vary_step,
+                            forced_bon_param=bon_assignments[i])
+            for i in range(n_configs)
+        ]
 
     # ------------------------------------------------------------------
     # Serialisation helpers
