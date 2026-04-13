@@ -488,6 +488,34 @@ def lookup_sales_data_core(
         return {**state, "data": "", "sql_query": sql_query, "error": f"Error accessing data: {str(e)}"}
 
 
+def _enrich_data_with_stats(data_csv: str) -> str:
+    """Append pre-computed numeric statistics to the CSV data string.
+
+    LLMs are unreliable at mental arithmetic over many rows.  Pre-computing
+    sum / min / max / count for every numeric column and appending them as a
+    summary block lets the LLM read the answer directly instead of deriving it.
+    """
+    if not data_csv or not data_csv.strip():
+        return data_csv
+    try:
+        import io
+        df = pd.read_csv(io.StringIO(data_csv))
+        num_cols = df.select_dtypes(include="number").columns.tolist()
+        if not num_cols:
+            return data_csv
+        lines = ["\n--- Pre-computed Statistics (use these exact values) ---"]
+        lines.append(f"Total rows: {len(df)}")
+        for col in num_cols:
+            s = df[col]
+            lines.append(
+                f"{col}: sum={round(s.sum(), 2)}, min={round(s.min(), 2)}, "
+                f"max={round(s.max(), 2)}, mean={round(s.mean(), 2)}"
+            )
+        return data_csv + "\n".join(lines)
+    except Exception:
+        return data_csv
+
+
 def analyzing_data_core(state: State, llm, trace_helper: Optional[TracingHelper] = None) -> Dict:
     """Core analysis logic - LLM-based data analysis.
 
@@ -499,8 +527,9 @@ def analyzing_data_core(state: State, llm, trace_helper: Optional[TracingHelper]
         Updated state with analysis appended to 'answer'.
     """
     try:
+        enriched_data = _enrich_data_with_stats(state.get("data", ""))
         formatted_prompt = DATA_ANALYSIS_PROMPT.format(
-            data=state.get("data", ""), prompt=state.get("prompt", ""), sql_query=state.get("sql_query", "")
+            data=enriched_data, prompt=state.get("prompt", ""), sql_query=state.get("sql_query", "")
         )
         analysis_result = llm.invoke(formatted_prompt)
         analysis_text = analysis_result.content if hasattr(analysis_result, "content") else str(analysis_result)
@@ -922,8 +951,9 @@ def analyzing_data(state: State, llm: ChatOllama, tracer=None) -> Dict:
     """
     try:
         #print("Data to analyze:\n", state.get("data", ""))
+        enriched_data = _enrich_data_with_stats(state.get("data", ""))
         formatted_prompt = DATA_ANALYSIS_PROMPT.format(
-            data=state.get("data", ""), prompt=state.get("prompt", ""), sql_query=state.get("sql_query","")
+            data=enriched_data, prompt=state.get("prompt", ""), sql_query=state.get("sql_query","")
         )
         analysis_result = llm.invoke(formatted_prompt)
         analysis_text = analysis_result.content if hasattr(analysis_result, "content") else str(analysis_result)

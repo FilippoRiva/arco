@@ -1,0 +1,103 @@
+{
+  "agent": {
+    "model": "gpt-4o-mini",
+    "provider": "openai",
+    "ollama_url": "http://localhost:11434"
+  },
+  "steps": {
+    "decide_tool": {
+      "n": 1,
+      "bon_param": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "max_tokens": 2000,
+      "top_p_min": 1.0,
+      "top_p_max": 1.0,
+      "top_k_min": null,
+      "top_k_max": null,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "gt_columns": null,
+      "use_cache": false,
+      "cache_mode": "auto",
+      "cot_n": 1,
+      "enabled": true,
+      "step_name": "decide_tool"
+    },
+    "lookup_sales_data": {
+      "n": 1,
+      "bon_param": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "max_tokens": 2000,
+      "top_p_min": 1.0,
+      "top_p_max": 1.0,
+      "top_k_min": null,
+      "top_k_max": null,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "gt_columns": [
+        "brand",
+        "total_revenue"
+      ],
+      "use_cache": false,
+      "cache_mode": "auto",
+      "cot_n": 1,
+      "enabled": true,
+      "step_name": "lookup_sales_data"
+    },
+    "analyzing_data": {
+      "n": 3,
+      "bon_param": "temperature",
+      "temp_min": 0.2196,
+      "temp_max": 0.7191,
+      "max_tokens": 2000,
+      "top_p_min": 0.7468,
+      "top_p_max": 0.7468,
+      "top_k_min": null,
+      "top_k_max": null,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "gt_columns": null,
+      "use_cache": false,
+      "cache_mode": "auto",
+      "cot_n": 3,
+      "enabled": true,
+      "step_name": "analyzing_data"
+    },
+    "create_visualization": {
+      "n": 1,
+      "bon_param": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "max_tokens": 2000,
+      "top_p_min": 1.0,
+      "top_p_max": 1.0,
+      "top_k_min": null,
+      "top_k_max": null,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "gt_columns": null,
+      "use_cache": false,
+      "cache_mode": "auto",
+      "cot_n": 1,
+      "enabled": true,
+      "step_name": "create_visualization"
+    },
+    "model": "gpt-4o-mini",
+    "provider": "openai",
+    "ollama_url": "http://localhost:11434"
+  },
+  "run": {
+    "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_3\\vary_analyzing_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart"
+  }
+}

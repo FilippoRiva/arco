@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-04-13T12:14:07.254954",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000\\20260413_121407_249933_6a1456dc_show_me_the_sales_in_nov_2021",
+  "run_id": "6a1456dc",
+  "prompt": "Show me the sales in Nov 2021",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 38.42,
+    "step_timings_sec": {
+      "decide_tool": 0.458,
+      "lookup_sales_data": 15.132,
+      "analyzing_data": 4.987,
+      "create_visualization": 8.098
+    }
+  },
+  "energy": null,
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 0.25,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Sales trend for Nov 2021, with date as x and sales value as y",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show me the sales in Nov 2021"
+  }
+}

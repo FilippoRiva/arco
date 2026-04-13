@@ -1,24 +1,29 @@
 #!/usr/bin/env python3
-"""Bulk runner: samples random AgentConfig instances from a search space and
-evaluates each on the full benchmark dataset.
+"""Bulk runner: 3-phase ablation study over AgentConfig hyperparameters.
 
-Think time between consecutive config runs is drawn from an Exponential(mean)
-distribution to avoid hammering the API.
+In each phase only ONE step's hyperparameters are varied across N random
+configs; the other two steps are kept at their default (n=1, fixed temp).
+This implements the 50+50+50 protocol requested by the professor.
 
-Usage — local test (3 configs):
+Think time between consecutive config runs is drawn from Exponential(mean)
+to avoid hammering the API.
+
+Usage — validation (1 config per phase, no think time):
     python evaluation/bulk_runner.py \\
         evaluation/benchmark_dataset.json \\
         evaluation/search_space.yaml \\
-        --n-configs 3 \\
-        --save-dir evaluation/bulk_results/local_test
+        --n-configs 1 --think-time 0 \\
+        --save-dir runs/bulk_results/validation
 
-Usage — full run (50 configs):
+Usage — full 50+50+50 run:
     python evaluation/bulk_runner.py \\
         evaluation/benchmark_dataset.json \\
         evaluation/search_space.yaml \\
-        --n-configs 50 \\
-        --think-time 5.0 \\
-        --save-dir evaluation/bulk_results/full_run
+        --n-configs 50 --think-time 5.0 \\
+        --save-dir runs/bulk_results/full_run
+
+Usage — resume/run only one specific phase:
+    python evaluation/bulk_runner.py ... --vary-step lookup_sales_data --resume
 """
 
 import argparse
@@ -41,22 +46,36 @@ from evaluation.run_benchmark import run_benchmark  # noqa: E402
 from evaluation.search_space import SearchSpace  # noqa: E402
 
 
+# The three ablation phases, in execution order
+_VARY_STEPS = ["lookup_sales_data", "analyzing_data", "create_visualization"]
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _print_config_summary(config_id: int, cfg: AgentConfig, n_total: int) -> None:
-    """Print a compact one-line summary for each sampled config."""
-    parts = [f"CONFIG {config_id + 1}/{n_total}  model={cfg.model}"]
-    for step in ("lookup_sales_data", "analyzing_data", "create_visualization"):
+    """Print a detailed multi-line summary for each sampled config."""
+    label = {
+        "lookup_sales_data": "lookup_sales_data ",
+        "analyzing_data": "analyzing_data    ",
+        "create_visualization": "create_vis        ",
+    }
+    is_openai = cfg.provider in ("openai",)
+    print(f"  CONFIG {config_id + 1}/{n_total}  model={cfg.model}  provider={cfg.provider}")
+    for step in _VARY_STEPS:
         sc = cfg.get_step_config(step)
-        abbr = {"lookup_sales_data": "lsd", "analyzing_data": "ana", "create_visualization": "cvi"}[step]
         if sc.bon_param == "temperature":
-            param_str = f"T[{sc.temp_min:.2f},{sc.temp_max:.2f}]"
-        else:
-            param_str = f"P[{sc.top_p_min:.2f},{sc.top_p_max:.2f}]"
-        parts.append(f"{abbr}:n={sc.n},{param_str}")
-    print("  " + " | ".join(parts))
+            bon_str = f"bon=temperature  T[{sc.temp_min:.2f}→{sc.temp_max:.2f}]  top_p={sc.top_p_min:.2f}(fixed)"
+        elif sc.bon_param == "top_p":
+            bon_str = f"bon=top_p        temp={sc.temp_min:.2f}(fixed)  P[{sc.top_p_min:.2f}→{sc.top_p_max:.2f}]"
+        else:  # top_k
+            bon_str = f"bon=top_k        temp={sc.temp_min:.2f}(fixed)  top_p={sc.top_p_min:.2f}(fixed)  K[{sc.top_k_min}→{sc.top_k_max}]"
+        line = f"    {label[step]}: n={sc.n}  cot_n={sc.cot_n}  {bon_str}  max_tokens={sc.max_tokens}"
+        if not is_openai:
+            top_k_str = f"top_k={sc.top_k_min}" if sc.bon_param != "top_k" else "(BoN axis)"
+            line += f"  | {top_k_str}  beams={sc.num_beams}  no_repeat_ngram={sc.no_repeat_ngram_size}"
+        print(line)
 
 
 def _exponential_think_time(mean: float, rng: np.random.RandomState) -> float:
@@ -64,8 +83,116 @@ def _exponential_think_time(mean: float, rng: np.random.RandomState) -> float:
     return float(rng.exponential(scale=mean))
 
 
+def _print_summary_table(summary: pd.DataFrame) -> None:
+    """Print a compact table of mean scores per config."""
+    metric_cols = [c for c in ("csv_iou_mean", "text_score_mean", "vis_score_mean") if c in summary.columns]
+    if not metric_cols:
+        return
+    print(f"\n{'cfg':>4}  " + "  ".join(f"{c:>18}" for c in metric_cols))
+    print("-" * (6 + 20 * len(metric_cols)))
+    for _, row in summary.iterrows():
+        vals = "  ".join(
+            f"{row[c]:>18.4f}" if pd.notna(row.get(c)) else f"{'N/A':>18}"
+            for c in metric_cols
+        )
+        print(f"{int(row['config_id']):>4}  {vals}")
+
+
 # ---------------------------------------------------------------------------
-# Core bulk runner
+# Single-phase runner
+# ---------------------------------------------------------------------------
+
+def _run_phase(
+    dataset_path: str,
+    search_space_path: str,
+    vary_step: str,
+    phase_dir: Path,
+    *,
+    n_configs: int,
+    seed: int,
+    think_time_mean: float,
+    base_config: AgentConfig,
+    resume: bool,
+) -> pd.DataFrame:
+    """Run one ablation phase: vary only *vary_step*, others fixed at default.
+
+    Saves per-config artifacts under *phase_dir* and writes detail.csv /
+    summary.csv via aggregate_bulk_results.
+
+    Returns
+    -------
+    pd.DataFrame
+        Summary DataFrame for this phase (one row per config).
+    """
+    phase_dir.mkdir(parents=True, exist_ok=True)
+
+    space = SearchSpace(search_space_path)
+    configs: List[AgentConfig] = space.sample(
+        n_configs=n_configs, seed=seed, base_config=base_config, vary_step=vary_step
+    )
+
+    # Persist manifest before any run starts
+    records = space.configs_to_records(configs)
+    with open(phase_dir / "configs_sampled.json", "w", encoding="utf-8") as f:
+        json.dump(records, f, indent=2)
+    print(f"Sampled {n_configs} configs → {phase_dir / 'configs_sampled.json'}")
+    print()
+
+    think_rng = np.random.RandomState(seed + 1)
+    all_results: List[pd.DataFrame] = []
+
+    for config_idx, agent_config in enumerate(configs):
+        config_dir = phase_dir / f"config_{config_idx:04d}"
+
+        # Resume: skip if already done
+        done_marker = config_dir / "benchmark_results.csv"
+        if resume and done_marker.exists():
+            print(f"[config {config_idx:04d}] Skipping (already done).")
+            df_existing = pd.read_csv(done_marker)
+            df_existing["config_id"] = config_idx
+            all_results.append(df_existing)
+            continue
+
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f"\n{'='*70}")
+        _print_config_summary(config_idx, agent_config, n_configs)
+        print(f"{'='*70}")
+
+        with open(config_dir / "config.json", "w", encoding="utf-8") as f:
+            json.dump(records[config_idx], f, indent=2)
+
+        t_start = time.perf_counter()
+        df_config = run_benchmark(
+            dataset_path,
+            agent_config=agent_config,
+            save_dir=str(config_dir),
+            save_execution_artifacts=True,
+        )
+        elapsed = time.perf_counter() - t_start
+
+        df_config["config_id"] = config_idx
+        df_config.to_csv(config_dir / "benchmark_results.csv", index=False)
+        all_results.append(df_config)
+
+        print(f"\n[config {config_idx:04d}] Done in {elapsed:.1f}s")
+
+        # Think time (skip after last config)
+        if config_idx < n_configs - 1 and think_time_mean > 0:
+            t_sleep = _exponential_think_time(think_time_mean, think_rng)
+            print(f"Think time: sleeping {t_sleep:.1f}s before next config…")
+            time.sleep(t_sleep)
+
+    if not all_results:
+        print("No results to aggregate.")
+        return pd.DataFrame()
+
+    _, summary = aggregate_bulk_results(str(phase_dir), save=True)
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# Multi-phase coordinator
 # ---------------------------------------------------------------------------
 
 def run_bulk_benchmark(
@@ -80,144 +207,128 @@ def run_bulk_benchmark(
     openai_api_key: Optional[str] = None,
     save_dir: str = "./evaluation/bulk_results",
     resume: bool = False,
+    vary_step: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Run N random configs on the benchmark and aggregate results.
+    """Run the 3-phase ablation benchmark.
+
+    By default, runs all three phases sequentially:
+      1. vary lookup_sales_data  (other steps fixed at default)
+      2. vary analyzing_data     (other steps fixed at default)
+      3. vary create_visualization (other steps fixed at default)
+
+    Each phase samples *n_configs* random configs and saves results under
+    ``<save_dir>/vary_<step>/``.  At the end a combined ``detail_combined.csv``
+    is written to *save_dir*.
 
     Parameters
     ----------
     dataset_path : str
-        Path to the benchmark JSON file (e.g. evaluation/benchmark_dataset.json).
+        Path to the benchmark JSON (e.g. evaluation/benchmark_dataset.json).
     search_space_path : str
         Path to the search space YAML (e.g. evaluation/search_space.yaml).
     n_configs : int
-        Number of random configs to sample and evaluate.
+        Number of random configs **per phase** (total runs = 3 × n_configs).
     seed : int
-        Master seed for config sampling *and* think-time draws.
+        Master seed for config sampling and think-time draws.
     think_time_mean : float
-        Mean of the Exponential distribution for inter-run sleep (seconds).
-        Set to 0 to disable think time.
+        Mean of Exponential think-time between runs (seconds; 0 to disable).
     model : str
-        LLM model name passed to every sampled AgentConfig.
+        LLM model name for all sampled configs.
     provider : str
         LLM provider ("openai" or "ollama").
     openai_api_key : str, optional
         OpenAI API key; defaults to OPENAI_API_KEY env var.
     save_dir : str
-        Root directory where per-config subdirs and summary CSV are saved.
+        Root directory for all output.
     resume : bool
-        If True, skip configs whose output directory already exists.
+        Skip configs whose output directory already exists.
+    vary_step : str, optional
+        Run only this phase (for resuming or debugging a single phase).
+        Choices: "lookup_sales_data", "analyzing_data", "create_visualization".
+        When None (default), all three phases run in sequence.
 
     Returns
     -------
     pd.DataFrame
-        Summary DataFrame with one row per config.
+        Combined summary across all phases (one row per config per phase).
     """
     save_path = Path(save_dir)
     save_path.mkdir(parents=True, exist_ok=True)
 
-    # --- Build base config (model / provider only; steps overridden by space) ---
     base_config = AgentConfig(
         model=model,
         provider=provider,
         openai_api_key=openai_api_key or os.environ.get("OPENAI_API_KEY"),
     )
 
-    # --- Sample all configs upfront so the full plan is visible & reproducible ---
-    space = SearchSpace(search_space_path)
-    configs: List[AgentConfig] = space.sample(
-        n_configs=n_configs, seed=seed, base_config=base_config
-    )
+    steps_to_run = [vary_step] if vary_step else _VARY_STEPS
+    # When running all phases each gets its own subdir; single-phase runs
+    # save directly into save_dir to maintain backward compatibility.
+    use_subdirs = len(steps_to_run) > 1
 
-    # Persist sampled configs manifest (written before any run starts)
-    records = space.configs_to_records(configs)
-    manifest_path = save_path / "configs_sampled.json"
-    with open(manifest_path, "w", encoding="utf-8") as f:
-        json.dump(records, f, indent=2)
-    print(f"Sampled {n_configs} configs → {manifest_path}")
-    print()
+    phase_details: List[pd.DataFrame] = []
+    phase_summaries: List[pd.DataFrame] = []
 
-    # RNG for think-time draws (separate from config-sampling RNG)
-    think_rng = np.random.RandomState(seed + 1)
+    for phase_idx, step in enumerate(steps_to_run):
+        phase_dir = save_path / f"vary_{step}" if use_subdirs else save_path
 
-    all_results: List[pd.DataFrame] = []
+        print(f"\n{'#'*70}")
+        print(f"PHASE {phase_idx + 1}/{len(steps_to_run)}: varying '{step}'")
+        print(f"Output → {phase_dir}")
+        print(f"{'#'*70}")
 
-    for config_idx, agent_config in enumerate(configs):
-        config_dir = save_path / f"config_{config_idx:04d}"
-
-        # Resume: skip if already run
-        done_marker = config_dir / "benchmark_results.csv"
-        if resume and done_marker.exists():
-            print(f"[config {config_idx:04d}] Skipping (already done).")
-            df_existing = pd.read_csv(done_marker)
-            df_existing["config_id"] = config_idx
-            all_results.append(df_existing)
-            continue
-
-        config_dir.mkdir(parents=True, exist_ok=True)
-
-        # Print header
-        print(f"\n{'='*70}")
-        _print_config_summary(config_idx, agent_config, n_configs)
-        print(f"{'='*70}")
-
-        # Save this config's parameters
-        with open(config_dir / "config.json", "w", encoding="utf-8") as f:
-            json.dump(records[config_idx], f, indent=2)
-
-        # --- Run benchmark ---
-        t_start = time.perf_counter()
-        df_config = run_benchmark(
+        summary = _run_phase(
             dataset_path,
-            agent_config=agent_config,
-            save_dir=str(config_dir),
-            save_execution_artifacts=True,
+            search_space_path,
+            step,
+            phase_dir,
+            n_configs=n_configs,
+            seed=seed,
+            think_time_mean=think_time_mean,
+            base_config=base_config,
+            resume=resume,
         )
-        elapsed = time.perf_counter() - t_start
 
-        # Tag with config id (elapsed_sec already populated per-prompt by run_benchmark)
-        df_config["config_id"] = config_idx
+        if not summary.empty:
+            summary["vary_step"] = step
+            phase_summaries.append(summary)
 
-        df_config.to_csv(config_dir / "benchmark_results.csv", index=False)
-        all_results.append(df_config)
+        detail_path = phase_dir / "detail.csv"
+        if detail_path.exists():
+            df_detail = pd.read_csv(detail_path)
+            df_detail["vary_step"] = step
+            phase_details.append(df_detail)
 
-        print(f"\n[config {config_idx:04d}] Done in {elapsed:.1f}s")
+        _print_phase_summary(summary, step)
 
-        # --- Think time (not after last config) ---
-        if config_idx < n_configs - 1 and think_time_mean > 0:
-            t_sleep = _exponential_think_time(think_time_mean, think_rng)
-            print(f"Think time: sleeping {t_sleep:.1f}s before next config…")
-            time.sleep(t_sleep)
+        # Think time between phases (not after the last one)
+        if use_subdirs and phase_idx < len(steps_to_run) - 1 and think_time_mean > 0:
+            inter_phase_sleep = think_time_mean
+            print(f"\nInter-phase pause: {inter_phase_sleep:.1f}s…")
+            time.sleep(inter_phase_sleep)
 
-    # --- Aggregate & save consolidated outputs ---
-    if not all_results:
-        print("No results to aggregate.")
+    # --- Combined output (only when all 3 phases ran) ---
+    if use_subdirs and phase_details:
+        combined_detail = pd.concat(phase_details, ignore_index=True)
+        combined_path = save_path / "detail_combined.csv"
+        combined_detail.to_csv(combined_path, index=False)
+        print(f"\nCombined detail ({len(combined_detail)} rows) → {combined_path}")
+
+    print(f"\n{'#'*70}")
+    print("ALL PHASES COMPLETE")
+    print(f"Results → {save_dir}")
+    print(f"{'#'*70}")
+
+    if not phase_summaries:
         return pd.DataFrame()
+    return pd.concat(phase_summaries, ignore_index=True)
 
-    _, summary = aggregate_bulk_results(str(save_path), save=True)
 
-    print(f"\n{'='*70}")
-    print("BULK RUN COMPLETE")
-    print(f"{'='*70}")
-    print(f"Configs run : {len(all_results)}")
-    print(f"Results     : {save_dir}")
+def _print_phase_summary(summary: pd.DataFrame, vary_step: str) -> None:
+    """Print a short score table for one completed phase."""
+    abbr = {"lookup_sales_data": "lsd", "analyzing_data": "ana", "create_visualization": "cvi"}
+    print(f"\n--- Phase summary (vary={abbr.get(vary_step, vary_step)}) ---")
     _print_summary_table(summary)
-
-    return summary
-
-
-def _print_summary_table(summary: pd.DataFrame) -> None:
-    """Print a compact table of mean scores per config."""
-    metric_cols = [c for c in ("csv_iou_mean", "text_score_mean", "vis_score_mean") if c in summary.columns]
-    if not metric_cols:
-        return
-    print(f"\n{'cfg':>4}  " + "  ".join(f"{c:>18}" for c in metric_cols))
-    print("-" * (6 + 20 * len(metric_cols)))
-    for _, row in summary.iterrows():
-        vals = "  ".join(
-            f"{row[c]:>18.4f}" if row[c] is not None else f"{'N/A':>18}"
-            for c in metric_cols
-        )
-        print(f"{int(row['config_id']):>4}  {vals}")
 
 
 # ---------------------------------------------------------------------------
@@ -226,7 +337,11 @@ def _print_summary_table(summary: pd.DataFrame) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Bulk runner: random search over AgentConfig hyperparameters"
+        description=(
+            "3-phase ablation bulk runner. "
+            "Runs n-configs random configs per phase (total = 3 × n-configs). "
+            "Each phase varies one step while the other two stay at default (n=1)."
+        )
     )
     parser.add_argument("dataset", help="Path to benchmark dataset JSON")
     parser.add_argument("search_space", help="Path to search_space.yaml")
@@ -234,14 +349,14 @@ def main() -> None:
         "--n-configs",
         type=int,
         default=3,
-        help="Number of random configs to evaluate (default: 3 for local test, 50 for full)",
+        help="Random configs per phase (default: 3; use 50 for full run)",
     )
     parser.add_argument("--seed", type=int, default=42, help="Master random seed (default: 42)")
     parser.add_argument(
         "--think-time",
         type=float,
         default=5.0,
-        help="Mean of Exponential think time between runs in seconds (default: 5.0; 0 to disable)",
+        help="Mean Exponential think time between runs in seconds (default: 5.0; 0 to disable)",
     )
     parser.add_argument("--model", default="gpt-4o-mini", help="LLM model (default: gpt-4o-mini)")
     parser.add_argument("--provider", default="openai", help="LLM provider (default: openai)")
@@ -250,6 +365,15 @@ def main() -> None:
         "--resume",
         action="store_true",
         help="Skip configs whose output directory already exists",
+    )
+    parser.add_argument(
+        "--vary-step",
+        default=None,
+        choices=_VARY_STEPS,
+        help=(
+            "Run only this phase (for resuming or debugging). "
+            "Omit to run all three phases in sequence (default behaviour)."
+        ),
     )
 
     args = parser.parse_args()
@@ -264,6 +388,7 @@ def main() -> None:
         provider=args.provider,
         save_dir=args.save_dir,
         resume=args.resume,
+        vary_step=args.vary_step,
     )
 
 

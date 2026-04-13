@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-04-13T12:15:50.941817",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000\\20260413_121550_938816_daf3babe_show_total_revenue_by_product_brand_for_2023_as",
+  "run_id": "daf3babe",
+  "prompt": "Show total revenue by product brand for 2023 as a bar chart",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 40.8,
+    "step_timings_sec": {
+      "decide_tool": 0.515,
+      "lookup_sales_data": 18.141,
+      "analyzing_data": 3.957,
+      "create_visualization": 9.008
+    }
+  },
+  "energy": null,
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 0.9,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart"
+  }
+}

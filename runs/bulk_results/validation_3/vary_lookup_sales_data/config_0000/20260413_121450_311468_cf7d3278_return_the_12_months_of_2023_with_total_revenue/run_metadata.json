@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-04-13T12:14:50.315466",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000\\20260413_121450_311468_cf7d3278_return_the_12_months_of_2023_with_total_revenue",
+  "run_id": "cf7d3278",
+  "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 43.048,
+    "step_timings_sec": {
+      "decide_tool": 1.185,
+      "lookup_sales_data": 20.927,
+      "analyzing_data": 4.776,
+      "create_visualization": 8.194
+    }
+  },
+  "energy": null,
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_3\\vary_lookup_sales_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Return the 12 months of 2023 with total revenue and total units sold"
+  }
+}
