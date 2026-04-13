@@ -1,5 +1,15 @@
 **/.DS_Store
 
+# LaTeX build artifacts
+tesi/*.aux
+tesi/*.bbl
+tesi/*.blg
+tesi/*.log
+tesi/*.out
+tesi/*.synctex.gz
+tesi/*.pdf
+tesi/Images/*.pdf
+
 evaluation/csv_queries
 
 **/.vscode
