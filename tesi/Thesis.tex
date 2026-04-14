@@ -148,18 +148,26 @@ Keywords may be a single word or two to four words. }
 %-----------------------------------------------------------------------------
 % INTRODUCTION
 %-----------------------------------------------------------------------------
-\section{Introduction}
+\section{Introduction - prova}
 \label{sec:introduction}
-This document is intended to be both an example of the Polimi \LaTeX{} template for Master Theses in article format,
-as well as a short introduction to its use. It is not intended to be a general introduction to \LaTeX{} itself,
-and the reader is assumed to be familiar with the basics of creating and compiling \LaTeX{} documents (see \cite{oetiker1995not, kottwitz2015latex}). 
-\\
-The cover page of the thesis in article format must contain all the relevant information:
-title of the thesis, name of the Study Programme, name(s) of the author(s),
-student ID number, name of the supervisor, name(s) of the co-supervisor(s) (if any), academic year.
+The automated analysis of business data represents one of the most relevant challenges in the field of applied artificial intelligence.
+As large volumes of structured data become increasingly available, there is a growing need for tools capable of answering natural language questions,
+executing database queries, and producing meaningful visualizations autonomously.
+
+This thesis presents the development of a \textit{Data Agent} based on Large Language Models (LLMs),
+designed to query sales datasets in Parquet format through SQL queries automatically generated via DuckDB.
+The agent is orchestrated using the LangGraph framework and integrates an LLM --- either in a local configuration via Ollama or through the OpenAI API ---
+to drive the routing between the available tools: data retrieval, textual analysis, and visualization generation.
+
+The adopted architecture follows a modular approach, in which each phase of the process --- from understanding the user's question to producing the final output ---
+is handled by distinct and composable components. Particular attention has been devoted to evaluating the agent's performance,
+using quantitative metrics applied to textual responses, extracted data, and generated visualizations.
+
+The document is organized as follows: Section~\ref{sec:introduction} introduces the context and objectives of the work;
+the subsequent sections describe the system architecture, implementation details, and experimental results obtained.
 \\
 Be sure to select a title that is meaningful.
-It should contain important keywords to be identified by indexer.
+It should contain important keywords to be identified by indexers.
 Keep the title as concise as possible and comprehensible even to people who are not experts in your field.
 The title has to be chosen at the end of your work so that it accurately captures the main subject of the manuscript.
 
