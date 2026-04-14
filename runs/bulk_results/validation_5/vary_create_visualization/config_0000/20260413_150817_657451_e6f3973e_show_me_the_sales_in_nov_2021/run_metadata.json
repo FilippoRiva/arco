@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-04-13T15:08:17.660452",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_5\\vary_create_visualization\\config_0000\\20260413_150817_657451_e6f3973e_show_me_the_sales_in_nov_2021",
+  "run_id": "e6f3973e",
+  "prompt": "Show me the sales in Nov 2021",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 77.115,
+    "step_timings_sec": {
+      "decide_tool": 0.462,
+      "lookup_sales_data": 1.938,
+      "analyzing_data": 3.961,
+      "create_visualization": 65.668
+    }
+  },
+  "energy": null,
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 0.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 0.8,
+        "all_gt_scores": [
+          0.8,
+          0.8,
+          0.8
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Sales trend for Nov 2021, with date as x and sales value as y",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_5\\vary_create_visualization\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show me the sales in Nov 2021"
+  }
+}

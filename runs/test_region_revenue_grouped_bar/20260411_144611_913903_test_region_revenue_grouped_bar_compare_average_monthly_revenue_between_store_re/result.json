@@ -1,0 +1,134 @@
+{
+  "prompt": "Compare average monthly revenue between store regions for 2022 and 2023",
+  "data": "region,year,avg_monthly_revenue\r\nMidwest,2022,17.82\r\nNortheast,2022,20.38\r\nSouth,2022,18.8\r\nWest,2022,18.3\r\nMidwest,2023,18.83\r\nNortheast,2023,20.21\r\nSouth,2023,19.17\r\nWest,2023,18.97\r\n",
+  "data_df": {
+    "__dataframe__": true,
+    "records": [
+      {
+        "region": "Midwest",
+        "year": 2022,
+        "avg_monthly_revenue": 17.82
+      },
+      {
+        "region": "Northeast",
+        "year": 2022,
+        "avg_monthly_revenue": 20.38
+      },
+      {
+        "region": "South",
+        "year": 2022,
+        "avg_monthly_revenue": 18.8
+      },
+      {
+        "region": "West",
+        "year": 2022,
+        "avg_monthly_revenue": 18.3
+      },
+      {
+        "region": "Midwest",
+        "year": 2023,
+        "avg_monthly_revenue": 18.83
+      },
+      {
+        "region": "Northeast",
+        "year": 2023,
+        "avg_monthly_revenue": 20.21
+      },
+      {
+        "region": "South",
+        "year": 2023,
+        "avg_monthly_revenue": 19.17
+      },
+      {
+        "region": "West",
+        "year": 2023,
+        "avg_monthly_revenue": 18.97
+      }
+    ]
+  },
+  "answer": [
+    "In 2022, the average monthly revenue by region was as follows: Midwest - $17.82, Northeast - $20.38, South - $18.80, and West - $18.30. In 2023, the average monthly revenue increased slightly in all regions: Midwest - $18.83, Northeast - $20.21, South - $19.17, and West - $18.97. Overall, there was a positive trend in average monthly revenue across all regions from 2022 to 2023.",
+    "import matplotlib.pyplot as plt\nimport pandas as pd\nimport numpy as np\n\nx_labels = data_df[config['x_axis']].astype(str)\ny_axes = config['y_axes']\nn_series = len(y_axes)\nbar_width = 0.8 / n_series\nx = np.arange(len(x_labels))\n\nplt.figure(figsize=(12, 6))\nfor i, col in enumerate(y_axes):\n    offset = (i - n_series / 2 + 0.5) * bar_width\n    plt.bar(x + offset, data_df[col], width=bar_width, label=col)\n\nplt.xlabel(config['x_axis'])\nplt.ylabel('Value')\nplt.title(config['title'])\nplt.xticks(x, x_labels, rotation=45, ha='right')\nplt.legend()\nplt.grid(True, axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
+  ],
+  "visualization_goal": "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+  "chart_config": {
+    "chart_type": "bar",
+    "x_axis": "region",
+    "y_axes": [
+      "avg_monthly_revenue_2022",
+      "avg_monthly_revenue_2023"
+    ],
+    "title": "Average Monthly Revenue by Region (2022 vs 2023)"
+  },
+  "tool_choice": "end",
+  "error": "KeyError: 'avg_monthly_revenue_2022'",
+  "sql_query": "SELECT st.region AS Region, \n       EXTRACT(YEAR FROM s.Sold_Date) AS Year, \n       AVG(s.Total_Sale_Value) AS Average_Monthly_Revenue\nFROM sales s \nJOIN stores st ON s.Store_Number = st.Store_Number\nWHERE EXTRACT(YEAR FROM s.Sold_Date) IN (2022, 2023)\nGROUP BY st.region, Year\nORDER BY Year, st.region;",
+  "run_id": "test_region_revenue_grouped_bar",
+  "cached_step_results": {},
+  "_step_timings_sec": {
+    "decide_tool": 0.53,
+    "lookup_sales_data": 7.998,
+    "analyzing_data": 4.154,
+    "create_visualization": 47.779
+  },
+  "_step_eval_scores": {
+    "lookup_sales_data": {
+      "scores": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "analyzing_data": {
+      "scores": [
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "create_visualization": {
+      "scores": [
+        0.7,
+        0.7,
+        1.0
+      ],
+      "best_idx": 2,
+      "best_score": 1.0
+    }
+  },
+  "_gt_scores_per_step": {
+    "lookup_sales_data": {
+      "gt_score": 0.0,
+      "all_gt_scores": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "analyzing_data": {
+      "gt_score": 0.0,
+      "all_gt_scores": null
+    },
+    "create_visualization": {
+      "gt_score": 0.9,
+      "all_gt_scores": [
+        0.7,
+        0.7,
+        0.9
+      ]
+    }
+  },
+  "_total_run_time_sec": 65.438,
+  "_energy": {
+    "energy_consumed_kwh": 0.001271308485277809,
+    "cpu_energy_kwh": 0.0010906166716667333,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00018069181361107537,
+    "emissions_kg_co2": 0.00042044459963410644,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 65.45054289999825
+  }
+}

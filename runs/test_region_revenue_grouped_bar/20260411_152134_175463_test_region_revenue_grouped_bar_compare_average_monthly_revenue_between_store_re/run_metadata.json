@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-04-11T15:21:34.182602",
+  "config_path": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\config\\test_region_revenue_grouped_bar.yaml",
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\test_region_revenue_grouped_bar\\20260411_152134_175463_test_region_revenue_grouped_bar_compare_average_monthly_revenue_between_store_re",
+  "run_id": "test_region_revenue_grouped_bar",
+  "prompt": "Compare average monthly revenue between store regions for 2022 and 2023",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 94.117,
+    "step_timings_sec": {
+      "decide_tool": 0.591,
+      "lookup_sales_data": 22.71,
+      "analyzing_data": 22.538,
+      "create_visualization": 45.808
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0018280105236108582,
+    "cpu_energy_kwh": 0.001568193593333126,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.0002598169302777327,
+    "emissions_kg_co2": 0.0006045559843475358,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 94.12776070000109
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+    "lookup_only": false,
+    "no_vis": false,
+    "run_id": "test_region_revenue_grouped_bar",
+    "save_dir": "./runs/test_region_revenue_grouped_bar",
+    "enable_codecarbon": true,
+    "save_results": false,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Compare average monthly revenue between store regions for 2022 and 2023"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-04-14T15:22:16.939244",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_7\\vary_create_visualization\\config_0000\\20260414_152216_930685_42ecf4cc_show_me_the_sales_in_nov_2021",
+  "run_id": "42ecf4cc",
+  "prompt": "Show me the sales in Nov 2021",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 69.123,
+    "step_timings_sec": {
+      "decide_tool": 0.82,
+      "lookup_sales_data": 1.628,
+      "analyzing_data": 2.975,
+      "create_visualization": 57.123
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0013426045050000937,
+    "cpu_energy_kwh": 0.0011519749533334103,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00019062955166668368,
+    "emissions_kg_co2": 0.000444023476684621,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 69.13612409999769
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Sales trend for Nov 2021, with date as x and sales value as y",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_7\\vary_create_visualization\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show me the sales in Nov 2021"
+  }
+}

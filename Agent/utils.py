@@ -721,6 +721,7 @@ Rate each criterion on a scale of 1-5:
 Do X and Y axes use the SAME data columns as the reference?
 - Column names must match exactly (case-insensitive)
 - Axes cannot be swapped (x must be x, y must be y)
+- Configs may use 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series). These are all valid multi-series approaches. If the reference uses 'group_by' and the generated uses 'y_axes' (or vice versa), focus on whether the SAME columns are ultimately visualized — not on the exact key name.
 [1=Wrong columns, 3=Partial match, 5=Exact match]
 
 ### 2. CHART TYPE CORRECTNESS
@@ -951,9 +952,13 @@ def make_csv_evaluator_gt(
             return 0.0
 
         result_df = data_df.copy()
+        result_df.columns = [c.lower() for c in result_df.columns]
+
+        gt_df_cmp = gt_df.copy()
+        gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
         try:
-            return compare_dataframes_iou(result_df, gt_df)
+            return compare_dataframes_iou(result_df, gt_df_cmp)
         except Exception as e:
             print(f"CSV evaluation error: {e}")
             return 0.0
@@ -1085,7 +1090,7 @@ def make_text_evaluator_gt(
             elif metric == "spice":
                 return spice_score_java(analysis_text, ground_truth_text)
             elif metric == "judge_gt":
-                score, _ = judge_analysis_gt(
+                score, evaluation = judge_analysis_gt(
                     generated_analysis=analysis_text,
                     gt_analysis=ground_truth_text,
                     judge_model=judge_model,
@@ -1093,6 +1098,7 @@ def make_text_evaluator_gt(
                     ollama_url=ollama_url,
                     openai_api_key=openai_api_key,
                 )
+                print(f"[analyzing_data GT judge] factual_accuracy={evaluation.get('factual_accuracy')} | coverage={evaluation.get('coverage')} | reasoning: {evaluation.get('reasoning', 'N/A')}")
                 return score
             else:
                 return bleu_score(analysis_text, ground_truth_text)
@@ -1345,11 +1351,41 @@ def standardize_candidate_columns(
 
     # Skip if fewer than 2 candidates have DataFrames
     valid = [c for c in candidates_info if c["df"] is not None and len(c["cols"]) > 0]
+
+    def _apply_gt_alignment(df: pd.DataFrame, canonical_cols: list) -> pd.DataFrame:
+        """Rename and reorder df columns to match canonical_cols without LLM."""
+        df = df.copy()
+        current_cols = list(df.columns)
+        if len(current_cols) == len(canonical_cols):
+            # Case-insensitive rename
+            ci_map = {c.lower(): c for c in current_cols}
+            fixed = {ci_map[canon.lower()]: canon
+                     for canon in canonical_cols
+                     if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon}
+            if fixed:
+                df = df.rename(columns=fixed)
+            # Positional rename as last resort
+            if list(df.columns) != canonical_cols and len(df.columns) == len(canonical_cols):
+                df.columns = canonical_cols
+        # Reorder to canonical order if all columns present
+        if set(canonical_cols).issubset(set(df.columns)):
+            df = df[canonical_cols]
+        return normalize_dataframe_values(df)
+
     if len(valid) < 2:
+        # Special case: single candidate + gt_columns → apply GT column alignment without LLM
+        if len(valid) == 1 and gt_columns:
+            ci = valid[0]
+            idx = ci["idx"]
+            df = _apply_gt_alignment(results[idx]["data_df"], list(gt_columns))
+            results[idx]["data_df"] = df
+            results[idx]["data"] = df.to_csv(index=False)
+            print(f"[standardize] Single-candidate GT alignment → columns: {list(df.columns)}")
         return results
 
-    # Skip the LLM only when candidates already have the exact same columns and order,
-    # AND those columns already match the GT (if provided).
+    # When all candidates share the same columns AND gt_columns is provided but
+    # column names don't already match GT → apply GT alignment directly to all
+    # candidates without calling the LLM (no inter-candidate disagreement to resolve).
     col_lists = [tuple(ci["cols"]) for ci in valid]
     if len(set(col_lists)) == 1:
         if gt_columns is None:
@@ -1357,7 +1393,15 @@ def standardize_candidate_columns(
         current_lower = [c.lower() for c in valid[0]["cols"]]
         if current_lower == [c.lower() for c in gt_columns]:
             return results
-        # Candidates agree with each other but not with GT — still need LLM alignment
+        # All candidates agree but names don't match GT → rename all without LLM
+        canonical_cols = list(gt_columns)
+        for ci in valid:
+            idx = ci["idx"]
+            df = _apply_gt_alignment(results[idx]["data_df"], canonical_cols)
+            results[idx]["data_df"] = df
+            results[idx]["data"] = df.to_csv(index=False)
+        print(f"[standardize] Multi-candidate GT alignment (same cols) → columns: {canonical_cols}")
+        return results
 
     # Build prompt
     schema_context = schema.get_full_schema_str() if schema else "No schema available"
@@ -1379,14 +1423,11 @@ def standardize_candidate_columns(
             schema_context=schema_context,
             candidates_section=candidates_section,
         ) + gt_hint
-        # Override canonical_cols after LLM call to guarantee GT names are used
-        _forced_canonical = list(gt_columns)
     else:
         prompt = COLUMN_STANDARDIZATION_PROMPT.format(
             schema_context=schema_context,
             candidates_section=candidates_section,
         )
-        _forced_canonical = None
 
     # Call LLM
     response = llm.invoke(prompt)
@@ -1404,11 +1445,6 @@ def standardize_candidate_columns(
     canonical_cols = mapping_data["canonical_columns"]
     mappings = mapping_data["mappings"]
 
-    # If GT columns were provided, force the canonical columns to be exactly those,
-    # regardless of what the LLM chose (it may ignore the hint and keep schema names).
-    if _forced_canonical is not None:
-        canonical_cols = _forced_canonical
-
     if len(mappings) != len(valid):
         print(f"[standardize] Warning: expected {len(valid)} mappings, got {len(mappings)}")
         return results
@@ -1420,28 +1456,8 @@ def standardize_candidate_columns(
         if df is None:
             continue
 
-        # Rename columns using LLM mapping; then fix any remaining mismatches
-        # against canonical_cols using case-insensitive fallback.
         rename_map = {old: new for old, new in col_map.items() if old in df.columns}
         df = df.rename(columns=rename_map)
-
-        # If GT columns are forced, ensure remaining columns are renamed to match
-        # canonical_cols by position (when count agrees) or by case-insensitive match.
-        if _forced_canonical is not None and list(df.columns) != canonical_cols:
-            current_cols = list(df.columns)
-            if len(current_cols) == len(canonical_cols):
-                # Try case-insensitive match first
-                ci_map = {c.lower(): c for c in current_cols}
-                fixed = {}
-                for canon in canonical_cols:
-                    matched = ci_map.get(canon.lower())
-                    if matched and matched != canon:
-                        fixed[matched] = canon
-                if fixed:
-                    df = df.rename(columns=fixed)
-            # If still not matching, rename positionally as last resort
-            if list(df.columns) != canonical_cols and len(df.columns) == len(canonical_cols):
-                df.columns = canonical_cols
 
         # Reorder to canonical order (only if all canonical cols are present)
         if set(canonical_cols).issubset(set(df.columns)):
@@ -1577,11 +1593,10 @@ Is the chart type appropriate for the data structure?
 
 ### 2. AXIS MAPPING
 Are the X and Y axes using appropriate columns from the data?
-- The config may have 'y_axis' (single column) or 'y_axes' (list of columns for multi-series). Both are valid.
-- Do the column names in the config actually exist in the data?
-- For multi-series (y_axes): are ALL listed columns present in the data and semantically correct?
+- The config may have 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series where series are filtered by a discriminator column). All are valid.
+- Do the column names in the config actually exist in the data? For 'y_axes', each listed column must exist. For 'y_axis'+'group_by', both y_axis and group_by must exist as actual data columns.
 - Are the axes semantically correct (e.g., time on X, measure on Y)?
-- For comparison goals (promo vs non-promo, A vs B): a single y_axis that picks only ONE of the series should score low (3 or below); y_axes with both series should score 5.
+- For comparison goals (A vs B for different years/categories): a single y_axis with group_by pointing to the discriminator column is correct; y_axes with columns that DON'T exist in data should score low.
 [1=Wrong/missing columns, 3=Acceptable mapping or missing one series, 5=Perfect mapping with all required series]
 
 ### 3. CODE QUALITY

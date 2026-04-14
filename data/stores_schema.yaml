@@ -1,0 +1,53 @@
+name: "stores"
+description: "Store metadata including location, type, and operational details"
+file_path: "stores.parquet"
+columns:
+  - name: "Store_Number"
+    description: "Unique store identifier (foreign key to sales table)"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "store_name"
+    description: "Human-readable store name (e.g. FreshMart #330)"
+    data_type: "VARCHAR"
+    nullable: false
+
+  - name: "city"
+    description: "City where the store is located"
+    data_type: "VARCHAR"
+    example_values: ["New York", "Los Angeles", "Chicago", "Houston"]
+    nullable: false
+
+  - name: "region"
+    description: "Geographic region of the store (Northeast, South, Midwest, West)"
+    data_type: "VARCHAR"
+    example_values: ["Northeast", "South", "Midwest", "West"]
+    nullable: false
+
+  - name: "store_type"
+    description: "Type of store format (Supermarket, Hypermarket, Discount, Convenience)"
+    data_type: "VARCHAR"
+    example_values: ["Supermarket", "Hypermarket", "Discount", "Convenience"]
+    nullable: false
+
+  - name: "opening_year"
+    description: "Year the store was opened"
+    data_type: "INTEGER"
+    example_values: ["2003", "2010", "2017"]
+    nullable: false
+
+  - name: "area_sqm"
+    description: "Store floor area in square meters"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "num_employees"
+    description: "Number of employees working at the store"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "has_parking"
+    description: "Whether the store has a dedicated parking area (true/false)"
+    data_type: "BOOLEAN"
+    example_values: ["true", "false"]
+    nullable: false

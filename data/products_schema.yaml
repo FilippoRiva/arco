@@ -1,0 +1,59 @@
+name: "products"
+description: "Product catalog with category, brand, pricing, and origin details"
+file_path: "products.parquet"
+columns:
+  - name: "SKU_Coded"
+    description: "Encoded product SKU identifier (foreign key to sales table)"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "Product_Class_Code"
+    description: "Product category classification code (foreign key to sales table)"
+    data_type: "INTEGER"
+    nullable: false
+
+  - name: "category"
+    description: "High-level product category"
+    data_type: "VARCHAR"
+    example_values: ["Beverages", "Dairy", "Snacks", "Bakery", "Household", "Personal Care"]
+    nullable: false
+
+  - name: "subcategory"
+    description: "Product subcategory within the category"
+    data_type: "VARCHAR"
+    example_values: ["Soft Drinks", "Juices", "Milk & Cream", "Cheese", "Chips & Crisps"]
+    nullable: false
+
+  - name: "product_name"
+    description: "Human-readable product name"
+    data_type: "VARCHAR"
+    example_values: ["Cola Classic", "Whole Milk 1L", "Sea Salt Chips", "White Sandwich Loaf"]
+    nullable: false
+
+  - name: "brand"
+    description: "Brand name of the product"
+    data_type: "VARCHAR"
+    example_values: ["CoolSip", "CreamyFarm", "CrunchTime", "GoldenCrust"]
+    nullable: false
+
+  - name: "unit_price_usd"
+    description: "Retail unit price of the product in USD"
+    data_type: "FLOAT"
+    nullable: false
+
+  - name: "weight_kg"
+    description: "Product weight in kilograms"
+    data_type: "FLOAT"
+    nullable: false
+
+  - name: "is_organic"
+    description: "Whether the product is certified organic (true/false)"
+    data_type: "BOOLEAN"
+    example_values: ["true", "false"]
+    nullable: false
+
+  - name: "country_of_origin"
+    description: "Country where the product was manufactured or sourced"
+    data_type: "VARCHAR"
+    example_values: ["USA", "France", "Germany", "Mexico", "Netherlands"]
+    nullable: false

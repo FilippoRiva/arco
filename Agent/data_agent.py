@@ -631,6 +631,23 @@ class SalesDataAgent:
                     result["error"] = str(e)
 
                 self.current_run_step_results[step_name] = [result]
+
+                # Apply column standardization for lookup_sales_data even when n=1
+                # (the n>1 path has its own block at line ~752 after collecting all candidates)
+                if step_name == "lookup_sales_data" and getattr(config, 'gt_columns', None):
+                    try:
+                        from Agent.utils import standardize_candidate_columns
+                        standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                        std_results = standardize_candidate_columns(
+                            [result], self.schema, standardize_llm,
+                            gt_columns=getattr(config, 'gt_columns', None),
+                        )
+                        result = std_results[0]
+                        self.current_run_step_results[step_name] = [result]
+                        helper.set_attributes(step_span, {"standardized_candidate_columns": True})
+                    except Exception as e:
+                        print(f"[{step_name}] Column standardization warning: {e}")
+
                 self._run_gt_eval(step_name, config, result, state)
                 _step_elapsed = time.perf_counter() - _step_t0
                 existing_timings = state.get("_step_timings_sec") or {}
@@ -749,7 +766,7 @@ class SalesDataAgent:
 
             self.current_run_step_results[step_name] = results
 
-            if step_name == "lookup_sales_data" and len(results) > 1:
+            if step_name == "lookup_sales_data" and (len(results) > 1 or getattr(config, 'gt_columns', None)):
                 try:
                     from Agent.utils import standardize_candidate_columns
                     standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)

@@ -1,0 +1,88 @@
+{
+  "timestamp": "2026-04-14T15:03:17.533079",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_7\\vary_lookup_sales_data\\config_0000\\20260414_150317_531095_beba889c_show_total_revenue_by_product_brand_for_2023_as",
+  "run_id": "beba889c",
+  "prompt": "Show total revenue by product brand for 2023 as a bar chart",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 38.885,
+    "step_timings_sec": {
+      "decide_tool": 0.526,
+      "lookup_sales_data": 8.369,
+      "analyzing_data": 6.967,
+      "create_visualization": 12.094
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0007555115458338858,
+    "cpu_energy_kwh": 0.0006480579966671938,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00010745354916669183,
+    "emissions_kg_co2": 0.0002498612674150911,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 38.89052139999694
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "analyzing_data": {
+        "gt_score": 0.875,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 0.9,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_7\\vary_lookup_sales_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart"
+  }
+}
