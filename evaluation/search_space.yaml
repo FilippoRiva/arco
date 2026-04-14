@@ -56,7 +56,7 @@ steps:
     n: [1, 2, 3]
     bon_param: ["temperature", "top_p"]
     cot_n: [1, 2, 3]
-    temp_min: {low: 0.0, high: 0.3}
+    temp_min: {low: 0.1, high: 0.3}
     temp_max: {low: 0.3, high: 1.0}
     top_p_min: {low: 0.7, high: 1.0}
     top_p_max: 1.0
@@ -73,7 +73,7 @@ steps:
     n: [1, 2, 3, 4]
     bon_param: ["temperature", "top_p"]
     cot_n: [1, 2, 3]
-    temp_min: {low: 0.0, high: 0.2}
+    temp_min: {low: 0.1, high: 0.2}
     temp_max: {low: 0.2, high: 0.8}
     top_p_min: {low: 0.7, high: 1.0}
     top_p_max: 1.0

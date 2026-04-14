@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-04-14T15:12:49.811235",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_7\\vary_analyzing_data\\config_0000\\20260414_151249_808236_ab5d9da7_return_the_top_5_stores_by_total_revenue_columns",
+  "run_id": "ab5d9da7",
+  "prompt": "Return the top 5 stores by total revenue; columns: Store_Number, total_revenue",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 10.954,
+    "step_timings_sec": {
+      "lookup_sales_data": 2.37,
+      "analyzing_data": 5.386
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.00021264673916666652,
+    "cpu_energy_kwh": 0.000182440196666721,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 3.0206542499945498e-05,
+    "emissions_kg_co2": 7.032610428372162e-05,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 10.962026699999114
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": null,
+    "no_vis": true,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_7\\vary_analyzing_data\\config_0000",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Return the top 5 stores by total revenue; columns: Store_Number, total_revenue"
+  }
+}

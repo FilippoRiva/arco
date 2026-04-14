@@ -56,7 +56,7 @@
     "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
     "gt_sql": "SELECT p.brand, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE YEAR(CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.brand ORDER BY total_revenue DESC",
     "gt_data": "brand,total_revenue\nGoldenCrust,1237536.46\nCreamyFarm,1116963.6\nCleanHome,985063.32\nCoolSip,942234.79\nGlowUp,682053.43\nCrunchTime,452267.33\n",
-    "gt_analysis": "In 2023, GoldenCrust leads with $1,237,536.46 in total revenue, followed by CreamyFarm ($1,116,963.60) and CleanHome ($985,063.32). CrunchTime has the lowest revenue at $452,267.33.",
+    "gt_analysis": "In 2023, GoldenCrust leads with $1,237,536.46 in total revenue, followed by CreamyFarm ($1,116,963.60), CleanHome ($985,063.32), CoolSip ($942,234.79), and GlowUp ($682,053.43). CrunchTime has the lowest revenue at $452,267.33. The total revenue across all brands amounts to $5,416,118.93.",
     "gt_chart_config": {
       "chart_type": "bar",
       "x_axis": "brand",

@@ -1,0 +1,106 @@
+{
+  "prompt": "Show total revenue by product brand for 2023 as a bar chart",
+  "data": "brand,Total_Revenue\r\nGoldenCrust,1237536.463893827\r\nCreamyFarm,1116963.5994906519\r\nCleanHome,985063.3195742369\r\nCoolSip,942234.7927734628\r\nGlowUp,682053.4300944787\r\nCrunchTime,452267.3291044235\r\n",
+  "data_df": {
+    "__dataframe__": true,
+    "records": [
+      {
+        "brand": "GoldenCrust",
+        "Total_Revenue": 1237536.463893827
+      },
+      {
+        "brand": "CreamyFarm",
+        "Total_Revenue": 1116963.5994906519
+      },
+      {
+        "brand": "CleanHome",
+        "Total_Revenue": 985063.3195742369
+      },
+      {
+        "brand": "CoolSip",
+        "Total_Revenue": 942234.7927734628
+      },
+      {
+        "brand": "GlowUp",
+        "Total_Revenue": 682053.4300944787
+      },
+      {
+        "brand": "CrunchTime",
+        "Total_Revenue": 452267.3291044235
+      }
+    ]
+  },
+  "answer": [
+    "In 2023, the total revenue by product brand is as follows: GoldenCrust generated $1,237,536.46, CreamyFarm $1,116,963.60, CleanHome $985,063.32, CoolSip $942,234.79, GlowUp $682,053.43, and CrunchTime $452,267.33. The total revenue across all brands amounts to $5,416,118.93.",
+    "x_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.figure(figsize=(10, 6))\nplt.bar(x_data, y_data)\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\n\n# Check for potential overlap\nif len(x_data) > 10 or any(len(str(label)) > 10 for label in x_data):\n    plt.xticks(rotation=45, ha='right', fontsize=9)\nelse:\n    plt.xticks(rotation=0)\n\nplt.tight_layout()\nplt.show()"
+  ],
+  "visualization_goal": "Bar chart showing total revenue per brand for 2023, ordered from highest to lowest",
+  "chart_config": {
+    "chart_type": "bar",
+    "x_axis": "brand",
+    "y_axis": "Total_Revenue",
+    "title": "Total Revenue by Brand for 2023"
+  },
+  "tool_choice": "end",
+  "sql_query": "SELECT p.brand, SUM(s.Total_Sale_Value) AS Total_Revenue \nFROM sales s \nJOIN products p ON s.SKU_Coded = p.SKU_Coded \nWHERE CAST(s.Sold_Date AS DATE) BETWEEN '2023-01-01' AND '2023-12-31' \nGROUP BY p.brand \nORDER BY Total_Revenue DESC;",
+  "run_id": "6a7be1a9",
+  "cached_step_results": {},
+  "_step_timings_sec": {
+    "decide_tool": 0.795,
+    "lookup_sales_data": 8.091,
+    "analyzing_data": 4.495,
+    "create_visualization": 16.971
+  },
+  "_step_eval_scores": {
+    "lookup_sales_data": {
+      "scores": [
+        1.0,
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "analyzing_data": {
+      "scores": [
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    },
+    "create_visualization": {
+      "scores": [
+        1.0
+      ],
+      "best_idx": 0,
+      "best_score": 1.0
+    }
+  },
+  "_gt_scores_per_step": {
+    "lookup_sales_data": {
+      "gt_score": 1.0,
+      "all_gt_scores": [
+        1.0,
+        1.0
+      ]
+    },
+    "analyzing_data": {
+      "gt_score": 0.875,
+      "all_gt_scores": null
+    },
+    "create_visualization": {
+      "gt_score": 1.0,
+      "all_gt_scores": null
+    }
+  },
+  "_total_run_time_sec": 39.337,
+  "_energy": {
+    "energy_consumed_kwh": 0.0007641808919447715,
+    "cpu_energy_kwh": 0.0006555516866668769,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00010862920527789457,
+    "emissions_kg_co2": 0.00025272837622219096,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 39.34326589999546
+  }
+}
