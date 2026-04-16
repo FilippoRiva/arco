@@ -221,13 +221,17 @@ def _write_execution_artifacts(
 
     # --- profiling fields extracted from result ---
     step_timings = None
+    step_llm_timings = None
     total_run_time = None
     energy = None
+    step_llm_energy = None
     accuracy = None
     if isinstance(result, dict):
         step_timings = result.get("_step_timings_sec")
+        step_llm_timings = result.get("_step_llm_timings_sec")
         total_run_time = result.get("_total_run_time_sec")
         energy = result.get("_energy")
+        step_llm_energy = result.get("_step_llm_energy")
         if "_gt_scores_per_step" in result:
             accuracy = {
                 "type": "ground_truth",
@@ -252,8 +256,10 @@ def _write_execution_artifacts(
         "timing": {
             "total_run_time_sec": total_run_time,
             "step_timings_sec": step_timings,
+            "step_llm_timings_sec": step_llm_timings,
         },
         "energy": energy,
+        "step_llm_energy": step_llm_energy,
         "accuracy": accuracy,
         "effective_run_params": _serialize_for_json(effective_run_params),
     }

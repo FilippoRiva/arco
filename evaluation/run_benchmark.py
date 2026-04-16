@@ -238,6 +238,10 @@ def run_benchmark(
         step_timings = result.get("_step_timings_sec", {})
         total_time = result.get("_total_run_time_sec")
 
+        # --- Per-step LLM call timings and energy ---
+        llm_timings = result.get("_step_llm_timings_sec") or {}
+        llm_energy = result.get("_step_llm_energy") or {}
+
         # --- Energy (populated only when enable_codecarbon=True) ---
         energy = result.get("_energy") or {}
 
@@ -253,12 +257,32 @@ def run_benchmark(
             "csv_eval_score":  eval_scores.get("lookup_sales_data", {}).get("best_score") if has_data else None,
             "text_eval_score": eval_scores.get("analyzing_data", {}).get("best_score") if entry.get("gt_analysis") else None,
             "vis_eval_score":  eval_scores.get("create_visualization", {}).get("best_score") if has_vis else None,
-            # Per-prompt timing
+            # Per-step total wall-clock timings
             "elapsed_sec":        round(total_time, 2) if total_time is not None else None,
             "lookup_time_sec":    round(step_timings.get("lookup_sales_data", 0), 2),
             "analyzing_time_sec": round(step_timings.get("analyzing_data", 0), 2),
             "vis_time_sec":       round(step_timings.get("create_visualization", 0), 2),
-            # Energy (None when CodeCarbon disabled or unavailable)
+            # Per-step LLM call timings (sum of all LLM invocations incl. BoN, CoT, eval judges)
+            "lookup_llm_time_sec":    round(llm_timings.get("lookup_sales_data", 0), 3),
+            "analyzing_llm_time_sec": round(llm_timings.get("analyzing_data", 0), 3),
+            "vis_llm_time_sec":       round(llm_timings.get("create_visualization", 0), 3),
+            # Per-step LLM call energy — all 5 CodeCarbon fields (None when CodeCarbon disabled)
+            "lookup_llm_energy_kwh":       (llm_energy.get("lookup_sales_data") or {}).get("energy_consumed_kwh"),
+            "lookup_llm_cpu_energy_kwh":   (llm_energy.get("lookup_sales_data") or {}).get("cpu_energy_kwh"),
+            "lookup_llm_gpu_energy_kwh":   (llm_energy.get("lookup_sales_data") or {}).get("gpu_energy_kwh"),
+            "lookup_llm_ram_energy_kwh":   (llm_energy.get("lookup_sales_data") or {}).get("ram_energy_kwh"),
+            "lookup_llm_emissions_co2":    (llm_energy.get("lookup_sales_data") or {}).get("emissions_kg_co2"),
+            "analyzing_llm_energy_kwh":       (llm_energy.get("analyzing_data") or {}).get("energy_consumed_kwh"),
+            "analyzing_llm_cpu_energy_kwh":   (llm_energy.get("analyzing_data") or {}).get("cpu_energy_kwh"),
+            "analyzing_llm_gpu_energy_kwh":   (llm_energy.get("analyzing_data") or {}).get("gpu_energy_kwh"),
+            "analyzing_llm_ram_energy_kwh":   (llm_energy.get("analyzing_data") or {}).get("ram_energy_kwh"),
+            "analyzing_llm_emissions_co2":    (llm_energy.get("analyzing_data") or {}).get("emissions_kg_co2"),
+            "vis_llm_energy_kwh":       (llm_energy.get("create_visualization") or {}).get("energy_consumed_kwh"),
+            "vis_llm_cpu_energy_kwh":   (llm_energy.get("create_visualization") or {}).get("cpu_energy_kwh"),
+            "vis_llm_gpu_energy_kwh":   (llm_energy.get("create_visualization") or {}).get("gpu_energy_kwh"),
+            "vis_llm_ram_energy_kwh":   (llm_energy.get("create_visualization") or {}).get("ram_energy_kwh"),
+            "vis_llm_emissions_co2":    (llm_energy.get("create_visualization") or {}).get("emissions_kg_co2"),
+            # Run-level energy (None when CodeCarbon disabled or unavailable)
             "energy_consumed_kwh": energy.get("energy_consumed_kwh"),
             "cpu_energy_kwh":      energy.get("cpu_energy_kwh"),
             "gpu_energy_kwh":      energy.get("gpu_energy_kwh"),

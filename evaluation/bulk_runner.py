@@ -323,9 +323,13 @@ def run_bulk_benchmark(
             print(f"\nInter-phase pause: sleeping {inter_phase_sleep:.1f}s…")
             time.sleep(inter_phase_sleep)
 
-    # --- Combined output (only when all 3 phases ran) ---
-    if use_subdirs and phase_details:
+    # --- Combined output (always generated when there are results) ---
+    if phase_details:
         combined_detail = pd.concat(phase_details, ignore_index=True)
+        # Reorder: config_id, vary_step, test_case_id, prompt first
+        _leading = [c for c in ("config_id", "vary_step", "test_case_id", "prompt") if c in combined_detail.columns]
+        _rest = [c for c in combined_detail.columns if c not in set(_leading)]
+        combined_detail = combined_detail[_leading + _rest]
         combined_path = save_path / "detail_combined.csv"
         combined_detail.to_csv(combined_path, index=False)
         print(f"\nCombined detail ({len(combined_detail)} rows) → {combined_path}")

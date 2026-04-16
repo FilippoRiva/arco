@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-04-16T19:11:03.906076",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_10\\vary_create_visualization\\config_0001\\20260416_191103_902000_35fe42b4_return_the_12_months_of_2023_with_total_revenue",
+  "run_id": "35fe42b4",
+  "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 64.665,
+    "step_timings_sec": {
+      "decide_tool": 1.671,
+      "lookup_sales_data": 2.651,
+      "analyzing_data": 9.881,
+      "create_visualization": 44.772
+    },
+    "step_llm_timings_sec": {
+      "decide_tool": 0.431,
+      "lookup_sales_data": 1.761,
+      "analyzing_data": 9.097,
+      "create_visualization": 43.919
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.0012554570977778687,
+    "cpu_energy_kwh": 0.001077256716666731,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.00017820038111113814,
+    "emissions_kg_co2": 0.0004152022604629012,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 64.67128800000137
+  },
+  "step_llm_energy": {
+    "decide_tool": {
+      "energy_consumed_kwh": 8.506426666655089e-06,
+      "cpu_energy_kwh": 7.303211666658171e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.203214999996918e-06,
+      "emissions_kg_co2": 2.813228414342838e-06
+    },
+    "lookup_sales_data": {
+      "energy_consumed_kwh": 3.446690222219533e-05,
+      "cpu_energy_kwh": 2.9579034999975793e-05,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 4.887867222219535e-06,
+      "emissions_kg_co2": 1.1398824969119994e-05
+    },
+    "analyzing_data": {
+      "energy_consumed_kwh": 0.00017685458166665231,
+      "cpu_energy_kwh": 0.00015175972999998823,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 2.5094851666664103e-05,
+      "emissions_kg_co2": 5.848899353963192e-05
+    },
+    "create_visualization": {
+      "energy_consumed_kwh": 0.0008528284058335781,
+      "cpu_energy_kwh": 0.0007319388866668912,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 0.00012088951916668722,
+      "emissions_kg_co2": 0.0002820457047204693
+    }
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Line chart showing monthly revenue trends for 2023",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_10\\vary_create_visualization\\config_0001",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Return the 12 months of 2023 with total revenue and total units sold"
+  }
+}

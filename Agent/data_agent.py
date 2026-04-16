@@ -424,15 +424,23 @@ class SalesDataAgent:
         result: Dict,
         state: Dict,
         all_results: Optional[List[Dict]] = None,
-    ) -> None:
+    ) -> float:
         """Run ground-truth evaluation for tracking/logging only.
 
         This NEVER influences selection — it only logs GT scores on the
         already-selected result so performance can be tracked without
         steering the agent.
+
+        Returns
+        -------
+        float
+            Wall-clock time (seconds) spent in LLM judge calls during this
+            evaluation, to be accumulated into the per-step LLM call timer.
         """
         if config.gt_eval_fn is None:
-            return
+            return 0.0
+
+        _gt_t0 = time.perf_counter()
 
         # Score the selected (best) result
         gt_score = None
@@ -460,6 +468,8 @@ class SalesDataAgent:
                 "all_gt_scores": [round(s, 4) for s in all_gt_scores] if all_gt_scores else None,
             }
             result["_gt_scores_per_step"] = existing
+
+        return time.perf_counter() - _gt_t0
 
     def _execute_step_with_config(
         self,
@@ -582,6 +592,28 @@ class SalesDataAgent:
 
             _step_t0 = time.perf_counter()
 
+            # --- Per-step LLM call instrumentation ---
+            _llm_invoke_time = 0.0
+            _step_llm_cc_tracker = None
+            if getattr(self, '_enable_codecarbon_steps', False) and _CODECARBON_AVAILABLE:
+                _step_cc_dir = os.path.join(
+                    self._codecarbon_step_base_dir, f"step_{step_name}"
+                )
+                os.makedirs(_step_cc_dir, exist_ok=True)
+                try:
+                    _step_llm_cc_tracker = EmissionsTracker(  # type: ignore[call-arg]
+                        project_name=f"step_{step_name}",
+                        output_dir=_step_cc_dir,
+                        save_to_file=True,
+                        measure_power_secs=1,
+                        log_level="error",
+                        allow_multiple_runs=True,
+                    )
+                    _step_llm_cc_tracker.start()
+                except Exception as _cc_e:
+                    print(f"[{step_name}] Per-step CodeCarbon failed to start: {_cc_e}")
+                    _step_llm_cc_tracker = None
+
             if n == 1:
                 temp, top_p, top_k = candidate_params[0]
                 llm = self._create_llm(
@@ -606,11 +638,14 @@ class SalesDataAgent:
                     ) as candidate_span:
                         if config.cot_n > 1:
                             print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
+                        _t = time.perf_counter()
                         result = core_fn(state, llm, trace_helper=helper)
+                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
                         result["_run_idx"] = 0
+                        _t = time.perf_counter()
                         result = self._apply_cot_iterations(
                             step_name,
                             state,
@@ -620,6 +655,7 @@ class SalesDataAgent:
                             config.cot_n,
                             trace_helper=helper,
                         )
+                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
@@ -638,33 +674,39 @@ class SalesDataAgent:
                     try:
                         from Agent.utils import standardize_candidate_columns
                         standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                        _t = time.perf_counter()
                         std_results = standardize_candidate_columns(
                             [result], self.schema, standardize_llm,
                             gt_columns=getattr(config, 'gt_columns', None),
                         )
+                        _llm_invoke_time += time.perf_counter() - _t
                         result = std_results[0]
                         self.current_run_step_results[step_name] = [result]
                         helper.set_attributes(step_span, {"standardized_candidate_columns": True})
                     except Exception as e:
                         print(f"[{step_name}] Column standardization warning: {e}")
 
-                self._run_gt_eval(step_name, config, result, state)
-                _step_elapsed = time.perf_counter() - _step_t0
-                existing_timings = state.get("_step_timings_sec") or {}
-                existing_timings[step_name] = round(_step_elapsed, 3)
-                result["_step_timings_sec"] = existing_timings
+                _llm_invoke_time += self._run_gt_eval(step_name, config, result, state)
                 eval_score = None
                 if config.eval_fn:
                     try:
+                        _t = time.perf_counter()
                         eval_score = config.eval_fn(result, state)
+                        _llm_invoke_time += time.perf_counter() - _t
                     except Exception:
                         pass
                 elif config.batch_eval_fn:
                     try:
+                        _t = time.perf_counter()
                         batch_scores = config.batch_eval_fn([result], state)
+                        _llm_invoke_time += time.perf_counter() - _t
                         eval_score = batch_scores[0] if batch_scores else None
                     except Exception:
                         pass
+                _step_elapsed = time.perf_counter() - _step_t0
+                existing_timings = state.get("_step_timings_sec") or {}
+                existing_timings[step_name] = round(_step_elapsed, 3)
+                result["_step_timings_sec"] = existing_timings
                 if eval_score is not None:
                     existing_eval = state.get("_step_eval_scores") or {}
                     existing_eval[step_name] = {
@@ -673,6 +715,27 @@ class SalesDataAgent:
                         "best_score": round(eval_score, 4),
                     }
                     result["_step_eval_scores"] = existing_eval
+                # --- Store per-step LLM call metrics ---
+                _existing_llm_time = state.get("_step_llm_timings_sec") or {}
+                _existing_llm_time[step_name] = round(_llm_invoke_time, 3)
+                result["_step_llm_timings_sec"] = _existing_llm_time
+                if _step_llm_cc_tracker is not None:
+                    try:
+                        _step_llm_cc_tracker.stop()
+                        if (hasattr(_step_llm_cc_tracker, "final_emissions_data")
+                                and _step_llm_cc_tracker.final_emissions_data is not None):
+                            _ed = _step_llm_cc_tracker.final_emissions_data
+                            _existing_llm_energy = state.get("_step_llm_energy") or {}
+                            _existing_llm_energy[step_name] = {
+                                "energy_consumed_kwh": _ed.energy_consumed,
+                                "cpu_energy_kwh": _ed.cpu_energy,
+                                "gpu_energy_kwh": _ed.gpu_energy,
+                                "ram_energy_kwh": _ed.ram_energy,
+                                "emissions_kg_co2": _ed.emissions,
+                            }
+                            result["_step_llm_energy"] = _existing_llm_energy
+                    except Exception as _cc_e:
+                        print(f"[{step_name}] Per-step CodeCarbon stop error: {_cc_e}")
                 helper.set_output(step_span, _summarize_result_for_trace(result))
                 return result
 
@@ -713,12 +776,15 @@ class SalesDataAgent:
                     ) as candidate_span:
                         if config.cot_n > 1:
                             print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
+                        _t = time.perf_counter()
                         result = core_fn(state, llm, trace_helper=helper)
+                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
                         result["_bon_param"] = bon_param
                         result["_run_idx"] = i
+                        _t = time.perf_counter()
                         result = self._apply_cot_iterations(
                             step_name,
                             state,
@@ -728,6 +794,7 @@ class SalesDataAgent:
                             config.cot_n,
                             trace_helper=helper,
                         )
+                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
@@ -736,7 +803,9 @@ class SalesDataAgent:
 
                         if config.eval_fn:
                             try:
+                                _t = time.perf_counter()
                                 score = config.eval_fn(result, state)
+                                _llm_invoke_time += time.perf_counter() - _t
                             except Exception as eval_err:
                                 print(f"  Run {i + 1}/{n}: eval error: {eval_err}")
                                 score = 0.0
@@ -781,7 +850,9 @@ class SalesDataAgent:
 
             if config.batch_eval_fn:
                 try:
+                    _t = time.perf_counter()
                     scores = config.batch_eval_fn(results, state)
+                    _llm_invoke_time += time.perf_counter() - _t
                     print(f"[{step_name}] Batch eval scores: {[f'{s:.3f}' for s in scores]}")
                 except Exception as e:
                     print(f"[{step_name}] Batch eval error: {e}")
@@ -796,7 +867,7 @@ class SalesDataAgent:
                 best_result["_all_scores"] = scores
                 print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
 
-            self._run_gt_eval(step_name, config, best_result, state, all_results=results)
+            _llm_invoke_time += self._run_gt_eval(step_name, config, best_result, state, all_results=results)
             _step_elapsed = time.perf_counter() - _step_t0
             existing_timings = state.get("_step_timings_sec") or {}
             existing_timings[step_name] = round(_step_elapsed, 3)
@@ -808,6 +879,27 @@ class SalesDataAgent:
                 "best_score": round(scores[best_idx], 4) if best_idx is not None and scores else None,
             }
             best_result["_step_eval_scores"] = existing_eval
+            # --- Store per-step LLM call metrics ---
+            _existing_llm_time = state.get("_step_llm_timings_sec") or {}
+            _existing_llm_time[step_name] = round(_llm_invoke_time, 3)
+            best_result["_step_llm_timings_sec"] = _existing_llm_time
+            if _step_llm_cc_tracker is not None:
+                try:
+                    _step_llm_cc_tracker.stop()
+                    if (hasattr(_step_llm_cc_tracker, "final_emissions_data")
+                            and _step_llm_cc_tracker.final_emissions_data is not None):
+                        _ed = _step_llm_cc_tracker.final_emissions_data
+                        _existing_llm_energy = state.get("_step_llm_energy") or {}
+                        _existing_llm_energy[step_name] = {
+                            "energy_consumed_kwh": _ed.energy_consumed,
+                            "cpu_energy_kwh": _ed.cpu_energy,
+                            "gpu_energy_kwh": _ed.gpu_energy,
+                            "ram_energy_kwh": _ed.ram_energy,
+                            "emissions_kg_co2": _ed.emissions,
+                        }
+                        best_result["_step_llm_energy"] = _existing_llm_energy
+                except Exception as _cc_e:
+                    print(f"[{step_name}] Per-step CodeCarbon stop error: {_cc_e}")
             helper.set_attributes(
                 step_span,
                 {
@@ -1237,12 +1329,19 @@ class SalesDataAgent:
                             save_to_file=True,
                             measure_power_secs=1,
                             log_level="error",
-                            allow_multiple_runs=False,
+                            allow_multiple_runs=True,
                         )
                         tracker.start()
                     except Exception as e:
                         print(f"CodeCarbon tracking failed to start: {e}, continuing without it")
                         tracker = None
+                # Enable per-step LLM call tracking
+                self._enable_codecarbon_steps = enable_codecarbon
+                self._codecarbon_step_base_dir = (
+                    os.path.join(save_dir, "codecarbon_steps") if enable_codecarbon else None
+                )
+                if self._codecarbon_step_base_dir:
+                    os.makedirs(self._codecarbon_step_base_dir, exist_ok=True)
                 try:
                     result = self.run_core(
                         prompt,
@@ -1254,6 +1353,8 @@ class SalesDataAgent:
                         save_results=save_results,
                     )
                 finally:
+                    self._enable_codecarbon_steps = False
+                    self._codecarbon_step_base_dir = None
                     if tracker is not None:
                         try:
                             tracker.stop()
