@@ -276,6 +276,27 @@ To perform load testing and performance analysis, you may want to use Apache JMe
 - **OpenAI**: `--model "openai:gpt-4o-mini"` (requires `OPENAI_API_KEY`)
 - **Anthropic**: `--model "anthropic:claude-3-5-sonnet-latest"` (requires `ANTHROPIC_API_KEY`)
 
+### Per-step model overrides
+You can keep a global default model/provider under `agent`, then override individual workflow steps under `steps`.
+
+```yaml
+agent:
+  provider: "openai"
+  model: "gpt-4o-mini"
+
+steps:
+  decide_tool:
+    provider: "openai"
+    model: "gpt-4.1-mini"
+
+  lookup_sales_data:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    ollama_url: "http://localhost:11434"
+```
+
+If a step-level `provider`, `model`, or `ollama_url` is `null` or omitted, the agent-level value is used.
+
 Environment variables (PowerShell):
 ```powershell
 $env:OPENAI_API_KEY="YOUR_KEY"
@@ -388,5 +409,4 @@ Open `http://localhost:8050/`.
 Notes:
 - On Windows, CodeCarbon works without special drivers; it may use modeled power if sensors are unavailable.
 - Logs are estimates; keep the machine plugged in and avoid heavy background tasks for more stable readings.
-
 

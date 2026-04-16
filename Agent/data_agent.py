@@ -19,7 +19,7 @@ import json
 import os
 import time
 from functools import partial
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import tempfile
 import numpy as np
 
@@ -269,6 +269,9 @@ class SalesDataAgent:
         top_k: Optional[int] = None,
         num_beams: int = 1,
         no_repeat_ngram_size: Optional[int] = None,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        ollama_url: Optional[str] = None,
     ):
         """Factory method to create LLM instances with specific parameters.
 
@@ -286,9 +289,13 @@ class SalesDataAgent:
         Returns:
             ChatOllama or ChatOpenAI instance configured with the given parameters
         """
-        if self.provider == "openai":
+        resolved_provider = (provider or self.provider).lower()
+        resolved_model = model or self.model
+        resolved_ollama_url = ollama_url or self.ollama_url
+
+        if resolved_provider == "openai":
             return ChatOpenAI(
-                model=self.model,
+                model=resolved_model,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 streaming=self.streaming,
@@ -297,11 +304,11 @@ class SalesDataAgent:
             )
         else:
             kwargs = dict(
-                model=self.model,
+                model=resolved_model,
                 temperature=temperature,
                 num_predict=max_tokens,
                 streaming=self.streaming,
-                base_url=self.ollama_url,
+                base_url=resolved_ollama_url,
                 top_p=top_p,
             )
             if top_k is not None:
@@ -311,6 +318,16 @@ class SalesDataAgent:
             if no_repeat_ngram_size is not None:
                 kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
             return ChatOllama(**kwargs)
+
+    def _resolve_step_llm_config(self, config: StepConfig) -> Tuple[str, str, Optional[str]]:
+        """Resolve the effective provider/model/base URL for a step.
+
+        Step-level values override the agent defaults when provided.
+        """
+        provider = (config.provider or self.agent_config.provider or self.provider).lower()
+        model = config.model or self.agent_config.model or self.model
+        ollama_url = config.ollama_url or self.agent_config.ollama_url or self.ollama_url
+        return provider, model, ollama_url
 
     def _apply_cot_iterations(
         self,
@@ -579,6 +596,15 @@ class SalesDataAgent:
                     "config.max_tokens": config.max_tokens,
                 },
             )
+            step_provider, step_model, step_ollama_url = self._resolve_step_llm_config(config)
+            helper.set_attributes(
+                step_span,
+                {
+                    "llm.provider": step_provider,
+                    "llm.model": step_model,
+                    "llm.ollama_url": step_ollama_url,
+                },
+            )
 
             _step_t0 = time.perf_counter()
 
@@ -591,6 +617,9 @@ class SalesDataAgent:
                     top_k=top_k,
                     num_beams=config.num_beams,
                     no_repeat_ngram_size=config.no_repeat_ngram_size,
+                    provider=step_provider,
+                    model=step_model,
+                    ollama_url=step_ollama_url,
                 )
                 try:
                     with helper.start_span(
@@ -598,11 +627,13 @@ class SalesDataAgent:
                         kind="tool",
                         attributes={
                             "step_name": step_name,
-                            "candidate_index": 0,
-                            "temperature": temp,
-                            "top_p": top_p,
-                            "top_k": top_k,
-                        },
+                        "candidate_index": 0,
+                        "temperature": temp,
+                        "top_p": top_p,
+                        "top_k": top_k,
+                        "llm.provider": step_provider,
+                        "llm.model": step_model,
+                    },
                     ) as candidate_span:
                         if config.cot_n > 1:
                             print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
@@ -637,7 +668,13 @@ class SalesDataAgent:
                 if step_name == "lookup_sales_data" and getattr(config, 'gt_columns', None):
                     try:
                         from Agent.utils import standardize_candidate_columns
-                        standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                        standardize_llm = self._create_llm(
+                            temperature=0.0,
+                            max_tokens=1000,
+                            provider=step_provider,
+                            model=step_model,
+                            ollama_url=step_ollama_url,
+                        )
                         std_results = standardize_candidate_columns(
                             [result], self.schema, standardize_llm,
                             gt_columns=getattr(config, 'gt_columns', None),
@@ -695,6 +732,9 @@ class SalesDataAgent:
                     top_k=top_k,
                     num_beams=config.num_beams,
                     no_repeat_ngram_size=config.no_repeat_ngram_size,
+                    provider=step_provider,
+                    model=step_model,
+                    ollama_url=step_ollama_url,
                 )
                 varying_val = varying_vals[i]
 
@@ -709,6 +749,8 @@ class SalesDataAgent:
                             "top_p": top_p,
                             "top_k": top_k,
                             bon_param: varying_val,
+                            "llm.provider": step_provider,
+                            "llm.model": step_model,
                         },
                     ) as candidate_span:
                         if config.cot_n > 1:
@@ -769,7 +811,13 @@ class SalesDataAgent:
             if step_name == "lookup_sales_data" and (len(results) > 1 or getattr(config, 'gt_columns', None)):
                 try:
                     from Agent.utils import standardize_candidate_columns
-                    standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                    standardize_llm = self._create_llm(
+                        temperature=0.0,
+                        max_tokens=1000,
+                        provider=step_provider,
+                        model=step_model,
+                        ollama_url=step_ollama_url,
+                    )
                     results = standardize_candidate_columns(
                         results, self.schema, standardize_llm,
                         gt_columns=getattr(config, 'gt_columns', None),

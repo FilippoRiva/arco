@@ -342,3 +342,155 @@ def test_end_to_end_graph_run_with_tracing(tmp_path):
     assert "chart_code_generation" in span_names
     assert "visualization_validation" in span_names
     assert "cache_save_run" in span_names
+
+
+def test_step_config_serialization_preserves_llm_overrides():
+    config = StepConfig(
+        step_name="decide_tool",
+        provider="openai",
+        model="gpt-4o-mini",
+        ollama_url="http://remote-ollama:11434",
+    )
+
+    serialized = config.to_dict()
+    restored = StepConfig.from_dict(serialized)
+
+    assert restored.provider == "openai"
+    assert restored.model == "gpt-4o-mini"
+    assert restored.ollama_url == "http://remote-ollama:11434"
+
+
+def test_agent_config_from_yaml_loads_step_level_llm_overrides(tmp_path):
+    config_path = Path(tmp_path) / "config.yaml"
+    config_path.write_text(
+        """
+agent:
+  model: "gpt-4o-mini"
+  provider: "openai"
+  ollama_url: "http://localhost:11434"
+
+steps:
+  decide_tool:
+    provider: "openai"
+    model: "gpt-4.1-mini"
+  lookup_sales_data:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    ollama_url: "http://ollama.internal:11434"
+
+run:
+  prompt: "test"
+""",
+        encoding="utf-8",
+    )
+
+    agent_config, run_params, schema = AgentConfig.from_yaml(str(config_path))
+
+    assert schema is None
+    assert run_params["prompt"] == "test"
+    assert agent_config.decide_tool.provider == "openai"
+    assert agent_config.decide_tool.model == "gpt-4.1-mini"
+    assert agent_config.lookup_sales_data.provider == "ollama"
+    assert agent_config.lookup_sales_data.model == "llama3.2:3b"
+    assert agent_config.lookup_sales_data.ollama_url == "http://ollama.internal:11434"
+
+
+def test_execute_step_uses_step_specific_llm_override():
+    agent = make_agent()
+    created_llms = []
+
+    def record_create_llm(**kwargs):
+        created_llms.append(kwargs)
+        return FakeLLM(temperature=kwargs.get("temperature", 0.1))
+
+    agent._create_llm = record_create_llm
+    agent.agent_config = AgentConfig(model="global-model", provider="openai")
+    config = StepConfig(
+        step_name="decide_tool",
+        use_cache=False,
+        provider="ollama",
+        model="llama3.2:3b",
+        ollama_url="http://ollama-step:11434",
+    )
+
+    result = agent._execute_step_with_config(
+        "decide_tool",
+        {"prompt": "hello", "answer": []},
+        lambda state, llm, trace_helper=None: {**state, "tool_choice": "lookup_sales_data"},
+        config,
+    )
+
+    assert result["tool_choice"] == "lookup_sales_data"
+    assert created_llms[0]["provider"] == "ollama"
+    assert created_llms[0]["model"] == "llama3.2:3b"
+    assert created_llms[0]["ollama_url"] == "http://ollama-step:11434"
+
+
+def test_execute_step_inherits_global_llm_config_when_step_override_is_missing():
+    agent = make_agent()
+    created_llms = []
+
+    def record_create_llm(**kwargs):
+        created_llms.append(kwargs)
+        return FakeLLM(temperature=kwargs.get("temperature", 0.1))
+
+    agent._create_llm = record_create_llm
+    agent.agent_config = AgentConfig(model="gpt-4o-mini", provider="openai")
+    config = StepConfig(step_name="analyzing_data", use_cache=False)
+
+    result = agent._execute_step_with_config(
+        "analyzing_data",
+        {"prompt": "hello", "answer": []},
+        lambda state, llm, trace_helper=None: {**state, "answer": ["analysis"]},
+        config,
+    )
+
+    assert result["answer"] == ["analysis"]
+    assert created_llms[0]["provider"] == "openai"
+    assert created_llms[0]["model"] == "gpt-4o-mini"
+    assert created_llms[0]["ollama_url"] == "http://localhost:11434"
+
+
+def test_execute_step_supports_mixed_provider_runs():
+    agent = make_agent()
+    created_llms = []
+
+    def record_create_llm(**kwargs):
+        created_llms.append(kwargs)
+        return FakeLLM(temperature=kwargs.get("temperature", 0.1))
+
+    agent._create_llm = record_create_llm
+    agent.agent_config = AgentConfig(model="gpt-4o-mini", provider="openai")
+
+    decide_config = StepConfig(
+        step_name="decide_tool",
+        use_cache=False,
+        provider="openai",
+        model="gpt-4.1-mini",
+    )
+    lookup_config = StepConfig(
+        step_name="lookup_sales_data",
+        use_cache=False,
+        provider="ollama",
+        model="llama3.2:3b",
+        ollama_url="http://mixed-ollama:11434",
+    )
+
+    agent._execute_step_with_config(
+        "decide_tool",
+        {"prompt": "hello", "answer": []},
+        lambda state, llm, trace_helper=None: {**state, "tool_choice": "lookup_sales_data"},
+        decide_config,
+    )
+    agent._execute_step_with_config(
+        "lookup_sales_data",
+        {"prompt": "hello", "answer": []},
+        lambda state, llm, trace_helper=None: {**state, "data": "a\n1\n", "sql_query": "SELECT 1"},
+        lookup_config,
+    )
+
+    assert created_llms[0]["provider"] == "openai"
+    assert created_llms[0]["model"] == "gpt-4.1-mini"
+    assert created_llms[1]["provider"] == "ollama"
+    assert created_llms[1]["model"] == "llama3.2:3b"
+    assert created_llms[1]["ollama_url"] == "http://mixed-ollama:11434"
