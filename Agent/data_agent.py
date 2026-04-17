@@ -28,6 +28,7 @@ import pandas as pd
 from langgraph.graph import END, StateGraph
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
+from langchain_core.callbacks import BaseCallbackHandler
 
 try:
     from Agent.parameter_provider import ParameterProvider
@@ -57,6 +58,95 @@ except ImportError:
                        CoTRefinementLLM)
 
 _COT_SIMILARITY_THRESHOLD = 0.95
+
+
+class _LLMCallAccumulator(BaseCallbackHandler):
+    """Accumulates wall-clock time and energy of LLM .invoke() calls via LangChain callbacks.
+
+    Attach as a callback to a LangChain LLM object to record only the time and energy
+    spent inside actual LLM API calls, excluding non-LLM work (DB queries, parquet reads,
+    code execution, etc.) that may be present in the same step function.
+
+    When cc_enabled=True, a fresh CodeCarbon EmissionsTracker is started at the beginning
+    of each invoke() and stopped at the end. This avoids the pro-rating approximation that
+    would be incorrect when GPU power varies significantly during inference (e.g. local
+    Ollama on A40/L40S), since the tracker window covers only the actual inference window.
+
+    Thread-safe for sequential use (one step at a time).
+    """
+
+    def __init__(
+        self,
+        cc_enabled: bool = False,
+        cc_output_dir: Optional[str] = None,
+    ) -> None:
+        super().__init__()
+        self._starts: Dict[str, float] = {}
+        self._cc_trackers: Dict[str, Any] = {}
+        self.total_time: float = 0.0
+        self._cc_enabled = cc_enabled and _CODECARBON_AVAILABLE
+        self._cc_output_dir = cc_output_dir
+        # Accumulated energy across all invoke() calls for this step
+        self.total_energy: Dict[str, float] = {
+            "energy_consumed_kwh": 0.0,
+            "cpu_energy_kwh": 0.0,
+            "gpu_energy_kwh": 0.0,
+            "ram_energy_kwh": 0.0,
+            "emissions_kg_co2": 0.0,
+        }
+
+    def _start_cc_tracker(self, key: str) -> None:
+        if not self._cc_enabled:
+            return
+        try:
+            tracker = EmissionsTracker(  # type: ignore[call-arg]
+                project_name="llm_invoke",
+                output_dir=self._cc_output_dir,
+                save_to_file=False,
+                measure_power_secs=1,
+                log_level="error",
+                allow_multiple_runs=True,
+            )
+            tracker.start()
+            self._cc_trackers[key] = tracker
+        except Exception as _e:
+            print(f"[CodeCarbon] per-invoke tracker start failed: {_e}")
+
+    def _stop_cc_tracker(self, key: str) -> None:
+        tracker = self._cc_trackers.pop(key, None)
+        if tracker is None:
+            return
+        try:
+            tracker.stop()
+            # tracker.stop() returns a float (CO2 kg), not EmissionsData.
+            # The full breakdown is in final_emissions_data, same as the original code.
+            _ed = getattr(tracker, "final_emissions_data", None)
+            if _ed is not None:
+                self.total_energy["energy_consumed_kwh"] += getattr(_ed, "energy_consumed", 0.0) or 0.0
+                self.total_energy["cpu_energy_kwh"]      += getattr(_ed, "cpu_energy",      0.0) or 0.0
+                self.total_energy["gpu_energy_kwh"]      += getattr(_ed, "gpu_energy",      0.0) or 0.0
+                self.total_energy["ram_energy_kwh"]      += getattr(_ed, "ram_energy",      0.0) or 0.0
+                self.total_energy["emissions_kg_co2"]    += getattr(_ed, "emissions",        0.0) or 0.0
+        except Exception as _e:
+            print(f"[CodeCarbon] per-invoke tracker stop failed: {_e}")
+
+    def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
+        key = str(run_id)
+        self._starts[key] = time.perf_counter()
+        self._start_cc_tracker(key)
+
+    def on_llm_end(self, response, *, run_id, **kwargs) -> None:
+        key = str(run_id)
+        if key in self._starts:
+            self.total_time += time.perf_counter() - self._starts.pop(key)
+        self._stop_cc_tracker(key)
+
+    def on_llm_error(self, error, *, run_id, **kwargs) -> None:
+        # Count errored calls too — the HTTP round-trip still happened.
+        key = str(run_id)
+        if key in self._starts:
+            self.total_time += time.perf_counter() - self._starts.pop(key)
+        self._stop_cc_tracker(key)
 
 # Optional energy/emissions tracking via CodeCarbon
 try:
@@ -269,6 +359,7 @@ class SalesDataAgent:
         top_k: Optional[int] = None,
         num_beams: int = 1,
         no_repeat_ngram_size: Optional[int] = None,
+        callbacks: Optional[list] = None,
     ):
         """Factory method to create LLM instances with specific parameters.
 
@@ -286,6 +377,7 @@ class SalesDataAgent:
         Returns:
             ChatOllama or ChatOpenAI instance configured with the given parameters
         """
+        _cb = callbacks or []
         if self.provider == "openai":
             return ChatOpenAI(
                 model=self.model,
@@ -294,6 +386,7 @@ class SalesDataAgent:
                 streaming=self.streaming,
                 api_key=self.openai_api_key,
                 top_p=top_p,
+                callbacks=_cb,
             )
         else:
             kwargs = dict(
@@ -303,6 +396,7 @@ class SalesDataAgent:
                 streaming=self.streaming,
                 base_url=self.ollama_url,
                 top_p=top_p,
+                callbacks=_cb,
             )
             if top_k is not None:
                 kwargs["top_k"] = top_k
@@ -593,26 +687,21 @@ class SalesDataAgent:
             _step_t0 = time.perf_counter()
 
             # --- Per-step LLM call instrumentation ---
+            # _LLMCallAccumulator tracks both time and energy (via per-invoke CodeCarbon
+            # trackers) so that measurements cover only the actual LLM inference window.
+            # This is correct even when GPU power varies (e.g. local Ollama on A40/L40S),
+            # since no pro-rating assumption is made.
             _llm_invoke_time = 0.0
-            _step_llm_cc_tracker = None
+            _cc_step_dir = None
             if getattr(self, '_enable_codecarbon_steps', False) and _CODECARBON_AVAILABLE:
-                _step_cc_dir = os.path.join(
+                _cc_step_dir = os.path.join(
                     self._codecarbon_step_base_dir, f"step_{step_name}"
                 )
-                os.makedirs(_step_cc_dir, exist_ok=True)
-                try:
-                    _step_llm_cc_tracker = EmissionsTracker(  # type: ignore[call-arg]
-                        project_name=f"step_{step_name}",
-                        output_dir=_step_cc_dir,
-                        save_to_file=True,
-                        measure_power_secs=1,
-                        log_level="error",
-                        allow_multiple_runs=True,
-                    )
-                    _step_llm_cc_tracker.start()
-                except Exception as _cc_e:
-                    print(f"[{step_name}] Per-step CodeCarbon failed to start: {_cc_e}")
-                    _step_llm_cc_tracker = None
+                os.makedirs(_cc_step_dir, exist_ok=True)
+            _llm_acc = _LLMCallAccumulator(
+                cc_enabled=getattr(self, '_enable_codecarbon_steps', False),
+                cc_output_dir=_cc_step_dir,
+            )
 
             if n == 1:
                 temp, top_p, top_k = candidate_params[0]
@@ -623,6 +712,7 @@ class SalesDataAgent:
                     top_k=top_k,
                     num_beams=config.num_beams,
                     no_repeat_ngram_size=config.no_repeat_ngram_size,
+                    callbacks=[_llm_acc],
                 )
                 try:
                     with helper.start_span(
@@ -638,14 +728,11 @@ class SalesDataAgent:
                     ) as candidate_span:
                         if config.cot_n > 1:
                             print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
-                        _t = time.perf_counter()
                         result = core_fn(state, llm, trace_helper=helper)
-                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
                         result["_run_idx"] = 0
-                        _t = time.perf_counter()
                         result = self._apply_cot_iterations(
                             step_name,
                             state,
@@ -655,7 +742,6 @@ class SalesDataAgent:
                             config.cot_n,
                             trace_helper=helper,
                         )
-                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
@@ -673,13 +759,11 @@ class SalesDataAgent:
                 if step_name == "lookup_sales_data" and getattr(config, 'gt_columns', None):
                     try:
                         from Agent.utils import standardize_candidate_columns
-                        standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
-                        _t = time.perf_counter()
+                        standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000, callbacks=[_llm_acc])
                         std_results = standardize_candidate_columns(
                             [result], self.schema, standardize_llm,
                             gt_columns=getattr(config, 'gt_columns', None),
                         )
-                        _llm_invoke_time += time.perf_counter() - _t
                         result = std_results[0]
                         self.current_run_step_results[step_name] = [result]
                         helper.set_attributes(step_span, {"standardized_candidate_columns": True})
@@ -703,6 +787,8 @@ class SalesDataAgent:
                         eval_score = batch_scores[0] if batch_scores else None
                     except Exception:
                         pass
+                # Add callback-accumulated LLM invoke time (core_fn + CoT + standardize)
+                _llm_invoke_time += _llm_acc.total_time
                 _step_elapsed = time.perf_counter() - _step_t0
                 existing_timings = state.get("_step_timings_sec") or {}
                 existing_timings[step_name] = round(_step_elapsed, 3)
@@ -719,23 +805,10 @@ class SalesDataAgent:
                 _existing_llm_time = state.get("_step_llm_timings_sec") or {}
                 _existing_llm_time[step_name] = round(_llm_invoke_time, 3)
                 result["_step_llm_timings_sec"] = _existing_llm_time
-                if _step_llm_cc_tracker is not None:
-                    try:
-                        _step_llm_cc_tracker.stop()
-                        if (hasattr(_step_llm_cc_tracker, "final_emissions_data")
-                                and _step_llm_cc_tracker.final_emissions_data is not None):
-                            _ed = _step_llm_cc_tracker.final_emissions_data
-                            _existing_llm_energy = state.get("_step_llm_energy") or {}
-                            _existing_llm_energy[step_name] = {
-                                "energy_consumed_kwh": _ed.energy_consumed,
-                                "cpu_energy_kwh": _ed.cpu_energy,
-                                "gpu_energy_kwh": _ed.gpu_energy,
-                                "ram_energy_kwh": _ed.ram_energy,
-                                "emissions_kg_co2": _ed.emissions,
-                            }
-                            result["_step_llm_energy"] = _existing_llm_energy
-                    except Exception as _cc_e:
-                        print(f"[{step_name}] Per-step CodeCarbon stop error: {_cc_e}")
+                if _llm_acc._cc_enabled and _llm_acc.total_energy["energy_consumed_kwh"] > 0:
+                    _existing_llm_energy = state.get("_step_llm_energy") or {}
+                    _existing_llm_energy[step_name] = dict(_llm_acc.total_energy)
+                    result["_step_llm_energy"] = _existing_llm_energy
                 helper.set_output(step_span, _summarize_result_for_trace(result))
                 return result
 
@@ -758,6 +831,7 @@ class SalesDataAgent:
                     top_k=top_k,
                     num_beams=config.num_beams,
                     no_repeat_ngram_size=config.no_repeat_ngram_size,
+                    callbacks=[_llm_acc],
                 )
                 varying_val = varying_vals[i]
 
@@ -776,15 +850,12 @@ class SalesDataAgent:
                     ) as candidate_span:
                         if config.cot_n > 1:
                             print(f"[{step_name}] CoT iteration 1/{config.cot_n}: starting initial run...")
-                        _t = time.perf_counter()
                         result = core_fn(state, llm, trace_helper=helper)
-                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
                         result["_bon_param"] = bon_param
                         result["_run_idx"] = i
-                        _t = time.perf_counter()
                         result = self._apply_cot_iterations(
                             step_name,
                             state,
@@ -794,7 +865,6 @@ class SalesDataAgent:
                             config.cot_n,
                             trace_helper=helper,
                         )
-                        _llm_invoke_time += time.perf_counter() - _t
                         result["_temperature"] = temp
                         result["_top_p"] = top_p
                         result["_top_k"] = top_k
@@ -838,7 +908,7 @@ class SalesDataAgent:
             if step_name == "lookup_sales_data" and (len(results) > 1 or getattr(config, 'gt_columns', None)):
                 try:
                     from Agent.utils import standardize_candidate_columns
-                    standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000)
+                    standardize_llm = self._create_llm(temperature=0.0, max_tokens=1000, callbacks=[_llm_acc])
                     results = standardize_candidate_columns(
                         results, self.schema, standardize_llm,
                         gt_columns=getattr(config, 'gt_columns', None),
@@ -868,6 +938,8 @@ class SalesDataAgent:
                 print(f"[{step_name}] Selected run {best_idx + 1}/{n} (score={scores[best_idx]:.3f})")
 
             _llm_invoke_time += self._run_gt_eval(step_name, config, best_result, state, all_results=results)
+            # Add callback-accumulated LLM invoke time (core_fn + CoT + standardize across all candidates)
+            _llm_invoke_time += _llm_acc.total_time
             _step_elapsed = time.perf_counter() - _step_t0
             existing_timings = state.get("_step_timings_sec") or {}
             existing_timings[step_name] = round(_step_elapsed, 3)
@@ -883,23 +955,10 @@ class SalesDataAgent:
             _existing_llm_time = state.get("_step_llm_timings_sec") or {}
             _existing_llm_time[step_name] = round(_llm_invoke_time, 3)
             best_result["_step_llm_timings_sec"] = _existing_llm_time
-            if _step_llm_cc_tracker is not None:
-                try:
-                    _step_llm_cc_tracker.stop()
-                    if (hasattr(_step_llm_cc_tracker, "final_emissions_data")
-                            and _step_llm_cc_tracker.final_emissions_data is not None):
-                        _ed = _step_llm_cc_tracker.final_emissions_data
-                        _existing_llm_energy = state.get("_step_llm_energy") or {}
-                        _existing_llm_energy[step_name] = {
-                            "energy_consumed_kwh": _ed.energy_consumed,
-                            "cpu_energy_kwh": _ed.cpu_energy,
-                            "gpu_energy_kwh": _ed.gpu_energy,
-                            "ram_energy_kwh": _ed.ram_energy,
-                            "emissions_kg_co2": _ed.emissions,
-                        }
-                        best_result["_step_llm_energy"] = _existing_llm_energy
-                except Exception as _cc_e:
-                    print(f"[{step_name}] Per-step CodeCarbon stop error: {_cc_e}")
+            if _llm_acc._cc_enabled and _llm_acc.total_energy["energy_consumed_kwh"] > 0:
+                _existing_llm_energy = state.get("_step_llm_energy") or {}
+                _existing_llm_energy[step_name] = dict(_llm_acc.total_energy)
+                best_result["_step_llm_energy"] = _existing_llm_energy
             helper.set_attributes(
                 step_span,
                 {

@@ -1,0 +1,120 @@
+{
+  "timestamp": "2026-04-17T20:37:55.422443",
+  "config_path": null,
+  "artifact_dir": "C:\\Users\\Davide\\Desktop\\POLIMI\\Tesi\\GitHub_Code\\DataAgent-1\\runs\\bulk_results\\validation_12\\vary_analyzing_data\\config_0001\\20260417_203755_419439_64e5df3e_show_me_the_sales_in_nov_2021",
+  "run_id": "64e5df3e",
+  "prompt": "Show me the sales in Nov 2021",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "timing": {
+    "total_run_time_sec": 44.932,
+    "step_timings_sec": {
+      "decide_tool": 1.83,
+      "lookup_sales_data": 2.708,
+      "analyzing_data": 21.772,
+      "create_visualization": 13.229
+    },
+    "step_llm_timings_sec": {
+      "decide_tool": 1.822,
+      "lookup_sales_data": 2.483,
+      "analyzing_data": 21.719,
+      "create_visualization": 13.119
+    }
+  },
+  "energy": {
+    "energy_consumed_kwh": 0.00087290786249995,
+    "cpu_energy_kwh": 0.000748827544999949,
+    "gpu_energy_kwh": 0.0,
+    "ram_energy_kwh": 0.0001240803175000009,
+    "emissions_kg_co2": 0.00028868634247025844,
+    "cpu_power_w": 60.0,
+    "gpu_power_w": 0.0,
+    "duration_sec": 44.938727000000654
+  },
+  "step_llm_energy": {
+    "decide_tool": {
+      "energy_consumed_kwh": 1.3243120277790391e-05,
+      "cpu_energy_kwh": 1.1361315000006773e-05,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.8818052777836176e-06,
+      "emissions_kg_co2": 4.379738252030282e-06
+    },
+    "lookup_sales_data": {
+      "energy_consumed_kwh": 3.5848027222214615e-05,
+      "cpu_energy_kwh": 3.0761819999982736e-05,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 5.08620722223188e-06,
+      "emissions_kg_co2": 1.1855587866876373e-05
+    },
+    "analyzing_data": {
+      "energy_consumed_kwh": 0.00014604784722211357,
+      "cpu_energy_kwh": 0.0001253248616665587,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 2.0722985555554867e-05,
+      "emissions_kg_co2": 4.830065193760296e-05
+    },
+    "create_visualization": {
+      "energy_consumed_kwh": 8.172019249995072e-05,
+      "cpu_energy_kwh": 7.013696166662461e-05,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.158323083332612e-05,
+      "emissions_kg_co2": 2.7026338623198704e-05
+    }
+  },
+  "accuracy": {
+    "type": "ground_truth",
+    "ground_truth_scores": {
+      "lookup_sales_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      },
+      "analyzing_data": {
+        "gt_score": 1.0,
+        "all_gt_scores": [
+          1.0,
+          1.0
+        ]
+      },
+      "create_visualization": {
+        "gt_score": 1.0,
+        "all_gt_scores": null
+      }
+    },
+    "step_eval_scores": {
+      "lookup_sales_data": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "analyzing_data": {
+        "scores": [
+          1.0,
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      },
+      "create_visualization": {
+        "scores": [
+          1.0
+        ],
+        "best_idx": 0,
+        "best_score": 1.0
+      }
+    }
+  },
+  "effective_run_params": {
+    "visualization_goal": "Sales trend for Nov 2021, with date as x and sales value as y",
+    "no_vis": false,
+    "lookup_only": false,
+    "run_id": null,
+    "save_dir": "runs\\bulk_results\\validation_12\\vary_analyzing_data\\config_0001",
+    "save_results": false,
+    "enable_codecarbon": true,
+    "reuse_from": null,
+    "step_overrides": null,
+    "prompt": "Show me the sales in Nov 2021"
+  }
+}
