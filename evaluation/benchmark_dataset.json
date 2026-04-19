@@ -7,7 +7,7 @@
     "gt_analysis": "Sales in November 2021 show daily values ranging from $11,030.39 to $52,004.60, with a total of $499,984.43 across 29 days.",
     "gt_chart_config": {
       "chart_type": "line",
-      "x_axis": "Sale_Date",
+      "x_axis": "Sold_Date",
       "y_axis": "Total_Sales_Value",
       "title": "Sales Trend for November 2021"
     },
@@ -18,7 +18,8 @@
       "label_format": null,
       "grid": null,
       "markers": null
-    }
+    },
+    "difficulty": 2
   },
   {
     "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
@@ -39,7 +40,8 @@
       "label_format": null,
       "grid": null,
       "markers": null
-    }
+    },
+    "difficulty": 2
   },
   {
     "prompt": "Return the top 5 stores by total revenue; columns: Store_Number, total_revenue",
@@ -49,7 +51,8 @@
     "gt_analysis": "Store 2970: $836,341.33; Store 3300: $619,660.17; Store 1320: $592,832.07; Store 1650: $580,443.01; Store 1210: $508,393.77",
     "gt_chart_config": null,
     "gt_chart_code": null,
-    "explicit_requirements": null
+    "explicit_requirements": null,
+    "difficulty": 1
   },
   {
     "prompt": "Show total revenue by product brand for 2023 as a bar chart",
@@ -70,7 +73,8 @@
       "label_format": null,
       "grid": null,
       "markers": null
-    }
+    },
+    "difficulty": 3
   },
   {
     "prompt": "Compare average monthly revenue between store regions for 2022 and 2023",
@@ -92,6 +96,285 @@
       "label_format": null,
       "grid": null,
       "markers": null
-    }
+    },
+    "difficulty": 4
+  },
+  {
+    "prompt": "Show promo vs non-promo revenue in 2023 as a bar chart",
+    "visualization_goal": "Bar chart comparing total revenue for promo and non-promo sales in 2023",
+    "gt_sql": "SELECT On_Promo, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY On_Promo ORDER BY On_Promo ASC",
+    "gt_data": "On_Promo,total_revenue\n0,5316412.07\n1,99706.86\n",
+    "gt_analysis": "0.0 leads the result set with 5,316,412.07 for total_revenue.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "On_Promo",
+      "y_axis": "total_revenue",
+      "title": "Promo vs Non-Promo Revenue (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 1
+  },
+  {
+    "prompt": "Return the top 10 product class codes by total units sold in 2023; columns: Product_Class_Code, total_units",
+    "visualization_goal": null,
+    "gt_sql": "SELECT Product_Class_Code, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY Product_Class_Code ORDER BY total_units DESC, Product_Class_Code ASC LIMIT 10",
+    "gt_data": "Product_Class_Code,total_units\n22850,89229.0\n22975,60425.0\n22800,57485.0\n22875,52055.0\n24400,46218.0\n24425,38045.0\n22950,26689.0\n22925,17320.0\n22825,13646.0\n24375,11358.0\n",
+    "gt_analysis": "The top row is 22850.0 with 89,229.00, while the last returned row is 24375.0 with 11,358.00.",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Show the top 8 stores by total units sold in 2022 as a bar chart",
+    "visualization_goal": "Bar chart of the top 8 stores ranked by total units sold in 2022",
+    "gt_sql": "SELECT Store_Number, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2022 GROUP BY Store_Number ORDER BY total_units DESC, Store_Number ASC LIMIT 8",
+    "gt_data": "Store_Number,total_units\n2970,23580.0\n3300,19158.0\n1650,17778.0\n1210,17158.0\n1320,17013.0\n3080,16717.0\n1100,15968.0\n1540,14517.0\n",
+    "gt_analysis": "The top row is 2970.0 with 23,580.00, while the last returned row is 1540.0 with 14,517.00.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "Store_Number",
+      "y_axis": "total_units",
+      "title": "Top 8 Stores by Units Sold (2022)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 1
+  },
+  {
+    "prompt": "Return the top 10 sales days in 2023 with total revenue and total units; columns: Sold_Date, total_revenue, total_units",
+    "visualization_goal": null,
+    "gt_sql": "SELECT CAST(Sold_Date AS DATE) AS Sold_Date, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY CAST(Sold_Date AS DATE) ORDER BY total_revenue DESC, Sold_Date ASC LIMIT 10",
+    "gt_data": "Sold_Date,total_revenue,total_units\n2023-12-22,62640.7,4059.0\n2023-11-23,57397.29,4014.0\n2023-12-23,52036.12,3385.0\n2023-12-21,48561.6,3275.0\n2023-12-15,47585.78,3287.0\n2023-12-24,43304.69,2782.0\n2023-12-20,37140.17,2483.0\n2023-12-14,35778.06,2406.0\n2023-12-08,35681.41,2684.0\n2023-12-16,34630.77,2435.0\n",
+    "gt_analysis": "The first row is 2023-12-22 00:00:00 with total_revenue=62,640.70, total_units=4,059.00.",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show monthly revenue and units sold for 2024 as a line chart",
+    "visualization_goal": "Line chart showing monthly revenue for 2024 with monthly units sold in the result table",
+    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2024 GROUP BY month_start ORDER BY month_start ASC",
+    "gt_data": "month_start,total_revenue,total_units\n2024-01-01,431060.3,33408.0\n2024-02-01,364920.39,29673.0\n2024-03-01,353913.05,28984.0\n",
+    "gt_analysis": "Monthly Revenue (2024) spans 3 periods, with total_revenue ranging from 353,913.05 to 431,060.30.",
+    "gt_chart_config": {
+      "chart_type": "line",
+      "x_axis": "month_start",
+      "y_axis": "total_revenue",
+      "title": "Monthly Revenue (2024)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show monthly revenue for product class code 22975 in 2022 as a line chart",
+    "visualization_goal": "Line chart showing monthly revenue for product class code 22975 in 2022",
+    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2022 AND Product_Class_Code = 22975 GROUP BY month_start ORDER BY month_start ASC",
+    "gt_data": "month_start,total_revenue,total_units\n2022-01-01,109375.06,6050.0\n2022-02-01,104525.62,5921.0\n2022-03-01,107997.17,5978.0\n2022-04-01,93714.22,4984.0\n2022-05-01,82721.25,4548.0\n2022-06-01,74547.65,4603.0\n2022-07-01,73802.56,4465.0\n2022-08-01,89880.8,5258.0\n2022-09-01,100250.83,5784.0\n2022-10-01,91346.61,5125.0\n2022-11-01,85311.64,4818.0\n2022-12-01,122319.24,6494.0\n",
+    "gt_analysis": "Monthly Revenue for Product Class 22975 (2022) spans 12 periods, with total_revenue ranging from 73,802.56 to 122,319.24.",
+    "gt_chart_config": {
+      "chart_type": "line",
+      "x_axis": "month_start",
+      "y_axis": "total_revenue",
+      "title": "Monthly Revenue for Product Class 22975 (2022)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart",
+    "visualization_goal": "Grouped bar chart showing monthly revenue in 2023 split between promo and non-promo sales",
+    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, On_Promo, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY month_start, On_Promo ORDER BY month_start ASC, On_Promo ASC",
+    "gt_data": "month_start,On_Promo,total_revenue\n2023-01-01,0,434102.83\n2023-01-01,1,69.98\n2023-02-01,0,411762.72\n2023-03-01,0,423070.84\n2023-04-01,0,378326.48\n2023-04-01,1,6153.2\n2023-05-01,0,379860.54\n2023-05-01,1,1465.89\n2023-06-01,0,364806.74\n2023-07-01,0,353284.21\n2023-08-01,0,398592.45\n2023-08-01,1,2469.09\n2023-09-01,0,415126.86\n2023-09-01,1,7428.11\n2023-10-01,0,446184.81\n2023-10-01,1,8046.25\n2023-11-01,0,476004.38\n2023-11-01,1,35099.91\n2023-12-01,0,835289.24\n2023-12-01,1,38974.43\n",
+    "gt_analysis": "The highest total_revenue is 835,289.24 for 2023-12-01 00:00:00 in group 0.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "month_start",
+      "y_axis": "total_revenue",
+      "group_by": "On_Promo",
+      "title": "Monthly Revenue by Promo Flag (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=config['x_axis'], columns=config['group_by'], values=config['y_axis'])\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(config['x_axis'])\nax.set_ylabel(config['y_axis'])\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(config['group_by']))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show total revenue by store type for 2023 as a bar chart",
+    "visualization_goal": "Bar chart showing total 2023 revenue by store type",
+    "gt_sql": "SELECT st.store_type, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY st.store_type ORDER BY total_revenue DESC, st.store_type ASC",
+    "gt_data": "store_type,total_revenue\nSupermarket,1938262.7\nDiscount,1574739.14\nHypermarket,1188793.49\nConvenience,714323.6\n",
+    "gt_analysis": "Supermarket leads the result set with 1,938,262.70 for total_revenue.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "store_type",
+      "y_axis": "total_revenue",
+      "title": "Total Revenue by Store Type (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 3
+  },
+  {
+    "prompt": "Show total units sold by product category for 2023 as a bar chart",
+    "visualization_goal": "Bar chart showing total units sold by product category in 2023",
+    "gt_sql": "SELECT p.category, SUM(s.Qty_Sold) AS total_units FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.category ORDER BY total_units DESC, p.category ASC",
+    "gt_data": "category,total_units\nDairy,141284.0\nBakery,87114.0\nBeverages,71131.0\nHousehold,57576.0\nPersonal Care,38045.0\nSnacks,24817.0\n",
+    "gt_analysis": "Dairy leads the result set with 141,284.00 for total_units.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "category",
+      "y_axis": "total_units",
+      "title": "Total Units Sold by Category (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 3
+  },
+  {
+    "prompt": "Return the top 10 brands by realized average selling price in 2023; columns: brand, avg_realized_unit_price, total_units",
+    "visualization_goal": null,
+    "gt_sql": "SELECT p.brand, ROUND(SUM(s.Total_Sale_Value) / NULLIF(SUM(s.Qty_Sold), 0), 4) AS avg_realized_unit_price, SUM(s.Qty_Sold) AS total_units FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.brand HAVING SUM(s.Qty_Sold) > 0 ORDER BY avg_realized_unit_price DESC, total_units DESC, p.brand ASC LIMIT 10",
+    "gt_data": "brand,avg_realized_unit_price,total_units\nCrunchTime,18.2241,24817.0\nGlowUp,17.9275,38045.0\nCleanHome,17.1089,57576.0\nGoldenCrust,14.2059,87114.0\nCoolSip,13.2465,71131.0\nCreamyFarm,7.9058,141284.0\n",
+    "gt_analysis": "The first row is CrunchTime with avg_realized_unit_price=18.22, total_units=24,817.00.",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Return the top 8 cities by total revenue in 2023; columns: city, total_revenue",
+    "visualization_goal": null,
+    "gt_sql": "SELECT st.city, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY st.city ORDER BY total_revenue DESC, st.city ASC LIMIT 8",
+    "gt_data": "city,total_revenue\nWashington,331128.83\nDallas,258377.21\nMemphis,249908.47\nAustin,224162.19\nSan Antonio,204549.96\nSan Diego,191375.95\nLas Vegas,188026.54\nSeattle,181115.33\n",
+    "gt_analysis": "The top row is Washington with 331,128.83, while the last returned row is Seattle with 181,115.33.",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Show 2023 revenue by region for organic vs non-organic products as a grouped bar chart",
+    "visualization_goal": "Grouped bar chart comparing 2023 revenue by region for organic and non-organic products",
+    "gt_sql": "SELECT st.region, p.is_organic, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY st.region, p.is_organic ORDER BY st.region ASC, p.is_organic ASC",
+    "gt_data": "region,is_organic,total_revenue\nMidwest,False,653644.88\nMidwest,True,125498.88\nNortheast,False,604879.67\nNortheast,True,113685.46\nSouth,False,1560531.43\nSouth,True,320121.83\nWest,False,1701793.25\nWest,True,335963.54\n",
+    "gt_analysis": "The highest total_revenue is 1,701,793.25 for West in group False.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "region",
+      "y_axis": "total_revenue",
+      "group_by": "is_organic",
+      "title": "Revenue by Region and Organic Flag (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=config['x_axis'], columns=config['group_by'], values=config['y_axis'])\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(config['x_axis'])\nax.set_ylabel(config['y_axis'])\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(config['group_by']))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 3
+  },
+  {
+    "prompt": "Compare average monthly revenue between store types for 2022 and 2023",
+    "visualization_goal": "Grouped bar chart comparing average monthly revenue by store type between 2022 and 2023",
+    "gt_sql": "SELECT st.store_type, monthly.yr AS year, ROUND(AVG(monthly.monthly_revenue), 2) AS avg_monthly_revenue FROM (SELECT s.Store_Number, EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) AS yr, DATE_TRUNC('month', CAST(s.Sold_Date AS DATE)) AS month_start, SUM(s.Total_Sale_Value) AS monthly_revenue FROM sales s WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) IN (2022, 2023) GROUP BY s.Store_Number, yr, month_start) monthly JOIN stores st ON monthly.Store_Number = st.Store_Number GROUP BY st.store_type, monthly.yr ORDER BY st.store_type ASC, monthly.yr ASC",
+    "gt_data": "store_type,year,avg_monthly_revenue\nConvenience,2022,15914.67\nConvenience,2023,14881.74\nDiscount,2022,13206.19\nDiscount,2023,13122.83\nHypermarket,2022,12657.14\nHypermarket,2023,12383.27\nSupermarket,2022,12829.11\nSupermarket,2023,12668.38\n",
+    "gt_analysis": "The highest avg_monthly_revenue is 15,914.67 for Convenience in group 2022.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "store_type",
+      "y_axis": "avg_monthly_revenue",
+      "group_by": "year",
+      "title": "Avg Monthly Revenue by Store Type: 2022 vs 2023"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=config['x_axis'], columns=config['group_by'], values=config['y_axis'])\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(config['x_axis'])\nax.set_ylabel(config['y_axis'])\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(config['group_by']))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 4
+  },
+  {
+    "prompt": "Show promo revenue share by product category for 2023 as a bar chart",
+    "visualization_goal": "Bar chart showing the share of revenue generated under promotion for each product category in 2023",
+    "gt_sql": "SELECT p.category, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END) / NULLIF(SUM(s.Total_Sale_Value), 0), 4) AS promo_revenue_share, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END), 2) AS promo_revenue, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.category ORDER BY promo_revenue_share DESC, p.category ASC",
+    "gt_data": "category,promo_revenue_share,promo_revenue,total_revenue\nSnacks,0.0626,28289.71,452267.33\nDairy,0.05,55877.1,1116963.6\nPersonal Care,0.019,12944.48,682053.43\nBakery,0.0021,2595.57,1237536.46\nBeverages,0.0,0.0,942234.79\nHousehold,0.0,0.0,985063.32\n",
+    "gt_analysis": "Snacks leads the result set with 0.0626 for promo_revenue_share.",
+    "gt_chart_config": {
+      "chart_type": "bar",
+      "x_axis": "category",
+      "y_axis": "promo_revenue_share",
+      "title": "Promo Revenue Share by Category (2023)"
+    },
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "explicit_requirements": {
+      "color": null,
+      "title_format": null,
+      "label_format": null,
+      "grid": null,
+      "markers": null
+    },
+    "difficulty": 4
+  },
+  {
+    "prompt": "Return the top 10 region-category combinations by revenue growth from 2022 to 2023; columns: region, category, revenue_2022, revenue_2023, yoy_growth_pct",
+    "visualization_goal": null,
+    "gt_sql": "WITH yearly AS (SELECT st.region, p.category, EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) AS yr, SUM(s.Total_Sale_Value) AS revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) IN (2022, 2023) GROUP BY st.region, p.category, yr) SELECT region, category, ROUND(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 2) AS revenue_2022, ROUND(SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END), 2) AS revenue_2023, ROUND((SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END) - SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END)) / NULLIF(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 0), 4) AS yoy_growth_pct FROM yearly GROUP BY region, category HAVING SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END) > 0 ORDER BY yoy_growth_pct DESC, revenue_2023 DESC, region ASC, category ASC LIMIT 10",
+    "gt_data": "region,category,revenue_2022,revenue_2023,yoy_growth_pct\nMidwest,Dairy,109924.97,177962.09,0.6189\nNortheast,Dairy,97567.4,148380.87,0.5208\nWest,Dairy,302663.61,418924.1,0.3841\nSouth,Dairy,270941.97,371696.55,0.3719\nNortheast,Beverages,113136.89,132240.01,0.1688\nSouth,Personal Care,240317.96,264557.94,0.1009\nSouth,Beverages,314634.11,322570.31,0.0252\nNortheast,Bakery,165082.51,167660.31,0.0156\nWest,Beverages,365936.72,368724.49,0.0076\nMidwest,Personal Care,97222.05,97802.39,0.006\n",
+    "gt_analysis": "The first row is Midwest with category=Dairy, revenue_2022=109,924.97, revenue_2023=177,962.09, yoy_growth_pct=0.6189.",
+    "gt_chart_config": null,
+    "gt_chart_code": null,
+    "explicit_requirements": null,
+    "difficulty": 4
   }
 ]
