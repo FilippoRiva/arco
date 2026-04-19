@@ -18,6 +18,9 @@ agent:
 # =============================================================================
 steps:
   decide_tool:
+    provider: null             # null = inherit agent.provider
+    model: null                # null = inherit agent.model
+    ollama_url: null           # null = inherit agent.ollama_url
     n: 1
     temp_min: 0.1
     temp_max: 0.1
@@ -30,6 +33,9 @@ steps:
     enabled: true
 
   lookup_sales_data:
+    provider: null
+    model: null
+    ollama_url: null
     n: 2
     temp_min: 0.1
     temp_max: 0.3
@@ -43,6 +49,9 @@ steps:
     eval: "default"          # "default" = consensus CSV evaluator, "none" = no eval
 
   analyzing_data:
+    provider: null
+    model: null
+    ollama_url: null
     n: 1
     temp_min: 0.1
     temp_max: 0.7
@@ -56,6 +65,9 @@ steps:
     eval: "default"          # "default" = LLM judge (no GT), "none" = no eval
 
   create_visualization:
+    provider: null
+    model: null
+    ollama_url: null
     n: 1
     temp_min: 0.1
     temp_max: 0.5

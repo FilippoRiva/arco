@@ -46,6 +46,11 @@ class StepConfig:
     num_beams: int = 1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
     no_repeat_ngram_size: Optional[int] = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
 
+    # Optional per-step LLM overrides
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    ollama_url: Optional[str] = None
+
     # Evaluation and selection (not serialized)
     eval_fn: Optional[Callable] = None
     batch_eval_fn: Optional[Callable] = None
@@ -112,6 +117,7 @@ class StepConfig:
             'n', 'bon_param', 'temp_min', 'temp_max', 'max_tokens',
             'top_p_min', 'top_p_max', 'top_k_min', 'top_k_max',
             'num_beams', 'no_repeat_ngram_size',
+            'provider', 'model', 'ollama_url',
             'use_cache', 'cache_mode', 'enabled', 'step_name', 'cot_n'
         }
         filtered = {k: v for k, v in data.items() if k in valid_keys}

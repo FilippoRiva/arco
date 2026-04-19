@@ -156,8 +156,29 @@ Results (per-config JSON + aggregated CSV/XLSX) are saved under `--save-dir`.
 
 Set the provider and model in the `agent:` block of the YAML config. API keys can be passed directly or via environment variables:
 
-```bash
-# PowerShell
+### Per-step model overrides
+You can keep a global default model/provider under `agent`, then override individual workflow steps under `steps`.
+
+```yaml
+agent:
+  provider: "openai"
+  model: "gpt-4o-mini"
+
+steps:
+  decide_tool:
+    provider: "openai"
+    model: "gpt-4.1-mini"
+
+  lookup_sales_data:
+    provider: "ollama"
+    model: "llama3.2:3b"
+    ollama_url: "http://localhost:11434"
+```
+
+If a step-level `provider`, `model`, or `ollama_url` is `null` or omitted, the agent-level value is used.
+
+Environment variables (PowerShell):
+```powershell
 $env:OPENAI_API_KEY="YOUR_KEY"
 $env:ANTHROPIC_API_KEY="YOUR_KEY"
 $env:OLLAMA_HOST="http://localhost:11434"
