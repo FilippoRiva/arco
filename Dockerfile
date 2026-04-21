@@ -2,31 +2,47 @@
 
 FROM python:3.12-slim
 
-# Set up workdir
 WORKDIR /app
 
-# Install system deps (for pandas/pyarrow etc.)
+# System deps for pandas/pyarrow/codecarbon/matplotlib
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     ca-certificates \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
+# Install Python deps first (layer cached unless requirements.txt changes)
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# Use non-interactive matplotlib backend (no display on headless Linux)
+ENV MPLBACKEND=Agg
+
+# Ollama URL — on Linux use --network=host and point to localhost,
+# or override with -e OLLAMA_HOST=http://<host-ip>:11434 at runtime
+ENV OLLAMA_HOST=http://localhost:11434
+
+# Copy source code
 COPY Agent ./Agent
+COPY evaluation ./evaluation
 COPY data ./data
+COPY config ./config
+COPY run_agent.py ./
 
-# Default environment: point to Ollama server on host (override as needed)
-# Example for Docker Desktop on Windows/Mac: host.docker.internal:11434
-# Example for Linux: use host IP or docker network alias
-ENV OLLAMA_HOST=http://host.docker.internal:11434
+# /app/runs is the output directory — mount a host volume here to persist results:
+#   docker run -v /host/path/runs:/app/runs ...
+VOLUME ["/app/runs"]
 
-# Default command runs the agent CLI; override args at runtime
-# Example: docker run --rm -e OLLAMA_HOST=http://host.docker.internal:11434 data-agent \
-#          python -m Agent.data_agent "Show me the sales in Nov 2021" --goal "Sales trend for Nov 2021"
-ENTRYPOINT ["python", "-m", "Agent.data_agent"]
-CMD ["Show me the sales in Nov 2021", "--goal", "Sales trend for Nov 2021"]
+# Default: bulk_runner with validation preset (1 config, no think time).
+# Override all args at runtime, e.g.:
+#   docker run --rm --network=host -v $(pwd)/runs:/app/runs data-agent \
+#     python evaluation/bulk_runner.py \
+#       evaluation/benchmark_dataset.json evaluation/search_space.yaml \
+#       --n-configs 50 --think-time 5.0 --save-dir runs/bulk_results/full_run
+ENTRYPOINT ["python"]
+CMD ["evaluation/bulk_runner.py", \
+     "evaluation/benchmark_dataset.json", \
+     "evaluation/search_space.yaml", \
+     "--n-configs", "1", "--think-time", "0", \
+     "--save-dir", "runs/bulk_results/validation"]
