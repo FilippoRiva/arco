@@ -22,7 +22,7 @@
     "difficulty": 2
   },
   {
-    "prompt": "Return the 12 months of 2023 with total revenue and total units sold",
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold",
     "visualization_goal": "Line chart showing monthly revenue trends for 2023",
     "gt_sql": "SELECT DATE_TRUNC('month', Sold_Date) AS month_start, SUM(Total_Sale_Value) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM Sold_Date) = 2023 GROUP BY DATE_TRUNC('month', Sold_Date) ORDER BY month_start ASC",
     "gt_data": "month_start,total_revenue,total_units\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n",
@@ -44,7 +44,7 @@
     "difficulty": 2
   },
   {
-    "prompt": "Return the top 5 stores by total revenue; columns: Store_Number, total_revenue",
+    "prompt": "Return the top 5 stores by total revenue, identified by store number",
     "visualization_goal": null,
     "gt_sql": "SELECT Store_Number, SUM(Total_Sale_Value) AS total_revenue FROM sales GROUP BY Store_Number ORDER BY total_revenue DESC LIMIT 5",
     "gt_data": "Store_Number,total_revenue\n2970,836341.3271910138\n3300,619660.1670180857\n1320,592832.0675794836\n1650,580443.0079528484\n1210,508393.76778540947\n",
@@ -102,12 +102,12 @@
   {
     "prompt": "Show promo vs non-promo revenue in 2023 as a bar chart",
     "visualization_goal": "Bar chart comparing total revenue for promo and non-promo sales in 2023",
-    "gt_sql": "SELECT On_Promo, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY On_Promo ORDER BY On_Promo ASC",
-    "gt_data": "On_Promo,total_revenue\n0,5316412.07\n1,99706.86\n",
-    "gt_analysis": "0.0 leads the result set with 5,316,412.07 for total_revenue.",
+    "gt_sql": "SELECT CASE WHEN On_Promo = 1 THEN 'Promo' ELSE 'Non-Promo' END AS promo_status, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY On_Promo ORDER BY On_Promo ASC",
+    "gt_data": "promo_status,total_revenue\nNon-Promo,5316412.07\nPromo,99706.86\n",
+    "gt_analysis": "Non-promo sales generated $5,316,412.07 in 2023, vs $99,706.86 for promo sales (~1.8% of total revenue).",
     "gt_chart_config": {
       "chart_type": "bar",
-      "x_axis": "On_Promo",
+      "x_axis": "promo_status",
       "y_axis": "total_revenue",
       "title": "Promo vs Non-Promo Revenue (2023)"
     },
@@ -122,18 +122,18 @@
     "difficulty": 1
   },
   {
-    "prompt": "Return the top 10 product class codes by total units sold in 2023; columns: Product_Class_Code, total_units",
+    "prompt": "Return the top 10 product class codes by total units sold in 2023",
     "visualization_goal": null,
     "gt_sql": "SELECT Product_Class_Code, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY Product_Class_Code ORDER BY total_units DESC, Product_Class_Code ASC LIMIT 10",
     "gt_data": "Product_Class_Code,total_units\n22850,89229.0\n22975,60425.0\n22800,57485.0\n22875,52055.0\n24400,46218.0\n24425,38045.0\n22950,26689.0\n22925,17320.0\n22825,13646.0\n24375,11358.0\n",
-    "gt_analysis": "The top row is 22850.0 with 89,229.00, while the last returned row is 24375.0 with 11,358.00.",
+    "gt_analysis": "Product class 22850 leads with 89,229 units sold in 2023, followed by 22975 (60,425) and 22800 (57,485). The top 10 ranges down to class 24375 with 11,358 units.",
     "gt_chart_config": null,
     "gt_chart_code": null,
     "explicit_requirements": null,
     "difficulty": 1
   },
   {
-    "prompt": "Show the top 8 stores by total units sold in 2022 as a bar chart",
+    "prompt": "Show the top 8 stores by total units sold in 2022 as a bar chart, identifying each store by its store number",
     "visualization_goal": "Bar chart of the top 8 stores ranked by total units sold in 2022",
     "gt_sql": "SELECT Store_Number, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2022 GROUP BY Store_Number ORDER BY total_units DESC, Store_Number ASC LIMIT 8",
     "gt_data": "Store_Number,total_units\n2970,23580.0\n3300,19158.0\n1650,17778.0\n1210,17158.0\n1320,17013.0\n3080,16717.0\n1100,15968.0\n1540,14517.0\n",
@@ -155,11 +155,11 @@
     "difficulty": 1
   },
   {
-    "prompt": "Return the top 10 sales days in 2023 with total revenue and total units; columns: Sold_Date, total_revenue, total_units",
+    "prompt": "Return the top 10 sales days in 2023 with total revenue and total units sold",
     "visualization_goal": null,
     "gt_sql": "SELECT CAST(Sold_Date AS DATE) AS Sold_Date, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY CAST(Sold_Date AS DATE) ORDER BY total_revenue DESC, Sold_Date ASC LIMIT 10",
     "gt_data": "Sold_Date,total_revenue,total_units\n2023-12-22,62640.7,4059.0\n2023-11-23,57397.29,4014.0\n2023-12-23,52036.12,3385.0\n2023-12-21,48561.6,3275.0\n2023-12-15,47585.78,3287.0\n2023-12-24,43304.69,2782.0\n2023-12-20,37140.17,2483.0\n2023-12-14,35778.06,2406.0\n2023-12-08,35681.41,2684.0\n2023-12-16,34630.77,2435.0\n",
-    "gt_analysis": "The first row is 2023-12-22 00:00:00 with total_revenue=62,640.70, total_units=4,059.00.",
+    "gt_analysis": "The first row is 2023-12-22 with total_revenue=62,640.70, total_units=4,059.00.",
     "gt_chart_config": null,
     "gt_chart_code": null,
     "explicit_requirements": null,
@@ -190,9 +190,9 @@
   {
     "prompt": "Show monthly revenue for product class code 22975 in 2022 as a line chart",
     "visualization_goal": "Line chart showing monthly revenue for product class code 22975 in 2022",
-    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue, SUM(Qty_Sold) AS total_units FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2022 AND Product_Class_Code = 22975 GROUP BY month_start ORDER BY month_start ASC",
-    "gt_data": "month_start,total_revenue,total_units\n2022-01-01,109375.06,6050.0\n2022-02-01,104525.62,5921.0\n2022-03-01,107997.17,5978.0\n2022-04-01,93714.22,4984.0\n2022-05-01,82721.25,4548.0\n2022-06-01,74547.65,4603.0\n2022-07-01,73802.56,4465.0\n2022-08-01,89880.8,5258.0\n2022-09-01,100250.83,5784.0\n2022-10-01,91346.61,5125.0\n2022-11-01,85311.64,4818.0\n2022-12-01,122319.24,6494.0\n",
-    "gt_analysis": "Monthly Revenue for Product Class 22975 (2022) spans 12 periods, with total_revenue ranging from 73,802.56 to 122,319.24.",
+    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2022 AND Product_Class_Code = 22975 GROUP BY month_start ORDER BY month_start ASC",
+    "gt_data": "month_start,total_revenue\n2022-01-01,109375.06\n2022-02-01,104525.62\n2022-03-01,107997.17\n2022-04-01,93714.22\n2022-05-01,82721.25\n2022-06-01,74547.65\n2022-07-01,73802.56\n2022-08-01,89880.8\n2022-09-01,100250.83\n2022-10-01,91346.61\n2022-11-01,85311.64\n2022-12-01,122319.24\n",
+    "gt_analysis": "Monthly revenue for product class 22975 in 2022 ranges from $73,802.56 (July) to $122,319.24 (December), with a mid-year trough and a strong year-end peak.",
     "gt_chart_config": {
       "chart_type": "line",
       "x_axis": "month_start",
@@ -212,17 +212,16 @@
   {
     "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart",
     "visualization_goal": "Grouped bar chart showing monthly revenue in 2023 split between promo and non-promo sales",
-    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, On_Promo, ROUND(SUM(Total_Sale_Value), 2) AS total_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY month_start, On_Promo ORDER BY month_start ASC, On_Promo ASC",
-    "gt_data": "month_start,On_Promo,total_revenue\n2023-01-01,0,434102.83\n2023-01-01,1,69.98\n2023-02-01,0,411762.72\n2023-03-01,0,423070.84\n2023-04-01,0,378326.48\n2023-04-01,1,6153.2\n2023-05-01,0,379860.54\n2023-05-01,1,1465.89\n2023-06-01,0,364806.74\n2023-07-01,0,353284.21\n2023-08-01,0,398592.45\n2023-08-01,1,2469.09\n2023-09-01,0,415126.86\n2023-09-01,1,7428.11\n2023-10-01,0,446184.81\n2023-10-01,1,8046.25\n2023-11-01,0,476004.38\n2023-11-01,1,35099.91\n2023-12-01,0,835289.24\n2023-12-01,1,38974.43\n",
-    "gt_analysis": "The highest total_revenue is 835,289.24 for 2023-12-01 00:00:00 in group 0.",
+    "gt_sql": "SELECT DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month_start, ROUND(SUM(CASE WHEN On_Promo = 1 THEN Total_Sale_Value ELSE 0 END), 2) AS promo_revenue, ROUND(SUM(CASE WHEN On_Promo = 0 THEN Total_Sale_Value ELSE 0 END), 2) AS non_promo_revenue FROM sales WHERE EXTRACT(YEAR FROM CAST(Sold_Date AS DATE)) = 2023 GROUP BY month_start ORDER BY month_start ASC",
+    "gt_data": "month_start,promo_revenue,non_promo_revenue\n2023-01-01,69.98,434102.83\n2023-02-01,0.0,411762.72\n2023-03-01,0.0,423070.84\n2023-04-01,6153.2,378326.48\n2023-05-01,1465.89,379860.54\n2023-06-01,0.0,364806.74\n2023-07-01,0.0,353284.21\n2023-08-01,2469.09,398592.45\n2023-09-01,7428.11,415126.86\n2023-10-01,8046.25,446184.81\n2023-11-01,35099.91,476004.38\n2023-12-01,38974.43,835289.24\n",
+    "gt_analysis": "Monthly non-promo revenue peaks in December at $835,289.24, with promo revenue highest in December ($38,974.43) and November ($35,099.91). February, March, June, and July had no promo sales.",
     "gt_chart_config": {
       "chart_type": "bar",
       "x_axis": "month_start",
-      "y_axis": "total_revenue",
-      "group_by": "On_Promo",
+      "y_columns": ["non_promo_revenue", "promo_revenue"],
       "title": "Monthly Revenue by Promo Flag (2023)"
     },
-    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=config['x_axis'], columns=config['group_by'], values=config['y_axis'])\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(config['x_axis'])\nax.set_ylabel(config['y_axis'])\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(config['group_by']))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
+    "gt_chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nx = np.arange(len(data_df))\ny_cols = config['y_columns']\nwidth = 0.8 / len(y_cols)\n\nfig, ax = plt.subplots()\nfor i, col in enumerate(y_cols):\n    offset = (i - (len(y_cols) - 1) / 2) * width\n    ax.bar(x + offset, data_df[col], width, label=col.replace('_', ' ').title())\n\nax.set_xlabel(config['x_axis'])\nax.set_ylabel('Revenue')\nax.set_title(config['title'])\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in data_df[config['x_axis']]], rotation=45, ha='right')\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
     "explicit_requirements": {
       "color": null,
       "title_format": null,
@@ -277,18 +276,18 @@
     "difficulty": 3
   },
   {
-    "prompt": "Return the top 10 brands by realized average selling price in 2023; columns: brand, avg_realized_unit_price, total_units",
+    "prompt": "Return the top 3 brands by realized average selling price in 2023, where average price is computed as total revenue divided by total units sold, along with total units sold per brand",
     "visualization_goal": null,
-    "gt_sql": "SELECT p.brand, ROUND(SUM(s.Total_Sale_Value) / NULLIF(SUM(s.Qty_Sold), 0), 4) AS avg_realized_unit_price, SUM(s.Qty_Sold) AS total_units FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.brand HAVING SUM(s.Qty_Sold) > 0 ORDER BY avg_realized_unit_price DESC, total_units DESC, p.brand ASC LIMIT 10",
-    "gt_data": "brand,avg_realized_unit_price,total_units\nCrunchTime,18.2241,24817.0\nGlowUp,17.9275,38045.0\nCleanHome,17.1089,57576.0\nGoldenCrust,14.2059,87114.0\nCoolSip,13.2465,71131.0\nCreamyFarm,7.9058,141284.0\n",
-    "gt_analysis": "The first row is CrunchTime with avg_realized_unit_price=18.22, total_units=24,817.00.",
+    "gt_sql": "SELECT p.brand, ROUND(SUM(s.Total_Sale_Value) / NULLIF(SUM(s.Qty_Sold), 0), 4) AS avg_realized_unit_price, SUM(s.Qty_Sold) AS total_units FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.brand HAVING SUM(s.Qty_Sold) > 0 ORDER BY avg_realized_unit_price DESC, total_units DESC, p.brand ASC LIMIT 3",
+    "gt_data": "brand,avg_realized_unit_price,total_units\nCrunchTime,18.2241,24817.0\nGlowUp,17.9275,38045.0\nCleanHome,17.1089,57576.0\n",
+    "gt_analysis": "The top 3 brands by avg realized price are CrunchTime (18.2241), GlowUp (17.9275), and CleanHome (17.1089).",
     "gt_chart_config": null,
     "gt_chart_code": null,
     "explicit_requirements": null,
     "difficulty": 3
   },
   {
-    "prompt": "Return the top 8 cities by total revenue in 2023; columns: city, total_revenue",
+    "prompt": "Return the top 8 cities by total revenue in 2023",
     "visualization_goal": null,
     "gt_sql": "SELECT st.city, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY st.city ORDER BY total_revenue DESC, st.city ASC LIMIT 8",
     "gt_data": "city,total_revenue\nWashington,331128.83\nDallas,258377.21\nMemphis,249908.47\nAustin,224162.19\nSan Antonio,204549.96\nSan Diego,191375.95\nLas Vegas,188026.54\nSeattle,181115.33\n",
@@ -345,11 +344,11 @@
     "difficulty": 4
   },
   {
-    "prompt": "Show promo revenue share by product category for 2023 as a bar chart",
+    "prompt": "Show promo revenue share by product category for 2023 as a bar chart, expressing the share as a percentage of total revenue",
     "visualization_goal": "Bar chart showing the share of revenue generated under promotion for each product category in 2023",
-    "gt_sql": "SELECT p.category, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END) / NULLIF(SUM(s.Total_Sale_Value), 0), 4) AS promo_revenue_share, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END), 2) AS promo_revenue, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.category ORDER BY promo_revenue_share DESC, p.category ASC",
-    "gt_data": "category,promo_revenue_share,promo_revenue,total_revenue\nSnacks,0.0626,28289.71,452267.33\nDairy,0.05,55877.1,1116963.6\nPersonal Care,0.019,12944.48,682053.43\nBakery,0.0021,2595.57,1237536.46\nBeverages,0.0,0.0,942234.79\nHousehold,0.0,0.0,985063.32\n",
-    "gt_analysis": "Snacks leads the result set with 0.0626 for promo_revenue_share.",
+    "gt_sql": "SELECT p.category, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END) / NULLIF(SUM(s.Total_Sale_Value), 0) * 100, 2) AS promo_revenue_share, ROUND(SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END), 2) AS promo_revenue, ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) = 2023 GROUP BY p.category ORDER BY promo_revenue_share DESC, p.category ASC",
+    "gt_data": "category,promo_revenue_share,promo_revenue,total_revenue\nSnacks,6.26,28289.71,452267.33\nDairy,5.0,55877.1,1116963.6\nPersonal Care,1.9,12944.48,682053.43\nBakery,0.21,2595.57,1237536.46\nBeverages,0.0,0.0,942234.79\nHousehold,0.0,0.0,985063.32\n",
+    "gt_analysis": "Snacks leads with 6.26% promo revenue share, followed by Dairy (5.0%) and Personal Care (1.9%). Beverages and Household have no promo sales.",
     "gt_chart_config": {
       "chart_type": "bar",
       "x_axis": "category",
@@ -367,11 +366,11 @@
     "difficulty": 4
   },
   {
-    "prompt": "Return the top 10 region-category combinations by revenue growth from 2022 to 2023; columns: region, category, revenue_2022, revenue_2023, yoy_growth_pct",
+    "prompt": "Return the top 10 region-category combinations by year-over-year revenue growth from 2022 to 2023, showing revenue for both years and the growth expressed as a percentage",
     "visualization_goal": null,
-    "gt_sql": "WITH yearly AS (SELECT st.region, p.category, EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) AS yr, SUM(s.Total_Sale_Value) AS revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) IN (2022, 2023) GROUP BY st.region, p.category, yr) SELECT region, category, ROUND(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 2) AS revenue_2022, ROUND(SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END), 2) AS revenue_2023, ROUND((SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END) - SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END)) / NULLIF(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 0), 4) AS yoy_growth_pct FROM yearly GROUP BY region, category HAVING SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END) > 0 ORDER BY yoy_growth_pct DESC, revenue_2023 DESC, region ASC, category ASC LIMIT 10",
-    "gt_data": "region,category,revenue_2022,revenue_2023,yoy_growth_pct\nMidwest,Dairy,109924.97,177962.09,0.6189\nNortheast,Dairy,97567.4,148380.87,0.5208\nWest,Dairy,302663.61,418924.1,0.3841\nSouth,Dairy,270941.97,371696.55,0.3719\nNortheast,Beverages,113136.89,132240.01,0.1688\nSouth,Personal Care,240317.96,264557.94,0.1009\nSouth,Beverages,314634.11,322570.31,0.0252\nNortheast,Bakery,165082.51,167660.31,0.0156\nWest,Beverages,365936.72,368724.49,0.0076\nMidwest,Personal Care,97222.05,97802.39,0.006\n",
-    "gt_analysis": "The first row is Midwest with category=Dairy, revenue_2022=109,924.97, revenue_2023=177,962.09, yoy_growth_pct=0.6189.",
+    "gt_sql": "WITH yearly AS (SELECT st.region, p.category, EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) AS yr, SUM(s.Total_Sale_Value) AS revenue FROM sales s JOIN stores st ON s.Store_Number = st.Store_Number JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM CAST(s.Sold_Date AS DATE)) IN (2022, 2023) GROUP BY st.region, p.category, yr) SELECT region, category, ROUND(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 2) AS revenue_2022, ROUND(SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END), 2) AS revenue_2023, ROUND(((SUM(CASE WHEN yr = 2023 THEN revenue ELSE 0 END) - SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END)) / NULLIF(SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END), 0)) * 100, 2) AS yoy_growth_pct FROM yearly GROUP BY region, category HAVING SUM(CASE WHEN yr = 2022 THEN revenue ELSE 0 END) > 0 ORDER BY yoy_growth_pct DESC, revenue_2023 DESC, region ASC, category ASC LIMIT 10",
+    "gt_data": "region,category,revenue_2022,revenue_2023,yoy_growth_pct\nMidwest,Dairy,109924.97,177962.09,61.89\nNortheast,Dairy,97567.4,148380.87,52.08\nWest,Dairy,302663.61,418924.1,38.41\nSouth,Dairy,270941.97,371696.55,37.19\nNortheast,Beverages,113136.89,132240.01,16.88\nSouth,Personal Care,240317.96,264557.94,10.09\nSouth,Beverages,314634.11,322570.31,2.52\nNortheast,Bakery,165082.51,167660.31,1.56\nWest,Beverages,365936.72,368724.49,0.76\nMidwest,Personal Care,97222.05,97802.39,0.6\n",
+    "gt_analysis": "The first row is Midwest with category=Dairy, revenue_2022=109,924.97, revenue_2023=177,962.09, yoy_growth_pct=61.89%.",
     "gt_chart_config": null,
     "gt_chart_code": null,
     "explicit_requirements": null,

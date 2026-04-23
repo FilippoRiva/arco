@@ -12,6 +12,8 @@ tesi/Images/*.pdf
 
 evaluation/csv_queries
 
+runs/bulk_results/prompt_validation*/
+
 **/.vscode
 **/__pycache__/
 
