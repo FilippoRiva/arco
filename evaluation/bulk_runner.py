@@ -327,7 +327,7 @@ def run_bulk_benchmark(
     if phase_details:
         combined_detail = pd.concat(phase_details, ignore_index=True)
         # Reorder: config_id, vary_step, test_case_id, prompt first
-        _leading = [c for c in ("config_id", "vary_step", "test_case_id", "prompt") if c in combined_detail.columns]
+        _leading = [c for c in ("config_id", "vary_step", "test_case_id", "prompt", "difficulty") if c in combined_detail.columns]
         _rest = [c for c in combined_detail.columns if c not in set(_leading)]
         combined_detail = combined_detail[_leading + _rest]
         combined_path = save_path / "detail_combined.csv"

@@ -555,8 +555,10 @@ class SalesDataAgent:
 
         # Score the selected (best) result
         gt_score = None
+        _best_store_snapshot = None
         try:
             gt_score = config.gt_eval_fn(result, state)
+            _best_store_snapshot = dict(getattr(config.gt_eval_fn, "_store", {}))
             print(f"[{step_name}] GT tracking score: {gt_score:.3f}")
         except Exception as e:
             print(f"[{step_name}] GT eval error (tracking only): {e}")
@@ -571,6 +573,10 @@ class SalesDataAgent:
                 except Exception:
                     all_gt_scores.append(0.0)
             print(f"[{step_name}] All GT scores: {[f'{s:.3f}' for s in all_gt_scores]}")
+            # Restore _store to reflect the best result (loop above overwrites it)
+            if _best_store_snapshot is not None and hasattr(config.gt_eval_fn, "_store"):
+                config.gt_eval_fn._store.clear()
+                config.gt_eval_fn._store.update(_best_store_snapshot)
 
         if gt_score is not None:
             existing = state.get("_gt_scores_per_step") or {}

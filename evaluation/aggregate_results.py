@@ -104,9 +104,10 @@ def aggregate_bulk_results(
     detail = all_results.merge(configs_df, on="config_id", how="left")
 
     # Reorder: config_id, prompt identity, scores, timings, LLM timings, energy, then config params
-    prompt_id_cols  = [c for c in ("test_case_id", "prompt") if c in detail.columns]
-    gt_score_cols   = [c for c in ("csv_iou", "text_score", "vis_score") if c in detail.columns]
-    eval_score_cols = [c for c in ("csv_eval_score", "text_eval_score", "vis_eval_score") if c in detail.columns]
+    prompt_id_cols    = [c for c in ("test_case_id", "prompt", "difficulty") if c in detail.columns]
+    gt_score_cols     = [c for c in ("csv_iou", "text_score", "vis_score") if c in detail.columns]
+    gt_reasoning_cols = [c for c in ("csv_iou_reasoning", "text_score_reasoning", "vis_score_reasoning") if c in detail.columns]
+    eval_score_cols   = [c for c in ("csv_eval_score", "text_eval_score", "vis_eval_score") if c in detail.columns]
     timing_cols     = [c for c in ("elapsed_sec", "lookup_time_sec", "analyzing_time_sec", "vis_time_sec") if c in detail.columns]
     llm_timing_cols = [c for c in ("lookup_llm_time_sec", "analyzing_llm_time_sec", "vis_llm_time_sec") if c in detail.columns]
     llm_energy_cols = [c for c in (
@@ -118,7 +119,7 @@ def aggregate_bulk_results(
         "vis_llm_ram_energy_kwh", "vis_llm_emissions_co2",
     ) if c in detail.columns]
     run_energy_cols = [c for c in ("energy_consumed_kwh", "cpu_energy_kwh", "gpu_energy_kwh", "ram_energy_kwh", "emissions_kg_co2") if c in detail.columns]
-    score_cols      = gt_score_cols + eval_score_cols + timing_cols + llm_timing_cols + llm_energy_cols + run_energy_cols
+    score_cols      = gt_score_cols + gt_reasoning_cols + eval_score_cols + timing_cols + llm_timing_cols + llm_energy_cols + run_energy_cols
     config_param_cols = [c for c in detail.columns if c not in set(["config_id"] + prompt_id_cols + score_cols)]
     ordered_cols = ["config_id"] + prompt_id_cols + score_cols + config_param_cols
     detail = detail[[c for c in ordered_cols if c in detail.columns]]

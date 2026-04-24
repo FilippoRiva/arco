@@ -941,6 +941,8 @@ def make_csv_evaluator_gt(
     else:
         raise ValueError("Provide either ground_truth_csv_path or ground_truth_csv_text")
 
+    _store: Dict = {}
+
     def eval_fn(result: Dict, state: Dict) -> float:
         data_df = result.get("data_df")
         if data_df is None:
@@ -949,6 +951,7 @@ def make_csv_evaluator_gt(
                 data_df = text_to_dataframe(data_text)
 
         if data_df is None:
+            _store["reasoning"] = "Model returned no data (SQL error or empty result)."
             return 0.0
 
         result_df = data_df.copy()
@@ -958,11 +961,43 @@ def make_csv_evaluator_gt(
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
         try:
-            return compare_dataframes_iou(result_df, gt_df_cmp)
+            score = compare_dataframes_iou(result_df, gt_df_cmp)
+            if score < 1.0:
+                n_gt = len(gt_df_cmp)
+                n_model = len(result_df)
+                gt_cols = set(gt_df_cmp.columns.tolist())
+                model_cols = set(result_df.columns.tolist())
+                if n_model == 0:
+                    _store["reasoning"] = "Model returned empty result."
+                elif gt_cols != model_cols:
+                    missing = sorted(gt_cols - model_cols)
+                    extra = sorted(model_cols - gt_cols)
+                    parts = [f"GT {n_gt} rows, model {n_model} rows, IOU={score:.3f}."]
+                    if missing:
+                        parts.append(f"Missing cols: {missing}.")
+                    if extra:
+                        parts.append(f"Extra cols: {extra}.")
+                    _store["reasoning"] = " ".join(parts)
+                else:
+                    try:
+                        gt_r0 = dict(zip(gt_df_cmp.columns, gt_df_cmp.iloc[0].tolist()))
+                        mod_r0 = dict(zip(result_df.columns, result_df.iloc[0].tolist())) if n_model > 0 else {}
+                        _store["reasoning"] = (
+                            f"GT {n_gt} rows, model {n_model} rows, IOU={score:.3f}. "
+                            f"GT row[0]={gt_r0} | Model row[0]={mod_r0}"
+                        )
+                    except Exception:
+                        _store["reasoning"] = (
+                            f"GT {n_gt} rows, model {n_model} rows, IOU={score:.3f}. "
+                            "Same columns but values differ."
+                        )
+            return score
         except Exception as e:
+            _store["reasoning"] = f"Evaluation error: {e}"
             print(f"CSV evaluation error: {e}")
             return 0.0
 
+    eval_fn._store = _store
     return eval_fn
 
 
@@ -1076,6 +1111,8 @@ def make_text_evaluator_gt(
     Returns:
         Function with signature (result: Dict, state: Dict) -> float
     """
+    _store: Dict = {}
+
     def eval_fn(result: Dict, state: Dict) -> float:
         answers = result.get("answer", [])
         if not answers:
@@ -1099,14 +1136,22 @@ def make_text_evaluator_gt(
                     openai_api_key=openai_api_key,
                 )
                 print(f"[analyzing_data GT judge] factual_accuracy={evaluation.get('factual_accuracy')} | coverage={evaluation.get('coverage')} | reasoning: {evaluation.get('reasoning', 'N/A')}")
+                if score < 1.0:
+                    _store["reasoning"] = (
+                        f"factual_accuracy={evaluation.get('factual_accuracy')}, "
+                        f"coverage={evaluation.get('coverage')}. "
+                        f"{evaluation.get('reasoning', '')}"
+                    )
                 return score
             else:
                 return bleu_score(analysis_text, ground_truth_text)
 
         except Exception as e:
+            _store["reasoning"] = f"Evaluation error: {e}"
             print(f"Text GT evaluation error: {e}")
             return 0.0
 
+    eval_fn._store = _store
     return eval_fn
 
 
@@ -1134,22 +1179,26 @@ def make_vis_evaluator_gt(
         Function with signature (result: Dict, state: Dict) -> float
         that extracts chart_config and code from result and evaluates.
     """
+    _store: Dict = {}
+
     def eval_fn(result: Dict, state: Dict) -> float:
         chart_config = result.get("chart_config")
         answers = result.get("answer", [])
 
         if not chart_config:
+            _store["reasoning"] = "Model produced no chart_config."
             return 0.0
 
         # Chart code is the last answer entry
         chart_code = answers[-1] if answers else None
         if not chart_code:
+            _store["reasoning"] = "Model produced no chart code."
             return 0.0
 
         visualization_goal = state.get("visualization_goal", state.get("prompt", ""))
 
         try:
-            score, _ = judge_visualization(
+            score, evaluation = judge_visualization(
                 visualization_goal=visualization_goal,
                 generated_config=chart_config,
                 generated_code=chart_code,
@@ -1161,12 +1210,20 @@ def make_vis_evaluator_gt(
                 openai_api_key=openai_api_key,
                 ollama_url=ollama_url,
             )
+            if score < 1.0:
+                reasoning_parts = []
+                for key, val in evaluation.items():
+                    if key not in ("overall_score", "error") and val is not None:
+                        reasoning_parts.append(f"{key}={val}")
+                _store["reasoning"] = "; ".join(reasoning_parts) if reasoning_parts else str(evaluation)
             return score
 
         except Exception as e:
+            _store["reasoning"] = f"Evaluation error: {e}"
             print(f"Visualization evaluation error: {e}")
             return 0.0
 
+    eval_fn._store = _store
     return eval_fn
 
 

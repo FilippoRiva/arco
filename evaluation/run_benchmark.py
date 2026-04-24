@@ -245,14 +245,33 @@ def run_benchmark(
         # --- Energy (populated only when enable_codecarbon=True) ---
         energy = result.get("_energy") or {}
 
+        # Extract GT reasoning from evaluator closures (populated only when score < 1.0)
+        csv_iou_val    = gt_scores.get("lookup_sales_data", {}).get("gt_score") if has_data else None
+        text_score_val = gt_scores.get("analyzing_data", {}).get("gt_score") if entry.get("gt_analysis") else None
+        vis_score_val  = gt_scores.get("create_visualization", {}).get("gt_score") if has_vis else None
+
+        def _get_reasoning(eval_fn, score):
+            if score is None or score >= 1.0:
+                return None
+            return getattr(eval_fn, "_store", {}).get("reasoning")
+
+        csv_reasoning  = _get_reasoning(config.lookup_sales_data.gt_eval_fn, csv_iou_val)
+        text_reasoning = _get_reasoning(config.analyzing_data.gt_eval_fn, text_score_val)
+        vis_reasoning  = _get_reasoning(config.create_visualization.gt_eval_fn, vis_score_val)
+
         row = {
             "test_case_id": idx,
             "prompt": prompt,
+            "difficulty": entry.get("difficulty"),
             "gen_sql": " ".join((result.get("sql_query", "") or "").split()),
             # GT scores — same source as run_metadata.json accuracy.ground_truth_scores
-            "csv_iou":    gt_scores.get("lookup_sales_data", {}).get("gt_score") if has_data else None,
-            "text_score": gt_scores.get("analyzing_data", {}).get("gt_score") if entry.get("gt_analysis") else None,
-            "vis_score":  gt_scores.get("create_visualization", {}).get("gt_score") if has_vis else None,
+            "csv_iou":    csv_iou_val,
+            "text_score": text_score_val,
+            "vis_score":  vis_score_val,
+            # GT reasoning — populated only when the corresponding score < 1.0
+            "csv_iou_reasoning":    csv_reasoning,
+            "text_score_reasoning": text_reasoning,
+            "vis_score_reasoning":  vis_reasoning,
             # No-GT quality scores (BoN selector) — same source as run_metadata.json accuracy.step_eval_scores
             "csv_eval_score":  eval_scores.get("lookup_sales_data", {}).get("best_score") if has_data else None,
             "text_eval_score": eval_scores.get("analyzing_data", {}).get("best_score") if entry.get("gt_analysis") else None,
