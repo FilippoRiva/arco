@@ -53,3 +53,4 @@ codecarbon
 flask
 nltk
 pyyaml
+openpyxl
