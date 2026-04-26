@@ -17,6 +17,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Use non-interactive matplotlib backend (no display on headless Linux)
+ENV PYTHONUNBUFFERED=1
 ENV MPLBACKEND=Agg
 
 # Ollama URL — on Linux use --network=host and point to localhost,
