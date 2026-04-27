@@ -82,6 +82,7 @@ class SearchSpace:
             raw = yaml.safe_load(f)
         self._global: Dict[str, Any] = raw.get("global", {})
         self._steps: Dict[str, Dict[str, Any]] = raw.get("steps", {})
+        self._defaults: Dict[str, Dict[str, Any]] = raw.get("defaults", {})
 
     @property
     def default_seed(self) -> int:
@@ -223,7 +224,18 @@ class SearchSpace:
 
         for step_name, step_spec in self._steps.items():
             if vary_step is not None and step_name != vary_step:
-                sc = StepConfig(step_name=step_name)
+                default_spec = self._defaults.get(step_name, {})
+                sc = StepConfig(
+                    step_name=step_name,
+                    n=int(default_spec.get("n", 1)),
+                    cot_n=int(default_spec.get("cot_n", 1)),
+                    bon_param=default_spec.get("bon_param", "temperature"),
+                    temp_min=float(default_spec.get("temp_min", 0.1)),
+                    temp_max=float(default_spec.get("temp_max", 0.1)),
+                    top_p_min=float(default_spec.get("top_p_min", 1.0)),
+                    top_p_max=float(default_spec.get("top_p_max", 1.0)),
+                    max_tokens=int(default_spec.get("max_tokens", 2000)),
+                )
                 sc.use_cache = False
             else:
                 sc = self._sample_step(

@@ -98,6 +98,7 @@ def run_benchmark(
     save_execution_artifacts: bool = False,
     enable_codecarbon: bool = False,
     max_prompts: Optional[int] = None,
+    config_label: Optional[str] = None,
 ) -> pd.DataFrame:
     """Run benchmark against a unified GT dataset.
 
@@ -155,7 +156,8 @@ def run_benchmark(
         has_data = entry.get("gt_data") is not None
 
         print(f"\n{'='*60}")
-        print(f"TEST CASE {idx + 1}/{len(entries)}")
+        _config_prefix = f"[{config_label}] " if config_label else ""
+        print(f"{_config_prefix}TEST CASE {idx + 1}/{len(entries)}")
         print(f"{'='*60}")
         print(f"Prompt: {prompt}")
         print(f"Has data GT: {has_data} | Has vis GT: {has_vis}")

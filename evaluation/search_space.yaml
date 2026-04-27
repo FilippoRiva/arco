@@ -31,6 +31,45 @@
 global:
   seed: 42
 
+# ---------------------------------------------------------------------------
+# Default parameters for steps that are NOT being varied in a given phase.
+# Each step has different characteristics that justify different defaults:
+#
+#   lookup_sales_data    — SQL generation: needs precision → low temp, moderate tokens
+#   analyzing_data       — text analysis: needs coherence + nuance → mid temp, more tokens
+#   create_visualization — code generation: needs exactness → low temp, generous tokens
+# ---------------------------------------------------------------------------
+defaults:
+  lookup_sales_data:
+    n: 1
+    cot_n: 1
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.1
+    top_p_min: 1.0
+    top_p_max: 1.0
+    max_tokens: 2000
+
+  analyzing_data:
+    n: 1
+    cot_n: 1
+    bon_param: "temperature"
+    temp_min: 0.3
+    temp_max: 0.3
+    top_p_min: 1.0
+    top_p_max: 1.0
+    max_tokens: 3000
+
+  create_visualization:
+    n: 1
+    cot_n: 1
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 0.1
+    top_p_min: 1.0
+    top_p_max: 1.0
+    max_tokens: 2000
+
 # decide_tool is kept fixed (n=1, routing doesn't benefit from BoN)
 
 steps:
