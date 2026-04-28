@@ -18,8 +18,8 @@ columns:
     nullable: false
 
   - name: "Sold_Date"
-    description: "Transaction date in YYYY-MM-DD format"
-    data_type: "VARCHAR"
+    description: "Transaction date"
+    data_type: "DATE"
     example_values: ["2019-01-01", "2021-11-15"]
     nullable: false
 

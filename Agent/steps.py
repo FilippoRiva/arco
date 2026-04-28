@@ -347,6 +347,22 @@ Reasoning:
 - Step 5: Use DATE_TRUNC for monthly grouping; qualify all column references with table aliases.
 Query: SELECT st.region, s.yr AS year, ROUND(AVG(s.monthly_rev), 2) AS avg_monthly_revenue FROM (SELECT Store_Number, YEAR(CAST(Sold_Date AS DATE)) AS yr, DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month, SUM(Total_Sale_Value) AS monthly_rev FROM sales WHERE YEAR(CAST(Sold_Date AS DATE)) IN (2022, 2023) GROUP BY Store_Number, yr, month) s JOIN stores st ON s.Store_Number = st.Store_Number GROUP BY st.region, s.yr ORDER BY st.region, s.yr
 
+## COMMON MISTAKES TO AVOID
+- **NEVER use SUBSTR() or SUBSTRING() directly on a DATE column** — DuckDB DATE columns are not strings.
+  WRONG: `WHERE CAST(SUBSTR(Sold_Date, 1, 4) AS INTEGER) = 2021`
+  RIGHT: `WHERE YEAR(Sold_Date) = 2021`
+- **NEVER use LIKE directly on a DATE column** — cast to VARCHAR first.
+  WRONG: `WHERE Sold_Date LIKE '2023%'`
+  RIGHT: `WHERE CAST(Sold_Date AS VARCHAR) LIKE '2023%'`
+- **NEVER use strptime() on a column that is already DATE type** — it expects a string input.
+  WRONG: `CAST(strptime(Sold_Date, '%Y-%m-%d') AS DATE)`
+  RIGHT: `Sold_Date` (already DATE, no cast needed)
+- **NEVER use strftime(date, format)** — that is SQLite argument order. DuckDB does not support it.
+  WRONG: `strftime(Sold_Date, '%Y')`
+  RIGHT: `YEAR(Sold_Date)` or `EXTRACT(YEAR FROM Sold_Date)`
+- **To extract year from a DATE column**: use `YEAR(date_col)` or `EXTRACT(YEAR FROM date_col)`
+- **To extract month from a DATE column**: use `MONTH(date_col)` or `EXTRACT(MONTH FROM date_col)`
+
 ## OUTPUT FORMAT
 Return ONLY the SQL query as plain text. No explanations. No markdown formatting. No code fences. Just the SQL query.
 """

@@ -12,6 +12,9 @@ import subprocess
 import tempfile
 from functools import partial
 
+# Must match _OLLAMA_REQUEST_TIMEOUT in data_agent.py
+_OLLAMA_REQUEST_TIMEOUT: int = 600
+
 def text_to_csv(text: str) -> List[List[str]]:
     """Convert text table to CSV rows.
 
@@ -615,9 +618,10 @@ Return ONLY valid JSON:
                 model=judge_model,
                 temperature=0.2,
                 base_url=ollama_url,
-                max_tokens=1000
+                max_tokens=1000,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
             )
-        
+
         # Truncate data if too long
         truncated_data = data[:2000] if len(data) > 2000 else data
         
@@ -863,7 +867,8 @@ def judge_visualization(
                 model=judge_model,
                 temperature=temperature,
                 base_url=ollama_url,
-                max_tokens=1000
+                max_tokens=1000,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
             )
 
         # Format explicit requirements for display
@@ -1059,7 +1064,10 @@ Respond ONLY with valid JSON in this exact format:
             judge_llm = ChatOpenAI(model=judge_model, temperature=0.0, api_key=api_key)
         else:
             from langchain_ollama import ChatOllama
-            judge_llm = ChatOllama(model=judge_model, temperature=0.0, base_url=ollama_url)
+            judge_llm = ChatOllama(
+                model=judge_model, temperature=0.0, base_url=ollama_url,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
+            )
 
         formatted_prompt = JUDGE_GT_PROMPT.format(
             gt_analysis=gt_analysis,
@@ -1765,7 +1773,8 @@ def judge_visualization_no_gt(
             from langchain_ollama import ChatOllama
             judge_llm = ChatOllama(
                 model=judge_model, temperature=temperature,
-                base_url=ollama_url, max_tokens=1000
+                base_url=ollama_url, max_tokens=1000,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
             )
 
         max_code_len = 2000

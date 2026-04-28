@@ -261,6 +261,26 @@ def run_benchmark(
         text_reasoning = _get_reasoning(config.analyzing_data.gt_eval_fn, text_score_val)
         vis_reasoning  = _get_reasoning(config.create_visualization.gt_eval_fn, vis_score_val)
 
+        # Override reasoning with timeout messages when a step or its judge timed out
+        _step_errors = result.get("_step_errors") or {}
+        _step_to_reasoning = {
+            "lookup_sales_data":        "csv_reasoning",
+            "lookup_sales_data_judge":  "csv_reasoning",
+            "analyzing_data":           "text_reasoning",
+            "analyzing_data_judge":     "text_reasoning",
+            "create_visualization":     "vis_reasoning",
+            "create_visualization_judge": "vis_reasoning",
+        }
+        for _err_key, _err_msg in _step_errors.items():
+            if "TIMEOUT" in _err_msg and _err_key in _step_to_reasoning:
+                _target = _step_to_reasoning[_err_key]
+                if _target == "csv_reasoning":
+                    csv_reasoning = _err_msg
+                elif _target == "text_reasoning":
+                    text_reasoning = _err_msg
+                elif _target == "vis_reasoning":
+                    vis_reasoning = _err_msg
+
         row = {
             "test_case_id": idx,
             "prompt": prompt,

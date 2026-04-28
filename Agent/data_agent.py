@@ -148,6 +148,10 @@ class _LLMCallAccumulator(BaseCallbackHandler):
             self.total_time += time.perf_counter() - self._starts.pop(key)
         self._stop_cc_tracker(key)
 
+# Timeout for Ollama LLM HTTP requests (seconds).
+# A 33B model at ~30 tok/s with 4000 max tokens needs ~130s; 600s is a 4× safety margin.
+_OLLAMA_REQUEST_TIMEOUT: int = 600
+
 # Optional energy/emissions tracking via CodeCarbon
 try:
     from codecarbon import EmissionsTracker  # type: ignore
@@ -234,6 +238,7 @@ class SalesDataAgent:
                 max_tokens=max_tokens,
                 streaming=streaming,
                 base_url=self.ollama_url,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
             )
 
         self.data_path = data_path or DEFAULT_DATA_PATH
@@ -404,6 +409,7 @@ class SalesDataAgent:
                 base_url=resolved_ollama_url,
                 top_p=top_p,
                 callbacks=_cb,
+                client_kwargs={"timeout": _OLLAMA_REQUEST_TIMEOUT},
             )
             if top_k is not None:
                 kwargs["top_k"] = top_k
@@ -562,6 +568,15 @@ class SalesDataAgent:
             print(f"[{step_name}] GT tracking score: {gt_score:.3f}")
         except Exception as e:
             print(f"[{step_name}] GT eval error (tracking only): {e}")
+            _err_lower = str(e).lower()
+            _type_lower = type(e).__name__.lower()
+            if "timeout" in _err_lower or "timed out" in _err_lower or "timeout" in _type_lower:
+                _existing_errors = result.get("_step_errors") or {}
+                _existing_errors[f"{step_name}_judge"] = (
+                    f"[JUDGE_TIMEOUT:{_OLLAMA_REQUEST_TIMEOUT}s] {str(e)}"
+                )
+                result["_step_errors"] = _existing_errors
+                print(f"[{step_name}] Judge LLM timed out after {_OLLAMA_REQUEST_TIMEOUT}s")
 
         # Score all N candidates for richer tracking
         all_gt_scores = None
@@ -788,6 +803,15 @@ class SalesDataAgent:
                     print(f"[{step_name}] Error: {e}")
                     result = dict(state)
                     result["error"] = str(e)
+                    _err_lower = str(e).lower()
+                    _type_lower = type(e).__name__.lower()
+                    if "timeout" in _err_lower or "timed out" in _err_lower or "timeout" in _type_lower:
+                        _existing_errors = state.get("_step_errors") or {}
+                        _existing_errors[step_name] = (
+                            f"[LLM_TIMEOUT:{_OLLAMA_REQUEST_TIMEOUT}s] {str(e)}"
+                        )
+                        result["_step_errors"] = _existing_errors
+                        print(f"[{step_name}] LLM call timed out after {_OLLAMA_REQUEST_TIMEOUT}s")
 
                 self.current_run_step_results[step_name] = [result]
 
@@ -949,6 +973,14 @@ class SalesDataAgent:
                     error_result["_top_k"] = top_k
                     error_result["_bon_param"] = bon_param
                     error_result["_run_idx"] = i
+                    _err_lower = str(e).lower()
+                    if "timeout" in _err_lower or "timed out" in _err_lower:
+                        _existing_errors = state.get("_step_errors") or {}
+                        _existing_errors[step_name] = (
+                            f"[LLM_TIMEOUT:{_OLLAMA_REQUEST_TIMEOUT}s] {str(e)}"
+                        )
+                        error_result["_step_errors"] = _existing_errors
+                        print(f"[{step_name}] LLM call timed out after {_OLLAMA_REQUEST_TIMEOUT}s (run {i + 1}/{n})")
                     results.append(error_result)
                     scores.append(-float("inf"))
 
