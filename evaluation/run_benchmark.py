@@ -132,9 +132,11 @@ def run_benchmark(
     if schema:
         print(f"Loaded schema: {[t.name for t in schema.tables]}")
 
-    # Determine base config and judge identity
-    _external_config = agent_config is not None
-    if _external_config:
+    # Determine base config and judge identity.
+    # A caller-provided AgentConfig or YAML config path is treated as authoritative:
+    # benchmark mode may attach evaluators, but it must not override step params.
+    _preserve_config = agent_config is not None or config_path is not None
+    if agent_config is not None:
         config = agent_config
         judge_model = config.model
         judge_provider = config.provider
@@ -156,8 +158,7 @@ def run_benchmark(
         has_data = entry.get("gt_data") is not None
 
         print(f"\n{'='*60}")
-        _config_prefix = f"[{config_label}] " if config_label else ""
-        print(f"{_config_prefix}TEST CASE {idx + 1}/{len(entries)}")
+        print(f"TEST CASE {idx + 1}/{len(entries)}")
         print(f"{'='*60}")
         print(f"Prompt: {prompt}")
         print(f"Has data GT: {has_data} | Has vis GT: {has_vis}")
@@ -165,9 +166,9 @@ def run_benchmark(
         # Configure step-level eval functions for this entry.
         # GT eval functions are used for tracking/logging only (gt_eval_fn).
         # Non-GT eval functions are used for best-of-n selection (eval_fn / batch_eval_fn).
-        # When _external_config=True, sampling params (n, temp, top_p) are NOT overridden.
+        # When a config object or config file is provided, sampling params are preserved.
         if has_data:
-            if not _external_config:
+            if not _preserve_config:
                 config.lookup_sales_data.n = n
                 config.lookup_sales_data.temp_min = 0.1
                 config.lookup_sales_data.temp_max = 0.5
@@ -182,7 +183,7 @@ def run_benchmark(
             config.lookup_sales_data.gt_columns = [c.lower() for c in _gt_df.columns]
 
         if has_data and entry.get("gt_analysis"):
-            if not _external_config:
+            if not _preserve_config:
                 config.analyzing_data.n = n
                 config.analyzing_data.temp_min = 0.1
                 config.analyzing_data.temp_max = 0.7
@@ -199,7 +200,7 @@ def run_benchmark(
             )
 
         if has_vis:
-            if not _external_config:
+            if not _preserve_config:
                 config.create_visualization.n = n
                 config.create_visualization.temp_min = 0.1
                 config.create_visualization.temp_max = 0.5
