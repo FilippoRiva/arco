@@ -236,6 +236,13 @@ class SearchSpace:
                     top_p_max=float(default_spec.get("top_p_max", 1.0)),
                     max_tokens=int(default_spec.get("max_tokens", 2000)),
                 )
+                top_k_min = default_spec.get("top_k_min")
+                top_k_max = default_spec.get("top_k_max")
+                no_repeat = default_spec.get("no_repeat_ngram_size")
+                sc.top_k_min = int(top_k_min) if top_k_min is not None else None
+                sc.top_k_max = int(top_k_max) if top_k_max is not None else None
+                sc.num_beams = int(default_spec.get("num_beams", 1))
+                sc.no_repeat_ngram_size = int(no_repeat) if no_repeat is not None else None
                 sc.use_cache = False
             else:
                 sc = self._sample_step(
