@@ -42,3 +42,6 @@ jmeter.log
 
 codecarbon
 .cache
+# Local benchmark outputs
+runs/
+output/
