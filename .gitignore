@@ -1,5 +1,8 @@
 **/.DS_Store
 
+# PowerPoint outputs
+presentation-powerpoint/
+
 # LaTeX build artifacts
 tesi/*.aux
 tesi/*.bbl
