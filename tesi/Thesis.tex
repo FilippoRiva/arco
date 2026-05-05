@@ -213,7 +213,8 @@ showing the flow from user input to final output across the agent's processing p
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.92\textwidth]{fig1_system_overview}
+    \vspace{-8pt}
+    \includegraphics[width=0.92\textwidth]{Images/fig1_system_overview}
     \caption{High-level architecture of the Sales Agent.}
     \label{fig:system_overview}
 \end{figure}
@@ -358,11 +359,22 @@ are stored in the \texttt{State} and appended to the \texttt{answer} list.
 \vspace{0.5em}
 Figure~\ref{fig:sequence} shows the sequence diagram for a full execution of the
 Sales Agent on a question that requires data retrieval, analysis, and visualisation.
+The notation follows a deliberately simplified variant of UML~2 sequence diagrams:
+standard lifelines and message arrows are retained, combined fragments (\texttt{loop}
+and \texttt{opt}) mark the iteration boundary and the optional table-selection step,
+and dashed arrows denote return values. Activation bars, actor stereotypes (e.g.\
+stick figures or boundary symbols), and explicit \emph{create}/\emph{destroy} messages
+have been omitted. Given the density of the diagram~--- nine lifelines and approximately
+35 messages across four iterations~--- these elements would add visual noise without
+improving comprehension; the colour coding of the participant boxes already conveys
+their roles at a glance. This choice prioritises readability over strict UML compliance,
+which is standard practice in academic and industrial documentation when the primary
+goal is to communicate flow rather than to specify a system for code generation.
 
-\begin{figure}[h]
+\begin{figure}[htbp]
     \centering
-    % TODO: insert sequence diagram
-    \fbox{\parbox{0.85\textwidth}{\centering\vspace{3cm}Sequence Diagram\vspace{3cm}}}
+    \includegraphics[width=0.65\textwidth]{Images/fig4_sequence.png}
+    \vspace{-6pt}
     \caption{Sequence diagram of a full Sales Agent execution.}
     \label{fig:sequence}
 \end{figure}
