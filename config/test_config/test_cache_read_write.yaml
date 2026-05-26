@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# CACHE RUN CONFIGURATION
+# =============================================================================
+# Test config for caching
+
+global:
+  schema: "../../data"
+  prompt: "What is the most common type of good?"
+  use_cache: true
+  run_id: "cache_rw_test_run_id"
+  cache_mode: "rw"
+  save_dir: "./output"
+
+agents:
+  Visualizer:
+    n: 3

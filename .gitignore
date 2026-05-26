@@ -1,50 +1,21 @@
-**/.DS_Store
-
-# PowerPoint outputs
-presentation-powerpoint/
-
-# LaTeX build artifacts
-tesi/*.aux
-tesi/*.bbl
-tesi/*.blg
-tesi/*.log
-tesi/*.out
-tesi/*.synctex.gz
-tesi/*.pdf
-tesi/Images/*.pdf
-
-evaluation/csv_queries
-
-runs/bulk_results/prompt_validation*/
-runs/bulk_results/*detail_combined_*.xlsx
-
+# IDE's files
 **/.vscode
 **/__pycache__/
+.idea
 
-venv/
+# Agentic Coding
 .claude/
-shared.txt
-out/
+.codex/
+
+# Python libraries and build files
+venv/
 build/
-cplusplus/
-apache-jmeter-5.6.3/
-spice_cache/
-SPICE-1.0/
-spice
 
-loop.py
-CMakePresets.json
-
-ninja
-
-test_data_agent.ipynb
-output
-results
-
-jmeter.log
-
+# Codecarbon outputs
 codecarbon
-.cache
+
 # Local benchmark outputs
-runs/
-output/
+data/runs/
+data/output/
+output/cache/
+src/arco.egg-info/

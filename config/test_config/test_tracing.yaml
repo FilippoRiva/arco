@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./schema.json
+# =============================================================================
+# TEST PHOENIX TRACING
+# =============================================================================
+# Test config for the arize phoenix integration
+
+global:
+  schema: "../../data"
+  prompt: "Show me the sales in Nov 2021"
+  enable_tracing: true
+  phoenix_endpoint: "http://localhost:6006/v1/traces"
+  phoenix_project_name: "ARCO-evaluation"

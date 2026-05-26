@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# PERPLEXITY RUN CONFIGURATION
+# =============================================================================
+# Test configuration with a complex query to check if perplexity analysis works
+
+global:
+  schema: "../../data"
+  prompt: >
+    For each product class, compare the average revenue per unit sold during
+    promotions vs non-promotions throughout 2021. Rank the product classes by
+    the absolute difference in average revenue per unit between the two conditions,
+    and include the total number of transactions for each group.
+  visualization_goal: >
+    Bar chart comparing average revenue per unit (promo vs non-promo) for each
+    product class in 2021, sorted by absolute difference descending.
+  use_cache: True
+  cache_mode: w
+  run_id: "test_perplexity"
+  enable_codecarbon: true
+
+agents:
+  Retriever:
+    temp_min: 0.3 # SQL gen is extremely schematic
+  Analyzer:
+    temp_min: 1.7 # High temp to check perplexity
+    max_tokens: 1000
+  Visualizer:
+    temp_min: 0.5 # Code and JSON generation is extremely schematic

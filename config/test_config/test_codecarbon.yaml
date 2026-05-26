@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# TEST CODECARBON OUTPUT
+# =============================================================================
+# Test config for the codecarbon integration
+
+global:
+  schema: "../../data"
+  prompt: "Show me the sales in Nov 2021"
+  enable_codecarbon: true

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# TEST GLOBAL CONFIGS
+# =============================================================================
+# Test for the agents section
+
+global:
+  prompt: "Show me the sales in Nov 2021"
+  visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"
+  schema: "../../data" # path to YAML schemas for the database relative to this config
+  provider: openai
+  model: gpt-4o-mini
+
+agents:
+  Retriever:
+    provider: openai
+    model: gpt-5.4-nano
+    n: 2
+    bon_param: "temperature"
+    temp_min: 0.1
+    temp_max: 1.0
+    cot_n: 2
+
+  Analyzer:
+    provider: openai
+    model: gpt-4.1-nano
+    n: 3
+    bon_param: "temperature"
+    temp_min: 0.3
+    temp_max: 0.5
+
+  Visualizer:
+    provider: openai
+    model: gpt-5.4-nano
+    n: 4
+    bon_param: "temperature"
+    temp_min: 0.8
+    temp_max: 1.4

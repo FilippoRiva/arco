@@ -25,8 +25,8 @@ ENV MPLBACKEND=Agg
 ENV OLLAMA_HOST=http://localhost:11434
 
 # Copy source code
-COPY Agent ./Agent
-COPY evaluation ./evaluation
+COPY src/arco ./Agent
+COPY src/arco/evaluators ./evaluation
 COPY data ./data
 COPY config ./config
 COPY run_agent.py ./
