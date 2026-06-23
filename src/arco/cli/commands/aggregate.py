@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate bulk-run results into analysis-ready DataFrames.
+"""
 
 Two output views
 ----------------
@@ -32,6 +32,35 @@ import pandas as pd
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
+
+# ---------------------------------------------------------------------------
+# Script Parser Registration
+# ---------------------------------------------------------------------------
+def register(subparsers: ArgumentParser) -> ArgumentParser:
+    parser = subparsers.add_parser("aggregate", help="Aggregate bulk_runner results into detail and summary DataFrames")
+    parser.add_argument("bulk_dir", help="Root directory produced by bulk_runner.py")
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="Write detail.csv and summary.csv inside bulk_dir",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=10,
+        help="Number of top configs to print (default: 10)",
+    )
+    return parser
+
+# ---------------------------------------------------------------------------
+# Script Handler
+# ---------------------------------------------------------------------------
+def handle(args: Namespace, parser: ArgumentParser) -> None:
+    detail, summary = aggregate_bulk_results(args.bulk_dir, save=args.save)
+    print(f"\nDetail  shape : {detail.shape}")
+    print(f"Summary shape : {summary.shape}")
+    print_summary(summary, top_k=args.top_k)
 
 # ---------------------------------------------------------------------------
 # Core aggregation
@@ -184,37 +213,3 @@ def print_summary(summary: pd.DataFrame, top_k: int = 10) -> None:
             if col in row and pd.notna(row[col])
         )
         print(f"{rank:>4}  {int(row['config_id']):>4}  {scores}   ({n_str})")
-
-
-# ---------------------------------------------------------------------------
-# CLI entry point
-# ---------------------------------------------------------------------------
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Aggregate bulk_runner results into detail and summary DataFrames"
-    )
-    parser.add_argument("bulk_dir", help="Root directory produced by bulk_runner.py")
-    parser.add_argument(
-        "--save",
-        action="store_true",
-        help="Write detail.csv and summary.csv inside bulk_dir",
-    )
-    parser.add_argument(
-        "--top-k",
-        type=int,
-        default=10,
-        help="Number of top configs to print (default: 10)",
-    )
-
-    args = parser.parse_args()
-
-    detail, summary = aggregate_bulk_results(args.bulk_dir, save=args.save)
-
-    print(f"\nDetail  shape : {detail.shape}")
-    print(f"Summary shape : {summary.shape}")
-    print_summary(summary, top_k=args.top_k)
-
-
-if __name__ == "__main__":
-    main()

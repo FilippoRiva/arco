@@ -25,12 +25,11 @@ Usage — full 50+50+50 run:
 Usage — resume/run only one specific phase:
     python evaluation/bulk_runner.py ... --vary-step lookup_sales_data --resume
 """
-
-import argparse
 import json
 import os
 import sys
 import time
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import List, Optional
 
@@ -40,14 +39,93 @@ import pandas as pd
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.config import ArcoConfig  # noqa: E402
-from evaluators import aggregate_bulk_results  # noqa: E402
-from evaluators import run_benchmark  # noqa: E402
-from evaluators import SearchSpace  # noqa: E402
-
-
 # The three ablation phases, in execution order
 _VARY_STEPS = ["lookup_sales_data", "analyzing_data", "create_visualization"]
+
+
+# ---------------------------------------------------------------------------
+# Script Parser Registration
+# ---------------------------------------------------------------------------
+def register(subparsers: ArgumentParser) -> ArgumentParser:
+    parser = subparsers.add_parser(
+        "bulk",
+        help=(
+            "Performs a 3-phase ablation study."
+            "Runs n-configs random configs per phase."
+            "Each phase varies one step while the other two stay at default (n=1)."
+        )
+    )
+
+    parser.add_argument("dataset", help="Path to benchmark dataset JSON")
+    parser.add_argument("search_space", help="Path to search_space.yaml")
+    parser.add_argument(
+        "--n-configs",
+        type=int,
+        default=3,
+        help="Random configs per phase (default: 3; use 50 for full run)",
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Master random seed (default: 42)")
+    parser.add_argument(
+        "--think-time",
+        type=float,
+        default=5.0,
+        help="Mean Exponential think time between runs in seconds (default: 5.0; 0 to disable)",
+    )
+    parser.add_argument("--model", default="gpt-4o-mini", help="LLM model (default: gpt-4o-mini)")
+    parser.add_argument("--provider", default="openai", help="LLM provider (default: openai)")
+    parser.add_argument("--save-dir", default="./evaluation/bulk_results", help="Output directory")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip configs whose output directory already exists",
+    )
+    parser.add_argument(
+        "--vary-step",
+        default=None,
+        choices=_VARY_STEPS,
+        help=(
+            "Run only this phase (for resuming or debugging). "
+            "Omit to run all three phases in sequence (default behaviour)."
+        ),
+    )
+    parser.add_argument(
+        "--no-codecarbon",
+        action="store_true",
+        help="Disable CodeCarbon energy/emissions tracking (enabled by default)",
+    )
+    parser.add_argument(
+        "--max-prompts",
+        type=int,
+        default=None,
+        help="Limit to the first N prompts of the benchmark dataset (default: all)",
+    )
+    return parser
+
+
+# ---------------------------------------------------------------------------
+# Script Handler
+# ---------------------------------------------------------------------------
+def handle(args: Namespace, parser: ArgumentParser) -> None:
+    with console.status("[bold cyan]Loading Arco...[/bold cyan]", spinner="dots"):
+        from core.config import ArcoConfig
+        from evaluators import aggregate_bulk_results
+        from evaluators import run_benchmark
+        from evaluators import SearchSpace
+
+    run_bulk_benchmark(
+        args.dataset,
+        args.search_space,
+        n_configs=args.n_configs,
+        seed=args.seed,
+        think_time_mean=args.think_time,
+        model=args.model,
+        provider=args.provider,
+        save_dir=args.save_dir,
+        resume=args.resume,
+        vary_step=args.vary_step,
+        enable_codecarbon=not args.no_codecarbon,
+        max_prompts=args.max_prompts,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -103,18 +181,18 @@ def _print_summary_table(summary: pd.DataFrame) -> None:
 # ---------------------------------------------------------------------------
 
 def _run_phase(
-    dataset_path: str,
-    search_space_path: str,
-    vary_step: str,
-    phase_dir: Path,
-    *,
-    n_configs: int,
-    seed: int,
-    think_time_mean: float,
-    base_config: ArcoConfig,
-    resume: bool,
-    enable_codecarbon: bool = False,
-    max_prompts: Optional[int] = None,
+        dataset_path: str,
+        search_space_path: str,
+        vary_step: str,
+        phase_dir: Path,
+        *,
+        n_configs: int,
+        seed: int,
+        think_time_mean: float,
+        base_config: ArcoConfig,
+        resume: bool,
+        enable_codecarbon: bool = False,
+        max_prompts: Optional[int] = None,
 ) -> pd.DataFrame:
     """Run one ablation phase: vary only *vary_step*, others fixed at default.
 
@@ -157,9 +235,9 @@ def _run_phase(
 
         config_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         _print_config_summary(config_idx, agent_config, n_configs)
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         with open(config_dir / "config.json", "w", encoding="utf-8") as f:
             json.dump(records[config_idx], f, indent=2)
@@ -201,20 +279,20 @@ def _run_phase(
 # ---------------------------------------------------------------------------
 
 def run_bulk_benchmark(
-    dataset_path: str,
-    search_space_path: str,
-    *,
-    n_configs: int = 3,
-    seed: int = 42,
-    think_time_mean: float = 5.0,
-    model: str = "gpt-4o-mini",
-    provider: str = "openai",
-    openai_api_key: Optional[str] = None,
-    save_dir: str = "./evaluation/bulk_results",
-    resume: bool = False,
-    vary_step: Optional[str] = None,
-    enable_codecarbon: bool = True,
-    max_prompts: Optional[int] = None,
+        dataset_path: str,
+        search_space_path: str,
+        *,
+        n_configs: int = 3,
+        seed: int = 42,
+        think_time_mean: float = 5.0,
+        model: str = "gpt-4o-mini",
+        provider: str = "openai",
+        openai_api_key: Optional[str] = None,
+        save_dir: str = "./evaluation/bulk_results",
+        resume: bool = False,
+        vary_step: Optional[str] = None,
+        enable_codecarbon: bool = True,
+        max_prompts: Optional[int] = None,
 ) -> pd.DataFrame:
     """Run the 3-phase ablation benchmark.
 
@@ -283,10 +361,10 @@ def run_bulk_benchmark(
     for phase_idx, step in enumerate(steps_to_run):
         phase_dir = save_path / f"vary_{step}" if use_subdirs else save_path
 
-        print(f"\n{'#'*70}")
+        print(f"\n{'#' * 70}")
         print(f"PHASE {phase_idx + 1}/{len(steps_to_run)}: varying '{step}'")
         print(f"Output → {phase_dir}")
-        print(f"{'#'*70}")
+        print(f"{'#' * 70}")
 
         summary = _run_phase(
             dataset_path,
@@ -328,7 +406,8 @@ def run_bulk_benchmark(
     if phase_details:
         combined_detail = pd.concat(phase_details, ignore_index=True)
         # Reorder: config_id, vary_step, test_case_id, prompt first
-        _leading = [c for c in ("config_id", "vary_step", "test_case_id", "prompt", "difficulty") if c in combined_detail.columns]
+        _leading = [c for c in ("config_id", "vary_step", "test_case_id", "prompt", "difficulty") if
+                    c in combined_detail.columns]
         _rest = [c for c in combined_detail.columns if c not in set(_leading)]
         combined_detail = combined_detail[_leading + _rest]
         combined_path = save_path / "detail_combined.csv"
@@ -338,10 +417,10 @@ def run_bulk_benchmark(
         combined_detail.to_excel(xlsx_path, index=False)
         print(f"Excel version → {xlsx_path}")
 
-    print(f"\n{'#'*70}")
+    print(f"\n{'#' * 70}")
     print("ALL PHASES COMPLETE")
     print(f"Results → {save_dir}")
-    print(f"{'#'*70}")
+    print(f"{'#' * 70}")
 
     if not phase_summaries:
         return pd.DataFrame()
@@ -353,81 +432,3 @@ def _print_phase_summary(summary: pd.DataFrame, vary_step: str) -> None:
     abbr = {"lookup_sales_data": "lsd", "analyzing_data": "ana", "create_visualization": "cvi"}
     print(f"\n--- Phase summary (vary={abbr.get(vary_step, vary_step)}) ---")
     _print_summary_table(summary)
-
-
-# ---------------------------------------------------------------------------
-# CLI entry point
-# ---------------------------------------------------------------------------
-
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description=(
-            "3-phase ablation bulk runner. "
-            "Runs n-configs random configs per phase (total = 3 × n-configs). "
-            "Each phase varies one step while the other two stay at default (n=1)."
-        )
-    )
-    parser.add_argument("dataset", help="Path to benchmark dataset JSON")
-    parser.add_argument("search_space", help="Path to search_space.yaml")
-    parser.add_argument(
-        "--n-configs",
-        type=int,
-        default=3,
-        help="Random configs per phase (default: 3; use 50 for full run)",
-    )
-    parser.add_argument("--seed", type=int, default=42, help="Master random seed (default: 42)")
-    parser.add_argument(
-        "--think-time",
-        type=float,
-        default=5.0,
-        help="Mean Exponential think time between runs in seconds (default: 5.0; 0 to disable)",
-    )
-    parser.add_argument("--model", default="gpt-4o-mini", help="LLM model (default: gpt-4o-mini)")
-    parser.add_argument("--provider", default="openai", help="LLM provider (default: openai)")
-    parser.add_argument("--save-dir", default="./evaluation/bulk_results", help="Output directory")
-    parser.add_argument(
-        "--resume",
-        action="store_true",
-        help="Skip configs whose output directory already exists",
-    )
-    parser.add_argument(
-        "--vary-step",
-        default=None,
-        choices=_VARY_STEPS,
-        help=(
-            "Run only this phase (for resuming or debugging). "
-            "Omit to run all three phases in sequence (default behaviour)."
-        ),
-    )
-    parser.add_argument(
-        "--no-codecarbon",
-        action="store_true",
-        help="Disable CodeCarbon energy/emissions tracking (enabled by default)",
-    )
-    parser.add_argument(
-        "--max-prompts",
-        type=int,
-        default=None,
-        help="Limit to the first N prompts of the benchmark dataset (default: all)",
-    )
-
-    args = parser.parse_args()
-
-    run_bulk_benchmark(
-        args.dataset,
-        args.search_space,
-        n_configs=args.n_configs,
-        seed=args.seed,
-        think_time_mean=args.think_time,
-        model=args.model,
-        provider=args.provider,
-        save_dir=args.save_dir,
-        resume=args.resume,
-        vary_step=args.vary_step,
-        enable_codecarbon=not args.no_codecarbon,
-        max_prompts=args.max_prompts,
-    )
-
-
-if __name__ == "__main__":
-    main()

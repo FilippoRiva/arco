@@ -11,7 +11,7 @@ import os
 
 RNG = np.random.default_rng(seed=42)
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
-SALES_PATH = os.path.join(DATA_DIR, "../data/Store_Sales_Price_Elasticity_Promotions_Data.parquet")
+SALES_PATH = os.path.join(DATA_DIR, "../Store_Sales_Price_Elasticity_Promotions_Data.parquet")
 
 # ── Load keys from existing sales data ──────────────────────────────────────
 sales = duckdb.query(f"SELECT * FROM '{SALES_PATH}'").df()
@@ -146,8 +146,8 @@ for _, row in sku_class_df.iterrows():
 products = pd.DataFrame(product_rows)
 
 # ── Save to parquet ──────────────────────────────────────────────────────────
-stores_path   = os.path.join(DATA_DIR, "../data/stores.parquet")
-products_path = os.path.join(DATA_DIR, "../data/products.parquet")
+stores_path   = os.path.join(DATA_DIR, "../stores.parquet")
+products_path = os.path.join(DATA_DIR, "../products.parquet")
 
 stores.to_parquet(stores_path,   index=False)
 products.to_parquet(products_path, index=False)

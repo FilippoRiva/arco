@@ -54,7 +54,7 @@ dev = [
     "ipykernel>=7.2.0",
     "matplotlib>=3.10.9",
     "pytest>=9.0.3",
-    "pytest-cov>=7.1.0"
+    "pytest-cov>=7.1.0",
 ]
 
 
@@ -63,4 +63,4 @@ dev = [
 "Original Project" = "https://github.com/ossaleon/DataAgent/tree/main"
 
 [project.scripts]
-arco-cli = "arco.cli:main"
+arco-cli = "arco.cli.cli:main"

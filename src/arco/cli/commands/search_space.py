@@ -11,8 +11,6 @@ ignores them for OpenAI, but we avoid polluting the config records with
 meaningless values when running against the OpenAI API.
 
 Usage:
-    from evaluation.search_space import SearchSpace
-
     space = SearchSpace("evaluation/search_space.yaml")
     configs = space.sample(n_configs=50)          # uses yaml seed
     configs = space.sample(n_configs=3, seed=7)   # override seed

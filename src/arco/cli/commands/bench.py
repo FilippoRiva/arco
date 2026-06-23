@@ -1,37 +1,37 @@
-#!/usr/bin/env python3
-"""Standalone benchmark script for evaluating the DataAgent against ground-truth datasets.
-
-Usage:
+"""
+Old Usage:
     python evaluation/run_benchmark.py evaluation/benchmark_dataset.json --n 3
     python evaluation/run_benchmark.py evaluation/benchmark_dataset.json --n 1 --save-dir ./results
 """
 
-import argparse
-import glob as _glob
-import json
-import os
-import sys
-from typing import Dict, List, Optional
+from argparse import ArgumentParser, Namespace
+from arco.cli.console import console
 
-import pandas as pd
-import yaml
+# ---------------------------------------------------------------------------
+# Script Parser Registration
+# ---------------------------------------------------------------------------
+def register(subparsers: ArgumentParser) -> ArgumentParser:
+    parser = subparsers.add_parser("bench", help="Run DataAgent benchmark against GT dataset")
+    parser.add_argument("dataset", help="Path to benchmark dataset JSON")
+    parser.add_argument("--n", type=int, default=1, help="Best-of-N per step (default: 1)")
+    parser.add_argument("--config", default=None, help="Path to run_config.yaml")
+    parser.add_argument("--judge-model", default="gpt-4o-mini", help="Judge model (default: gpt-4o-mini)")
+    parser.add_argument("--judge-provider", default="openai", help="Judge provider (default: openai)")
+    parser.add_argument("--save-dir", default="./evaluation/results", help="Output directory")
+    return parser
 
-# Add project root to path
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, _PROJECT_ROOT)
-
-from core.config import ArcoConfig
-from data import ColumnSchema, DatabaseSchema, TableSchema
-from data.utils import (
-    make_csv_evaluator_gt,
-    make_csv_evaluator_no_gt,
-    make_text_evaluator_gt,
-    make_text_evaluator_no_gt,
-    make_vis_evaluator_gt,
-    make_vis_evaluator_no_gt,
-)
-from run_agent import run_single  # non-interactive single-run entry point
-
+# ---------------------------------------------------------------------------
+# Script Handler
+# ---------------------------------------------------------------------------
+def handle(args: Namespace, parser: ArgumentParser) -> None:
+    run_benchmark(
+        args.dataset,
+        config_path=args.config,
+        n=args.n,
+        judge_model=args.judge_model,
+        judge_provider=args.judge_provider,
+        save_dir=args.save_dir,
+    )
 
 def _load_schema(data_dir: Optional[str] = None) -> Optional[DatabaseSchema]:
     """Discover and load all *_schema.yaml files from data_dir.
@@ -86,19 +86,19 @@ def load_benchmark_dataset(path: str) -> List[Dict]:
 
 
 def run_benchmark(
-    dataset_path: str,
-    *,
-    agent_config: Optional[ArcoConfig] = None,
-    config_path: Optional[str] = None,
-    n: int = 1,
-    judge_model: str = "gpt-4o-mini",
-    judge_provider: str = "openai",
-    save_dir: str = "./evaluation/results",
-    data_dir: Optional[str] = None,
-    save_execution_artifacts: bool = False,
-    enable_codecarbon: bool = False,
-    max_prompts: Optional[int] = None,
-    config_label: Optional[str] = None,
+        dataset_path: str,
+        *,
+        agent_config: Optional[ArcoConfig] = None,
+        config_path: Optional[str] = None,
+        n: int = 1,
+        judge_model: str = "gpt-4o-mini",
+        judge_provider: str = "openai",
+        save_dir: str = "./evaluation/results",
+        data_dir: Optional[str] = None,
+        save_execution_artifacts: bool = False,
+        enable_codecarbon: bool = False,
+        max_prompts: Optional[int] = None,
+        config_label: Optional[str] = None,
 ) -> pd.DataFrame:
     """Run benchmark against a unified GT dataset.
 
@@ -358,23 +358,3 @@ def run_benchmark(
 
     return df
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run DataAgent benchmark against GT dataset")
-    parser.add_argument("dataset", help="Path to benchmark dataset JSON")
-    parser.add_argument("--n", type=int, default=1, help="Best-of-N per step (default: 1)")
-    parser.add_argument("--config", default=None, help="Path to run_config.yaml")
-    parser.add_argument("--judge-model", default="gpt-4o-mini", help="Judge model (default: gpt-4o-mini)")
-    parser.add_argument("--judge-provider", default="openai", help="Judge provider (default: openai)")
-    parser.add_argument("--save-dir", default="./evaluation/results", help="Output directory")
-
-    args = parser.parse_args()
-
-    run_benchmark(
-        args.dataset,
-        config_path=args.config,
-        n=args.n,
-        judge_model=args.judge_model,
-        judge_provider=args.judge_provider,
-        save_dir=args.save_dir,
-    )

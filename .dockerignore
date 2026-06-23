@@ -36,8 +36,8 @@ test_code/
 jmx_files/
 
 # Evaluation results already in the repo (regenerated at runtime)
-scripts/evaluation/results/
-scripts/evaluation/__pycache__/
+output/evaluation/results/
+output/evaluation/__pycache__/
 
 # README and other docs
 *.md

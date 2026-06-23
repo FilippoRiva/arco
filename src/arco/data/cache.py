@@ -198,6 +198,9 @@ class RunCache:
         if step_file.exists():
             with open(step_file, 'r') as f:
                 raw = json.load(f)
+            if "perplexity" in raw:
+                from arco.core import EmpoweredAnswer
+                return EmpoweredAnswer.from_dict(raw)
             from arco.core import Answer
             return Answer.from_dict(raw)
         return None

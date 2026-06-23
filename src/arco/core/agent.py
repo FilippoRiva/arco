@@ -229,17 +229,8 @@ class Agent:
 
     def get_config_and_execute(self, state: State) -> State:
         """Execute a step with per-step best-of-n, evaluation, and caching.
-
-        This middleware method:
-        1. Checks cache if config.use_cache is True
-        2. Runs best-of-n sampling if cache miss or force_fresh
-        3. Evaluates each of N runs using config.eval_fn
-        4. Selects best result using config.selection_fn
-        5. Stores all N results for caching
-
         Args:
             state: Current agent state
-
         Returns:
             Updated state dict from the best run
         """

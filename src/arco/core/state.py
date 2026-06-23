@@ -139,6 +139,11 @@ class State:
     cached_results: Optional[dict[AgentType, Answer]] = None  # Preloaded results from similar past runs
 
     def add_answer(self, answer: Answer) -> State:
+        """
+        Returns a new State object with ad added answer to the answers attribute
+        :param answer: The answer to add to the answer's list
+        :return: A new state object containing a new answer
+        """
         return dataclasses.replace(self, answers=self.answers + [answer])
 
     def get_last_answer(self, agent_type: Optional[AgentType] = None) -> Answer | None:

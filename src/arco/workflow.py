@@ -301,6 +301,7 @@ class SalesDataWorkflow:
                     node_name = list(data.keys())[0]
                     current_state = State(**data[node_name])
                     yield {"event": "node_finished", "node": node_name, "state": current_state}
+
             final_result = current_state
             if not final_result:
                 raise Exception("The Graph was not able to produce a result")

@@ -684,7 +684,6 @@ class Visualizer(Agent):
                     tracing.set_output(span, {"validation": "passed"})
             except Exception as e:
                 exec_error = f"{type(e).__name__}: {e}"
-                print(f"[create_visualization] Code validation error: {exec_error}")
 
             if exec_error:
                 answer = Answer(

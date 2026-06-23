@@ -236,7 +236,7 @@ class AgentConfig:
             self.model = global_config.model
         if self.ollama_url == self._DUMMY_STR:
             self.ollama_url = global_config.ollama_url
-        if self.use_cache :
+        if self.use_cache is None:
             self.use_cache = global_config.use_cache
 
     @classmethod

@@ -15,7 +15,7 @@ global:
     Bar chart comparing average revenue per unit (promo vs non-promo) for each
     product class in 2021, sorted by absolute difference descending.
   use_cache: True
-  cache_mode: w
+  cache_mode: rw
   run_id: "test_perplexity"
   enable_codecarbon: true
 

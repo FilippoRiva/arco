@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Any
 import math
 import sys
 from dataclasses import dataclass, fields
@@ -19,6 +19,18 @@ class EmpoweredAnswer(Answer):
     @classmethod
     def from_answer(cls, answer: Answer) -> EmpoweredAnswer:
         return cls(**answer.__dict__.copy())
+
+    @classmethod
+    def from_dict(cls, dictionary: dict[str, Any]) -> EmpoweredAnswer:
+        perplexity = dictionary['perplexity']
+        budget_controller_choice = dictionary['budget_controller_choice']
+        dictionary.pop('perplexity')
+        dictionary.pop('budget_controller_choice')
+        answer = Answer.from_dict(dictionary)
+        empowered_ans = EmpoweredAnswer.from_answer(answer)
+        empowered_ans.perplexity = perplexity
+        empowered_ans.budget_controller_choice = budget_controller_choice
+        return empowered_ans
 
     def copy(self)-> Answer:
         ## Exploits the Answer.from_dict() so empowered fields must be removed and re-added later on

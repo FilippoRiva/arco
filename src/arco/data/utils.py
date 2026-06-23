@@ -127,10 +127,9 @@ def normalize_dataframe_values(df: DataFrame) -> DataFrame:
 
     df_copy: DataFrame = df.copy()
     for col in df_copy.columns:
-        df_column: DataFrame = df_copy.reindex(columns=[col])
+        df_column: pd.Series = df_copy[col]
 
-        numeric: Series = pd.to_numeric(df_column, errors="coerce") # pyrefly: ignore [bad-assignment]
-        datetime: Series = pd.to_datetime(df_column, errors="coerce", format="mixed") # pyrefly: ignore [bad-assignment]
+        numeric: Series = pd.to_numeric(df_column, errors="coerce")
         # Handle datetime dtype first (before numeric, since datetime64 is numeric-castable)
         if pd.api.types.is_datetime64_any_dtype(df_column):
             df_copy[col] = df_column.dt.strftime("%Y-%m-%d")
@@ -143,6 +142,7 @@ def normalize_dataframe_values(df: DataFrame) -> DataFrame:
         else:
             # Try datetime (for string columns like "2023-01-01")
             try:
+                datetime: Series = pd.to_datetime(df_column, errors="coerce", format="mixed")
                 if datetime.notna().all() and not df_column.isna().all():
                     df_copy[col] = datetime.map(lambda x: x.strftime("%Y-%m-%d"))
                     continue
