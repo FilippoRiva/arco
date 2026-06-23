@@ -1,9 +1,11 @@
 import sys
 from argparse import ArgumentParser, Namespace
 
-from arco.cli.console import console
-
 from rich.pretty import pprint
+
+from arco.cli import viz
+from arco.cli.console import console
+from arco.core import State
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +43,11 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="Prints the cache statistics"
     )
+    parser.add_argument(
+        "--view-run", "-v",
+        type=str,
+        help="Visualize the specified cached run"
+    )
     return parser
 
 
@@ -48,7 +55,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # Script Handler
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
-    if not (args.clear or args.delete or args.runs or args.stats):  # defaults to help
+    if not (args.clear or args.delete or args.runs or args.stats or args.view_run):  # defaults to help
         parser.print_help()
         sys.exit(1)
 
@@ -66,8 +73,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         count = cache.clear_cache()
         console.print(f"[bold cyan]Cache cleared[/bold cyan] : {count} runs deleted")
         return
-
-    if args.delete:
+    elif args.delete:
         if not confirm(f"Delete run '{args.delete}'?"):
             return
 
@@ -84,8 +90,12 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     if args.stats:
         stats = cache.get_cache_stats()  # Assumed to be a flat or nested dict
         console.print(f"[bold magenta]Cache Statistics[/bold magenta]:")
-        console.print(stats)
         pprint(stats)
+    if args.view_run:
+        metadata = cache.load_run_metadata(args.view_run)
+        result: State = metadata['final_result']
+        for answer in result.answers:
+            console.print(viz.generate_answer_panel(answer, verbose=True))
 
 
 def confirm(message: str) -> bool:

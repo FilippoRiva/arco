@@ -5,7 +5,7 @@ from rich.spinner import Spinner
 if TYPE_CHECKING:
     from arco.core import Answer
 
-# singleton console
+# load singleton console
 from arco.cli.console import console
 
 from rich import box
@@ -19,11 +19,12 @@ from rich.rule import Rule
 
 import time
 
+
 class StatusDisplay:
     def __init__(self):
         self.status = ""
         self.init_time = time.time()
-        self.start_time = None
+        self.node_start_time = None
         self.spinner = Spinner("dots")
         self.stopped = False
 
@@ -32,7 +33,7 @@ class StatusDisplay:
 
     def set(self, status, start_time=None):
         self.status = status
-        self.start_time = start_time
+        self.node_start_time = start_time
 
     def __rich__(self):
         if self.stopped:
@@ -40,17 +41,18 @@ class StatusDisplay:
 
         text = f"[yellow]{self.status}[/yellow]"
 
-        if self.start_time is not None:
-            elapsed = time.time() - self.start_time
+        if self.node_start_time is not None:
+            elapsed = time.time() - self.node_start_time
             text += f" [dim]Node time : {elapsed:.1f}s[/dim] "
 
-        text += f"[dim]Total time : {time.time()-self.init_time:.1f}s[/dim]"
+        text += f"[dim]Total time : {time.time() - self.init_time:.1f}s[/dim]"
 
         self.spinner.update(text=text),
         return Panel(
             self.spinner,
             border_style="cyan",
         )
+
 
 def _generate_answer_subtitle(answer: Answer) -> str:
     conf = answer.agent_config
@@ -80,7 +82,7 @@ def _generate_discarded_answer_panel(answer: Answer) -> Panel:
     )
 
 
-def _generate_answer_panel(answer: Answer, verbose: bool) -> Panel:
+def generate_answer_panel(answer: Answer, verbose: bool) -> Panel:
     # Build the main panel
     group_elements = [answer.message]
     if verbose and answer.agent_config:
@@ -171,6 +173,7 @@ def _energy_impact_panel(energy_dict: dict[str, Any]) -> Panel:
                  padding=(1, 2)
                  )
 
+
 def agent_events_visualizer(events: Generator[str, Any], verbose=False) -> State | None:
     """
     Visualizes generated updates produced by the agent.run() generator.
@@ -210,7 +213,7 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False) -> State
                 last_state = update["state"]
                 last_answer: Answer = last_state.get_last_answer()
                 status.set(f"{last_answer.agent_id.value} ended its run")
-                live.console.print(_generate_answer_panel(answer=last_answer, verbose=verbose))
+                live.console.print(generate_answer_panel(answer=last_answer, verbose=verbose))
             elif event_type == "codecarbon":
                 energy_dict = update["energy_dict"]
             elif event_type == "completed":

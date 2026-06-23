@@ -245,11 +245,19 @@ class State:
             if agent_type.value in state.agent_configs.keys():
                 agent_configs[agent_type] = AgentConfig.from_dict(dictionary['agent_configs'][agent_type.value])
         for answer in dictionary['answers']:
-            answers.append(Answer.from_dict(answer))
+            if 'perplexity' in answer.keys():
+                from arco.core import EmpoweredAnswer
+                answers.append(EmpoweredAnswer.from_dict(answer))
+            else:
+                answers.append(Answer.from_dict(answer))
         if dictionary['cached_results']:
             cached_results = {}
             for k, v in dictionary['cached_results'].items():
-                cached_results[AgentType(k)] = Answer.from_dict(v)
+                if 'perplexity' in v.keys():
+                    from arco.core import EmpoweredAnswer
+                    cached_results[AgentType(k)] = EmpoweredAnswer.from_dict(v)
+                else:
+                    cached_results[AgentType(k)] = Answer.from_dict(v)
         dictionary.update({
             'agent_configs': agent_configs,
             'answers': answers,

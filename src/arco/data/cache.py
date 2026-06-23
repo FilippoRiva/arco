@@ -240,7 +240,9 @@ class RunCache:
         if meta_file.exists():
             try:
                 with open(meta_file, 'r') as f:
-                    return json.load(f)
+                    metadata = json.load(f)
+                    metadata['final_result'] = State.from_dict(metadata['final_result'])
+                    return metadata
             except (json.JSONDecodeError, IOError):
                 return None
         return None
