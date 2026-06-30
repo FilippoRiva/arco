@@ -108,7 +108,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     if args.interactive:
         config = _interactive_configure(config)
 
-    viz.print_config_table(config, verbose=arg.verbose, interactive=args.interactive)
+    viz.print_config_table(config, verbose=args.verbose, interactive=args.interactive)
     console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
 
     ## Run the agent
