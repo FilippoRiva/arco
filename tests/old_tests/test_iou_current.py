@@ -19,7 +19,7 @@ from data.utils import compare_dataframes_iou, normalize_dataframe_values
 
 
 def load_benchmark():
-    path = os.path.join(os.path.dirname(__file__), "../output/evaluation/benchmark_dataset.json")
+    path = os.path.join(os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset.json")
     with open(path) as f:
         return json.load(f)
 

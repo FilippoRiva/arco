@@ -12,42 +12,13 @@ from arco.core import State
 # Script Parser Registration
 # ---------------------------------------------------------------------------
 def register(subparsers: ArgumentParser) -> ArgumentParser:
-    parser = subparsers.add_parser(
-        "cache",
-        help="Invokes the cache management system to handle the local cache."
-    )
-
-    parser.add_argument(
-        "--save-dir", "-d",
-        type=str,
-        default="output",
-        help="Directory of the cache to analyze"
-    )
-    parser.add_argument(
-        "--clear",
-        action="store_true",
-        help="If set it entirely clears the cached runs"
-    )
-    parser.add_argument(
-        "--delete",
-        type=str,
-        help="run_id of the run to delete"
-    )
-    parser.add_argument(
-        "--runs", "-r",
-        action="store_true",
-        help="Shows the list of cached runs"
-    )
-    parser.add_argument(
-        "--stats", "-s",
-        action="store_true",
-        help="Prints the cache statistics"
-    )
-    parser.add_argument(
-        "--view-run", "-v",
-        type=str,
-        help="Visualize the specified cached run"
-    )
+    parser = subparsers.add_parser("cache", help="Invokes the cache management system to handle the local cache.")
+    parser.add_argument("--save-dir", "-d", type=str, default="output", help="Directory of the cache to analyze")
+    parser.add_argument("--clear", action="store_true", help="If set it entirely clears the cached runs")
+    parser.add_argument("--delete", type=str, help="run_id of the run to delete")
+    parser.add_argument("--runs", "-r", action="store_true", help="Shows the list of cached runs")
+    parser.add_argument("--stats", "-s", action="store_true", help="Prints the cache statistics")
+    parser.add_argument("--view-run", "-v", type=str, help="Visualize the specified cached run")
     return parser
 
 

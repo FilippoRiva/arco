@@ -16,9 +16,9 @@ class Orchestrator(Agent):
     _ORCHESTRATOR_PROMPT = """You are a workflow orchestrator managing a data analysis pipeline.
     
     ## AVAILABLE AGENTS
-    - {AgentType.RETRIEVER.value}: Retrieves data from the database using SQL
-    - {AgentType.ANALYZER.value}: Analyzes retrieved data and provides insights
-    - {AgentType.VISUALIZER.value}: Generates chart code to visualize the data
+    - Retriever: Retrieves data from the database using SQL
+    - Analyzer: Analyzes retrieved data and provides insights
+    - Visualizer: Generates chart code to visualize the data
     - End: Completes the workflow
 
     ## DECISION RULES (CRITICAL - Follow in order)
@@ -29,11 +29,11 @@ class Orchestrator(Agent):
        - All relevant agents for the user's request have been executed
 
     ## DECISION FLOWCHART
-    Start → Has data? No → {AgentType.RETRIEVER.value}
+    Start → Has data? No → Retriever
                   ↓ Yes
-              Already analyzed? No → {AgentType.ANALYZER.value}
+              Already analyzed? No → Analyzer
                   ↓ Yes
-              Need visualization? Yes → {AgentType.VISUALIZER.value}
+              Need visualization? Yes → Visualizer 
                   ↓ No/Done
               end
               
@@ -85,7 +85,7 @@ class Orchestrator(Agent):
     - Step 4: Rule 1 applies - need data first, Rule 2 N/A (nothing used), Rule 3 not met (0 answers)
     - Step 5: Must start with lookup_sales_data
 
-    Decision: {AgentType.RETRIEVER.value} (need data first)
+    Decision: Retriever (need data first)
 
     Example 2 - After data lookup:
     State: prompt="Show sales data", answer=[], tool_choice="retriever", data exists
@@ -97,7 +97,7 @@ class Orchestrator(Agent):
     - Step 4: Rule 1 satisfied (have data), Rule 2 check (can't repeat lookup), Rule 3 not met (0 answers)
     - Step 5: Next logical step is analyzing_data
 
-    Decision: {AgentType.ANALYZER.value} (have data, now analyze)
+    Decision: Analyzer (have data, now analyze)
 
     Example 3 - After analysis and visualization:
     State: prompt="Show sales trends", answer=["Analysis text", "Chart code"], tool_choice="visualizer"
@@ -133,7 +133,7 @@ class Orchestrator(Agent):
     - Step 4: Rule 1 satisfied (have data), Rule 2 satisfied (not repeating), Rule 3 not met (0 answers)
     - Step 5: Should analyze first, then visualize (follow flowchart)
 
-    Decision: {AgentType.ANALYZER.value} (analyze before visualizing)
+    Decision: Analyzer (analyze before visualizing)
 
     ## YOUR TASK
     Based on the chain of thought reasoning above and the current state, select the next tool to execute.
@@ -143,8 +143,8 @@ class Orchestrator(Agent):
     No explanations. Just the tool name.
     """
 
-    def __init__(self, trace_helper: TracingHelper):
-        super().__init__(trace_helper)
+    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
+        super().__init__(trace_helper, empower)
         self.type = AgentType.ORCHESTRATOR
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
@@ -187,6 +187,8 @@ class Orchestrator(Agent):
         # Override decision if reached max number of calls
         if len(state.answers) > 10:
             matched_agent = "end"
+
+        matched_agent = matched_agent.capitalize()
 
         answer = Answer(
             agent_id=self.type,

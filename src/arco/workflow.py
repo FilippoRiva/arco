@@ -11,30 +11,20 @@ Usage example:
     workflow = SalesDataWorkflow()
     result = workflow.run("Show me the sales in Nov 2021")
 """
-from typing import Any
-from typing import Generator
-from arco.llm_tools import LLMCallAccumulator
 import json
-import logging
-import os
 import re
 import time
+from typing import Any
+from typing import Generator
 
 import requests
-
-# codecarbon
-from codecarbon import EmissionsTracker
-
-logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
-
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from arco import llm_tools, tracing
+from arco import llm_tools, tracing, tracking
 from arco.agents import Analyzer, Orchestrator, Retriever, Visualizer
 from arco.core import ArcoConfig, State, AgentType
 from arco.data import RunCache
-from arco.global_vars import CODECARBON_AVAILABLE
 from arco.tracing import (truncate_trace_text, _summarize_for_trace, TracingHelper)
 
 
@@ -109,7 +99,7 @@ class SalesDataWorkflow:
             # Environment variables similar to utils_0.py
             tracing.init_tracing(config.phoenix_endpoint)
             self.trace_helper = tracing.get_tracer(project_name=config.phoenix_project_name)
-        else :
+        else:
             self.trace_helper = TracingHelper()
 
         # Caching
@@ -118,11 +108,15 @@ class SalesDataWorkflow:
         # Initialize graph
         self.graph: CompiledStateGraph = self._build_graph()
 
+        # Codecarbon Emission Tracking
+        tracking.initialize_tracking(config)
+
     def _strict_graph(self) -> CompiledStateGraph:
         graph = StateGraph(State)
 
         init_args = {
-            "trace_helper": self.trace_helper
+            "trace_helper": self.trace_helper,
+            "empower": self.config.empower
         }
 
         # Add nodes
@@ -154,7 +148,8 @@ class SalesDataWorkflow:
         graph = StateGraph(State)
 
         init_args = {
-            "trace_helper": self.trace_helper
+            "trace_helper": self.trace_helper,
+            "empower": self.config.empower
         }
 
         # Add nodes
@@ -218,8 +213,20 @@ class SalesDataWorkflow:
             # Fallback if mermaid is not available
             self.graph.get_graph().print_ascii()
 
-    def run(self) -> Generator[dict[str, Any]]:
+    def run(self) -> State:
+        gen = self.stream()
+        try:
+            while True:
+                next(gen)
+        except StopIteration as e:
+            return e.value
+
+    def stream(self) -> Generator[dict[str, Any]]:
+
         yield {"event": "started", "run_id": self.config.run_id, "config": self.config}
+
+        # Global Tracking start
+        tracking.start_tracking()
 
         # Cache load
         cached_results = {}
@@ -242,34 +249,13 @@ class SalesDataWorkflow:
             agent_configs=self.config.agent_configs
         )
 
-        # codecarbon setup
-        tracker = None
-        save_dir = self.config.save_dir if self.config.save_dir else "./output"
-        if self.config.enable_codecarbon and CODECARBON_AVAILABLE:
-            # Global Emission Tracking
-            codecarbon_dir = os.path.join(save_dir, "codecarbon")
-            os.makedirs(codecarbon_dir, exist_ok=True)
-            tracker = EmissionsTracker(
-                project_name="SalesDataAgent",
-                output_dir=codecarbon_dir,
-                save_to_file=True,
-                measure_power_secs=1,
-                log_level="error",
-                allow_multiple_runs=True,
-                experiment_id=self.config.run_id
-            )
-            tracker.start()
-            codecarbon_base_dir = os.path.join(save_dir, "codecarbon")
-            os.makedirs(codecarbon_base_dir, exist_ok=True)
-            # LLM Emission Tracking
-            LLMCallAccumulator.enable(codecarbon_base_dir)
-
         # Check Model Reachability
         if not self.model_is_reachable:
             self.model_is_reachable = self.check_model()
             if not self.model_is_reachable:
-                yield {"event": "error", "message": "Model is not reachable. Please set your OPENAI_API_KEY environment variable if using openai models or properly start the ollama server."}
-                return
+                yield {"event": "error",
+                       "message": "Model is not reachable. Please set your OPENAI_API_KEY environment variable if using openai models or properly start the ollama server."}
+                return None
 
         # Start Inference and Generator Loop
         _run_t0 = time.perf_counter()
@@ -287,10 +273,16 @@ class SalesDataWorkflow:
                 input_data=_summarize_for_trace(input_state),
         ) as run_span):
 
-            graph_config = {"configurable": {"thread_id": self.config.run_id}}
+            graph_config = {
+                "configurable": {
+                    "thread_id": self.config.run_id,
+                    "enable_budget_controller": self.config.enable_budget_controller
+                }
+            }
 
             current_state = None
-            for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates"]): # pyrefly: ignore [no-matching-overload]
+
+            for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates"]):
                 stream_type, data = chunk
                 if stream_type == "tasks":
                     yield {
@@ -305,8 +297,6 @@ class SalesDataWorkflow:
             final_result = current_state
             if not final_result:
                 raise Exception("The Graph was not able to produce a result")
-
-            final_result.profiling_metrics['total_run_time_sec'] = round(time.perf_counter() - _run_t0, 3)
 
             if self.config.use_cache and self.config.cache_mode in ["write", "w", "read_write", "rw"]:
                 with self.trace_helper.start_span(
@@ -331,29 +321,14 @@ class SalesDataWorkflow:
 
             tracing.set_output(run_span, _summarize_for_trace(final_result))
 
-        # codecarbon tracker metrics
-        if tracker is not None:
-            tracker.stop()
-            if hasattr(tracker, "final_emissions_data") and tracker.final_emissions_data is not None:
-                ed = tracker.final_emissions_data
-                energy_dict = {
-                        "energy_consumed_kwh": ed.energy_consumed,
-                        "cpu_energy_kwh": ed.cpu_energy,
-                        "gpu_energy_kwh": ed.gpu_energy,
-                        "ram_energy_kwh": ed.ram_energy,
-                        "emissions_kg_co2": ed.emissions,
-                        "cpu_power_w": ed.cpu_power,
-                        "gpu_power_w": ed.gpu_power,
-                        "duration_sec": ed.duration,
-                }
-                final_result.profiling_metrics['energy'] = energy_dict
-                yield {"event": "codecarbon", "energy_dict" : energy_dict}
-
         if self.config.save_state:
             self._write_execution_artifacts(result_state=final_result)
 
+        # Global tracking stop
+        tracking.stop_tracking()
+
         yield {"event": "completed", "state": final_result}
-        return
+        return final_result
 
     def check_ollama(self):
         with self.trace_helper.start_span(

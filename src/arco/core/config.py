@@ -10,6 +10,8 @@ from typing import Literal, Dict, Any, List, TYPE_CHECKING
 
 import numpy as np
 import yaml
+from pandas import DataFrame
+
 from .exceptions import ConfigException
 
 if TYPE_CHECKING:
@@ -47,7 +49,9 @@ class ArcoConfig:
     visualization_goal: str = ""  # a specific goal for visualization
     run_id: str = field(
         default_factory=lambda: generate_readable_id())  # the identifier for this run, generated if not provided
-    orchestration_enabled: bool = False  # graph mode, if
+    orchestration_enabled: bool = False  # graph mode, if true the orchestrator is enabled
+    empower: bool = True # whether if the arco empowerment is active
+    enable_budget_controller: bool = True # whether if the arco budget controller is active
     provider: Literal["openai", "ollama"] = "openai"  # global model provider
     model: str = "gpt-4o-mini"  # the model string
     ollama_url: str = "http://localhost:11434"  # the url to the ollama server
@@ -75,11 +79,14 @@ class ArcoConfig:
     # #
     config_path: str | None = None  # The path to this config YAML file
 
+    def update_prompt(self, prompt: str, visualization_goal: str | None = None):
+        return dataclasses.replace(self, prompt=prompt, visualization_goal=visualization_goal)
+
     def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
         """Get configuration for a specific agent by type"""
         res = self.agent_configs.get(agent_type)
         if not res:
-            raise ConfigException()
+            raise ConfigException(f"The requested agent_config is missing. Requested Agent: {agent_type.value}")
         return res
 
     def set_agent_config(self, agent_type: AgentType, config: AgentConfig) -> None:
@@ -90,6 +97,10 @@ class ArcoConfig:
         """Create a deep copy of this configuration."""
         from copy import deepcopy
         return deepcopy(self)
+
+    def set_gt(self, gt_data: dict[str, Any]):
+        for agent_config in self.agent_configs.values():
+            agent_config.set_gt(gt_data)
 
     @classmethod
     def from_yaml(cls, yaml_path: str) -> ArcoConfig:
@@ -130,7 +141,7 @@ class ArcoConfig:
             raise ConfigException("Prompt should be specified in the yaml")
 
         # Create intermediate config containing resolved globals so agents can inherit from it
-        temp_config = cls(**global_params) # pyrefly: ignore [missing-argument]
+        temp_config = cls(**global_params)  # pyrefly: ignore [missing-argument]
 
         from arco.core.state import AgentType
         agent_configs = {}
@@ -172,7 +183,7 @@ class AgentConfig:
     agent_name: str
 
     # Optional per-step LLM overrides
-    _DUMMY_STR = "_DUMMY_STR" # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
+    _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
     provider: str = _DUMMY_STR
     model: str = _DUMMY_STR
     ollama_url: str = _DUMMY_STR
@@ -194,13 +205,14 @@ class AgentConfig:
     no_repeat_ngram_size: int | None = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
 
     # GT Evaluation configuration
-    gt_csv_path = None  # Retriever gt csv path
-    gt_columns: List[str] | None = None  # Retriever gt_columns for alignment
+    run_gt_eval: bool = False
+    gt_data: DataFrame | None = None  # Retriever gt dataframe
+    gt_columns: List[str] | None = None  # Retriever gt_columns for alignment (from gt_data)
     gt_metric = None  # Analyzer evaluation technique
-    gt_text = None  # Analyzer gt text
-    gt_config = None  # Visualizer chart configuration gt
+    gt_analysis = None  # Analyzer gt text
+    gt_chart_config = None  # Visualizer chart configuration gt
     gt_code = None  # Visualizer code gt
-    gt_requirements = None  # Visualizer visual requirements gt
+    gt_visual_requirements = None  # Visualizer visual requirements gt
 
     # Caching control
     use_cache: bool | None = None
@@ -248,7 +260,7 @@ class AgentConfig:
         return cls(**filtered)
 
     @classmethod
-    def from_yaml(cls, yaml_path: str, agent_name, inherit_globals_from : ArcoConfig | None = None) -> AgentConfig:
+    def from_yaml(cls, yaml_path: str, agent_name, inherit_globals_from: ArcoConfig | None = None) -> AgentConfig:
         with open(yaml_path, 'r') as f:
             raw = yaml.safe_load(f)
 
@@ -277,6 +289,36 @@ class AgentConfig:
                 config.top_p_max = config.top_p_min
 
         return config
+
+    def set_gt(self, gt_dict: dict[str, Any]):
+        from arco.core.state import AgentType
+        if self.agent_name == AgentType.RETRIEVER:
+            if "gt_data" in gt_dict.keys():
+                import pandas as pd
+                csv = pd.io.common.StringIO(gt_dict["gt_data"])
+            elif "gt_csv_path" in gt_dict.keys():
+                import pandas as pd
+                with open(gt_dict["gt_csv_path"], "r", encoding="utf-8") as f:
+                    csv = pd.io.common.StringIO(f.read())
+            else:
+                self.run_gt_eval = False
+                return
+            self.gt_data = pd.read_csv(csv)
+            self.gt_columns = [c.lower() for c in self.gt_data.columns]
+            self.run_gt_eval = True
+        elif self.agent_name == AgentType.ANALYZER:
+            if "gt_analysis" in gt_dict.keys():
+                self.gt_analysis = gt_dict["gt_analysis"]
+                self.run_gt_eval = True
+            if "gt_metric" in gt_dict.keys():
+                self.gt_metric = gt_dict["gt_metric"]
+        elif self.agent_name == AgentType.VISUALIZER:
+            if "gt_chart_config" in gt_dict.keys() and "gt_chart_code" in gt_dict.keys():
+                self.gt_chart_config = gt_dict["gt_chart_config"]
+                self.gt_code = gt_dict["gt_chart_code"]
+                self.run_gt_eval = True
+            if "gt_visual_requirements" in gt_dict.keys():
+                self.gt_visual_requirements = gt_dict["gt_visual_requirements"]
 
     def __rich_repr__(self):
         # Rich automatically detects this method when you pass the object to Pretty()

@@ -71,12 +71,13 @@ class VisualizerEvaluator(Evaluator):
     }}"""
 
     def __init__(self, agent_config: AgentConfig):
+        super().__init__(agent_config)
         self.judge_model = agent_config.model
         self.provider = agent_config.provider
         self.ollama_url = agent_config.ollama_url
-        self.gt_config = agent_config.gt_config
+        self.gt_config = agent_config.gt_chart_config
         self.gt_code = agent_config.gt_code
-        self.gt_requirements = agent_config.gt_requirements
+        self.gt_visual_requirements = agent_config.gt_visual_requirements
 
     @staticmethod
     def _parse_vis_no_gt_judge_json(raw_text: str) -> Dict:
@@ -287,7 +288,7 @@ class VisualizerEvaluator(Evaluator):
 
     @staticmethod
     def judge_from_ground_truth(state: State, llm: BaseChatModel, gt_config: str = None,
-                                gt_code: str = None, explicit_requirements: Dict = None) -> State:
+                                gt_code: str = None, gt_visual_requirements: Dict = None) -> State:
         """
         Evaluate visualization quality using LLM-as-a-Judge.
 
@@ -296,15 +297,15 @@ class VisualizerEvaluator(Evaluator):
             llm: the BaseChatModel used for LLM-as-a-Judge inference.
             gt_config: Expected chart configuration dict.
             gt_code: Expected chart code string.
-            explicit_requirements: Optional dict of explicit styling requirements.
+            gt_visual_requirements: Optional dict of explicit styling requirements.
         """
 
         last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
         # Format explicit requirements for display
-        if explicit_requirements:
+        if gt_visual_requirements:
             req_display = "\n".join([
                 f"- {k}: {v}" if v is not None else f"- {k}: (not specified - ignore)"
-                for k, v in explicit_requirements.items()
+                for k, v in gt_visual_requirements.items()
             ])
         else:
             req_display = "None specified - ignore all styling requirements"
@@ -332,12 +333,11 @@ class VisualizerEvaluator(Evaluator):
         raw_content = response.content if hasattr(response, "content") else str(response)
 
         # Parse JSON response
-        evaluation = VisualizerEvaluator._parse_vis_judge_json(raw_content)
+        evaluation_dict = VisualizerEvaluator._parse_vis_judge_json(raw_content)
 
         # Compute overall score
-        overall_score = VisualizerEvaluator._compute_visualization_score(evaluation)
-        evaluation["overall_score"] = overall_score
-        last_visualizer_answer.evaluation = evaluation
+        overall_score = VisualizerEvaluator._compute_visualization_score(evaluation_dict)
+        last_visualizer_answer.gt_evaluation = Evaluation(score=overall_score)
         return
 
     def _gt_eval(self, state: State):
@@ -347,5 +347,5 @@ class VisualizerEvaluator(Evaluator):
             llm=llm,
             gt_config=self.gt_config,
             gt_code=self.gt_code,
-            explicit_requirements=self.gt_requirements,
+            gt_visual_requirements=self.gt_visual_requirements,
         )

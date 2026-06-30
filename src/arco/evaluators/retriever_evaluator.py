@@ -80,7 +80,8 @@ def compare_dataframes_iou(df1: DataFrame, df2: DataFrame, atol: float = 1e-2) -
 
 class RetrieverEvaluator(Evaluator):
     def __init__(self, config: AgentConfig):
-        self.gt_csv_path = config.gt_csv_path if config.gt_csv_path else None
+        super().__init__(config)
+        self.gt_data = config.gt_data
 
     def _batch_eval(self, states: List[State]):
         """
@@ -110,13 +111,13 @@ class RetrieverEvaluator(Evaluator):
             for j in range(len(dfs)):
                 if i == j or dfs[j] is None:
                     continue
-                total += compare_dataframes_iou(dfs[i], dfs[j]) # pyrefly: ignore [bad-argument-type]
+                total += compare_dataframes_iou(dfs[i], dfs[j])  # pyrefly: ignore [bad-argument-type]
                 count += 1
             answers[i].evaluation = Evaluation(
                 score=total / count if count > 0 else 0.0
             )
 
-        return True # if success
+        return True  # if success
 
     def _gt_eval(self, state: State):
         """
@@ -124,12 +125,12 @@ class RetrieverEvaluator(Evaluator):
         compare_dataframes_iou, which handles:
         - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
         """
-        ans_to_eval : Answer | None = state.get_last_answer(AgentType.RETRIEVER)
+        ans_to_eval: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
         if ans_to_eval is None:
             raise ValueError("Answer is None")
         ans_ret: Answer = ans_to_eval
 
-        if self.gt_csv_path is None:
+        if self.gt_data is None:
             ans_ret.gt_evaluation = Evaluation(score=0.0)
             return
 
@@ -137,17 +138,10 @@ class RetrieverEvaluator(Evaluator):
             raise ValueError(
                 f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}")
 
-        data_df = ans_ret.data_df
-
-        if data_df is None:
-            ans_ret.gt_evaluation = Evaluation(score=0.0)
-            return
-
-        result_df = data_df.copy()
+        result_df = self.gt_data.copy()
         result_df.columns = [c.lower() for c in result_df.columns]
 
-        gt_df: DataFrame = pd.read_csv(gt_csv_path)  # type: ignore
-        gt_df_cmp = gt_df.copy()
+        gt_df_cmp = self.gt_data.copy()
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
         score = compare_dataframes_iou(result_df, gt_df_cmp)

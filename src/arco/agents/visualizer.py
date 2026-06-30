@@ -503,8 +503,8 @@ class Visualizer(Agent):
     Return ONLY the Python code. No markdown formatting. No code fences. No explanations. Just the executable Python code.
     """
 
-    def __init__(self, trace_helper: TracingHelper):
-        super().__init__(trace_helper)
+    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
+        super().__init__(trace_helper, empower)
         self.type = AgentType.VISUALIZER
 
     @staticmethod
@@ -720,6 +720,6 @@ class Visualizer(Agent):
         return VisualizerEvaluator(agent_config=agent_config)
 
     def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        if agent_config.gt_config and agent_config.gt_code and agent_config.gt_requirements:
+        if agent_config.gt_chart_config and agent_config.gt_code and agent_config.gt_visual_requirements:
             return True
         return False

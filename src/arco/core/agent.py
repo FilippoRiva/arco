@@ -15,19 +15,24 @@ from arco import llm_tools
 from arco.tracing import _summarize_for_trace, truncate_trace_text
 from .evaluator import Evaluator
 from .empower import empower
-from .state import State, AgentType
+from .state import State, AgentType, ProfilingData
 from .exceptions import AgentException
+
+from arco import tracking
 
 if TYPE_CHECKING:
     from arco.tracing import TracingHelper
-    from arco.llm_tools import LLMCallAccumulator, CoTRefiner
+    from arco.llm_tools import CoTRefiner
+    from ..tracking import LLMCallAccumulator
     from .config import AgentConfig
 
 class Agent:
     _COT_SIMILARITY_THRESHOLD = 0.95
+    _empower : bool = False
 
-    def __init__(self, trace_helper: TracingHelper):
+    def __init__(self, trace_helper: TracingHelper, empower: bool = True):
         self.trace_helper: TracingHelper = trace_helper
+        self._empower: bool = empower
         self.type: AgentType = AgentType.NONE
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
@@ -232,7 +237,7 @@ class Agent:
         Args:
             state: Current agent state
         Returns:
-            Updated state dict from the best run
+            The new resulting State of the best execution
         """
 
         agent_config: AgentConfig = state.get_agent_config(self.type)
@@ -290,28 +295,22 @@ class Agent:
             evaluator: Evaluator = self.get_evaluator(agent_config)
             results, best_result = evaluator.evaluate_and_select(results=results)
 
-            # Evaluate from gt for tracing purposes
-            if self.can_evaluate_from_gt(agent_config):
-                evaluator.evaluate_ground_truth(results=results)
-
             ###
             # Profiling
             ###
-            best_result = best_result.set_profiling_metrics(
-                total_llm_timings=llm_acc.total_time,
-                agent_t0=agent_t0,
-                agent_type=self.type,
-                energy=llm_acc.total_energy,
-            )
+            total_agent_time = time.perf_counter() - agent_t0
+            profiling_data = ProfilingData(total_time= total_agent_time,
+                                           llm_time = llm_acc.total_time)
+            profiling_data = profiling_data.add_energy_data(energy_dict=llm_acc.energy_dict)
+            best_result = best_result.set_profiling_data(profiling_data, self.type)
 
             return best_result
 
 
     def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
-        return Evaluator()
-
-    def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        return False
+        return Evaluator(agent_config)
 
     def get_node(self) -> Runnable[State, State]:
-        return empower(RunnableLambda(self.get_config_and_execute))
+        if self._empower:
+            return empower(RunnableLambda(self.get_config_and_execute))
+        return RunnableLambda(self.get_config_and_execute)

@@ -26,6 +26,16 @@
           "type": "boolean",
           "description": "Toggle to determine the graph used for execution. If true the workflow becomes LLM-orchestrated"
         },
+        "empower": {
+          "type": "boolean",
+          "description": "Toggle to determine if the arco empowerment is enabled. Defaults to true",
+          "default": "true"
+        },
+        "enable_budget_controller": {
+          "type": "boolean",
+          "description": "Toggle to determine if the arco budget controller is enabled. Defaults to true",
+          "default": "true"
+        },
         "provider": {
           "type": "string",
           "enum": [

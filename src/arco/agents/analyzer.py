@@ -128,8 +128,8 @@ class Analyzer(Agent):
     Provide a direct, concise answer in natural language (2-3 sentences). Focus only on facts from the data.
     """
 
-    def __init__(self, trace_helper: TracingHelper):
-        super().__init__(trace_helper)
+    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
+        super().__init__(trace_helper, empower)
         self.type = AgentType.ANALYZER
 
     @staticmethod
@@ -204,6 +204,6 @@ class Analyzer(Agent):
         return AnalyzerEvaluator(agent_config)
 
     def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        if agent_config.gt_text and agent_config.gt_metric:
+        if agent_config.gt_analysis and agent_config.gt_metric:
             return True
         return False

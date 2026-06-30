@@ -1,14 +1,11 @@
-from copy import deepcopy
-
-from pandas import DataFrame
 import dataclasses
 import io
-import time
 from dataclasses import dataclass, field, replace, asdict
 from enum import Enum
 from typing import List, Optional, Any
 
 import pandas as pd
+from pandas import DataFrame
 
 from .config import AgentConfig
 from .evaluator import Evaluation
@@ -20,6 +17,63 @@ class AgentType(str, Enum):
     VISUALIZER = "Visualizer"
     ORCHESTRATOR = "Orchestrator"
     NONE = None
+
+
+@dataclass(frozen=True)
+class ProfilingData:
+    total_time: float | None = None
+    llm_time: float | None = None
+    energy_consumed_kwh: float | None = None
+    cpu_energy_kwh: float | None = None
+    gpu_energy_kwh: float | None = None
+    ram_energy_kwh: float | None = None
+    emissions_kg_co2: float | None = None
+
+    def set_total_time(self, total_time):
+        return replace(self, total_time=total_time)
+
+    def set_llm_time(self, llm_time):
+        return replace(self, llm_time=llm_time)
+
+    def add_total_time(self, time):
+        return replace(self, total_time=(self.total_time or 0) + time)
+
+    def add_llm_time(self, llm_time):
+        return replace(self, llm_time=(self.llm_time or 0) + llm_time)
+
+    def set_energy_data(self, energy_dict: dict):
+        return replace(self,
+                       energy_consumed_kwh=energy_dict["energy_consumed_kwh"],
+                       cpu_energy_kwh=energy_dict["cpu_energy_kwh"],
+                       gpu_energy_kwh=energy_dict["gpu_energy_kwh"],
+                       ram_energy_kwh=energy_dict["ram_energy_kwh"],
+                       emissions_kg_co2=energy_dict["emissions_kg_co2"],
+                       )
+
+    def add_energy_data(self, energy_dict: dict):
+        return replace(
+            self,
+            energy_consumed_kwh=(self.energy_consumed_kwh or 0) + energy_dict.get("energy_consumed_kwh", 0),
+            cpu_energy_kwh=(self.cpu_energy_kwh or 0) + energy_dict.get("cpu_energy_kwh", 0),
+            gpu_energy_kwh=(self.gpu_energy_kwh or 0) + energy_dict.get("gpu_energy_kwh", 0),
+            ram_energy_kwh=(self.ram_energy_kwh or 0) + energy_dict.get("ram_energy_kwh", 0),
+            emissions_kg_co2=(self.emissions_kg_co2 or 0) + energy_dict.get("emissions_kg_co2", 0),
+        )
+
+    def get_energy_dict(self):
+        return {
+            "energy_consumed_kwh": self.energy_consumed_kwh,
+            "cpu_energy_kwh": self.cpu_energy_kwh,
+            "gpu_energy_kwh": self.gpu_energy_kwh,
+            "ram_energy_kwh": self.ram_energy_kwh,
+            "emissions_kg_co2": self.emissions_kg_co2
+        }
+
+    def add_profiling_data(self, profiling_data: ProfilingData):
+        res = self.add_total_time(profiling_data.total_time)
+        res = res.add_llm_time(profiling_data.llm_time)
+        res = res.add_energy_data(profiling_data.get_energy_dict())
+        return res
 
 
 @dataclass
@@ -55,7 +109,10 @@ class Answer:
     error: str | None = None
 
     # LLM generation info
-    logprobs : list[float | int] | None = None
+    logprobs: list[float | int] | None = None
+
+    # Profiling Data
+    profiling_data: ProfilingData = field(default_factory=ProfilingData)
 
     def __str__(self) -> str:
         """
@@ -110,9 +167,11 @@ class Answer:
             ]
         if ans.data_str:
             ans.data_df = pd.read_csv(io.StringIO(ans.data_str))
+        if ans.profiling_data:
+            ans.profiling_data = ProfilingData(dictionary["profiling_data"])
         return ans
 
-    def copy(self)-> Answer:
+    def copy(self) -> Answer:
         return Answer.from_dict(self.to_dict())
 
 
@@ -133,7 +192,8 @@ class State:
     answers: List[Answer] = field(default_factory=list)
 
     # List of metrics profiling the current state
-    profiling_metrics: dict[str, Any] = field(default_factory=dict)
+    global_profiling_data: ProfilingData = field(default_factory=ProfilingData)
+    agents_profiling_data: dict[AgentType, ProfilingData] = field(default_factory=dict)
 
     # Caching
     cached_results: Optional[dict[AgentType, Answer]] = None  # Preloaded results from similar past runs
@@ -165,14 +225,14 @@ class State:
             return next((item for item in reversed(answers) if item.agent_id == agent_type), None)
         return answers[-1] if len(answers) > 0 else None
 
-    def replace_last_answer(self, answer: Answer)-> State:
+    def replace_last_answer(self, answer: Answer) -> State:
         last_answer = self.get_last_answer()
         if not last_answer:
-            return dataclasses.replace(self, answers = [answer])
+            return dataclasses.replace(self, answers=[answer])
         new_answers = [answer.copy() for answer in self.answers]
         new_answers.pop(-1)
         new_answers.append(answer)
-        return dataclasses.replace(self, answers = new_answers)
+        return dataclasses.replace(self, answers=new_answers)
 
     def get_last_agent_config(self, agent_type: AgentType | None = None) -> AgentConfig | None:
         if not agent_type:
@@ -183,7 +243,8 @@ class State:
 
     def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
         if agent_type not in self.agent_configs.keys():
-            Exception(f"The specified agent type ({agent_type}) is not defined in the {AgentType.__name__} enum. Please provide a known agent_type")
+            Exception(
+                f"The specified agent type ({agent_type}) is not defined in the {AgentType.__name__} enum. Please provide a known agent_type")
         return self.agent_configs[agent_type]
 
     def get_last_execution_outputs(self) -> tuple[Answer | None, AgentConfig | None]:
@@ -205,30 +266,24 @@ class State:
             f"({a.agent_id.value}: {a.message[:(max_message_length - 3)] + '...' if len(a.message) > max_message_length else a.message})"
             for a in answers])
 
-    def set_profiling_metrics(self, total_llm_timings: float, agent_t0: float, agent_type: AgentType,
-                              energy: dict[str, float] | None = None) -> State:
-        profiling_metrics: dict[str, dict[str, float | dict]] = {}
+    def set_profiling_data(self, profiling_data: ProfilingData, agent_type: AgentType) -> State:
+        # Global level profiling
+        global_profiling_data = self.global_profiling_data.add_profiling_data(profiling_data)
 
-        # Profiling : total time
-        agent_timing = time.perf_counter() - agent_t0
-        profiling_metrics['agent_timings_sec'] = {
-            agent_type.value: round(agent_timing, 3)
-        }
+        # Agent level profiling
+        agents_profiling_data = self.agents_profiling_data.copy()
+        if agent_type in self.agents_profiling_data:
+            agents_profiling_data[agent_type] = agents_profiling_data[agent_type].add_profiling_data(profiling_data)
+        else:
+            agents_profiling_data[agent_type] = profiling_data
 
-        # Profiling : llm time
-        profiling_metrics['agent_llm_timings_sec'] = {
-            agent_type.value: round(total_llm_timings, 3)
-        }
-
-        # Profiling : codecarbon
-        if energy:
-            profiling_metrics['codecarbon_energy'] = {
-                agent_type.value: energy
-            }
+        # Answer level profiling
+        self.get_last_answer(agent_type).profiling_data = profiling_data
 
         return replace(
             self,
-            profiling_metrics=profiling_metrics
+            global_profiling_data=global_profiling_data,
+            agents_profiling_data=agents_profiling_data
         )
 
     def to_dict(self):
@@ -264,4 +319,3 @@ class State:
             'cached_results': cached_results
         })
         return State(**dictionary)
-

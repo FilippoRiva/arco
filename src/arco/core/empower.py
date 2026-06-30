@@ -84,20 +84,27 @@ def arco_evaluation(state: State, config: RunnableConfig) -> State:
     answer.perplexity=perplexity
     return state.replace_last_answer(answer)
 
+def budget_controller_is_enabled(config: RunnableConfig) -> bool:
+    return config.get("configurable", {}).get("enable_budget_controller", False) == True
 
 def budget_controller(state: State, config: RunnableConfig) -> State:
     parent_node = get_parent_node(config)
+    if not budget_controller_is_enabled(config):
+        return state
+
     answer = state.get_last_answer(parent_node)
     if not answer:
-        raise Exception("No answer found during budget controller")
+        raise Exception("No answer found during budget controller phase")
     answer = cast(EmpoweredAnswer, answer)
 
     if parent_node == AgentType.RETRIEVER:
         max_perplexity = 2
     elif parent_node == AgentType.ANALYZER:
-        max_perplexity = 15.0
+        max_perplexity = 15
     elif parent_node == AgentType.VISUALIZER:
         max_perplexity = 3
+    elif parent_node == AgentType.ORCHESTRATOR:
+        max_perplexity = 1.3
     else :
         raise Exception(f"The Budget Controller does not implement answer evaluation for this type of Agent : {parent_node.value}")
 

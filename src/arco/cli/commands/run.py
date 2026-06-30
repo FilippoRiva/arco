@@ -108,17 +108,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     if args.interactive:
         config = _interactive_configure(config)
 
-    configs_to_show = {f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()}
-    configs_to_show.pop("schema")
-    configs_to_show.pop("agent_configs")
-
-    # Visualize run configuration
-    run_config_data = [
-        *[(key, value) for key, value in configs_to_show.items()],
-        ("verbose", args.verbose),
-        ("interactive", args.interactive)
-    ]
-    viz.print_config_table(run_config_data)
+    viz.print_config_table(config, verbose=arg.verbose, interactive=args.interactive)
     console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
 
     ## Run the agent
@@ -127,4 +117,4 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     )
 
     # runs the agent with a visualization logic in rich
-    viz.agent_events_visualizer(agent.run(), verbose=args.verbose)
+    viz.agent_events_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)

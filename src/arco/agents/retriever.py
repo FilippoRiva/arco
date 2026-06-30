@@ -15,7 +15,7 @@ from arco.evaluators import RetrieverEvaluator
 from arco.llm_tools import CoTRefiner
 
 if TYPE_CHECKING:
-    from arco.llm_tools import LLMCallAccumulator
+    from arco.tracking import LLMCallAccumulator
     from arco.data import DatabaseSchema
     from arco.tracing import TracingHelper
     from arco.core import AgentConfig, Evaluator, State
@@ -256,8 +256,8 @@ class Retriever(Agent):
     {{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
     """
 
-    def __init__(self, trace_helper: TracingHelper, schema: DatabaseSchema):
-        super().__init__(trace_helper)
+    def __init__(self, trace_helper: TracingHelper, schema: DatabaseSchema, empower: bool = False):
+        super().__init__(trace_helper, empower)
         self.type = AgentType.RETRIEVER
         self.schema = schema
 

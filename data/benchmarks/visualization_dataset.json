@@ -9,7 +9,7 @@
       "title": "Sales Trend for November 2021"
     },
     "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-    "explicit_requirements": {
+    "gt_visual_requirements": {
       "color": null,
       "title_format": null,
       "label_format": null,
@@ -27,7 +27,7 @@
       "title": "Monthly Revenue 2023"
     },
     "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-    "explicit_requirements": {
+    "gt_visual_requirements": {
       "color": null,
       "title_format": null,
       "label_format": null,
@@ -45,7 +45,7 @@
       "title": "Top 20 SKUs by Units Sold"
     },
     "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data)\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.tight_layout()\nplt.show()",
-    "explicit_requirements": {
+    "gt_visual_requirements": {
       "color": null,
       "title_format": null,
       "label_format": null,
@@ -63,7 +63,7 @@
       "title": "Top 10 Stores by Revenue"
     },
     "gt_chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[config['x_axis']]\ny_data = data_df[config['y_axis']]\n\nplt.bar(x_data, y_data, color='red')\nplt.xlabel(config['x_axis'])\nplt.ylabel(config['y_axis'])\nplt.title(config['title'])\nplt.xticks(rotation=45, ha='right')\nplt.tight_layout()\nplt.show()",
-    "explicit_requirements": {
+    "gt_visual_requirements": {
       "color": "red",
       "title_format": null,
       "label_format": null,

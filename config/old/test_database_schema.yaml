@@ -1,8 +1,0 @@
-# =============================================================================
-# DATABASE SCHEMA
-# =============================================================================
-# Each entry is a path to a per-table schema YAML file.
-# Paths are resolved relative to this config file's directory.
-schema:
-  compact_threshold: 5
-  data_dir: "../data"          # scans for all *_schema.yaml files in this directory

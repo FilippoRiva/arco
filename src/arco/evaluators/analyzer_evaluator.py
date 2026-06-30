@@ -216,11 +216,12 @@ class AnalyzerEvaluator(Evaluator):
     }}"""
 
     def __init__(self, agent_config: AgentConfig):
+        super().__init__(agent_config)
         self.provider = agent_config.provider
         self.judge_model = agent_config.model
         self.ollama_url = agent_config.ollama_url
-        self.metric = agent_config.gt_metric
-        self.gt_text = agent_config.gt_text
+        self.gt_metric = agent_config.gt_metric
+        self.gt_analysis = agent_config.gt_analysis
 
     @staticmethod
     def _parse_judge_json(raw_text: str) -> Dict:
@@ -335,19 +336,19 @@ class AnalyzerEvaluator(Evaluator):
         if not analysis:
             raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
 
-        if self.metric == "spice":
-            score = spice_score_java(analysis, self.gt_text, spice_jar=None)
+        if self.gt_metric == "spice":
+            score = spice_score_java(analysis, self.gt_analysis, spice_jar=None)
             evaluation = Evaluation(score=score)
-        elif self.metric == "judge_gt":
+        elif self.gt_metric == "judge":
             llm = get_llm(provider=self.provider, model=self.judge_model, ollama_url=self.ollama_url)
             evaluation = AnalyzerEvaluator.judge_from_ground_truth(
                 state=state,
                 llm=llm,
-                gt_analysis=self.gt_text,
+                gt_analysis=self.gt_analysis,
             )
         else:
-            score = bleu_score(analysis, self.gt_text)
+            score = bleu_score(analysis, self.gt_analysis)
             evaluation = Evaluation(score=score)
 
-        last_analyzer_answer.evaluation = evaluation
+        last_analyzer_answer.gt_evaluation = evaluation
         return

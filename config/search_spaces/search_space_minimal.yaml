@@ -40,7 +40,7 @@ global:
 #   create_visualization — code generation: needs exactness → low temp, generous tokens
 # ---------------------------------------------------------------------------
 defaults:
-  lookup_sales_data:
+  Retriever:
     n: 1
     cot_n: 1
     bon_param: "temperature"
@@ -50,7 +50,7 @@ defaults:
     top_p_max: 1.0
     max_tokens: 2000
 
-  analyzing_data:
+  Analyzer:
     n: 1
     cot_n: 1
     bon_param: "temperature"
@@ -60,7 +60,7 @@ defaults:
     top_p_max: 1.0
     max_tokens: 3000
 
-  create_visualization:
+  Visualizer:
     n: 1
     cot_n: 1
     bon_param: "temperature"
@@ -71,9 +71,8 @@ defaults:
     max_tokens: 2000
 
 # decide_tool is kept fixed (n=1, routing doesn't benefit from BoN)
-
 steps:
-  lookup_sales_data:
+  Retriever:
     # --- Universal parameters ---
     n: [1, 2, 3, 4]
     bon_param: ["temperature", "top_p"]
@@ -90,7 +89,7 @@ steps:
     num_beams: [1, 2]
     no_repeat_ngram_size: [null, 2, 3]
 
-  analyzing_data:
+  Analyzer:
     # --- Universal parameters ---
     n: [1, 2, 3]
     bon_param: ["temperature", "top_p"]
@@ -107,7 +106,7 @@ steps:
     num_beams: [1, 2]
     no_repeat_ngram_size: [null, 2, 3]
 
-  create_visualization:
+  Visualizer:
     # --- Universal parameters ---
     n: [1, 2, 3, 4]
     bon_param: ["temperature", "top_p"]

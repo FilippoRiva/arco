@@ -36,11 +36,16 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
+from arco.cli.console import console
+from arco.core import AgentType
+
+from .bench import run_benchmark
+
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # The three ablation phases, in execution order
-_VARY_STEPS = ["lookup_sales_data", "analyzing_data", "create_visualization"]
+_VARY_STEPS = [AgentType.RETRIEVER.value, AgentType.ANALYZER.value, AgentType.VISUALIZER.value]
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +62,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
     )
 
     parser.add_argument("dataset", help="Path to benchmark dataset JSON")
+    parser.add_argument("schema", help="Path to the database schemas to parse")
     parser.add_argument("search_space", help="Path to search_space.yaml")
     parser.add_argument(
         "--n-configs",
@@ -82,7 +88,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
     parser.add_argument(
         "--vary-step",
         default=None,
-        choices=_VARY_STEPS,
+        choices=[AgentType.RETRIEVER.value, AgentType.ANALYZER.value, AgentType.VISUALIZER.value],
         help=(
             "Run only this phase (for resuming or debugging). "
             "Omit to run all three phases in sequence (default behaviour)."
@@ -106,15 +112,10 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # Script Handler
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
-    with console.status("[bold cyan]Loading Arco...[/bold cyan]", spinner="dots"):
-        from core.config import ArcoConfig
-        from evaluators import aggregate_bulk_results
-        from evaluators import run_benchmark
-        from evaluators import SearchSpace
-
     run_bulk_benchmark(
-        args.dataset,
-        args.search_space,
+        dataset_path=args.dataset,
+        search_space_path=args.search_space,
+        schema=args.schema,
         n_configs=args.n_configs,
         seed=args.seed,
         think_time_mean=args.think_time,
@@ -134,11 +135,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
 def _print_config_summary(config_id: int, cfg: ArcoConfig, n_total: int) -> None:
     """Print a detailed multi-line summary for each sampled config."""
-    label = {
-        "lookup_sales_data": "lookup_sales_data ",
-        "analyzing_data": "analyzing_data    ",
-        "create_visualization": "create_vis        ",
-    }
     is_openai = cfg.provider in ("openai",)
     print(f"  CONFIG {config_id + 1}/{n_total}  model={cfg.model}  provider={cfg.provider}")
     for step in _VARY_STEPS:
@@ -149,7 +145,7 @@ def _print_config_summary(config_id: int, cfg: ArcoConfig, n_total: int) -> None
             bon_str = f"bon=top_p        temp={sc.temp_min:.2f}(fixed)  P[{sc.top_p_min:.2f}→{sc.top_p_max:.2f}]"
         else:  # top_k
             bon_str = f"bon=top_k        temp={sc.temp_min:.2f}(fixed)  top_p={sc.top_p_min:.2f}(fixed)  K[{sc.top_k_min}→{sc.top_k_max}]"
-        line = f"    {label[step]}: n={sc.n}  cot_n={sc.cot_n}  {bon_str}  max_tokens={sc.max_tokens}"
+        line = f"    {step}: n={sc.n}  cot_n={sc.cot_n}  {bon_str}  max_tokens={sc.max_tokens}"
         if not is_openai:
             top_k_str = f"top_k={sc.top_k_min}" if sc.bon_parameter != "top_k" else "(BoN axis)"
             line += f"  | {top_k_str}  beams={sc.num_beams}  no_repeat_ngram={sc.no_repeat_ngram_size}"
@@ -182,7 +178,7 @@ def _print_summary_table(summary: pd.DataFrame) -> None:
 
 def _run_phase(
         dataset_path: str,
-        search_space_path: str,
+        search_space: SearchSpace,
         vary_step: str,
         phase_dir: Path,
         *,
@@ -206,13 +202,12 @@ def _run_phase(
     """
     phase_dir.mkdir(parents=True, exist_ok=True)
 
-    space = SearchSpace(search_space_path)
-    configs: List[ArcoConfig] = space.sample(
+    configs: List[ArcoConfig] = search_space.sample(
         n_configs=n_configs, seed=seed, base_config=base_config, vary_step=vary_step
     )
 
     # Persist manifest before any run starts
-    records = space.configs_to_records(configs)
+    records = search_space.configs_to_records(configs)
     with open(phase_dir / "configs_sampled.json", "w", encoding="utf-8") as f:
         json.dump(records, f, indent=2)
     print(f"Sampled {n_configs} configs → {phase_dir / 'configs_sampled.json'}")
@@ -245,7 +240,7 @@ def _run_phase(
         t_start = time.perf_counter()
         df_config = run_benchmark(
             dataset_path,
-            agent_config=agent_config,
+            config=agent_config,
             save_dir=str(config_dir),
             save_execution_artifacts=True,
             enable_codecarbon=enable_codecarbon,
@@ -282,12 +277,12 @@ def run_bulk_benchmark(
         dataset_path: str,
         search_space_path: str,
         *,
+        schema: str = "../data",
         n_configs: int = 3,
         seed: int = 42,
         think_time_mean: float = 5.0,
         model: str = "gpt-4o-mini",
         provider: str = "openai",
-        openai_api_key: Optional[str] = None,
         save_dir: str = "./evaluation/bulk_results",
         resume: bool = False,
         vary_step: Optional[str] = None,
@@ -321,8 +316,6 @@ def run_bulk_benchmark(
         LLM model name for all sampled configs.
     provider : str
         LLM provider ("openai" or "ollama").
-    openai_api_key : str, optional
-        OpenAI API key; defaults to OPENAI_API_KEY env var.
     save_dir : str
         Root directory for all output.
     resume : bool
@@ -337,13 +330,19 @@ def run_bulk_benchmark(
     pd.DataFrame
         Combined summary across all phases (one row per config per phase).
     """
+    with console.status("[bold cyan]Loading Arco...[/bold cyan]", spinner="dots"):
+        from arco.core import ArcoConfig
+        from .search_space import SearchSpace
+
     save_path = Path(save_dir)
     save_path.mkdir(parents=True, exist_ok=True)
 
+    search_sp = SearchSpace(search_space_path)
     base_config = ArcoConfig(
+        prompt=None,
+        schema=schema,
         model=model,
         provider=provider,
-        openai_api_key=openai_api_key or os.environ.get("OPENAI_API_KEY"),
     )
 
     steps_to_run = [vary_step] if vary_step else _VARY_STEPS
@@ -368,7 +367,7 @@ def run_bulk_benchmark(
 
         summary = _run_phase(
             dataset_path,
-            search_space_path,
+            search_sp,
             step,
             phase_dir,
             n_configs=n_configs,

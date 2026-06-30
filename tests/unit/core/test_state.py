@@ -134,7 +134,7 @@ def test_profiling_metrics(base_state_with_mock):
 
     assert result, "Shouldn't be None"
     assert result != base_state_with_mock, "Should be a different object"
-    assert result.profiling_metrics, "Shouldn't be None"
+    assert result.global_profiling_data, "Shouldn't be None"
 
 def test_dict(base_state_with_mock, first_answer):
     answer_dict = first_answer.to_dict()

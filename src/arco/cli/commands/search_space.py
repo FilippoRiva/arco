@@ -23,15 +23,15 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import yaml
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from arco.core import AgentConfig, AgentType
 
-from core.config import ArcoConfig, AgentConfig  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Default max_tokens per step when not specified in YAML
 _STEP_MAX_TOKENS: Dict[str, int] = {
-    "lookup_sales_data": 2000,
-    "analyzing_data": 3000,
-    "create_visualization": 2000,
+    AgentType.RETRIEVER : 2000,
+    AgentType.ANALYZER: 3000,
+    AgentType.VISUALIZER: 2000,
 }
 
 # Providers that do NOT support top_k / num_beams / no_repeat_ngram_size
@@ -91,12 +91,12 @@ class SearchSpace:
     # ------------------------------------------------------------------
 
     def _sample_step(
-        self,
-        step_name: str,
-        step_spec: Dict[str, Any],
-        rng: np.random.RandomState,
-        provider: str = "openai",
-        forced_bon_param: Optional[str] = None,
+            self,
+            step_name: str,
+            step_spec: Dict[str, Any],
+            rng: np.random.RandomState,
+            provider: str = "openai",
+            forced_bon_param: Optional[str] = None,
     ) -> AgentConfig:
         """Sample one StepConfig for a given step.
 
@@ -126,7 +126,7 @@ class SearchSpace:
         else:
             bon_param = str(rng.choice(bon_choices))
 
-        sc = AgentConfig(agent_name=step_name, n=n, bon_param=bon_param, max_tokens=max_tokens)
+        sc = AgentConfig(agent_name=step_name, n=n, bon_parameter=bon_param, max_tokens=max_tokens)
         sc.use_cache = False  # always fresh in experiments
 
         # ---- BoN axis and its counterpart (fixed single value) ----
@@ -192,11 +192,11 @@ class SearchSpace:
         return sc
 
     def sample_one(
-        self,
-        rng: np.random.RandomState,
-        base_config: Optional[ArcoConfig] = None,
-        vary_step: Optional[str] = None,
-        forced_bon_param: Optional[str] = None,
+            self,
+            rng: np.random.RandomState,
+            base_config: Optional[ArcoConfig] = None,
+            vary_step: Optional[str] = None,
+            forced_bon_param: Optional[str] = None,
     ) -> ArcoConfig:
         """Sample one AgentConfig from the search space.
 
@@ -227,7 +227,7 @@ class SearchSpace:
                     agent_name=step_name,
                     n=int(default_spec.get("n", 1)),
                     cot_n=int(default_spec.get("cot_n", 1)),
-                    bon_param=default_spec.get("bon_param", "temperature"),
+                    bon_parameter=default_spec.get("bon_param", "temperature"),
                     temp_min=float(default_spec.get("temp_min", 0.1)),
                     temp_max=float(default_spec.get("temp_max", 0.1)),
                     top_p_min=float(default_spec.get("top_p_min", 1.0)),
@@ -252,11 +252,11 @@ class SearchSpace:
         return config
 
     def sample(
-        self,
-        n_configs: int,
-        seed: Optional[int] = None,
-        base_config: Optional[ArcoConfig] = None,
-        vary_step: Optional[str] = None,
+            self,
+            n_configs: int,
+            seed: Optional[int] = None,
+            base_config: Optional[ArcoConfig] = None,
+            vary_step: Optional[str] = None,
     ) -> List[ArcoConfig]:
         """Sample *n_configs* AgentConfigs from the search space.
 
@@ -300,7 +300,7 @@ class SearchSpace:
             "model": cfg.model,
             "provider": cfg.provider,
         }
-        for step_name in ["lookup_sales_data", "analyzing_data", "create_visualization"]:
+        for step_name in [AgentType.RETRIEVER, AgentType.ANALYZER, AgentType.VISUALIZER]:
             sc = cfg.get_agent_config(step_name)
             p = step_name
             row[f"{p}.n"] = sc.n

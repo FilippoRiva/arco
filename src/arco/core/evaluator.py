@@ -12,14 +12,25 @@ class Evaluation:
     score: float
     success: bool = True
 
-
 class Evaluator:
+    def __init__(self, config: AgentConfig):
+        self.run_gt_eval = config.run_gt_eval
+
     def evaluate_and_select(self, results: List[State]) -> Tuple[List[State], State]:
+        # gt evaluation
+        if self.run_gt_eval:
+            self.evaluate_ground_truth(results)
+
+        if len(results) == 1:
+            return results, results[0]
+
         # executes _batch_eval, if that fails it runs _eval
         batch_eval_success = self._batch_eval(results)
         if not batch_eval_success:
             for result in results:
                 self._eval(result)
+
+
         # finally selects the best result
         return results, self._selection(results)
 

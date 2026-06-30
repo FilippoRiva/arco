@@ -1,14 +1,12 @@
 from langchain_core.messages import AIMessage
-import os
-import time
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
-from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.language_models import BaseChatModel
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
 from arco.global_vars import OLLAMA_REQUEST_TIMEOUT
+from arco.tracking import LLMCallAccumulator
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
@@ -67,97 +65,6 @@ class CoTRefiner:
     def __getattr__(self, name):
         return getattr(self._llm, name)
 
-
-class LLMCallAccumulator(BaseCallbackHandler):
-    """Accumulates wall-clock time and energy of LLM .invoke() calls via LangChain callbacks.
-
-    Attach as a callback to a LangChain LLM object to record only the time and energy
-    spent inside actual LLM API calls, excluding non-LLM work (DB queries, parquet reads,
-    code execution, etc.) that may be present in the same step function.
-
-    When cc_enabled=True, a fresh CodeCarbon EmissionsTracker is started at the beginning
-    of each invoke() and stopped at the end. This avoids the pro-rating approximation that
-    would be incorrect when GPU power varies significantly during inference (e.g. local
-    Ollama on A40/L40S), since the tracker window covers only the actual inference window.
-
-    Thread-safe for sequential use (one step at a time).
-    """
-
-    _save_dir: str | None = None
-    _enabled: bool = False
-
-    def __init__(self, name:str) -> None:
-        super().__init__()
-        self._starts: Dict[str, float | int] = {}
-        self._cc_trackers: Dict[str, Any] = {}
-        self.total_time: float | int = 0.0
-        self._cc_output_dir : str | None = os.path.join(LLMCallAccumulator._save_dir, name) if LLMCallAccumulator._save_dir else None
-        self._enabled : bool = LLMCallAccumulator._enabled
-        # Accumulated energy across all invoke() calls for this step
-        self.total_energy: Dict[str, float | int] = {}
-
-        if self._cc_output_dir:
-            os.makedirs(self._cc_output_dir, exist_ok=True)
-
-    @staticmethod
-    def enable(save_dir: str):
-        LLMCallAccumulator._save_dir = save_dir
-        LLMCallAccumulator._enabled = True
-
-    def _start_cc_tracker(self, key: str) -> None:
-        if not self._enabled:
-            return
-        try:
-            tracker = EmissionsTracker(  # type: ignore[call-arg]
-                project_name="llm_invoke",
-                output_dir=self._cc_output_dir,
-                save_to_file=False,
-                measure_power_secs=1,
-                log_level="error",
-                allow_multiple_runs=True,
-            )
-            tracker.start()
-            self._cc_trackers[key] = tracker
-        except Exception as _e:
-            pass
-            # print(f"[CodeCarbon] per-invoke tracker start failed: {_e}")
-
-    def _stop_cc_tracker(self, key: str) -> None:
-        tracker = self._cc_trackers.pop(key, None)
-        if tracker is None:
-            return
-        try:
-            tracker.stop()
-            # tracker.stop() returns a float (CO2 kg), not EmissionsData.
-            # The full breakdown is in final_emissions_data, same as the original code.
-            _ed = getattr(tracker, "final_emissions_data", None)
-            if _ed is not None:
-                self.total_energy["energy_consumed_kwh"] += getattr(_ed, "energy_consumed", 0.0) or 0.0
-                self.total_energy["cpu_energy_kwh"] += getattr(_ed, "cpu_energy", 0.0) or 0.0
-                self.total_energy["gpu_energy_kwh"] += getattr(_ed, "gpu_energy", 0.0) or 0.0
-                self.total_energy["ram_energy_kwh"] += getattr(_ed, "ram_energy", 0.0) or 0.0
-                self.total_energy["emissions_kg_co2"] += getattr(_ed, "emissions", 0.0) or 0.0
-        except Exception as _e:
-            pass
-            # print(f"[CodeCarbon] per-invoke tracker stop failed: {_e}")
-
-    def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
-        key = str(run_id)
-        self._starts[key] = time.perf_counter()
-        self._start_cc_tracker(key)
-
-    def on_llm_end(self, response, *, run_id, **kwargs) -> None:
-        key = str(run_id)
-        if key in self._starts:
-            self.total_time += time.perf_counter() - self._starts.pop(key)
-        self._stop_cc_tracker(key)
-
-    def on_llm_error(self, error, *, run_id, **kwargs) -> None:
-        # Count errored calls too — the HTTP round-trip still happened.
-        key = str(run_id)
-        if key in self._starts:
-            self.total_time += time.perf_counter() - self._starts.pop(key)
-        self._stop_cc_tracker(key)
 
 def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> BaseChatModel:
     temp, top_p, top_k = agent_config.get_candidate_params()[0]

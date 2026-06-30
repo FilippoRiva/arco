@@ -2,7 +2,7 @@
 # =============================================================================
 # CACHE RUN CONFIGURATION
 # =============================================================================
-# Test config for caching
+# Test config for caching with both read and write
 
 global:
   schema: "../../data"
