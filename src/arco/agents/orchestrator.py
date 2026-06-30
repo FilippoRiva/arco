@@ -6,6 +6,7 @@ from langchain_core.language_models import BaseChatModel
 
 from arco.core import Agent, Answer, AgentType
 from arco.llm_tools import CoTRefiner
+from arco import llm_tools
 
 if TYPE_CHECKING:
     from arco.core import State
@@ -168,7 +169,9 @@ class Orchestrator(Agent):
             agent_choice=last_orchestrator_answer.agent_choice if last_orchestrator_answer else None)
 
         # try:
-        response_content: str = str(llm.invoke(decision_prompt).content)
+        orchestrator_response = llm.invoke(decision_prompt)
+
+        response_content: str = str(orchestrator_response.content)
         tool_choice = response_content.strip().lower()
         valid_tools = ["retriever", "analyzer", "visualizer", "end"]
         closest_match = difflib.get_close_matches(tool_choice, valid_tools, n=1, cutoff=0.6)
@@ -190,10 +193,13 @@ class Orchestrator(Agent):
 
         matched_agent = matched_agent.capitalize()
 
+        logprobs = llm_tools.extract_logprobs(orchestrator_response)
+
         answer = Answer(
             agent_id=self.type,
             message=f"The chosen agent is {matched_agent}",
             agent_choice=matched_agent,
-            agent_config=deepcopy(state.get_agent_config(AgentType.ORCHESTRATOR))
+            agent_config=deepcopy(state.get_agent_config(AgentType.ORCHESTRATOR)),
+            logprobs=logprobs
         )
         return state.add_answer(answer)
