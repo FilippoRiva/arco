@@ -150,14 +150,14 @@ def get_llm(
             kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
         return ChatOllama(**kwargs)
 
-def extract_logprobs(message: AIMessage) -> list[float | int] | None:
+def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
     logprobs = None
 
     metadata = message.response_metadata
     if "logprobs" in metadata and metadata["logprobs"] is not None:
         content_logprobs = metadata['logprobs'].get("content", [])
         logprobs = [
-            token_info.get("logprob") for token_info in content_logprobs if "logprob" in token_info
+            (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if "logprob" in token_info
         ]
 
     return logprobs

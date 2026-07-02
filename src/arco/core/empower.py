@@ -73,8 +73,8 @@ def arco_evaluation(state: State, config: RunnableConfig) -> State:
         return state.replace_last_answer(answer)
 
     # Compute Perplexity
-    logprobs: list[float | int] = answer.logprobs
-    avg_logprob = sum(logprobs) / len(logprobs)
+    numeric_logprobs: list[float | int] = [probs for _, probs in answer.logprobs]
+    avg_logprob = sum(numeric_logprobs) / len(numeric_logprobs)
     if avg_logprob < -math.log(sys.float_info.max):
         perplexity = math.inf
     else:

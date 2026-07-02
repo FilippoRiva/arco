@@ -109,7 +109,7 @@ class Answer:
     error: str | None = None
 
     # LLM generation info
-    logprobs: list[float | int] | None = None
+    logprobs: list[tuple[str, float | int]] | None = None
 
     # Profiling Data
     profiling_data: ProfilingData = field(default_factory=ProfilingData)
@@ -246,6 +246,9 @@ class State:
             Exception(
                 f"The specified agent type ({agent_type}) is not defined in the {AgentType.__name__} enum. Please provide a known agent_type")
         return self.agent_configs[agent_type]
+
+    def get_agents_used(self) -> list[str]:
+        return [answer.agent_id.value.lower() for answer in self.answers if answer.agent_id is not AgentType.ORCHESTRATOR]
 
     def get_last_execution_outputs(self) -> tuple[Answer | None, AgentConfig | None]:
         return self.get_last_answer(), self.get_last_agent_config()

@@ -17,8 +17,10 @@ from rich.console import Group
 from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.rule import Rule
+from rich.text import Text
 
 import time
+import math
 
 
 class StatusDisplay:
@@ -145,6 +147,30 @@ def generate_answer_panel(answer: Answer, verbose: bool) -> Panel:
                 border_style="red"
             )
             group_elements += [error_subpanel]
+
+        if answer.logprobs:
+            colored_text = Text()
+
+            for token, logprob in answer.logprobs:
+                try:
+                    token_ppl = math.exp(-logprob)
+                except OverflowError:
+                    token_ppl = float('inf')
+                if token_ppl < 1.2: style = "bold green"
+                elif token_ppl < 5.0: style = "yellow"
+                else: style = "bold red"
+                colored_text.append(token, style=style)
+
+            perplexity_subpanel = Panel(
+                colored_text,
+                title="[bold blue]Token Perplexity Analysis[/bold blue]",
+                title_align="left",
+                subtitle="[bold green]■ <1.2 (High)[/bold green] [yellow]■ <5.0 (Mid)[/yellow] [bold red]■ ≥5.0 (Low Confidence)[/bold red]",
+                subtitle_align="right",
+                border_style="blue",
+                expand=True
+            )
+            group_elements += [perplexity_subpanel]
 
         group_elements += [config_subpanel]
         content = Group(*group_elements)
