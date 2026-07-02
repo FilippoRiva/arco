@@ -24,120 +24,118 @@ if TYPE_CHECKING:
 class Retriever(Agent):
     _TABLE_SELECTION_PROMPT = """You are a database architect helping identify which tables are needed to answer a user's question.
 
-    ## TASK
-    From the list of available tables, select only the tables needed to answer the user's question.
+## TASK
+From the list of available tables, select only the tables needed to answer the user's question.
 
-    ## AVAILABLE TABLES
-    {compact_schema}
+## AVAILABLE TABLES
+{compact_schema}
 
-    ## USER QUESTION
-    {prompt}
+## USER QUESTION
+{prompt}
 
-    ## CHAIN OF THOUGHT REASONING
-    Before selecting tables, think step by step:
+## CHAIN OF THOUGHT REASONING
+Before selecting tables, think step by step:
 
-    **Step 1: Understanding the Question**
-    - What is the user really asking for?
-    - What entities or concepts are mentioned? (e.g., products, sales, customers, dates)
-    - What metrics or dimensions does the answer require?
+**Step 1: Understanding the Question**
+- What is the user really asking for?
+- What entities or concepts are mentioned? (e.g., products, sales, customers, dates)
+- What metrics or dimensions does the answer require?
 
-    **Step 2: Mapping Concepts to Tables**
-    - Which table descriptions match the entities mentioned in the question?
-    - Is the question asking about relationships between multiple entities (implies a JOIN)?
-    - Are any tables clearly irrelevant (different domain, different subject)?
+**Step 2: Mapping Concepts to Tables**
+- Which table descriptions match the entities mentioned in the question?
+- Is the question asking about relationships between multiple entities (implies a JOIN)?
+- Are any tables clearly irrelevant (different domain, different subject)?
 
-    **Step 3: Identifying Required Joins**
-    - If multiple entities are needed, which tables contain them?
-    - Do any tables serve as lookup/dimension tables needed to label results?
-    - Is there a fact table that connects the needed entities?
+**Step 3: Identifying Required Joins**
+- If multiple entities are needed, which tables contain them?
+- Do any tables serve as lookup/dimension tables needed to label results?
+- Is there a fact table that connects the needed entities?
 
-    **Step 4: Checking Completeness**
-    - Do the selected tables together contain all the data needed to answer the question?
-    - Is any additional table needed for filtering or context?
-    - Are there redundant tables containing the same data?
+**Step 4: Checking Completeness**
+- Do the selected tables together contain all the data needed to answer the question?
+- Is any additional table needed for filtering or context?
+- Are there redundant tables containing the same data?
 
-    **Step 5: Final Selection**
-    - List only the table names that are necessary and sufficient to answer the question
-    - When in doubt, include a table rather than exclude it (extra context is better than missing data)
-    - Use only table names exactly as listed in AVAILABLE TABLES
+**Step 5: Final Selection**
+- List only the table names that are necessary and sufficient to answer the question
+- When in doubt, include a table rather than exclude it (extra context is better than missing data)
+- Use only table names exactly as listed in AVAILABLE TABLES
 
-    ## OUTPUT FORMAT
-    Return ONLY a comma-separated list of table names. No explanations. No markdown. Just table names.
-    Example: sales,products
-    """
+## OUTPUT FORMAT
+Return ONLY a comma-separated list of table names. No explanations. No markdown. Just table names.
+Example: sales, products
+"""
 
     _SQL_GENERATION_PROMPT = """You are an expert SQL developer specializing in DuckDB queries for data analysis and visualization.
 
-    ## TASK
-    Generate a DuckDB SQL query to answer the user's question and provide data optimized for visualization.
+## TASK
+Generate a DuckDB SQL query to answer the user's question and provide data optimized for analysis and visualization.
 
-    ## AVAILABLE DATA
-    {schema_context}
+## AVAILABLE DATA
+{schema_context}
 
-    ## USER QUESTION
-    {prompt}
+## USER QUESTION
+- prompt : {prompt}
+- visualization_goal : {visualization_goal}
 
-    ## VISUALIZATION GOAL
-    {visualization_goal}
+## INSTRUCTIONS
+1. Analyze the user's question to identify what data is needed
+2. Consider the visualization goal to structure the query output appropriately
+3. Select appropriate columns from the schema above
+4. Use proper SQL syntax for filtering, aggregation, sorting, and joins across tables
+5. For DATE columns with pattern matching, CAST to VARCHAR: CAST(date_column AS VARCHAR) LIKE '%2021-11%'
+6. Handle NULL values appropriately
+7. Use DuckDB-specific functions when beneficial
+8. **When using JOINs**: always qualify every column reference with its table alias (e.g. `st.region`, not `region`). In SELECT, GROUP BY, ORDER BY, and WHERE, prefix each column with the correct alias of the table it belongs to. Never reference a column by name alone when multiple tables are in scope.
 
-    ## INSTRUCTIONS
-    1. Analyze the user's question to identify what data is needed
-    2. Consider the visualization goal to structure the query output appropriately
-    3. Select appropriate columns from the schema above
-    4. Use proper SQL syntax for filtering, aggregation, sorting, and joins across tables
-    5. For DATE columns with pattern matching, CAST to VARCHAR: CAST(date_column AS VARCHAR) LIKE '%2021-11%'
-    6. Handle NULL values appropriately
-    7. Use DuckDB-specific functions when beneficial
-    8. **When using JOINs**: always qualify every column reference with its table alias (e.g. `st.region`, not `region`). In SELECT, GROUP BY, ORDER BY, and WHERE, prefix each column with the correct alias of the table it belongs to. Never reference a column by name alone when multiple tables are in scope.
+## QUERY OPTIMIZATION FOR VISUALIZATION
+- **For time series plots**: Ensure dates are sorted chronologically, use DATE_TRUNC for proper granularity
+- **For bar charts**: Aggregate data by category, order by the metric being compared
+- **For scatter plots**: Select two numeric columns that show relationships
+- **For trend analysis**: Include time-based grouping (daily, monthly, yearly)
+- **General**: Limit result size if needed, ensure clean column names for axis labels
 
-    ## QUERY OPTIMIZATION FOR VISUALIZATION
-    - **For time series plots**: Ensure dates are sorted chronologically, use DATE_TRUNC for proper granularity
-    - **For bar charts**: Aggregate data by category, order by the metric being compared
-    - **For scatter plots**: Select two numeric columns that show relationships
-    - **For trend analysis**: Include time-based grouping (daily, monthly, yearly)
-    - **General**: Limit result size if needed, ensure clean column names for axis labels
+## CHAIN OF THOUGHT REASONING
+Before generating the SQL query, think step by step:
 
-    ## CHAIN OF THOUGHT REASONING
-    Before generating the SQL query, think step by step:
+**Step 1: Understanding the Request**
+- What is the user really asking for?
+- What is the main entity or metric of interest?
+- What time period or filters are implied?
 
-    **Step 1: Understanding the Request**
-    - What is the user really asking for?
-    - What is the main entity or metric of interest?
-    - What time period or filters are implied?
+**Step 2: Identifying Required Data**
+- Which columns from the schema above are relevant to answer this question?
+- Do I need data from multiple tables? If yes, what JOIN keys connect them?
+- Do I need to filter the data? If yes, on which column(s)?
+- Do I need aggregations (SUM, COUNT, AVG)? If yes, on which column(s)?
+- Do I need grouping? If yes, by which column(s)?
 
-    **Step 2: Identifying Required Data**
-    - Which columns from the schema above are relevant to answer this question?
-    - Do I need data from multiple tables? If yes, what JOIN keys connect them?
-    - Do I need to filter the data? If yes, on which column(s)?
-    - Do I need aggregations (SUM, COUNT, AVG)? If yes, on which column(s)?
-    - Do I need grouping? If yes, by which column(s)?
+**Step 3: Considering Visualization Needs**
+- Based on the visualization goal "{visualization_goal}", what chart type is likely?
+- For time series: Need chronological ordering and proper date format
+- For comparisons: Need categorical grouping and clear labels
+- For correlations: Need two numeric columns without aggregation
+- What should be on X-axis vs Y-axis?
 
-    **Step 3: Considering Visualization Needs**
-    - Based on the visualization goal "{visualization_goal}", what chart type is likely?
-    - For time series: Need chronological ordering and proper date format
-    - For comparisons: Need categorical grouping and clear labels
-    - For correlations: Need two numeric columns without aggregation
-    - What should be on X-axis vs Y-axis?
+**Step 4: Query Structure Planning**
+- SELECT: Which columns and aggregations?
+- FROM: Which table(s)? Use JOINs if data spans multiple tables
+- WHERE: What filters are needed?
+- GROUP BY: Which columns for aggregation?
+- ORDER BY: How should results be sorted?
+- LIMIT: Should I limit the result set?
 
-    **Step 4: Query Structure Planning**
-    - SELECT: Which columns and aggregations?
-    - FROM: Which table(s)? Use JOINs if data spans multiple tables
-    - WHERE: What filters are needed?
-    - GROUP BY: Which columns for aggregation?
-    - ORDER BY: How should results be sorted?
-    - LIMIT: Should I limit the result set?
-
-    **Step 5: Handling Edge Cases**
-    - Are there DATE columns that need CAST to VARCHAR for pattern matching?
-    - Are there potential NULL values that need filtering?
-    - Do column names need aliasing for better visualization labels?
-    - Are table aliases needed for clarity in multi-table queries?
+**Step 5: Handling Edge Cases**
+- Are there DATE columns that need CAST to VARCHAR for pattern matching?
+- Are there potential NULL values that need filtering?
+- Do column names need aliasing for better visualization labels?
+- Are table aliases needed for clarity in multi-table queries?
 
 
 
-    ## EXAMPLES WITH REASONING
+## EXAMPLES WITH REASONING
 
-    Example 1:
+Example 1:
     Question: "Show me sales from November 2021"
     Visualization: "Monthly sales trend"
     Reasoning:
@@ -148,7 +146,7 @@ class Retriever(Agent):
     - Step 5: Must CAST Date to VARCHAR for LIKE pattern matching
     Query: SELECT Date, SUM(Revenue) as Total_Revenue FROM sales WHERE CAST(Date AS VARCHAR) LIKE '%2021-11%' GROUP BY Date ORDER BY Date
 
-    Example 2:
+Example 2:
     Question: "What are the top 5 products by total revenue?"
     Visualization: "Compare products by revenue"
     Reasoning:
@@ -159,7 +157,7 @@ class Retriever(Agent):
     - Step 5: No special edge cases
     Query: SELECT Product_Name, SUM(Revenue) as Total_Revenue FROM sales GROUP BY Product_ID, Product_Name ORDER BY Total_Revenue DESC LIMIT 5
 
-    Example 3:
+Example 3:
     Question: "Show monthly total sales for 2021"
     Visualization: "Revenue trends over time"
     Reasoning:
@@ -170,7 +168,7 @@ class Retriever(Agent):
     - Step 5: Use EXTRACT for year filtering
     Query: SELECT DATE_TRUNC('month', Date) as Month, SUM(Revenue) as Monthly_Sales FROM sales WHERE EXTRACT(YEAR FROM Date) = 2021 GROUP BY Month ORDER BY Month
 
-    Example 4:
+Example 4:
     Question: "Analyze price vs demand relationship"
     Visualization: "Price vs demand correlation"
     Reasoning:
@@ -181,7 +179,7 @@ class Retriever(Agent):
     - Step 5: Filter out NULLs to avoid chart issues
     Query: SELECT Price, Units_Sold FROM sales WHERE Price IS NOT NULL AND Units_Sold IS NOT NULL
 
-    Example 5 (multi-table):
+Example 5 (multi-table):
     Question: "Show total revenue by product category for 2023"
     Visualization: "Bar chart of revenue by category"
     Schema:
@@ -195,13 +193,13 @@ class Retriever(Agent):
     - Step 5: Use EXTRACT for year filter; alias table names for clarity
     Query: SELECT p.Category, SUM(s.Total_Sale_Value) as Total_Revenue FROM sales s JOIN products p ON s.SKU_Coded = p.SKU_Coded WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023 GROUP BY p.Category ORDER BY Total_Revenue DESC
 
-    ## IMPORTANT — "Average of aggregates" pattern
-    When the question asks for "average monthly [metric]", "average daily [metric]", etc., you MUST:
-    1. First aggregate raw rows to the desired period (e.g., compute monthly totals per store using SUM and GROUP BY store + month).
-    2. Then wrap that result in an outer query or subquery and apply AVG to the aggregated values.
-    Do NOT apply AVG directly to individual transaction/row values — that gives the average transaction size, not the average monthly metric.
+## IMPORTANT — "Average of aggregates" pattern
+When the question asks for "average monthly [metric]", "average daily [metric]", etc., you MUST:
+1. First aggregate raw rows to the desired period (e.g., compute monthly totals per store using SUM and GROUP BY store + month).
+2. Then wrap that result in an outer query or subquery and apply AVG to the aggregated values.
+Do NOT apply AVG directly to individual transaction/row values — that gives the average transaction size, not the average monthly metric.
 
-    Example 6 (two-level aggregation — "average monthly revenue"):
+Example 6 (two-level aggregation — "average monthly revenue"):
     Question: "Compare average monthly revenue between store regions for 2022 and 2023"
     Visualization: "Grouped bar chart comparing average monthly revenue per region between 2022 and 2023"
     Schema:
@@ -215,46 +213,46 @@ class Retriever(Agent):
     - Step 5: Use DATE_TRUNC for monthly grouping; qualify all column references with table aliases.
     Query: SELECT st.region, s.yr AS year, ROUND(AVG(s.monthly_rev), 2) AS avg_monthly_revenue FROM (SELECT Store_Number, YEAR(CAST(Sold_Date AS DATE)) AS yr, DATE_TRUNC('month', CAST(Sold_Date AS DATE)) AS month, SUM(Total_Sale_Value) AS monthly_rev FROM sales WHERE YEAR(CAST(Sold_Date AS DATE)) IN (2022, 2023) GROUP BY Store_Number, yr, month) s JOIN stores st ON s.Store_Number = st.Store_Number GROUP BY st.region, s.yr ORDER BY st.region, s.yr
 
-    ## COMMON MISTAKES TO AVOID
-    - **NEVER use SUBSTR() or SUBSTRING() directly on a DATE column** — DuckDB DATE columns are not strings.
-      WRONG: `WHERE CAST(SUBSTR(Sold_Date, 1, 4) AS INTEGER) = 2021`
-      RIGHT: `WHERE YEAR(Sold_Date) = 2021`
-    - **NEVER use LIKE directly on a DATE column** — cast to VARCHAR first.
-      WRONG: `WHERE Sold_Date LIKE '2023%'`
-      RIGHT: `WHERE CAST(Sold_Date AS VARCHAR) LIKE '2023%'`
-    - **NEVER use strptime() on a column that is already DATE type** — it expects a string input.
-      WRONG: `CAST(strptime(Sold_Date, '%Y-%m-%d') AS DATE)`
-      RIGHT: `Sold_Date` (already DATE, no cast needed)
-    - **NEVER use strftime(date, format)** — that is SQLite argument order. DuckDB does not support it.
-      WRONG: `strftime(Sold_Date, '%Y')`
-      RIGHT: `YEAR(Sold_Date)` or `EXTRACT(YEAR FROM Sold_Date)`
-    - **To extract year from a DATE column**: use `YEAR(date_col)` or `EXTRACT(YEAR FROM date_col)`
-    - **To extract month from a DATE column**: use `MONTH(date_col)` or `EXTRACT(MONTH FROM date_col)`
+## COMMON MISTAKES TO AVOID
+- **NEVER use SUBSTR() or SUBSTRING() directly on a DATE column** — DuckDB DATE columns are not strings.
+  WRONG: `WHERE CAST(SUBSTR(Sold_Date, 1, 4) AS INTEGER) = 2021`
+  RIGHT: `WHERE YEAR(Sold_Date) = 2021`
+- **NEVER use LIKE directly on a DATE column** — cast to VARCHAR first.
+  WRONG: `WHERE Sold_Date LIKE '2023%'`
+  RIGHT: `WHERE CAST(Sold_Date AS VARCHAR) LIKE '2023%'`
+- **NEVER use strptime() on a column that is already DATE type** — it expects a string input.
+  WRONG: `CAST(strptime(Sold_Date, '%Y-%m-%d') AS DATE)`
+  RIGHT: `Sold_Date` (already DATE, no cast needed)
+- **NEVER use strftime(date, format)** — that is SQLite argument order. DuckDB does not support it.
+  WRONG: `strftime(Sold_Date, '%Y')`
+  RIGHT: `YEAR(Sold_Date)` or `EXTRACT(YEAR FROM Sold_Date)`
+- **To extract year from a DATE column**: use `YEAR(date_col)` or `EXTRACT(YEAR FROM date_col)`
+- **To extract month from a DATE column**: use `MONTH(date_col)` or `EXTRACT(MONTH FROM date_col)`
 
-    ## OUTPUT FORMAT
-    Return ONLY the SQL query as plain text. No explanations. No markdown formatting. No code fences. Just the SQL query.
-    """
+## OUTPUT FORMAT
+Return ONLY the SQL query as plain text. No explanations. No markdown formatting. No code fences. Just the SQL query.
+"""
 
     _COLUMN_STANDARDIZATION_PROMPT = """\
-    You are a data schema expert. Given N SQL queries against the same database that \
-    answer the same question, standardize their result column names and order.
+You are a data schema expert. Given N SQL queries against the same database that \
+answer the same question, standardize their result column names and order.
 
-    ## Database Schema
-    {schema_context}
+## Database Schema
+{schema_context}
 
-    ## Candidates
-    {candidates_section}
+## Candidates
+{candidates_section}
 
-    ## Rules
-    - For columns that come directly from schema tables, use the exact schema column name.
-    - For aggregated/computed columns (SUM, COUNT, AVG, etc.), pick the most descriptive \
-    name used by any candidate. Prefer lowercase_with_underscores.
-    - All candidates MUST map to the same canonical columns in the same order.
-    - Return ONLY valid JSON, no explanation or markdown fences.
+## Rules
+- For columns that come directly from schema tables, use the exact schema column name.
+- For aggregated/computed columns (SUM, COUNT, AVG, etc.), pick the most descriptive \
+name used by any candidate. Prefer lowercase_with_underscores.
+- All candidates MUST map to the same canonical columns in the same order.
+- Return ONLY valid JSON, no explanation or markdown fences.
 
-    ## Output format
-    {{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
-    """
+## Output format
+{{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
+"""
 
     def __init__(self, trace_helper: TracingHelper, schema: DatabaseSchema, empower: bool = False):
         super().__init__(trace_helper, empower)
@@ -454,7 +452,6 @@ class Retriever(Agent):
             return state.add_answer(answer)
 
         except Exception as e:
-            # print(f"Error accessing data: {str(e)}")
 
             answer: Answer = Answer(
                 agent_id=self.type,
@@ -509,16 +506,19 @@ class Retriever(Agent):
         for i, result in enumerate(results):
             last_retriever_answer: Answer | None = result.get_last_answer(AgentType.RETRIEVER)
             if last_retriever_answer is None:
-                raise AgentException("Could not retrieve the last retriever answer for column standardization")
+                continue
             if last_retriever_answer.data_df is None:
-                raise AgentException("Could not retrieve the last retriever output dataframe")
+                continue
             df = last_retriever_answer.data_df
             sql = last_retriever_answer.sql_query
             if df is None or sql is None:
-                raise AgentException(
-                    f"Could not retrieve {"dataframe" if df is None else "sql"} from the retriever answer")
+                continue
             cols = list(df.columns)
             candidates.append({"idx": i, "df": df, "sql": sql, "cols": cols, "state": result})
+
+        if len(candidates) == 0:
+            # If all candidates failed execution
+            return results
 
         if len(candidates) == 1:
             # Special case: single candidate + gt_columns → apply GT column alignment without LLM
