@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 
 from arco.cli.console import console
 
-import os
+import os, sys
 from arco.cli import viz
 from rich.rule import Rule
 

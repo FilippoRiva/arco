@@ -28,47 +28,6 @@ from arco.data import RunCache
 from arco.tracing import (truncate_trace_text, _summarize_for_trace, TracingHelper)
 
 
-def serialize_for_json(value):
-    """Convert results into a JSON-safe structure."""
-    if value is None or isinstance(value, (str, int, float, bool)):
-        return value
-    if isinstance(value, dict):
-        return {str(key): serialize_for_json(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [serialize_for_json(item) for item in value]
-
-    if value.__class__.__name__ == "DataFrame" and hasattr(value, "to_dict"):
-        # noinspection PyBroadException
-        try:
-            return {
-                "__dataframe__": True,
-                "records": serialize_for_json(value.to_dict(orient="records")),
-            }
-        except Exception:
-            return str(value)
-
-    if value.__class__.__name__ in ("Timestamp", "NaTType"):
-        return str(value)
-
-    if hasattr(value, "item"):  # numpy scalar (int64, float64, etc.)
-        return value.item()
-
-    try:
-        json.dumps(value)
-        return value
-    except (TypeError, ValueError):
-        return str(value)
-
-
-def _slugify_prompt(prompt, max_len=48):
-    """Return a filesystem-safe prompt slug."""
-    normalized = re.sub(r"[^A-Za-z0-9]+", "_", (prompt or "").strip().lower())
-    normalized = normalized.strip("_")
-    if not normalized:
-        return "run"
-    return normalized[:max_len].rstrip("_") or "run"
-
-
 class SalesDataWorkflow:
     """End-to-end agentic workflow to query, analyze, and visualize sales data.
 
@@ -103,12 +62,12 @@ class SalesDataWorkflow:
             self.trace_helper = TracingHelper()
 
         # Caching
-        self.cache = RunCache(config.save_dir) if config.save_dir else RunCache()
+        self.cache = RunCache(config.save_dir)
 
         # Initialize graph
         self.graph: CompiledStateGraph = self._build_graph()
 
-        # Codecarbon Emission Tracking
+        # codecarbon Emission Tracking
         tracking.initialize_tracking(config)
 
     def _strict_graph(self) -> CompiledStateGraph:
@@ -204,23 +163,6 @@ class SalesDataWorkflow:
             return self._orchestration_graph()
         return self._strict_graph()
 
-    def draw_graph(self):
-        """Return an ASCII rendering of the compiled graph if available."""
-        try:
-            from IPython.display import Image, display
-            display(Image(self.graph.get_graph().draw_mermaid_png()))
-        except ImportError:
-            # Fallback if mermaid is not available
-            self.graph.get_graph().print_ascii()
-
-    def run(self) -> State:
-        gen = self.stream()
-        try:
-            while True:
-                next(gen)
-        except StopIteration as e:
-            return e.value
-
     def stream(self) -> Generator[dict[str, Any]]:
 
         yield {"event": "started", "run_id": self.config.run_id, "config": self.config}
@@ -254,7 +196,7 @@ class SalesDataWorkflow:
             self.model_is_reachable = self.check_model()
             if not self.model_is_reachable:
                 yield {"event": "error",
-                       "message": "Model is not reachable. Please set your OPENAI_API_KEY environment variable if using openai models or properly start the ollama server."}
+                       "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server."}
                 return None
 
         # Start Inference and Generator Loop
@@ -322,7 +264,7 @@ class SalesDataWorkflow:
             tracing.set_output(run_span, _summarize_for_trace(final_result))
 
         if self.config.save_state:
-            self._write_execution_artifacts(result_state=final_result)
+            final_result.save(self.config.save_dir)
 
         # Global tracking stop
         tracking.stop_tracking()
@@ -355,7 +297,7 @@ class SalesDataWorkflow:
                 kind="tool",
                 input_data={"provider": self.config.provider, "model": self.config.model},
         ) as span:
-            if self.config.provider == "openai":
+            if self.config.provider == "openai" or self.config.provider == "openrouter":
                 try:
                     llm_tools.get_llm(
                         provider=self.config.provider,
@@ -365,6 +307,8 @@ class SalesDataWorkflow:
                     return True
                 except Exception as e:
                     tracing.set_output(span, {"reachable": False, "error": truncate_trace_text(e)})
+                    yield {"event": "error",
+                           "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server."}
                     return False
             else:
                 try:
@@ -376,10 +320,6 @@ class SalesDataWorkflow:
                 except Exception as e:
                     tracing.set_output(span, {"reachable": False, "error": truncate_trace_text(e)})
                     return False
-
-    def _write_execution_artifacts(self, result_state: State):
-        """Persist the execution for further analysis"""
-        pass
 
 
 __all__ = ["SalesDataWorkflow"]

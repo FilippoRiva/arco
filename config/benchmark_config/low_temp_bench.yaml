@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=./schema.json
+global:
+  schema: "../../data"
+  orchestration_enabled: true
+  enable_budget_controller: false
+  provider: openai
+  model: gpt-4.1-nano
+
+defaults:
+  Retriever:
+    temp_min: 0.1
+  Analyzer:
+    temp_min: 0.1
+  Visualizer:
+    temp_min: 0.1
+
+runs:
+  - name: Baseline test
+  - name: Mid temp test
+    changes:
+      Retriever:
+        temp_min: 0.3
+      Analyzer:
+        temp_min: 0.3
+      Visualizer:
+        temp_min: 0.3

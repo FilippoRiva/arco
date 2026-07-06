@@ -259,6 +259,49 @@ def _energy_impact_panel(energy_dict: dict[str, Any]) -> Panel:
                  )
 
 
+def print_benchmark_header(name: str, description: str, changes: dict[str, Any]) -> None:
+    """Print a rich panel summarizing the benchmark run's name, description, and changes."""
+    header = Text(name, style="bold cyan", justify="center")
+
+    body = Table.grid(padding=(0, 1))
+    body.add_column(justify="right", style="bold dim")
+    body.add_column()
+    body.add_row("Description:", description or "[dim italic]none provided[/dim italic]")
+
+    if changes:
+        changes_table = Table(
+            title="Overrides", show_header=True, header_style="bold magenta",
+            box=box.SIMPLE_HEAVY, expand=False
+        )
+        changes_table.add_column("Agent", style="bold yellow")
+        changes_table.add_column("Parameter", style="cyan")
+        changes_table.add_column("Value", style="green")
+
+        for agent_name, params in changes.items():
+            if isinstance(params, dict):
+                first = True
+                for param, value in params.items():
+                    changes_table.add_row(
+                        agent_name if first else "",
+                        param,
+                        str(value)
+                    )
+                    first = False
+            else:
+                changes_table.add_row(agent_name, "-", str(params))
+    else:
+        changes_table = Text("No overrides — running with defaults.", style="dim italic")
+
+    body.add_row("Changes:", changes_table)
+
+    console.print(Panel(
+        body,
+        title=header,
+        border_style="blue",
+        box=box.ROUNDED,
+        padding=(1, 2)
+    ))
+
 def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plot=False) -> State:
     """
     Visualizes generated updates produced by the agent.run() generator.
@@ -267,6 +310,7 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plo
     :return: The final resulting state
     """
     status = StatusDisplay()
+    last_state = None
 
     with Live(status, refresh_per_second=8, screen=False) as live:
         energy_dict: dict = {}
@@ -275,7 +319,7 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plo
             if event_type == "started":
                 live.console.print(Panel(f"[bold cyan]Agent Run Started[/bold cyan]\n[dim]ID: {update["run_id"]}[/dim]",
                                          border_style="blue"))
-                status.set("Started the graph execution")
+                status.set("Started the graph execution ")
             elif event_type == "cache":
                 value = update["value"]
                 if value == "search":
@@ -287,17 +331,17 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plo
                     live.console.print(Panel(f"[dim]Cache miss[/dim]",
                                              border_style="dim"))
                 elif value == "store":
-                    status.set("Storing results to cache")
+                    status.set("Storing results to cache ")
                 elif value == "store_completed":
                     live.console.print(Panel(f"[dim]Successfully stored in cache[/dim]",
                                              border_style="dim"))
             elif event_type == "node_started":
                 start_time = time.time()
-                status.set(f"{update['node']} is running", start_time)
+                status.set(f"{update['node']} is running ", start_time)
             elif event_type == "node_finished":
                 last_state = update["state"]
                 last_answer: Answer = last_state.get_last_answer()
-                status.set(f"{last_answer.agent_id.value} ended its run")
+                status.set(f"{last_answer.agent_id.value} ended its run ")
                 live.console.print(generate_answer_panel(answer=last_answer, verbose=verbose))
             elif event_type == "codecarbon":
                 energy_dict = update["energy_dict"]
@@ -312,6 +356,14 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plo
 
     if energy_dict:
         console.print(_energy_impact_panel(energy_dict))
+
+    # Fallback when model fails completely
+    if not last_state:
+        status.stop()
+        live.console.print(Panel(
+            f"[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
+            border_style="red"))
+        return None
 
     from arco.core import AgentType
     vis_answer: Answer | None = last_state.get_last_answer(AgentType.VISUALIZER)

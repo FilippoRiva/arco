@@ -6,17 +6,9 @@
     "global": {
       "type": "object",
       "properties": {
-        "prompt": {
-          "type": "string",
-          "description": "The execution instruction or query passed to the agent system."
-        },
         "schema": {
           "type": "string",
           "description": "Path to YAML schemas for the database relative to this config file."
-        },
-        "visualization_goal": {
-          "type": "string",
-          "description": "Detailed guidelines on how data outputs should be plotted or visualized."
         },
         "run_id": {
           "type": "string",
@@ -95,11 +87,10 @@
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
       "required": [
-        "prompt",
         "schema"
       ]
     },
-    "agents": {
+    "defaults": {
       "type": "object",
       "description": "Per-agent configuration settings.",
       "additionalProperties": {
@@ -198,9 +189,70 @@
         "description": "Dictionary of dynamic, named agent definitions (e.g., Retriever, Analyzer). All internal keys are optional, allowing individual agents to selectively override the global defaults or customize their own sampling boundaries, caching rules, and evaluation setups.",
         "required": []
       }
+    },
+    "runs": {
+      "type": "array",
+      "description": "Ordered list of benchmark runs, each optionally applying a named set of overrides to specific agents. Runs without 'changes' use the global/agent defaults as-is.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique identifier for this benchmark run."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable explanation of what this benchmark tests."
+          },
+          "changes": {
+            "type": "object",
+            "description": "Per-agent overrides applied for this run. Keys are agent names matching entries under 'agents'. Omit entirely to run with defaults unchanged.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "enum": ["openai", "ollama"]
+                },
+                "model": { "type": "string" },
+                "n": { "type": "integer", "minimum": 1 },
+                "bon_param": {
+                  "type": "string",
+                  "enum": ["temperature", "top_k", "top_p"]
+                },
+                "temp_min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+                "temp_max": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+                "cot_n": { "type": "integer", "minimum": 1 },
+                "top_p_min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "top_p_max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+                "top_k_min": { "type": "integer", "minimum": 1 },
+                "top_k_max": { "type": "integer", "minimum": 1 },
+                "max_tokens": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Maximum output tokens for this agent."
+                },
+                "use_cache": { "type": "boolean" },
+                "cache_mode": {
+                  "type": "string",
+                  "enum": ["read", "r", "write", "w", "read_write", "rw"]
+                },
+                "enabled": { "type": "boolean" },
+                "eval": {
+                  "type": "string",
+                  "enum": ["default"]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["name"]
+      }
     }
   },
   "required": [
-    "global"
+    "global",
+    "runs"
   ]
 }

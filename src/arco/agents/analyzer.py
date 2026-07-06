@@ -202,8 +202,3 @@ class Analyzer(Agent):
 
     def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
         return AnalyzerEvaluator(agent_config)
-
-    def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        if agent_config.gt_analysis and agent_config.gt_metric:
-            return True
-        return False

@@ -293,11 +293,7 @@ class AnalyzerEvaluator(Evaluator):
 
     @staticmethod
     def judge_from_ground_truth(state: State, llm: BaseChatModel, gt_analysis: Optional[str] = None) -> Evaluation:
-        """Evaluate generated analysis against a ground truth reference using LLM-as-judge.
-
-        Unlike judge_analysis() which scores against SQL data, this function compares
-        the generated text directly to a reference (GT) text, checking whether key
-        numerical facts and conclusions are captured correctly — regardless of phrasing."""
+        """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
         generated_analysis = last_analyzer_answer.analysis

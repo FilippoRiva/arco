@@ -18,9 +18,11 @@ tracker: EmissionTracker | None = None
 def initialize_tracking(config: ArcoConfig):
     if not config.enable_codecarbon:
         return
+
     global tracker
     if tracker is not None:
         return
+
     codecarbon_dir = os.path.join(config.save_dir or "./output", "codecarbon")
     os.makedirs(codecarbon_dir, exist_ok=True)
     tracker = EmissionsTracker(

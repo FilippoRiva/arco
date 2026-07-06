@@ -202,8 +202,6 @@ No explanations. Just the agent's name."""
             agents_used=state.get_agents_used(),
             error_is_present=error_is_present)
 
-        print(decision_prompt)
-
         # try:
         orchestrator_response = llm.invoke(decision_prompt)
 

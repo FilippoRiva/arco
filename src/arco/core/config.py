@@ -43,22 +43,22 @@ class ArcoConfig:
     # GLOBAL CONFIGURATION
     # #
     # mandatory(the only mandatory parameters)
-    prompt: str
     schema: DatabaseSchema
     # optional
+    prompt: str = ""
     visualization_goal: str = ""  # a specific goal for visualization
     run_id: str = field(
         default_factory=lambda: generate_readable_id())  # the identifier for this run, generated if not provided
     orchestration_enabled: bool = False  # graph mode, if true the orchestrator is enabled
-    empower: bool = True # whether if the arco empowerment is active
-    enable_budget_controller: bool = True # whether if the arco budget controller is active
+    empower: bool = True  # whether if the arco empowerment is active
+    enable_budget_controller: bool = True  # whether if the arco budget controller is active
     provider: Literal["openai", "ollama"] = "openai"  # global model provider
     model: str = "gpt-4o-mini"  # the model string
     ollama_url: str = "http://localhost:11434"  # the url to the ollama server
     save_state: bool = False  # toggle for state artifact creation
     use_cache: bool = False  # toggle for cache usage
     cache_mode: Literal["read", "r", "write", "w", "read_write", "rw"] = "rw"  # cache usage mode
-    save_dir: str | None = None  # save directory for cache or artifacts
+    save_dir: str = "./output"  # save directory for cache or artifacts
     enable_codecarbon: bool = False  # toggle for codecarbon
     enable_tracing: bool = False
     phoenix_endpoint: str | None = None
@@ -137,9 +137,6 @@ class ArcoConfig:
                 if field_meta.name not in global_params.keys():  # avoids redefining schema or other specific params
                     global_params[field_meta.name] = g[field_meta.name]
 
-        if 'prompt' not in global_params.keys():
-            raise ConfigException("Prompt should be specified in the yaml")
-
         # Create intermediate config containing resolved globals so agents can inherit from it
         temp_config = cls(**global_params)  # pyrefly: ignore [missing-argument]
 
@@ -157,6 +154,65 @@ class ArcoConfig:
                 "agent_configs": agent_configs
             }
         )
+
+    @staticmethod
+    def _load_benchmark_dataset(path: str) -> List[Dict]:
+        """Load and validate a unified GT dataset JSON."""
+        with open(path) as f:
+            import json
+            entries = json.load(f)
+        if not entries:
+            raise ValueError(f"Empty dataset: {path}")
+        first = entries[0]
+        if "prompt" not in first:
+            raise ValueError("Dataset entries must have a 'prompt' field")
+        if "gt_data" not in first and "gt_chart_config" not in first:
+            raise ValueError("Dataset entries must have 'gt_data' and/or 'gt_chart_config'")
+        return entries
+
+    @classmethod
+    def from_benchmark_yaml(cls, yaml_path: str, benchmark_dataset_path: str) -> list[dict[str, Any]]:
+        with open(yaml_path, 'r') as f:
+            raw = yaml.safe_load(f)
+
+        runs = raw.get("runs")
+
+        full_benchmark_config_list = []
+        benchmark_dataset = ArcoConfig._load_benchmark_dataset(benchmark_dataset_path)
+
+        for i, run in enumerate(runs):
+            changes = run.get("changes", [])
+
+            single_run_config_dict = {
+                "name" : run.get("name"),
+                "description" : run.get("description"),
+                "configs" : [],
+                "difficulties": [],
+                "changes": changes
+            }
+
+            for entry in benchmark_dataset:
+                # loads the default config
+                default_config = ArcoConfig.from_yaml(yaml_path)
+
+                # updates prompts and ground truth from benchmark dataset
+                prompt = entry["prompt"]
+                visualization_goal = entry.get("visualization_goal")
+                gt_dict = {key: value for key, value in entry.items() if key.startswith("gt_")}
+                run_entry_config = default_config.update_prompt(prompt, visualization_goal)
+                run_entry_config.set_gt(gt_dict)
+
+                # set the changes for this specific run configuration
+                for agent in changes:
+                    from arco.core import AgentType
+                    agent_type = AgentType(agent)
+                    run_entry_config.agent_configs[agent_type].update(changes.get(agent))
+
+                single_run_config_dict["configs"].append(run_entry_config)
+                single_run_config_dict["difficulties"].append(entry.get("difficulty"))
+
+            full_benchmark_config_list.append(single_run_config_dict)
+        return full_benchmark_config_list
 
 
 @dataclass
@@ -265,6 +321,9 @@ class AgentConfig:
             raw = yaml.safe_load(f)
 
         agents_section = raw.get('agents', {})
+        if agents_section == {}:
+            agents_section = raw.get('defaults', {})
+
         if agent_name in agents_section.keys():
             agent_dict = dict(agents_section[agent_name])
             agent_dict.setdefault('agent_name', agent_name)
@@ -276,18 +335,7 @@ class AgentConfig:
         if inherit_globals_from:
             config._inherit_from_arco_config(inherit_globals_from)
 
-        if config.n == 1:
-            config.temp_max = config.temp_min
-            config.top_k_max = config.top_k_min
-            config.top_p_max = config.top_p_min
-        else:
-            if config.temp_max < config.temp_min:
-                config.temp_max = config.temp_min
-            if config.top_k_min and config.top_k_max and config.top_k_max < config.top_k_min:
-                config.top_k_max = config.top_k_min
-            if config.top_p_min and config.top_p_max and config.top_p_max < config.top_p_min:
-                config.top_p_max = config.top_p_min
-
+        config._normalize_ranges()
         return config
 
     def set_gt(self, gt_dict: dict[str, Any]):
@@ -319,6 +367,28 @@ class AgentConfig:
                 self.run_gt_eval = True
             if "gt_visual_requirements" in gt_dict.keys():
                 self.gt_visual_requirements = gt_dict["gt_visual_requirements"]
+
+    def update(self, update_dict: dict[str, Any]):
+        """Update fields on this AgentConfig from a dict, ignoring unspecified/unknown keys."""
+        valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
+        for key, value in update_dict.items():
+            if key in valid_keys:
+                setattr(self, key, value)
+        self._normalize_ranges()
+
+    def _normalize_ranges(self):
+        if self.n == 1:
+            self.temp_max = self.temp_min
+            self.top_k_max = self.top_k_min
+            self.top_p_max = self.top_p_min
+        else:
+            if self.temp_max < self.temp_min:
+                self.temp_max = self.temp_min
+            if self.top_k_min and self.top_k_max and self.top_k_max < self.top_k_min:
+                self.top_k_max = self.top_k_min
+            if self.top_p_min and self.top_p_max and self.top_p_max < self.top_p_min:
+                self.top_p_max = self.top_p_min
+
 
     def __rich_repr__(self):
         # Rich automatically detects this method when you pass the object to Pretty()

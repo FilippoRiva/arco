@@ -718,8 +718,3 @@ class Visualizer(Agent):
 
     def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
         return VisualizerEvaluator(agent_config=agent_config)
-
-    def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        if agent_config.gt_chart_config and agent_config.gt_code and agent_config.gt_visual_requirements:
-            return True
-        return False

@@ -1,7 +1,9 @@
 import dataclasses
 import io
+import json
 from dataclasses import dataclass, field, replace, asdict
 from enum import Enum
+from pathlib import Path
 from typing import List, Optional, Any
 
 import pandas as pd
@@ -322,3 +324,10 @@ class State:
             'cached_results': cached_results
         })
         return State(**dictionary)
+
+    def save(self, save_dir: str):
+        save_dir = Path(save_dir+"/storage/")
+        save_dir.mkdir(parents=True, exist_ok=True)
+        save_file = save_dir / f"{self.run_id}.json"
+        with open(save_file, "w") as f:
+            json.dump(self.to_dict(), f, indent=2, default=str)

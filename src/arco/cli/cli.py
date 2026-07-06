@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Load the available commands
-from arco.cli.commands import run, cache, bulk, bench, aggregate
+from arco.cli.commands import run, cache, bench
 
 # Load the console singleton
 from arco.cli.console import console
@@ -32,8 +32,7 @@ def main():
     ## Parsing with argparse
     parser = argparse.ArgumentParser(
         description=(
-            "The arco-cli utility tool to run the agent, manage cache, bulk execute for evaluation, benchmark on ground-truth data"
-            "and aggregate bulk runner results"
+            "The arco-cli utility tool to run the agent, manage cache or benchmark on ground-truth data"
         )
     )
 
@@ -42,17 +41,13 @@ def main():
     commands = {
         "run": run.register(subparsers),
         "cache": cache.register(subparsers),
-        "bulk": bulk.register(subparsers),
-        "bench": bench.register(subparsers),
-        "aggregate": aggregate.register(subparsers),
+        "benchmark": bench.register(subparsers),
     }
 
     handlers = {
         "run": run.handle,
         "cache": cache.handle,
-        "bulk": bulk.handle,
-        "bench": bench.handle,
-        "aggregate": aggregate.handle,
+        "benchmark": bench.handle,
     }
 
     # Parse

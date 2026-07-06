@@ -1,3 +1,5 @@
+import os
+
 from langchain_core.messages import AIMessage
 from typing import Optional, TYPE_CHECKING
 
@@ -95,9 +97,10 @@ def get_llm(
         top_p: float | None = None,
         top_k: int | None = None,
         num_beams: int | None = None,
-        no_repeat_ngram_size: Optional[int] = None,
+        no_repeat_ngram_size: int | None = None,
         llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
-        ollama_url: Optional[str] = None,
+        ollama_url: str | None = None,
+        openrouter_url: str = "https://openrouter.ai/api/v1"
 ) -> BaseChatModel:
     """Factory method to create LLM instances with specific parameters.
 
@@ -129,6 +132,24 @@ def get_llm(
             callbacks=[llm_accumulator],
             top_p=top_p,
             logprobs=True
+        )
+    elif provider.lower() == "openrouter":
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "OpenRouter requires an API key: pass openrouter_api_key or "
+                "set the OPENROUTER_API_KEY environment variable."
+            )
+        return ChatOpenAI(
+            model=model,
+            api_key=api_key,
+            base_url=openrouter_url,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            streaming=streaming,
+            callbacks=[llm_accumulator],
+            top_p=top_p,
+            logprobs=True,
         )
     else:
         kwargs = dict(

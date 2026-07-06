@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArcoConfig",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The execution instruction or query passed to the agent system."
+        },
+        "schema": {
+          "type": "string",
+          "description": "Path to YAML schemas for the database relative to this config file."
+        },
+        "visualization_goal": {
+          "type": "string",
+          "description": "Detailed guidelines on how data outputs should be plotted or visualized."
+        },
+        "run_id": {
+          "type": "string",
+          "description": "Unique identifier for this specific execution. Ignore to auto-generate a unique ID, or set a fixed string to enable reproducible caching behavior."
+        },
+        "orchestration_enabled": {
+          "type": "boolean",
+          "description": "Toggle to determine the graph used for execution. If true the workflow becomes LLM-orchestrated"
+        },
+        "empower": {
+          "type": "boolean",
+          "description": "Toggle to determine if the arco empowerment is enabled. Defaults to true",
+          "default": "true"
+        },
+        "enable_budget_controller": {
+          "type": "boolean",
+          "description": "Toggle to determine if the arco budget controller is enabled. Defaults to true",
+          "default": "true"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "ollama",
+            "openrouter"
+          ],
+          "description": "The AI model provider backend."
+        },
+        "model": {
+          "type": "string",
+          "description": "The specific model identifier."
+        },
+        "ollama_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The base URL for local Ollama instances. Needed if provider is ollama"
+        },
+        "save_state": {
+          "type": "boolean",
+          "description": "Toggle to determine whether final output artifacts should be persisted to disk."
+        },
+        "save_dir": {
+          "type": "string",
+          "default": "./output",
+          "description": "Directory path where output artifacts and execution metrics will be saved. This path is used also for codecarbon results"
+        },
+        "use_cache": {
+          "type": "boolean",
+          "description": "Toggle to enable or disable global caching."
+        },
+        "cache_mode": {
+          "type": "string",
+          "enum": [
+            "r", "read",
+            "w", "write",
+            "rw", "read_write"
+          ],
+          "description": "Behavior mode for the cache subsystem when interacting with data storage."
+        },
+        "enable_codecarbon": {
+          "type": "boolean",
+          "description": "Toggle to enable codecarbon consumption measurements. The output dir is set with the save_dir option"
+        },
+        "enable_tracing": {
+          "type": "boolean",
+          "description": "Toggle to enable arize phoenix tracing"
+        },
+        "phoenix_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "The endpoint of the used arize phoenix client"
+        },
+        "phoenix_project_name": {
+          "type": "string",
+          "description": "The name of the arize phoenix client project"
+        }
+      },
+      "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
+      "required": [
+        "prompt",
+        "schema"
+      ]
+    },
+    "agents": {
+      "type": "object",
+      "description": "Per-agent configuration settings.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "ollama"
+            ],
+            "description": "The AI model provider backend."
+          },
+          "model": {
+            "type": "string",
+            "description": "The specific model identifier."
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of completions to generate."
+          },
+          "bon_param": {
+            "type": "string",
+            "enum": [
+              "temperature",
+              "top_k",
+              "top_p"
+            ],
+            "description": "Best-of-N selection parameter."
+          },
+          "temp_min": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 2.0,
+            "description": "Minimum sampling temperature limit."
+          },
+          "temp_max": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 2.0,
+            "description": "Maximum sampling temperature limit."
+          },
+          "cot_n": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Chain-of-thought generation count multiplier (optional)."
+          },
+          "top_p_min": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Minimum top_p (nucleus sampling) threshold limit."
+          },
+          "top_p_max": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Maximum top_p (nucleus sampling) threshold limit."
+          },
+          "top_k_min": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Minimum top_k token cutoff pool limit."
+          },
+          "top_k_max": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum top_k token cutoff pool limit."
+          },
+          "use_cache": {
+            "type": "boolean",
+            "description": "Toggle to enable or disable query caching for this agent."
+          },
+          "cache_mode": {
+            "type": "string",
+            "enum": [
+              "read", "r",
+              "write", "w",
+              "read_write", "rw"
+            ],
+            "description": "Behavior mode for the cache with this agent."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Master toggle to enable or disable this component entirely."
+          },
+          "eval": {
+            "type": "string",
+            "enum": [
+              "default"
+            ],
+            "description": "The evaluation system used by the agent to perform best-of-n selection"
+          }
+        },
+        "description": "Dictionary of dynamic, named agent definitions (e.g., Retriever, Analyzer). All internal keys are optional, allowing individual agents to selectively override the global defaults or customize their own sampling boundaries, caching rules, and evaluation setups.",
+        "required": []
+      }
+    }
+  },
+  "required": [
+    "global"
+  ]
+}

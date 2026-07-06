@@ -643,5 +643,3 @@ name used by any candidate. Prefer lowercase_with_underscores.
     def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
         return RetrieverEvaluator(agent_config)
 
-    def can_evaluate_from_gt(self, agent_config: AgentConfig) -> bool:
-        return True if agent_config.gt_csv_path else False
