@@ -100,29 +100,17 @@ def run_benchmark(
     Returns:
         DataFrame with per-test-case information.
     """
+    # Dependencies loaded dynamically
     from arco.cli.console import console
-    status = console.status("[bold cyan]Loading benchmark[/bold cyan]")
-    status.start()
-
-    import collections, os, random, sys
+    import collections, os
     from pathlib import Path
     from functools import partial
-    console.print("[green]✓[/green] Built-in modules loaded")
-
     import pandas as pd
-    console.print("[green]✓[/green] Pandas loaded")
-
     from rich.rule import Rule
     from arco.cli import viz
-    console.print("[green]✓[/green] Visualization tools loaded")
-
-    from arco.core import ArcoConfig
     from arco.core import AgentType
     from arco.core.state import ProfilingData
-    from arco.workflow import SalesDataWorkflow
-    console.print("[green]✓[/green] ARCO dependencies loaded")
-
-    status.stop()
+    from arco.workflows.workflow_executor import WorkflowExecutor
 
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
@@ -146,7 +134,7 @@ def run_benchmark(
     for idx, config in enumerate(configs):
         # Run agent
         console.print(Rule(f"[bold blue]Test Case {idx + 1}/{len(configs)}"))
-        agent = SalesDataWorkflow(config=config)
+        agent = WorkflowExecutor(config=config)
         result = visualization_logic(agent.stream())
 
         ## Handle Profiling Data

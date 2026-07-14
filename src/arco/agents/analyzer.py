@@ -11,7 +11,6 @@ from arco.evaluators import AnalyzerEvaluator
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core import State, AgentConfig, Evaluator
-    from arco.tracing import TracingHelper
 
 
 class Analyzer(Agent):
@@ -127,8 +126,8 @@ class Analyzer(Agent):
     Provide a direct, concise answer in natural language (2-3 sentences). Focus only on facts from the data.
     """
 
-    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
-        super().__init__(trace_helper, empower)
+    def __init__(self, empower: bool = False):
+        super().__init__(empower)
         self.type = AgentType.ANALYZER
 
     @staticmethod

@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from arco.workflows import sales
+
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
 
@@ -45,7 +47,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from rich.rule import Rule
     from arco.cli import viz
     console.print("[green]✓[/green] Visualization tools loaded")
-    from arco.workflow import SalesDataWorkflow
+    from arco.workflows.workflow_executor import WorkflowExecutor
     from arco.core import ArcoConfig
     console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
@@ -63,11 +65,12 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     viz.print_config_table(config, verbose=args.verbose)
     console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
 
-    ## Run the agent
-    agent = SalesDataWorkflow(
-        config=config
+    ## Get the agent
+    workflow = WorkflowExecutor(
+        config=config,
+        graph=sales.build_graph(config)
     )
 
     # runs the agent with a visualization logic in rich
-    # viz.agent_events_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)
-    viz.streaming_agent_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)
+    viz.agent_events_visualizer(workflow.stream(), verbose=args.verbose, show_plot=True)
+    # viz.streaming_agent_visualizer(workflow.stream(), verbose=args.verbose, show_plot=True)

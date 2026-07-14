@@ -1,13 +1,12 @@
 import json
 from copy import deepcopy
-from typing import Optional, List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 import duckdb
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
 from pandas import DataFrame
 
-from arco import tracing
 from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
 from arco.data import normalize_dataframe_values
@@ -15,9 +14,8 @@ from arco.evaluators import RetrieverEvaluator
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
-    from arco.tracking import LLMCallAccumulator
+    from arco.core.tracking import LLMCallAccumulator
     from arco.data import DatabaseSchema
-    from arco.tracing import TracingHelper
     from arco.core import AgentConfig, Evaluator, State
 
 
@@ -254,8 +252,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
 {{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
 """
 
-    def __init__(self, trace_helper: TracingHelper, schema: DatabaseSchema, empower: bool = False):
-        super().__init__(trace_helper, empower)
+    def __init__(self, schema: DatabaseSchema, empower: bool = False):
+        super().__init__(empower)
         self.type = AgentType.RETRIEVER
         self.schema = schema
 
@@ -263,8 +261,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
     def _select_relevant_tables(
             state: State,
             schema: DatabaseSchema,
-            llm,
-            trace_helper: Optional[TracingHelper] = None,
+            llm
     ) -> tuple[list[str], list[float | int] | None]:
         """Use the LLM to select relevant tables from a large schema.
 
@@ -277,63 +274,38 @@ name used by any candidate. Prefer lowercase_with_underscores.
             state: Conversation state containing the user prompt.
             schema: DatabaseSchema with all available tables.
             llm: LLM instance for table selection.
-            trace_helper : Optional tracing Helper for Phoenix integration
 
         Returns:
             List of selected table names. Falls back to all table names if the LLM
             output cannot be parsed (safe degradation).
         """
-        helper = trace_helper or TracingHelper()
         compact_schema = schema.get_compact_summary()
-        with helper.start_span(
-                "schema_table_selection",
-                kind="tool",
-                attributes={
-                    "schema.table_count": len(schema.tables),
-                    "schema.compact_summary_length": len(compact_schema),
-                },
-                input_data={
-                    "prompt": tracing.truncate_trace_text(state.prompt),
-                    "table_count": len(schema.tables),
-                },
-        ) as span:
-            formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
-                compact_schema=compact_schema,
-                prompt=state.prompt,
-            )
-            response = llm.invoke(formatted_prompt)
-            raw = response.content if hasattr(response, "content") else str(response)
-            logprobs = llm_tools.extract_logprobs(response)
-            raw = raw.strip()
+        formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
+            compact_schema=compact_schema,
+            prompt=state.prompt,
+        )
+        response = llm.invoke(formatted_prompt)
+        raw = response.content if hasattr(response, "content") else str(response)
+        logprobs = llm_tools.extract_logprobs(response)
+        raw = raw.strip()
 
-            name_map = {t.name.lower(): t.name for t in schema.tables}
-            selected = []
-            for token in raw.split(","):
-                normalized = token.strip().lower()
-                if normalized in name_map:
-                    selected.append(name_map[normalized])
+        name_map = {t.name.lower(): t.name for t in schema.tables}
+        selected = []
+        for token in raw.split(","):
+            normalized = token.strip().lower()
+            if normalized in name_map:
+                selected.append(name_map[normalized])
 
-            if not selected:
-                # print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
-                selected = [t.name for t in schema.tables]
-                tracing.set_attributes(span, {"selection.fallback_to_all": True})
-
-            tracing.set_output(
-                span,
-                {
-                    "raw_response": tracing.truncate_trace_text(raw),
-                    "selected_tables": selected,
-                },
-            )
-
+        if not selected:
+            # print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
+            selected = [t.name for t in schema.tables]
         return selected, logprobs
 
     @staticmethod
     def _generate_sql_query(
             state: State,
             schema_context: str,
-            llm,
-            trace_helper: TracingHelper
+            llm
     ) -> tuple[str, list[float | int] | None]:
         """Generate a DuckDB SQL query from the user prompt and schema context.
 
@@ -343,39 +315,26 @@ name used by any candidate. Prefer lowercase_with_underscores.
                             Includes table names, descriptions, and column details for all
                             relevant tables.
             llm: LLM instance used to generate the SQL.
-            trace_helper : Optional tracing Helper for Phoenix integration
 
         Returns:
             A plain SQL string suitable for DuckDB. Any Markdown fences are stripped.
         """
         visualization_goal = state.visualization_goal or state.prompt
 
-        helper = trace_helper
-        with helper.start_span(
-                "sql_generation",
-                kind="tool",
-                attributes={"schema_context_length": len(schema_context)},
-                input_data={
-                    "prompt": tracing.truncate_trace_text(state.prompt),
-                    "visualization_goal": tracing.truncate_trace_text(visualization_goal),
-                },
-        ) as span:
-            formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
-                prompt=state.prompt,
-                schema_context=schema_context,
-                visualization_goal=visualization_goal,
-            )
-            response = llm.invoke(formatted_prompt)
-            logprobs = llm_tools.extract_logprobs(response)
-            sql_query = response.content if hasattr(response, "content") else str(response)
-            cleaned_sql = (
-                sql_query.strip()
-                .replace("```sql", "")
-                .replace("```", "")
-            )
-            tracing.set_output(span, {"sql_query": tracing.truncate_trace_text(cleaned_sql)})
-            # print("Generated SQL Query:\n", cleaned_sql)
-            return cleaned_sql, logprobs
+        formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
+            prompt=state.prompt,
+            schema_context=schema_context,
+            visualization_goal=visualization_goal,
+        )
+        response = llm.invoke(formatted_prompt)
+        logprobs = llm_tools.extract_logprobs(response)
+        sql_query = response.content if hasattr(response, "content") else str(response)
+        cleaned_sql = (
+            sql_query.strip()
+            .replace("```sql", "")
+            .replace("```", "")
+        )
+        return cleaned_sql, logprobs
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """Core lookup logic - SQL generation and data retrieval.
@@ -408,7 +367,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # --- Build schema context (two-step when many tables) ---
         if schema.should_use_table_selection():
-            selected_names, logprobs_relevant_tables = Retriever._select_relevant_tables(state, schema, llm, trace_helper=self.trace_helper)
+            selected_names, logprobs_relevant_tables = Retriever._select_relevant_tables(state, schema, llm)
             schema_context = schema.get_full_schema_str(table_names=selected_names)
         else:
             selected_names = [table.name for table in schema.tables]
@@ -416,28 +375,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             schema_context = schema.get_full_schema_str()
 
         # --- Generate and execute SQL ---
-        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(state, schema_context, llm, trace_helper=self.trace_helper)
+        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(state, schema_context, llm)
         try:
-            with self.trace_helper.start_span(
-                    "sql_execution",
-                    kind="tool",
-                    attributes={
-                        "schema_table_count": len(schema.tables),
-                        "selected_table_count": len(selected_names),
-                    },
-                    input_data={"sql_query": tracing.truncate_trace_text(sql_query)},
-            ) as span:
-                # pyrefly: ignore [bad-assignment]
-                result_df: DataFrame = con.execute(sql_query).df()
-                result_str = result_df.to_csv(index=False)
-                tracing.set_output(
-                    span,
-                    {
-                        "selected_tables": selected_names,
-                        "dataframe": tracing.summarize_dataframe(result_df),
-                        "data_preview": tracing.truncate_trace_text(result_str),
-                    },
-                )
+            result_df: DataFrame = con.execute(sql_query).df()
+            result_str = result_df.to_csv(index=False)
 
             answer: Answer = Answer(
                 agent_id=self.type,
@@ -632,7 +573,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
             llm_accumulator=llm_acc,
             provider=config.provider,
             model=config.model,
-            ollama_url=config.ollama_url,
         )
 
         return Retriever.apply_standardization(results,

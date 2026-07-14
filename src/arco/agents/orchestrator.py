@@ -9,7 +9,6 @@ from arco.core import Agent, Answer, AgentType, llm_tools
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core import State
-    from arco.tracing import TracingHelper
 
 
 class Orchestrator(Agent):
@@ -173,8 +172,8 @@ Based on the chain of thought reasoning above and the current state, select the 
 Respond with ONLY the tool name: retriever, analyzer, visualizer, or end
 No explanations. Just the agent's name."""
 
-    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
-        super().__init__(trace_helper, empower)
+    def __init__(self, empower: bool = False):
+        super().__init__(empower)
         self.type = AgentType.ORCHESTRATOR
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:

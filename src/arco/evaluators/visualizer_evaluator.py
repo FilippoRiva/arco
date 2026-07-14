@@ -73,7 +73,6 @@ class VisualizerEvaluator(Evaluator):
         super().__init__(agent_config)
         self.judge_model = agent_config.model
         self.provider = agent_config.provider
-        self.ollama_url = agent_config.ollama_url
         self.gt_config = agent_config.gt_chart_config
         self.gt_code = agent_config.gt_code
         self.gt_visual_requirements = agent_config.gt_visual_requirements
@@ -162,7 +161,7 @@ class VisualizerEvaluator(Evaluator):
         Uses an LLM judge to score chart quality based on data suitability,
         axis mapping, code quality, and goal alignment.
         """
-        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model, ollama_url=self.ollama_url)
+        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model)
         VisualizerEvaluator.judge(state, llm)
         return
 
@@ -344,7 +343,7 @@ class VisualizerEvaluator(Evaluator):
         return
 
     def _gt_eval(self, state: State):
-        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model, ollama_url=self.ollama_url)
+        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model)
         VisualizerEvaluator.judge_from_ground_truth(
             state,
             llm=llm,

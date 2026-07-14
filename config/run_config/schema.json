@@ -79,19 +79,6 @@
         "enable_codecarbon": {
           "type": "boolean",
           "description": "Toggle to enable codecarbon consumption measurements. The output dir is set with the save_dir option"
-        },
-        "enable_tracing": {
-          "type": "boolean",
-          "description": "Toggle to enable arize phoenix tracing"
-        },
-        "phoenix_endpoint": {
-          "type": "string",
-          "format": "uri",
-          "description": "The endpoint of the used arize phoenix client"
-        },
-        "phoenix_project_name": {
-          "type": "string",
-          "description": "The name of the arize phoenix client project"
         }
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",

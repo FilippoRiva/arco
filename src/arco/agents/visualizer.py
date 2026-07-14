@@ -5,7 +5,6 @@ from typing import Optional, Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco import tracing
 from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
 from arco.evaluators import VisualizerEvaluator
@@ -13,7 +12,6 @@ from arco.evaluators import VisualizerEvaluator
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core import Evaluator, AgentConfig, State
-    from arco.tracing import TracingHelper
 
 
 class Visualizer(Agent):
@@ -502,8 +500,8 @@ class Visualizer(Agent):
     Return ONLY the Python code. No markdown formatting. No code fences. No explanations. Just the executable Python code.
     """
 
-    def __init__(self, trace_helper: TracingHelper, empower: bool = False):
-        super().__init__(trace_helper, empower)
+    def __init__(self, empower: bool = False):
+        super().__init__(empower)
         self.type = AgentType.VISUALIZER
 
     @staticmethod
@@ -544,9 +542,8 @@ class Visualizer(Agent):
             }
 
     @staticmethod
-    def _extract_chart_config(state: State, llm: BaseChatModel | CoTRefiner,
-                              trace_helper: Optional[TracingHelper] = None) -> tuple[
-        dict[str, str], list[float | int] | None]:
+    def _extract_chart_config(state: State, llm: BaseChatModel | CoTRefiner) \
+            -> tuple[dict[str, str], list[float | int] | None]:
         """Infer a compact chart configuration from the looked-up data.
 
         Prompts the LLM to return a minified JSON config and parses it into a
@@ -555,7 +552,6 @@ class Visualizer(Agent):
         Args:
             state: Conversation state; should include 'data' and optionally 'visualization_goal'.
             llm: ChatOllama instance used to infer the chart configuration.
-            trace_helper : Optional tracing Helper for Phoenix integration
 
         Returns:
             A proposal chart_configuration
@@ -568,61 +564,34 @@ class Visualizer(Agent):
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
         data_text = last_retriever_answer.data_str
 
-        helper = trace_helper or TracingHelper()
         visualization_goal = state.visualization_goal or state.prompt
-        with helper.start_span(
-                "chart_config_extraction",
-                kind="tool",
-                input_data={
-                    "visualization_goal": tracing.truncate_trace_text(visualization_goal),
-                    "data_preview": tracing.truncate_trace_text(data_text),
-                },
-        ) as span:
-            formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
-                data=data_text, visualization_goal=visualization_goal
-            )
-            response = llm.invoke(formatted_prompt)
-            logprobs = llm_tools.extract_logprobs(response)
-            raw: str = str(response.content) if hasattr(response, "content") else str(response)
-            chart_config = Visualizer._parse_chart_config(raw)
-            tracing.set_output(
-                span,
-                {
-                    "raw_response": tracing.truncate_trace_text(raw),
-                    "chart_config": chart_config,
-                },
-            )
-            # Do NOT include data in chart_config - it will be passed separately as DataFrame
-            # print("This is the chart_config: " + str(chart_config))
-            return chart_config, logprobs
+
+        formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
+            data=data_text, visualization_goal=visualization_goal
+        )
+        response = llm.invoke(formatted_prompt)
+        logprobs = llm_tools.extract_logprobs(response)
+        raw: str = str(response.content) if hasattr(response, "content") else str(response)
+        chart_config = Visualizer._parse_chart_config(raw)
+        return chart_config, logprobs
 
     @staticmethod
-    def _create_chart(chart_config: dict, llm: BaseChatModel | CoTRefiner,
-                      trace_helper: Optional[TracingHelper] = None) -> tuple[str, list[float | int] | None]:
+    def _create_chart(chart_config: dict, llm: BaseChatModel | CoTRefiner) -> tuple[str, list[float | int] | None]:
         """Ask the LLM to emit matplotlib code for the given chart configuration.
 
         Args:
             llm: ChatOllama instance used to generate the plotting code.
-            trace_helper : Optional tracing Helper for Phoenix integration
 
         Returns:
             A Python code string (without Markdown fences) that, when executed,
             renders the chart using matplotlib.
         """
-        helper = trace_helper or TracingHelper()
-        with helper.start_span(
-                "chart_code_generation",
-                kind="tool",
-                input_data={"chart_config": chart_config},
-        ) as span:
-            formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
-            response = llm.invoke(formatted_prompt)
-            logprobs = llm_tools.extract_logprobs(response)
-            code: str = str(response.content) if hasattr(response, "content") else str(response)
-            cleaned_code = code.replace("```python", "").replace("```", "").strip()
-            tracing.set_output(span, {"code": tracing.truncate_trace_text(cleaned_code)})
-            # clean any accidental fences
-            return cleaned_code, logprobs
+        formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
+        response = llm.invoke(formatted_prompt)
+        logprobs = llm_tools.extract_logprobs(response)
+        code: str = str(response.content) if hasattr(response, "content") else str(response)
+        cleaned_code = code.replace("```python", "").replace("```", "").strip()
+        return cleaned_code, logprobs
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """Core visualization logic - chart config extraction and code generation.
@@ -650,12 +619,10 @@ class Visualizer(Agent):
             #    print("Warning: No DataFrame available in state")
 
             # Extract chart configuration
-            chart_config, logprobs_chart_config = Visualizer._extract_chart_config(state, llm,
-                                                                                   trace_helper=self.trace_helper)
+            chart_config, logprobs_chart_config = Visualizer._extract_chart_config(state, llm)
 
             # Generate chart code
-            code, logprobs_code = Visualizer._create_chart(chart_config=chart_config, llm=llm,
-                                                           trace_helper=self.trace_helper)
+            code, logprobs_code = Visualizer._create_chart(chart_config=chart_config, llm=llm)
 
             # --- Validate by executing in a headless namespace (no display) ---
             # Switch to Agg (non-interactive) backend to avoid tkinter threading
@@ -669,18 +636,8 @@ class Visualizer(Agent):
                 "config": chart_config
             }
             try:
-                with self.trace_helper.start_span(
-                        "visualization_validation",
-                        kind="tool",
-                        input_data={
-                            "chart_config": chart_config,
-                            "dataframe": tracing.summarize_dataframe(data_df),
-                            "code": tracing.truncate_trace_text(code),
-                        },
-                ) as span:
-                    exec(exec_code, namespace)  # noqa: S102
-                    exec_error = ""
-                    tracing.set_output(span, {"validation": "passed"})
+                exec(exec_code, namespace)  # noqa: S102
+                exec_error = ""
             except Exception as e:
                 exec_error = f"{type(e).__name__}: {e}"
 

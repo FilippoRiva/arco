@@ -73,7 +73,7 @@ def _check(name, condition, detail=""):
 print("=== TEST 1: _create_llm → request_timeout su ChatOllama ===")
 try:
     # Costruiamo un'istanza minimale senza __init__ completo
-    agent_stub = object.__new__(da.SalesDataWorkflow)
+    agent_stub = object.__new__(da.WorkflowExecutor)
     agent_stub.provider    = "ollama"
     agent_stub.model       = "test-model"
     agent_stub.ollama_url  = HANG_URL

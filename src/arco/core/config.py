@@ -42,7 +42,7 @@ class ArcoConfig:
     # #
     # GLOBAL CONFIGURATION
     # #
-    # mandatory(the only mandatory parameters)
+    # mandatory
     schema: DatabaseSchema
     # optional
     prompt: str = ""
@@ -60,19 +60,11 @@ class ArcoConfig:
     cache_mode: Literal["read", "r", "write", "w", "read_write", "rw"] = "rw"  # cache usage mode
     save_dir: str = "./output"  # save directory for cache or artifacts
     enable_codecarbon: bool = False  # toggle for codecarbon
-    enable_tracing: bool = False
-    phoenix_endpoint: str | None = None
-    phoenix_project_name: str | None = None
 
     # #
     # AGENTS CONFIGURATION
     # #
     agent_configs: Dict[AgentType, AgentConfig] = field(default_factory=dict)
-
-    # #
-    # TRACING CONFIGURATION
-    # #
-    tracing: dict = field(default_factory=lambda: {"enabled": False})
 
     # #
     # NOT CONFIGURABLE FROM YAML
@@ -106,7 +98,7 @@ class ArcoConfig:
     def from_yaml(cls, yaml_path: str) -> ArcoConfig:
         """Load configuration from a YAML file.
 
-        The YAML file should have sections: agent, steps, schema, run, tracing.
+        The YAML file should have sections: agent, steps, schema, run
         Schema table definitions are stored in separate per-table YAML files,
         referenced by path in schema.tables.
 
@@ -116,7 +108,7 @@ class ArcoConfig:
         Returns:
             Tuple of (AgentConfig, run_params dict, DatabaseSchema or None).
             run_params includes keys: prompt,run_id, save_dir, save_results,
-            reuse_from, enable_codecarbon, and a 'tracing' sub-dict.
+            reuse_from and enable_codecarbon.
         """
         with open(yaml_path, 'r') as f:
             raw = yaml.safe_load(f)
@@ -222,10 +214,8 @@ class AgentConfig:
     """Configuration for a single agent execution.
 
     Attributes:
-        agent_name: Name identifier for this step
         provider: model provider for this specific agent
         model: The LLM model from the provider used for this agent
-        ollama_url: The ollama url for llm instantiation
         n: Number of best-of-n runs for this step (default 1)
         temp_min: Minimum temperature for sampling (default 0.1)
         temp_max: Maximum temperature for sampling (default 0.1)
@@ -238,13 +228,10 @@ class AgentConfig:
         cache_mode: Cache behavior - "auto", "skip", or "force_fresh"
         schema: DatabaseSchema used by the retriever
     """
-    agent_name: str
-
     # Optional per-step LLM overrides
     _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
     provider: str = _DUMMY_STR
     model: str = _DUMMY_STR
-    ollama_url: str = _DUMMY_STR
 
     # Best-of-n sampling parameters
     n: int = 1
@@ -304,8 +291,6 @@ class AgentConfig:
             self.provider = global_config.provider
         if self.model == self._DUMMY_STR:
             self.model = global_config.model
-        if self.ollama_url == self._DUMMY_STR:
-            self.ollama_url = global_config.ollama_url
         if self.use_cache is None:
             self.use_cache = global_config.use_cache
 
@@ -328,9 +313,8 @@ class AgentConfig:
 
         if agent_name in agents_section.keys():
             agent_dict = dict(agents_section[agent_name])
-            agent_dict.setdefault('agent_name', agent_name)
         else:
-            agent_dict = {'agent_name': agent_name}
+            agent_dict = {}
 
         config = AgentConfig.from_dict(agent_dict)
 

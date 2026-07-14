@@ -134,7 +134,7 @@ def budget_routing_logic(state: State, config: RunnableConfig) -> Literal["end",
     return answer.budget_controller_choice
 
 
-def empower(node_func: Runnable[State, State]) -> Runnable[State, State]:
+def empower(node_func: Runnable[State, State]) -> RunnableLambda[State, State]:
     subgraph_builder: StateGraph = StateGraph(State)
 
     subgraph_builder.add_node("core_logic", node_func)

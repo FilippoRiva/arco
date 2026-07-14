@@ -1,15 +1,17 @@
 import os
 
 from langchain_core.messages import AIMessage
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
-from arco.tracking import LLMCallAccumulator
+from arco.core.tracking import LLMCallAccumulator
 
+# Global parameters
 OLLAMA_REQUEST_TIMEOUT: int = 600
+OLLAMA_URL: str = "http://localhost:11434"
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
@@ -84,7 +86,6 @@ def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) 
         top_k=top_k,
         num_beams=agent_config.num_beams,
         no_repeat_ngram_size=agent_config.no_repeat_ngram_size,
-        ollama_url=agent_config.ollama_url,
         llm_accumulator=llm_acc,
     )
 
@@ -100,7 +101,6 @@ def get_llm(
         num_beams: int | None = None,
         no_repeat_ngram_size: int | None = None,
         llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
-        ollama_url: str = "localhost:11434",
         openrouter_url: str = "https://openrouter.ai/api/v1"
 ) -> BaseChatModel:
     """Factory method to create LLM instances with specific parameters.
@@ -119,7 +119,7 @@ def get_llm(
         provider: The LLM provider to use (e.g., 'openai', 'ollama', 'anthropic').
         model: The specific model ID/name to instantiate.
         llm_accumulator: An instance to track or log LLM calls and usage.
-        ollama_url: Base URL for the Ollama API, if using the Ollama provider.
+        openrouter_url: Base URL for the Openrouter API, if using openrouter provider.
 
     Returns:
         BaseChatModel: A configured instance of a LangChain-compatible chat model.
@@ -160,7 +160,7 @@ def get_llm(
     else:
         kwargs = dict(
             model=model,
-            base_url=ollama_url,
+            base_url=OLLAMA_URL,
             temperature=temperature,
             num_predict=max_tokens,
             top_p=top_p,

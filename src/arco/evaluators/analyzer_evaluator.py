@@ -219,7 +219,6 @@ class AnalyzerEvaluator(Evaluator):
         super().__init__(agent_config)
         self.provider = agent_config.provider
         self.judge_model = agent_config.model
-        self.ollama_url = agent_config.ollama_url
         self.gt_metric = agent_config.gt_metric
         self.gt_analysis = agent_config.gt_analysis
 
@@ -323,7 +322,7 @@ class AnalyzerEvaluator(Evaluator):
         if not analysis:
             raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
 
-        llm = get_llm(provider=self.provider, model=self.judge_model, ollama_url=self.ollama_url)
+        llm = get_llm(provider=self.provider, model=self.judge_model)
         AnalyzerEvaluator.judge(state, llm)
 
     def _gt_eval(self, state: State):
@@ -337,7 +336,7 @@ class AnalyzerEvaluator(Evaluator):
             score = spice_score_java(analysis, self.gt_analysis, spice_jar=None)
             evaluation = Evaluation(score=score)
         elif self.gt_metric == "judge":
-            llm = get_llm(provider=self.provider, model=self.judge_model, ollama_url=self.ollama_url)
+            llm = get_llm(provider=self.provider, model=self.judge_model)
             evaluation = AnalyzerEvaluator.judge_from_ground_truth(
                 state=state,
                 llm=llm,

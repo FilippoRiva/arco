@@ -1,8 +1,5 @@
 from langchain_core.runnables import RunnableLambda
 
-from langchain_core.runnables import Runnable
-
-from arco import tracing
 import difflib
 import time
 from typing import List, TYPE_CHECKING
@@ -10,26 +7,29 @@ from typing import List, TYPE_CHECKING
 from langchain_core.language_models import BaseChatModel
 
 from . import llm_tools
-from arco.tracing import _summarize_for_trace, truncate_trace_text
 from .evaluator import Evaluator
 from .empower import empower
 from .state import State, AgentType, ProfilingData
 from .exceptions import AgentException
 
 if TYPE_CHECKING:
-    from arco.tracing import TracingHelper
     from arco.core.llm_tools import CoTRefiner
-    from ..tracking import LLMCallAccumulator
+    from arco.core.tracking import LLMCallAccumulator
     from .config import AgentConfig
 
 class Agent:
     _COT_SIMILARITY_THRESHOLD = 0.95
     _empower : bool = False
 
-    def __init__(self, trace_helper: TracingHelper, empower: bool = True):
-        self.trace_helper: TracingHelper = trace_helper
-        self._empower: bool = empower
+    def __init__(self, empower_bool: bool = True):
+        self._empower: bool = empower_bool
         self.type: AgentType = AgentType.NONE
+        runnable = RunnableLambda(self.get_config_and_execute)
+        self._runnable = empower(runnable) if self._empower else runnable
+
+    @property
+    def name(self) -> str:
+        return self.type.value
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """
@@ -49,55 +49,25 @@ class Agent:
         llm = llm_tools.get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
         # Run inference
-        temp, top_p, top_k = config.get_candidate_params()[0]
-        with self.trace_helper.start_span(
-                "step_candidate",
-                kind="tool",
-                attributes={
-                    "step_name": config.agent_name,
-                    "candidate_index": 0,
-                    "temperature": temp,
-                    "top_p": top_p,
-                    "top_k": top_k,
-                    "llm.provider": config.provider,
-                    "llm.model": config.model,
-                },
-        ) as candidate_span:
-            result: State = self.core(state, llm)
-            if config.cot_n > 1:
-                result: State = self.apply_cot_iteration(
-                    state,
-                    llm,
-                    result,
-                    config
-                )
-
-            config_dictionary = {
-                "_temperature": temp,
-                "_top_p": top_p,
-                "_top_k": top_k,
-                "_run_idx": 0,
-            }
-            tracing.set_output(candidate_span,
-                                         _summarize_for_trace(result, additional_logging=config_dictionary))
-
+        result: State = self.core(state, llm)
+        if config.cot_n > 1:
+            result: State = self.apply_cot_iteration(
+                state,
+                llm,
+                result,
+                config
+            )
         return [result]
 
-    def execute_best_of_n(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator,
-                          agent_span) -> List[State]:
+    def execute_best_of_n(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> List[State]:
         # Initialize results and their scores
         results = []
 
-        # Variable LLM parameters
-        _param_idx = {"temperature": 0, "top_p": 1, "top_k": 2}[config.bon_parameter]
-        varying_vals = [p[_param_idx] for p in config.get_candidate_params()]
-        tracing.set_attributes(agent_span, {"candidate_count": config.n, "varying_values": varying_vals})
+        if config.provider is None or config.model is None:
+            raise AgentException("Both config provider and config model must be set")
 
         # Generate results
         for i, (temp, top_p, top_k) in enumerate(config.get_candidate_params()):
-            if config.provider is None or config.model is None:
-                raise AgentException("Both config provider and config model must be set")
-
             llm = llm_tools.get_llm(
                 # Variable
                 temperature=temp,
@@ -110,44 +80,17 @@ class Agent:
                 llm_accumulator=llm_acc,
                 provider=config.provider,
                 model=config.model,
-                ollama_url=config.ollama_url,
             )
 
-            varying_val = varying_vals[i]
-
-            with self.trace_helper.start_span(
-                    "agent_candidate",
-                    kind="tool",
-                    attributes={
-                        "agent_name": config.agent_name,
-                        "candidate_index": i,
-                        "temperature": temp,
-                        "top_p": top_p,
-                        "top_k": top_k,
-                        config.bon_parameter: varying_val,
-                        "llm.provider": config.provider,
-                        "llm.model": config.model,
-                    },
-            ) as candidate_span:
-                result: State = self.core(state, llm)
-                if config.cot_n > 1:
-                    result: State = self.apply_cot_iteration(
-                        state,
-                        llm,
-                        result,
-                        config
-                    )
-                config_dictionary = {
-                    "_temperature": temp,
-                    "_top_p": top_p,
-                    "_top_k": top_k,
-                    "_bon_param": config.bon_parameter,
-                    "_run_idx": i,
-                }
-
-                tracing.set_output(candidate_span,
-                                             _summarize_for_trace(result, additional_logging=config_dictionary))
-                results.append(result)
+            result: State = self.core(state, llm)
+            if config.cot_n > 1:
+                result: State = self.apply_cot_iteration(
+                    state,
+                    llm,
+                    result,
+                    config
+                )
+            results.append(result)
         return results
 
     def apply_cot_iteration(
@@ -181,21 +124,7 @@ class Agent:
         for cot_i in range(1, config.cot_n):
             # Apply Refinement
             refinement_llm = llm_tools.CoTRefiner(llm, previous_output, execution_error)
-            with self.trace_helper.start_span(
-                    "cot_refinement",
-                    kind="tool",
-                    attributes={
-                        "agent_name": config.agent_name,
-                        "cot_iteration": cot_i + 1,
-                        "cot_total": config.cot_n,
-                    },
-                    input_data={
-                        "previous_output": truncate_trace_text(previous_output),
-                        "execution_error": truncate_trace_text(execution_error),
-                    },
-            ) as span:
-                new_result: State = self.core(state, refinement_llm)
-                tracing.set_output(span, _summarize_for_trace(new_result))
+            new_result: State = self.core(state, refinement_llm)
 
             new_error = new_result.answers[-1].error
             if new_error:
@@ -207,13 +136,6 @@ class Agent:
             else:
                 new_output = str(new_result.answers[-1])
                 ratio = difflib.SequenceMatcher(None, previous_output, new_output).ratio()
-                tracing.set_attributes(
-                    span,
-                    {
-                        "cot_similarity": ratio,
-                        "cot_converged": ratio >= self._COT_SIMILARITY_THRESHOLD,
-                    },
-                )
 
                 if ratio >= self._COT_SIMILARITY_THRESHOLD:
                     break
@@ -238,75 +160,50 @@ class Agent:
 
         agent_config: AgentConfig = state.get_agent_config(self.type)
 
-        with self.trace_helper.start_span(
-                self.__class__.__name__,
-                kind="agent",
-                attributes={
-                    "agent_name": agent_config.agent_name,
-                    "config.cache_mode": getattr(agent_config, "cache_mode", None),
-                    "config.use_cache": getattr(agent_config, "use_cache", None),
-                    "config.n": getattr(agent_config, "n", None),
-                    "config.cot_n": getattr(agent_config, "cot_n", None),
-                },
-                input_data=_summarize_for_trace(state),
-        ) as agent_span:
-            # Loads results from the cache if requested and returns if it hits
-            if agent_config.use_cache:
-                if state.cached_results:
-                    if answer := state.cached_results.get(self.type):
-                        return state.add_answer(answer)
+        # Loads results from the cache if requested and returns if it hits
+        if agent_config.use_cache:
+            if state.cached_results:
+                if answer := state.cached_results.get(self.type):
+                    return state.add_answer(answer)
 
-            # Parameters for per-step LLM call instrumentation
-            tracing.set_attributes(
-                agent_span,
-                {
-                    "config.n": agent_config.n,
-                    "config.cot_n": agent_config.cot_n,
-                    "config.bon_param": agent_config.bon_parameter,
-                    "config.max_tokens": agent_config.max_tokens,
-                },
-            )
-            # Start timers
-            agent_t0 = time.perf_counter()
+        # Start timers
+        agent_t0 = time.perf_counter()
 
-            # Get llm call time accumulator for profiling
-            from arco.core.llm_tools import LLMCallAccumulator
-            llm_acc = LLMCallAccumulator(agent_config.agent_name)
+        # Get llm call time accumulator for profiling
+        from arco.core.llm_tools import LLMCallAccumulator
+        llm_acc = LLMCallAccumulator(self.name)
 
-            ###
-            # Inference
-            ###
-            if agent_config.n == 1:
-                results = self.execute_greedy(state=state, config=agent_config, llm_acc=llm_acc)
-            else:
-                results = self.execute_best_of_n(state=state, config=agent_config, agent_span=agent_span,
-                                                 llm_acc=llm_acc)
+        ###
+        # Inference
+        ###
+        if agent_config.n == 1:
+            results = self.execute_greedy(state=state, config=agent_config, llm_acc=llm_acc)
+        else:
+            results = self.execute_best_of_n(state=state, config=agent_config, llm_acc=llm_acc)
 
-            # Run Post Generation Hooks (dynamically overridden if needed, see Retriever as an example)
-            results = self.post_generation_hooks(results, llm_acc=llm_acc, config=agent_config)
+        # Run Post Generation Hooks (dynamically overridden if needed, see Retriever as an example)
+        results = self.post_generation_hooks(results, llm_acc=llm_acc, config=agent_config)
 
-            ###
-            # Evaluation
-            ###
-            evaluator: Evaluator = self.get_evaluator(agent_config)
-            results, best_result = evaluator.evaluate_and_select(results=results)
+        ###
+        # Evaluation
+        ###
+        evaluator: Evaluator = self.get_evaluator(agent_config)
+        results, best_result = evaluator.evaluate_and_select(results=results)
 
-            ###
-            # Profiling
-            ###
-            total_agent_time = time.perf_counter() - agent_t0
-            profiling_data = ProfilingData(total_time= total_agent_time,
-                                           llm_time = llm_acc.total_time)
-            profiling_data = profiling_data.add_energy_data(energy_dict=llm_acc.energy_dict)
-            best_result = best_result.set_profiling_data(profiling_data, self.type)
+        ###
+        # Profiling
+        ###
+        total_agent_time = time.perf_counter() - agent_t0
+        profiling_data = ProfilingData(total_time= total_agent_time,
+                                       llm_time = llm_acc.total_time)
+        profiling_data = profiling_data.add_energy_data(energy_dict=llm_acc.energy_dict)
+        best_result = best_result.set_profiling_data(profiling_data, self.type)
 
-            return best_result
+        return best_result
 
 
     def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
         return Evaluator(agent_config)
 
-    def get_node(self) -> Runnable[State, State]:
-        if self._empower:
-            return empower(RunnableLambda(self.get_config_and_execute))
-        return RunnableLambda(self.get_config_and_execute)
+    def __call__(self, state: State) -> State:
+        return self._runnable.invoke(state)
