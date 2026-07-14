@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=./schema.json
+global:
+  schema: "../../data"
+  orchestration_enabled: true
+  enable_budget_controller: false
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+
+defaults:
+  Retriever:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Analyzer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Visualizer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+
+runs:
+  - name: Baseline
+    description: baseline benchmark at standard configs
+  - name: Temperature (low - 0.2)
+    description: Temperature test on low temperature settings
+    changes:
+      Retriever:
+        temp_min: 0.2
+      Analyzer:
+        temp_min: 0.2
+      Visualizer:
+        temp_min: 0.2
+  - name: Temperature (medium - 0.8)
+    description: Temperature test on medium temperature settings
+    changes:
+      Retriever:
+        temp_min: 0.8
+      Analyzer:
+        temp_min: 0.8
+      Visualizer:
+        temp_min: 0.8
+  - name: Temperature (high - 1.2)
+    description: Temperature test on high temperature settings
+    changes:
+      Retriever:
+        temp_min: 1.2
+      Analyzer:
+        temp_min: 1.2
+      Visualizer:
+        temp_min: 1.2

@@ -5,14 +5,13 @@ from typing import Optional, Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco import llm_tools
 from arco import tracing
-from arco.core import Agent, Answer, AgentType
+from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
 from arco.evaluators import VisualizerEvaluator
-from arco.llm_tools import CoTRefiner
 
 if TYPE_CHECKING:
+    from arco.core.llm_tools import CoTRefiner
     from arco.core import Evaluator, AgentConfig, State
     from arco.tracing import TracingHelper
 

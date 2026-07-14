@@ -7,7 +7,7 @@
 global:
   prompt: "Show me the sales in Nov 2021"
   visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"
-  schema: "../../data" # path to YAML schemas for the database relative to this config
+  schema: "../../../data" # path to YAML schemas for the database relative to this config
   provider: openai
   model: gpt-4.1-nano
 

@@ -3,8 +3,7 @@ from typing import Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco import llm_tools
-from arco.core import Evaluator, Evaluation, AgentType
+from arco.core import Evaluator, Evaluation, AgentType, llm_tools
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig, State, Answer
@@ -284,7 +283,7 @@ class VisualizerEvaluator(Evaluator):
             normalized = (raw_score - 1) / 4.0
             total_score += normalized * weight
 
-        return total_score
+        return round(total_score, 6)
 
     @staticmethod
     def judge_from_ground_truth(state: State, llm: BaseChatModel, gt_config: str = None,
@@ -312,9 +311,13 @@ class VisualizerEvaluator(Evaluator):
 
         if not gt_code: raise Exception("gt_code cannot be None")
 
+        code: str = last_visualizer_answer.code
+        if code is None:
+            last_visualizer_answer.gt_evaluation = Evaluation(score=0)
+            return
+
         # Truncate code if too long
         max_code_len = 2000
-        code: str = last_visualizer_answer.code
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
         gt_code_truncated = gt_code[:max_code_len] if len(gt_code) > max_code_len else gt_code
 

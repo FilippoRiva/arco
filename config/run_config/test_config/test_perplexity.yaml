@@ -5,7 +5,7 @@
 # Test configuration with a complex query to check if perplexity analysis works
 
 global:
-  schema: "../../data"
+  schema: "../../../data"
   prompt: >
     For each product class, compare the average revenue per unit sold during
     promotions vs non-promotions throughout 2021. Rank the product classes by

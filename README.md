@@ -1,199 +1,221 @@
-## Sales Data Agent
+# ARCO framework
 
-An LLM-powered agent that queries a local parquet dataset with DuckDB, analyzes the results, and optionally generates visualization code. It uses a LangGraph workflow and supports **multiple LLM providers**:
+An agentic workflow profiling framework compatible with any **LangGraph** workflow built using our `Agent` and `Evaluator` abstraction.
 
-- **OpenAI (default)**: e.g. `gpt-4o-mini`
-- **Ollama (local)**: e.g. `llama3.2:3b`
-- **Anthropic (Claude models)**: e.g. `anthropic:claude-3-5-sonnet-latest`
+Compatible with **OpenAI**, **OpenRouter** and **Ollama** backends.
 
-### What it does
-- **Lookup**: converts natural language into SQL via the LLM and runs it on DuckDB over the parquet files in `data/`.
-- **Analyze**: asks the LLM to summarize/interpret the results.
-- **Visualize**: requests a chart configuration and generates matplotlib code to plot it.
-
-Each step supports **best-of-N self-consistency**: the agent runs each step N times with a sampling schedule (temperature, top-p, or top-k) and selects the best candidate via an evaluator (consensus CSV IoU, LLM judge, or visualization judge).
+It provides:
+- Single agent **Best-of-N** support 
+- **Chain of Thought** integration
+- Local **Energy and Emissions** profiling through codecarbon
+- **Performance** profiling through a proper benchmarking interface
 
 ---
 
-## Requirements
-- Python 3.10+
-- An API key for OpenAI **or** Ollama running locally (`https://ollama.com`) with a model pulled
-- Parquet file(s) present in `data/`
+### System Requirements
 
-Install Python deps (from the project root):
-```bash
-pip install -r requirements.txt
-```
+Depending on the agents and models you use, you may also need:
 
----
-
-## Project layout
-```
-DataAgent-1/
-  Agent/
-    data_agent.py          # SalesDataAgent class and LangGraph wiring
-    config.py              # AgentConfig (per-step hyperparameters)
-    steps.py               # Individual step implementations
-    cache.py               # Run caching
-    schema.py              # Multi-table schema support
-    parameter_provider.py  # Interactive terminal parameter overrides
-    tracing.py             # Phoenix/OpenTelemetry tracing helpers
-    utils.py
-  config/
-    run_config.yaml        # Main single-run configuration file
-    search_space.yaml      # (used by bulk runner)
-    *.yaml                 # Additional config templates
-  data/                    # Parquet files + per-table schema YAML files
-  evaluation/
-    bulk_runner.py         # Bulk ablation study runner
-    run_benchmark.py       # Single benchmark run over a dataset
-    benchmark_dataset.json # Benchmark prompts + ground truth
-    search_space.yaml      # Hyperparameter search space for bulk runs
-    aggregate_results.py   # Post-run aggregation utilities
-  runs/                    # Output directory for run artifacts
-  run_agent.py             # Entry point for single runs
-  requirements.txt
-```
+- An available LLM backend:
+  - OpenAI API access (for OpenAI-based agents)
+  - Ollama installed and running locally (for local models)
+- A compatible environment for profiling:
+  - CodeCarbon supports CPU/GPU/RAM energy tracking
+  - GPU monitoring requires compatible hardware and drivers
 
 ---
 
-## Running the agent
+## Installation
 
-There are two ways to execute the agent: **single run** via `run_agent.py` or **bulk run** via `evaluation/bulk_runner.py`.
-
-### Single run — `run_agent.py`
-
-All parameters are configured in a YAML file (default: `config/run_config.yaml`). Edit the config, then run:
+### 1. Clone the repository
 
 ```bash
-python run_agent.py                        # uses config/run_config.yaml
-python run_agent.py config/my_config.yaml  # custom config path
+git clone https://github.com/FilippoRiva/arco
+cd arco
 ```
+### 2. Create and activate a virtual environment
 
-On first launch the script shows the loaded config and optionally prompts for interactive overrides (set `interactive_config: true` in the YAML to enable).
-
-#### Key run parameters (`run:` section in YAML)
-
-| Parameter | Description |
-|---|---|
-| `prompt` | Natural language query |
-| `visualization_goal` | Chart description (empty to skip) |
-| `agent_mode` | `lookup_only` \| `analysis` \| `full` |
-| `run_id` | Stable ID for caching / reproducibility (`null` = auto) |
-| `save_dir` | Root output directory |
-| `save_execution_artifacts` | Write `run_metadata.json` + `result.json` per run |
-| `enable_codecarbon` | Enable CodeCarbon energy tracking |
-| `reuse_from` | Run ID to reuse cached intermediate results from |
-| `step_overrides` | Temporary per-step hyperparameter overrides |
-
-#### Key agent parameters (`agent:` section in YAML)
-
-| Parameter | Description |
-|---|---|
-| `model` | LLM model name (e.g. `gpt-4o-mini`, `llama3.2:3b`) |
-| `provider` | `openai` or `ollama` |
-| `ollama_url` | Ollama server URL (ignored for openai) |
-| `openai_api_key` | `null` = read from `OPENAI_API_KEY` env var |
-
-#### Per-step configuration (`steps:` section in YAML)
-
-Each step (`decide_tool`, `lookup_sales_data`, `analyzing_data`, `create_visualization`) supports:
-
-| Parameter | Description |
-|---|---|
-| `n` | Number of best-of-N candidates |
-| `temp_min` / `temp_max` | Temperature range across candidates |
-| `top_p_min` / `top_p_max` | Top-p range (alternative BoN axis) |
-| `top_k_min` / `top_k_max` | Top-k range (Ollama only; alternative BoN axis) |
-| `cot_n` | Chain-of-thought refinement iterations |
-| `max_tokens` | Max tokens per generation |
-| `use_cache` | Enable result caching |
-| `eval` | Evaluator: `default` (consensus/LLM judge) or `none` |
-| `enabled` | Enable/disable the step entirely |
-
-#### Ground truth (optional)
-
-Provide a ground-truth block in the YAML to log evaluation scores alongside each step (scores are never used to steer selection — only for tracking):
-
-```yaml
-ground_truth:
-  csv_path: "path/to/gt_data.csv"
-  analysis_text: "expected analysis text"
-  vis_config: null
-  vis_code: null
-```
-
----
-
-### Bulk run — `evaluation/bulk_runner.py`
-
-The bulk runner performs a **3-phase ablation study** over the hyperparameter search space defined in `evaluation/search_space.yaml`. In each phase only one step's hyperparameters are varied across N randomly sampled configurations; the other steps are kept at their defaults. Results are aggregated automatically at the end of each phase.
+Using venv:
 
 ```bash
-# Validation run (1 config per phase, no think time)
-python evaluation/bulk_runner.py \
-    evaluation/benchmark_dataset.json \
-    evaluation/search_space.yaml \
-    --n-configs 1 --think-time 0 \
-    --save-dir runs/bulk_results/validation
-
-# Full 50+50+50 run
-python evaluation/bulk_runner.py \
-    evaluation/benchmark_dataset.json \
-    evaluation/search_space.yaml \
-    --n-configs 50 --think-time 5.0 \
-    --save-dir runs/bulk_results/full_run
-
-# Resume or run only one specific phase
-python evaluation/bulk_runner.py ... --vary-step lookup_sales_data --resume
+python -m venv .venv
 ```
 
-Results (per-config JSON + aggregated CSV/XLSX) are saved under `--save-dir`.
+Activate it:
+
+#### - Linux/macOS
+
+```bash
+source .venv/bin/activate
+```
+
+#### - Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+### 3. Install ARCO
+
+For a standard installation use:
+
+```bash
+pip install .
+```
+
+For a development installation [optional] (providing testing and notebooks support) use:
+
+```bash
+pip install -e ".[dev]"
+```
+
+the `-e` flag allows for code changes to be immediately effective in the `arco-cli` command.
+
+### 4. Verify Installation
+
+After installation, verify that the CLI is available:
+
+```bash
+arco-cli --help
+```
+
+You should see the available ARCO commands.
+
+### 5. Provider setup 
+
+#### Ollama Setup [Optional]
+
+If you plan to use local models (which is needed for a proper profiling of your agents), install Ollama and make sure the service is running:
+
+```bash
+systemctl status ollama
+```
+
+Then pull the desired model:
+
+```bash
+ollama pull <model-name>
+```
+
+#### OpenAI Setup [Optional]
+
+For OpenAI-based agents, export the `OPENAI_API_KEY` environment variable containing your API key:
+
+```bash
+export OPENAI_API_KEY=<your-api-key>
+```
+
+#### OpenRouter Setup [Optional]
+
+For OpenRouter-based agents, export the `OPENROUTER_API_KEY` environment variable containing your API key:
+
+```bash
+export OPENAI_API_KEY=<your-api-key>
+```
+
+---
+## Usage
+
+The entire functionality of this framework is exposed through the `arco-cli` command-line tool.
+
+ARCO provides three main sub-commands:
+
+- `arco-cli run` - execute a single agent workflow
+- `arco-cli benchmark` - evaluate multiple configurations against a benchmark dataset
+- `arco-cli cache` - inspect and manage previous executions
 
 ---
 
-## LLM provider configuration
+### `arco-cli run`
 
-Set the provider and model in the `agent:` block of the YAML config. API keys can be passed directly or via environment variables:
+Executes a single ARCO workflow using a provided configuration file.
 
-### Per-step model overrides
-You can keep a global default model/provider under `agent`, then override individual workflow steps under `steps`.
-
-```yaml
-agent:
-  provider: "openai"
-  model: "gpt-4o-mini"
-
-steps:
-  decide_tool:
-    provider: "openai"
-    model: "gpt-4.1-mini"
-
-  lookup_sales_data:
-    provider: "ollama"
-    model: "llama3.2:3b"
-    ollama_url: "http://localhost:11434"
+```bash
+arco-cli run --config <path-to-config.yaml>
 ```
 
-If a step-level `provider`, `model`, or `ollama_url` is `null` or omitted, the agent-level value is used.
-
-Environment variables (PowerShell):
-```powershell
-$env:OPENAI_API_KEY="YOUR_KEY"
-$env:ANTHROPIC_API_KEY="YOUR_KEY"
-$env:OLLAMA_HOST="http://localhost:11434"
+Options
+```
+--config	-c	Path to the ARCO configuration YAML file (required)
+--verbose	-v	Display additional execution information, including agent configuration and metrics
+```
+Example
+```bash
+arco-cli run -c configs/example.yaml -v
 ```
 
-### Using Ollama locally
+Refer to [Run Configuration Files](docs/run_config.md) for writing run configuration files.
 
-1. Install Ollama from `https://ollama.com/download`.
-2. Pull a model: `ollama pull llama3.2:3b`
-3. Start the server: `ollama serve`
-4. Set `provider: "ollama"` and `model: "llama3.2:3b"` in the config YAML.
+### `arco-cli benchmark`
 
----
+Runs a benchmark suite by executing multiple ARCO configurations against a ground-truth dataset.
 
-## Tracing with Phoenix (optional)
+```bash
+arco-cli benchmark \
+    --dataset <path-to-dataset.json> \
+    --config <path-to-benchmark.yaml>
+```
+
+Options
+```
+--dataset	-d	Path to the benchmark ground-truth dataset (required)
+--config	-c	Path to the benchmark configuration YAML file (required)
+--save-dir		Directory where benchmark results are stored (default: ./output/benchmarks)
+--id		        Custom identifier for the benchmark run
+--verbose	-v	Enable detailed visualization of agent executions
+```
+
+Example
+```bash
+arco-cli benchmark \
+    -d datasets/sales_gt.json \
+    -c benchmarks/config.yaml \
+    --save-dir output/results
+```
+
+Benchmark results are automatically saved as CSV files containing execution metrics, evaluations, and profiling information.
+
+Refer to [Benchmark Configuration Files](docs/benchmark_config.md) for writing benchmark configuration files.
+
+### `arco-cli cache`
+
+Provides tools to inspect, visualize, and manage cached ARCO executions.
+
+Usage
+```bash
+arco-cli cache [options]
+```
+Options
+
+```
+--save-dir	-d	Directory containing cached runs (default: output)
+--runs	    -r  List available cached executions
+--stats	    -s	Display cache statistics
+--view-run	-v	Visualize a specific cached run by ID
+--delete		Delete a cached run by ID
+--clear		    Remove all cached runs
+```
+Examples
+
+List available runs:
+
+```bash
+arco-cli cache --runs
+```
+
+View a previous execution:
+
+```bash
+arco-cli cache --view-run <run_id>
+```
+
+Clear the cache:
+
+```bash
+arco-cli cache --clear
+```
+
+## Tracing with Phoenix [optional]
 
 Enable OpenInference/Phoenix tracing to visualize agent runs. Configure in the `tracing:` block of the YAML:
 
@@ -219,7 +241,7 @@ Open the UI at `http://localhost:6006`. Top-level spans: `AgentRun`, `tool_choic
 
 ---
 
-## Energy and emissions (CodeCarbon)
+## Energy and emissions [CodeCarbon]
 
 Set `enable_codecarbon: true` in the `run:` block of the YAML config. Energy usage and CO₂ emissions are measured per-LLM-call and saved in `run_metadata.json` alongside each run's artifacts.
 
@@ -229,12 +251,3 @@ carbonboard --filepath "codecarbon/emissions.csv" --port 8050
 ```
 
 ---
-
-## High-level flow
-
-1. **Decide tool** (LLM): choose lookup → analyze → visualize → end.
-2. **Lookup** (DuckDB): parquet → temp table → LLM SQL → query → text table in state.
-3. **Analyze** (LLM): summarize / answer with reference to the result data.
-4. **Visualize** (LLM): emit compact config → generate matplotlib code to plot.
-
-Each step runs best-of-N candidates with a sampling schedule and selects the best via an evaluator. The agent exposes a single `run(prompt, ...)` entry point and returns the final state with an ordered `answer` list.

@@ -88,10 +88,10 @@ def budget_controller_is_enabled(config: RunnableConfig) -> bool:
     return config.get("configurable", {}).get("enable_budget_controller", False) == True
 
 def budget_controller(state: State, config: RunnableConfig) -> State:
-    parent_node = get_parent_node(config)
     if not budget_controller_is_enabled(config):
         return state
 
+    parent_node = get_parent_node(config)
     answer = state.get_last_answer(parent_node)
     if not answer:
         raise Exception("No answer found during budget controller phase")

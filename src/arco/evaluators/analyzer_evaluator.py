@@ -9,7 +9,7 @@ from typing import Optional, Dict, List, Tuple, TYPE_CHECKING
 from langchain_core.language_models import BaseChatModel
 
 from arco.core import AgentType, State, Answer, Evaluation, Evaluator
-from arco.llm_tools import get_llm
+from arco.core.llm_tools import get_llm
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
@@ -330,7 +330,8 @@ class AnalyzerEvaluator(Evaluator):
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
         analysis = last_analyzer_answer.analysis
         if not analysis:
-            raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
+            last_analyzer_answer.evaluation = Evaluation(score=0)
+            return
 
         if self.gt_metric == "spice":
             score = spice_score_java(analysis, self.gt_analysis, spice_jar=None)

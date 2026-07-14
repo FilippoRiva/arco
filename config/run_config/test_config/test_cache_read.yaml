@@ -5,7 +5,7 @@
 # Test config for caching for reading
 
 global:
-  schema: "../../data"
+  schema: "../../../data"
   prompt: "Do we sell more organic or inorganic products?"
   use_cache: true
   cache_mode: "r"

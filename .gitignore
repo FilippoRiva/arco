@@ -18,4 +18,5 @@ codecarbon
 data/runs/
 data/output/
 output/cache/
+output/storage/
 src/arco.egg-info/

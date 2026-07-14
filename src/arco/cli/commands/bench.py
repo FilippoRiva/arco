@@ -1,21 +1,7 @@
-import collections
-import os
-import random
-import sys
-from argparse import ArgumentParser, Namespace
-from functools import partial
+from typing import TYPE_CHECKING
 
-import pandas as pd
-from rich.rule import Rule
-
-from arco.cli import viz
-from arco.cli.console import console
-from arco.core import ArcoConfig, AgentType
-from arco.core.state import ProfilingData
-from arco.workflow import SalesDataWorkflow
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+if TYPE_CHECKING:
+    from argparse import ArgumentParser, Namespace
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
@@ -35,14 +21,27 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # Script Handler
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
+    # Dependencies
+    from arco.cli.console import console
+
+    status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
+    status.start()
+    from arco.core import ArcoConfig
+    from pathlib import Path
+    console.print("[green]✓[/green] Pre-benchmark dependencies loaded")
+    status.stop()
+
+
     df_list = []
-    list_of_run_configs = ArcoConfig.from_benchmark_yaml(args.config, args.dataset)
+    with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
+        list_of_run_configs = ArcoConfig.from_benchmark_yaml(args.config, args.dataset)
+        console.print("[green]✓[/green] Run configurations loaded")
     for run_config_dict in list_of_run_configs:
         df_list.append(
             run_benchmark(
                 **run_config_dict,
                 save_dir=args.save_dir,
-                benchmark_id=args.id,
+                benchmark_id=args.id or Path(args.config).stem,
                 verbose=args.verbose
             )
         )
@@ -101,10 +100,41 @@ def run_benchmark(
     Returns:
         DataFrame with per-test-case information.
     """
+    from arco.cli.console import console
+    status = console.status("[bold cyan]Loading benchmark[/bold cyan]")
+    status.start()
+
+    import collections, os, random, sys
+    from pathlib import Path
+    from functools import partial
+    console.print("[green]✓[/green] Built-in modules loaded")
+
+    import pandas as pd
+    console.print("[green]✓[/green] Pandas loaded")
+
+    from rich.rule import Rule
+    from arco.cli import viz
+    console.print("[green]✓[/green] Visualization tools loaded")
+
+    from arco.core import ArcoConfig
+    from arco.core import AgentType
+    from arco.core.state import ProfilingData
+    from arco.workflow import SalesDataWorkflow
+    console.print("[green]✓[/green] ARCO dependencies loaded")
+
+    status.stop()
+
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
 
     viz.print_benchmark_header(name, description, changes)
+
+    bench_csv_name =  benchmark_id + "-[" + name.replace(" ", "_") + "].csv"
+    out_path = Path(save_dir) / bench_csv_name
+    if out_path.exists():
+        console.print(f"[yellow]Benchmark already exists: {out_path}. Skipping.[/yellow]")
+        return pd.read_csv(out_path)
+
     results = []
     agents_executed = []
 
@@ -158,6 +188,7 @@ def run_benchmark(
         row = {
             "benchmark_id": benchmark_id,
             "test_case_id": idx,
+            "run_id": result.run_id,
             "prompt": config.prompt,
             "difficulty": difficulties[idx],
             **answer_profiling_dict,
@@ -172,7 +203,6 @@ def run_benchmark(
 
     # Save results
     os.makedirs(save_dir, exist_ok=True)
-    out_path = os.path.join(save_dir, benchmark_id + name.replace(" ", "_") + ".csv")
     df.to_csv(out_path, index=False)
     console.print(f"\nResults saved to [cyan]{out_path}[/cyan]")
 

@@ -1,12 +1,7 @@
-import sys
-from argparse import ArgumentParser, Namespace
+from typing import TYPE_CHECKING
 
-from rich.pretty import pprint
-
-from arco.cli import viz
-from arco.cli.console import console
-from arco.core import State
-
+if TYPE_CHECKING:
+    from argparse import ArgumentParser, Namespace
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
@@ -26,13 +21,21 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # Script Handler
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
+    import sys
     if not (args.clear or args.delete or args.runs or args.stats or args.view_run):  # defaults to help
         parser.print_help()
         sys.exit(1)
 
-    # Load the dependencies
-    with console.status("[bold cyan]Loading Cache...[/bold cyan]", spinner="dots"):
-        from arco.data import RunCache
+    from arco.cli.console import console
+
+    # Dependencies
+    status =  console.status("[bold cyan]Loading cache[/bold cyan]", spinner="dots")
+    status.start()
+    from rich.pretty import pprint
+    from arco.cli import viz
+    from arco.core import State
+    from arco.data import RunCache
+    status.stop()
 
     # Run cache management
     save_dir = args.save_dir

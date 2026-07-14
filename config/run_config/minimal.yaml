@@ -9,6 +9,6 @@
 # GLOBAL CONFIGURATION
 # =============================================================================
 global:
-  schema: "../data" # path to YAML schemas for the database
+  schema: "../../data" # path to YAML schemas for the database
   prompt: "Show me the sales in Nov 2021"
   visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"

@@ -171,6 +171,10 @@
             "minimum": 1,
             "description": "Maximum top_k token cutoff pool limit."
           },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Maximum number of tokens the agent should output at each generation"
+          },
           "use_cache": {
             "type": "boolean",
             "description": "Toggle to enable or disable query caching for this agent."

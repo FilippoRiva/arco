@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType
-from arco.llm_tools import CoTRefiner
-from arco import llm_tools
+from arco.core import Agent, Answer, AgentType, llm_tools
 
 if TYPE_CHECKING:
+    from arco.core.llm_tools import CoTRefiner
     from arco.core import State
     from arco.tracing import TracingHelper
 

@@ -64,6 +64,8 @@ class ProfilingData:
 
     def get_energy_dict(self):
         return {
+            "total_time" : self.total_time,
+            "llm_time" : self.llm_time,
             "energy_consumed_kwh": self.energy_consumed_kwh,
             "cpu_energy_kwh": self.cpu_energy_kwh,
             "gpu_energy_kwh": self.gpu_energy_kwh,
@@ -170,7 +172,7 @@ class Answer:
         if ans.data_str:
             ans.data_df = pd.read_csv(io.StringIO(ans.data_str))
         if ans.profiling_data:
-            ans.profiling_data = ProfilingData(dictionary["profiling_data"])
+            ans.profiling_data = ProfilingData(**dictionary["profiling_data"])
         return ans
 
     def copy(self) -> Answer:

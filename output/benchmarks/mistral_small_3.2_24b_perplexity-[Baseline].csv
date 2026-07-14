@@ -1,0 +1,1075 @@
+benchmark_id,test_case_id,run_id,prompt,difficulty,Orchestrator_1_message,Orchestrator_1_evaluation,Orchestrator_1_evaluation_gt,Orchestrator_1_perplexity,Orchestrator_1_total_time,Orchestrator_1_llm_time,Orchestrator_1_energy_consumed_kwh,Orchestrator_1_cpu_energy_kwh,Orchestrator_1_gpu_energy_kwh,Orchestrator_1_ram_energy_kwh,Orchestrator_1_emissions_kg_co2,Retriever_1_message,Retriever_1_evaluation,Retriever_1_evaluation_gt,Retriever_1_perplexity,Retriever_1_total_time,Retriever_1_llm_time,Retriever_1_energy_consumed_kwh,Retriever_1_cpu_energy_kwh,Retriever_1_gpu_energy_kwh,Retriever_1_ram_energy_kwh,Retriever_1_emissions_kg_co2,Orchestrator_2_message,Orchestrator_2_evaluation,Orchestrator_2_evaluation_gt,Orchestrator_2_perplexity,Orchestrator_2_total_time,Orchestrator_2_llm_time,Orchestrator_2_energy_consumed_kwh,Orchestrator_2_cpu_energy_kwh,Orchestrator_2_gpu_energy_kwh,Orchestrator_2_ram_energy_kwh,Orchestrator_2_emissions_kg_co2,Analyzer_1_message,Analyzer_1_evaluation,Analyzer_1_evaluation_gt,Analyzer_1_perplexity,Analyzer_1_total_time,Analyzer_1_llm_time,Analyzer_1_energy_consumed_kwh,Analyzer_1_cpu_energy_kwh,Analyzer_1_gpu_energy_kwh,Analyzer_1_ram_energy_kwh,Analyzer_1_emissions_kg_co2,Orchestrator_3_message,Orchestrator_3_evaluation,Orchestrator_3_evaluation_gt,Orchestrator_3_perplexity,Orchestrator_3_total_time,Orchestrator_3_llm_time,Orchestrator_3_energy_consumed_kwh,Orchestrator_3_cpu_energy_kwh,Orchestrator_3_gpu_energy_kwh,Orchestrator_3_ram_energy_kwh,Orchestrator_3_emissions_kg_co2,Visualizer_1_message,Visualizer_1_evaluation,Visualizer_1_evaluation_gt,Visualizer_1_perplexity,Visualizer_1_total_time,Visualizer_1_llm_time,Visualizer_1_energy_consumed_kwh,Visualizer_1_cpu_energy_kwh,Visualizer_1_gpu_energy_kwh,Visualizer_1_ram_energy_kwh,Visualizer_1_emissions_kg_co2,Orchestrator_4_message,Orchestrator_4_evaluation,Orchestrator_4_evaluation_gt,Orchestrator_4_perplexity,Orchestrator_4_total_time,Orchestrator_4_llm_time,Orchestrator_4_energy_consumed_kwh,Orchestrator_4_cpu_energy_kwh,Orchestrator_4_gpu_energy_kwh,Orchestrator_4_ram_energy_kwh,Orchestrator_4_emissions_kg_co2,Retriever_cumulative_total_time,Retriever_cumulative_llm_time,Retriever_cumulative_energy_consumed_kwh,Retriever_cumulative_cpu_energy_kwh,Retriever_cumulative_gpu_energy_kwh,Retriever_cumulative_ram_energy_kwh,Retriever_cumulative_emissions_kg_co2,Analyzer_cumulative_total_time,Analyzer_cumulative_llm_time,Analyzer_cumulative_energy_consumed_kwh,Analyzer_cumulative_cpu_energy_kwh,Analyzer_cumulative_gpu_energy_kwh,Analyzer_cumulative_ram_energy_kwh,Analyzer_cumulative_emissions_kg_co2,Visualizer_cumulative_total_time,Visualizer_cumulative_llm_time,Visualizer_cumulative_energy_consumed_kwh,Visualizer_cumulative_cpu_energy_kwh,Visualizer_cumulative_gpu_energy_kwh,Visualizer_cumulative_ram_energy_kwh,Visualizer_cumulative_emissions_kg_co2,Orchestrator_cumulative_total_time,Orchestrator_cumulative_llm_time,Orchestrator_cumulative_energy_consumed_kwh,Orchestrator_cumulative_cpu_energy_kwh,Orchestrator_cumulative_gpu_energy_kwh,Orchestrator_cumulative_ram_energy_kwh,Orchestrator_cumulative_emissions_kg_co2,global_total_time,global_llm_time,global_energy_consumed_kwh,global_cpu_energy_kwh,global_gpu_energy_kwh,global_ram_energy_kwh,global_emissions_kg_co2
+mistral_small_3.2_24b_perplexity,0,vivid-schema-593,Show me the sales in Nov 2021,2,The chosen agent is Retriever,,,1.0031319777712004,1.2881503550015623,0.9966423450005095,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT DATE_TRUNC('day', s.Sold_Date) AS sale_date,
+       SUM(s.Total_Sale_Value) AS daily_sales
+FROM sales s
+WHERE s.Sold_Date >= '2021-11-01'
+  AND s.Sold_Date < '2021-12-01'
+GROUP BY sale_date
+ORDER BY sale_date
+'''
+
+The resulting DataFrame has 29 rows with columns : sale_date, daily_sales",,1.0,1.1082824461277252,2.577920395999172,2.184959238000374,0,0,0,0,0,The chosen agent is Analyzer,,,1.0226596267638883,0.929236473999481,0.9268104929997207,0,0,0,0,0,"Here are the daily sales values for November 2021:
+
+Total sales for November 2021 were $499,984.43 across 30 days, with daily sales ranging from $11,030.39 to $52,004.60. The average daily sales were $17,240.84.",,0.75,1.2044478370696206,6.563531188001434,2.2486802870007523,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0072279544517566,0.8568437009998888,0.8540280880006321,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+if 'y_axes' in config:
+    # Multi-series grouped bar chart (wide format)
+    x_labels = data_df[config['x_axis']].astype(str)
+    y_axes = config['y_axes']
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel('Value' if 'y_label' not in config else config['y_label'])
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+elif 'group_by' in config:
+    # Multi-series grouped bar chart from long format
+    group_col = config['group_by']
+    x_col = config['x_axis']
+    y_col = config['y_axis']
+
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+else:
+    # Single series chart
+    x_data = data_df[config['x_axis']]
+    y_data = data_df[config['y_axis']]
+
+    if config['chart_type'] == 'bar':
+        plt.figure(figsize=(12, 6))
+        plt.bar(x_data, y_data)
+        plt.xticks(rotation=45, ha='right')
+        plt.grid(True, axis='y', alpha=0.3)
+
+    elif config['chart_type'] == 'line':
+        plt.figure(figsize=(12, 6))
+        plt.plot(x_data, y_data, marker='o')
+        plt.grid(True, alpha=0.3)
+
+    elif config['chart_type'] == 'scatter':
+        plt.figure(figsize=(10, 6))
+        plt.scatter(x_data, y_data, alpha=0.6)
+        plt.grid(True, alpha=0.3)
+
+    elif config['chart_type'] == 'area':
+        plt.figure(figsize=(12, 6))
+        plt.fill_between(x_data, y_data, alpha=0.4)
+        plt.plot(x_data, y_data)
+        plt.grid(True, alpha=0.3)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axis'])
+    plt.title(config['title'])
+    plt.xticks(rotation=45, ha='right' if isinstance(x_data[0], str) or 'date' in str(type(x_data[0])).lower() else 0)
+    plt.tight_layout()
+    plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'line', 'x_axis': 'sold_date', 'y_axis': 'total_sales_value', 'title': 'Sales Trend for November 2021'}",,0.65,1.0463187252001733,25.31241693999982,19.072390892999465,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.005190372403159,0.7559538610003074,0.7534145260015066,0.0,0.0,0.0,0.0,0.0,2.577920395999172,2.184959238000374,0,0,0,0,0,6.563531188001434,2.2486802870007523,0.0,0.0,0.0,0.0,0.0,25.31241693999982,19.072390892999465,0.0,0.0,0.0,0.0,0.0,3.8301843910012394,3.530895452002369,0,0,0,0,0,38.284052915001666,27.03692587000296,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,1,ranked-beam-246,Show the 12 months of 2023 with total revenue and total units sold,2,The chosen agent is Retriever,,,1.0008877388726123,1.4455264900007023,1.4424822910004877,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    DATE_TRUNC('month', s.Sold_Date) AS sale_month,
+    SUM(s.Total_Sale_Value) AS total_revenue_usd,
+    SUM(s.Qty_Sold) AS total_units_sold
+FROM
+    sales s
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY
+    DATE_TRUNC('month', s.Sold_Date)
+ORDER BY
+    sale_month ASC
+'''
+
+The resulting DataFrame has 12 rows with columns : sale_month, total_revenue_usd, total_units_sold",,1.0,1.1132898958193171,2.6016236370014667,2.3767713630004437,0,0,0,0,0,The chosen agent is Analyzer,,,1.0099348989405985,0.7568790780005656,0.7543966869998258,0,0,0,0,0,"Here are the 12 months of 2023 with their total revenue and units sold: January ($434,172.81, 33,653 units), February ($411,762.72, 31,545 units), March ($423,070.84, 32,460 units), April ($384,479.68, 30,199 units), May ($381,326.43, 31,154 units), June ($364,806.74, 29,082 units), July ($353,284.21, 27,932 units), August ($401,061.54, 31,903 units), September ($422,554.97, 31,847 units), October ($454,231.06, 38,208 units), November ($511,104.29, 41,043 units), and December ($874,263.67, 60,941 units). December had the highest revenue and units sold at $874,263.67 and 60,941 units, respectively.",,1.0,1.034400370144335,8.677527928000927,6.718299661000856,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0069447511737146,0.9017547449984704,0.8982325249999121,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_data = data_df[config['x_axis']]
+
+if 'y_axes' in config:
+    # Wide format with multiple series
+    y_axes = config['y_axes']
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_data))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel('Value')
+    plt.title(config['title'])
+    plt.xticks(x, x_data, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+elif 'group_by' in config:
+    # Long format with group_by
+    group_col = config['group_by']
+    y_col = config['y_axis']
+
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[config['x_axis']].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(config['x_axis'])
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+else:
+    # Single series
+    y_data = data_df[config['y_axis']]
+
+    plt.figure(figsize=(12, 6))
+    if config['chart_type'] == 'bar':
+        plt.bar(x_data, y_data)
+    elif config['chart_type'] == 'line':
+        plt.plot(x_data, y_data, marker='o')
+    elif config['chart_type'] == 'scatter':
+        plt.scatter(x_data, y_data, alpha=0.6)
+    elif config['chart_type'] == 'area':
+        plt.fill_between(x_data, y_data, alpha=0.4)
+        plt.plot(x_data, y_data)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axis'])
+    plt.title(config['title'])
+    plt.xticks(rotation=45, ha='right')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'line', 'x_axis': 'month_start', 'y_axis': 'total_revenue', 'title': 'Monthly Revenue Trends for 2023'}",,1.0,1.0218788613341951,19.832678816001135,15.10757189099968,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0028450490176504,0.6969235929991555,0.6943269000003056,0.0,0.0,0.0,0.0,0.0,2.6016236370014667,2.3767713630004437,0,0,0,0,0,8.677527928000927,6.718299661000856,0.0,0.0,0.0,0.0,0.0,19.832678816001135,15.10757189099968,0.0,0.0,0.0,0.0,0.0,3.801083905998894,3.7894384030005313,0,0,0,0,0,34.91291428700242,27.99208131800151,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,2,mapping-tensor-515,"Return the top 5 stores by total revenue, identified by store number",1,The chosen agent is Retriever,,,1.0007560692290882,0.7442857779988117,0.7428931819995341,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT s.Store_Number, SUM(sl.Total_Sale_Value) AS total_revenue
+FROM stores s
+JOIN sales sl ON s.Store_Number = sl.Store_Number
+GROUP BY s.Store_Number
+ORDER BY total_revenue DESC
+LIMIT 5
+'''
+
+The resulting DataFrame has 5 rows with columns : Store_Number, total_revenue",,1.0,1.099200753813992,2.0501149850006186,1.7939618500004144,0,0,0,0,0,The chosen agent is Analyzer,,,1.0011561494525734,1.8144701599994733,1.8119141889983439,0,0,0,0,0,"The top 5 stores by total revenue are store numbers 2970 ($836,341.33), 3300 ($619,660.17), 1320 ($592,832.07), 1650 ($580,443.01), and 1210 ($508,393.77). These stores generate between $508,393.77 and $836,341.33 in total revenue.",,1.0,1.105304065948718,4.901184160000412,3.067910923000454,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0086011883413528,1.1035605190008937,1.1001655629988818,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,,,,,,,,,,,2.0501149850006186,1.7939618500004144,0,0,0,0,0,4.901184160000412,3.067910923000454,0.0,0.0,0.0,0.0,0.0,,,,,,,,3.6623164569991786,3.65497293399676,0,0,0,0,0,10.613615602000209,8.516845706997628,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,3,top-k-palette-943,Show total revenue by product brand for 2023 as a bar chart,3,The chosen agent is Retriever,,,1.0004295421398581,0.9800788530010323,0.9787062449995574,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    p.brand,
+    SUM(s.Total_Sale_Value) AS Total_Revenue
+FROM
+    sales s
+JOIN
+    products p ON s.SKU_Coded = p.SKU_Coded
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY
+    p.brand
+ORDER BY
+    Total_Revenue DESC
+'''
+
+The resulting DataFrame has 6 rows with columns : brand, Total_Revenue",,1.0,1.063963645304261,2.6664014149992,2.3626487940000516,0,0,0,0,0,The chosen agent is Analyzer,,,1.0109772146750682,0.7712587130008615,0.7691192560014315,0,0,0,0,0,"The following shows the total 2023 revenue by product brand in descending order: GoldenCrust ($1,237,536.46), CreamyFarm ($1,116,963.60), CleanHome ($985,063.32), CoolSip ($942,234.79), GlowUp ($682,053.43), and CrunchTime ($452,267.33). The brands collectively generated $5,416,118.93 in total revenue for the year.",,1.0,1.157901049985952,5.6795144000006985,3.4671450669993646,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0047737329257078,0.6286539569991874,0.6243069310003193,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(10, 6))
+plt.bar(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'brand', 'y_axis': 'total_revenue', 'title': 'Total Revenue by Brand in 2023'}",,0.9,1.0314978786967792,10.646082715000375,6.427258675999838,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0031493901134827,0.7778030469999067,0.7751914100008435,0.0,0.0,0.0,0.0,0.0,2.6664014149992,2.3626487940000516,0,0,0,0,0,5.6795144000006985,3.4671450669993646,0.0,0.0,0.0,0.0,0.0,10.646082715000375,6.427258675999838,0.0,0.0,0.0,0.0,0.0,3.1577945700009877,3.1473238420021517,0,0,0,0,0,22.14979310000126,15.404376379001405,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,4,top-k-ledger-991,Compare average monthly revenue between store regions for 2022 and 2023,4,The chosen agent is Retriever,,,1.0004130091655208,1.15737378599988,1.155464696999843,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    st.region,
+    CASE
+        WHEN EXTRACT(YEAR FROM sl.month) = 2022 THEN '2022'
+        WHEN EXTRACT(YEAR FROM sl.month) = 2023 THEN '2023'
+    END AS year,
+    ROUND(AVG(sl.monthly_rev), 2) AS avg_monthly_revenue
+FROM (
+    SELECT
+        Store_Number,
+        DATE_TRUNC('month', Sold_Date) AS month,
+        SUM(Total_Sale_Value) AS monthly_rev
+    FROM sales
+    WHERE EXTRACT(YEAR FROM Sold_Date) IN (2022, 2023)
+    GROUP BY Store_Number, DATE_TRUNC('month', Sold_Date)
+) sl
+JOIN stores st ON sl.Store_Number = st.Store_Number
+GROUP BY st.region, CASE
+        WHEN EXTRACT(YEAR FROM sl.month) = 2022 THEN '2022'
+        WHEN EXTRACT(YEAR FROM sl.month) = 2023 THEN '2023'
+    END
+ORDER BY st.region, year
+'''
+
+The resulting DataFrame has 8 rows with columns : region, year, avg_monthly_revenue",,1.0,1.0849858101282943,5.146215947999735,4.891732875999878,0,0,0,0,0,The chosen agent is Analyzer,,,1.0013346062553992,1.3775310790006188,1.3753263520011387,0,0,0,0,0,"Here is the comparison of average monthly revenue between store regions for 2022 and 2023 based on the available data:
+
+In 2022, the Northeast region had the highest average monthly revenue at $17,703.52, while the Midwest had the lowest at $10,522.09. In 2023, all regions saw a decrease or negligible change in revenue, with the Northeast dropping to $14,970.11 and the Midwest slightly increasing to $10,821.44.",,0.875,1.1769281813881063,5.105115622000085,2.6830023519996757,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0067289662250944,0.7966255100000126,0.7937132150000252,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+group_col = config['group_by']
+x_col = config['x_axis']
+y_col = config['y_axis']
+
+groups = sorted(data_df[group_col].unique())
+x_labels = sorted(data_df[x_col].unique())
+x = np.arange(len(x_labels))
+n_series = len(groups)
+bar_w = 0.8 / n_series
+
+plt.figure(figsize=(12, 6))
+for i, group_val in enumerate(groups):
+    df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+    y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+    offset = (i - n_series / 2 + 0.5) * bar_w
+    plt.bar(x + offset, y_vals, width=bar_w, label=str(group_val))
+
+plt.xlabel(x_col)
+plt.ylabel(y_col)
+plt.title(config['title'])
+plt.xticks(x, x_labels, rotation=45, ha='right')
+plt.legend()
+plt.grid(True, axis='y', alpha=0.3)
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'region', 'y_axis': 'avg_monthly_revenue', 'group_by': 'year', 'title': 'Average Monthly Revenue by Region: 2022 vs 2023'}",,1.0,1.0515087841726996,14.82443818199863,8.16529256099966,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0027331114549418,2.228721804998713,2.2257761009987007,0.0,0.0,0.0,0.0,0.0,5.146215947999735,4.891732875999878,0,0,0,0,0,5.105115622000085,2.6830023519996757,0.0,0.0,0.0,0.0,0.0,14.82443818199863,8.16529256099966,0.0,0.0,0.0,0.0,0.0,5.560252179999225,5.550280364999708,0,0,0,0,0,30.636021931997675,21.29030815399892,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,5,top-k-matrix-448,Show promo vs non-promo revenue in 2023 as a bar chart,1,The chosen agent is Retriever,,,1.000537338459171,2.068909284000256,2.0670239809987834,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    CASE
+        WHEN s.On_Promo = 1 THEN 'Promo'
+        ELSE 'Non-Promo'
+    END AS sale_type,
+    SUM(s.Total_Sale_Value) AS total_revenue
+FROM
+    sales s
+JOIN
+    products p ON s.SKU_Coded = p.SKU_Coded AND s.Product_Class_Code = p.Product_Class_Code
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY
+    sale_type
+ORDER BY
+    SUM(s.Total_Sale_Value) DESC
+'''
+
+The resulting DataFrame has 2 rows with columns : sale_type, total_revenue",,1.0,1.0849385466606842,4.788579813999604,4.5307404340001085,0,0,0,0,0,The chosen agent is Analyzer,,,1.0138971910624826,0.8714879620001739,0.8693180530008249,0,0,0,0,0,"In 2023, non-promo revenue was significantly higher at $5,316,412.07 compared to promo revenue of $99,706.86. This shows that non-promo sales generated over 53 times more revenue than promo sales. The total combined revenue from both types of sales was $5,416,118.93.",,1.0,1.2310138044027878,4.937675990999196,2.02141292899978,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0042811837621355,0.8089312640004209,0.8059623270000884,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(10, 6))
+plt.bar(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+if len(x_data.unique()) > 10 or len(str(x_data.iloc[0])) > 10:
+    plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'promo_status', 'y_axis': 'total_revenue', 'title': 'Total Revenue: Promo vs Non-Promo in 2023'}",,1.0,1.0922086113050404,11.695982342000207,7.6438044969982,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0032522679155,1.0538307949991577,1.0515832849996514,0.0,0.0,0.0,0.0,0.0,4.788579813999604,4.5307404340001085,0,0,0,0,0,4.937675990999196,2.02141292899978,0.0,0.0,0.0,0.0,0.0,11.695982342000207,7.6438044969982,0.0,0.0,0.0,0.0,0.0,4.803159305000008,4.793887645999348,0,0,0,0,0,26.225397451999015,18.989845505997437,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,6,weighted-beam-307,Return the top 10 product class codes by total units sold in 2023,1,The chosen agent is Retriever,,,1.0008868934668222,3.9423462970007677,3.941001810000671,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT p.Product_Class_Code, SUM(s.Qty_Sold) as Total_Units_Sold
+FROM sales s
+JOIN products p ON s.SKU_Coded = p.SKU_Coded AND s.Product_Class_Code = p.Product_Class_Code
+WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY p.Product_Class_Code
+ORDER BY Total_Units_Sold DESC
+LIMIT 10
+'''
+
+The resulting DataFrame has 10 rows with columns : Product_Class_Code, Total_Units_Sold",,1.0,1.0305781065545128,2.710301867000453,2.457752852998965,0,0,0,0,0,The chosen agent is Analyzer,,,1.0009788928816152,0.8188030080000317,0.8164842070000304,0,0,0,0,0,"The top 10 product class codes by total units sold in 2023 are:
+1. 22850 with 89,229 units sold
+2. 22975 with 60,425 units sold
+3. 22800 with 57,485 units sold
+
+The remaining product class codes sold fewer units, with the lowest among the top 10 being product class code 24375, which sold 11,358 units.",,1.0,1.2323393688302002,5.643608961998325,2.9486465319987474,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.01250648451908,8.050005091999992,8.048323560999052,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,,,,,,,,,,,2.710301867000453,2.457752852998965,0,0,0,0,0,5.643608961998325,2.9486465319987474,0.0,0.0,0.0,0.0,0.0,,,,,,,,12.811154397000792,12.805809577999753,0,0,0,0,0,21.16506522599957,18.212208962997465,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,7,weighted-trajectory-374,"Show the top 8 stores by total units sold in 2022 as a bar chart, identifying each store by its store number",1,The chosen agent is Retriever,,,1.0006376314425987,2.6018431180000334,2.6004738150004414,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+  st.Store_Number,
+  SUM(sel.Qty_Sold) AS total_units_sold_2022
+FROM
+  sales sel
+JOIN
+  stores st ON sel.Store_Number = st.Store_Number
+WHERE
+  EXTRACT(YEAR FROM sel.Sold_Date) = 2022
+GROUP BY
+  st.Store_Number
+ORDER BY
+  total_units_sold_2022 DESC
+LIMIT 8
+'''
+
+The resulting DataFrame has 8 rows with columns : Store_Number, total_units_sold_2022",,1.0,1.2108519440026588,2.817240022999613,2.5880572690002737,0,0,0,0,0,The chosen agent is Analyzer,,,1.0078589332154386,0.9629879559997789,0.9617477539995889,0,0,0,0,0,"Here are the top 8 stores by total units sold in 2022: Store #2970 sold the most with 23,580 units, followed by Store #3300 with 19,158 units, and Store #1650 with 17,778 units. The lowest among the top 8 was Store #1540, which sold 14,517 units.
+
+(Note: While I cannot generate an actual bar chart, the ranking and unit counts are provided based on the data.)",,0.75,1.27888782494513,5.491001761000007,3.104173597999761,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0060124332963785,0.8943780310000875,0.8900984559986682,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+if 'y_axes' in config:
+    x_labels = data_df[config['x_axis']].astype(str)
+    y_axes = config['y_axes']
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(14, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel('Value')
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right', fontsize=9)
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+elif 'group_by' in config:
+    group_col = config['group_by']
+    x_col = config['x_axis']
+    y_col = config['y_axis']
+
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(14, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right', fontsize=9)
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+else:
+    x_data = data_df[config['x_axis']]
+    y_data = data_df[config['y_axis']]
+
+    plt.figure(figsize=(14, 6))
+    plt.bar(x_data, y_data)
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axis'])
+    plt.title(config['title'])
+    plt.xticks(x_data, rotation=45, ha='right', fontsize=9)
+    plt.tight_layout()
+    plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'store_number', 'y_axis': 'total_units', 'title': 'Top 8 Stores Ranked by Total Units Sold in 2022'}",,1.0,1.0497205530716724,23.187303841001267,14.666556947000572,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0030879973806435,4.208018608000202,4.20508495499962,0.0,0.0,0.0,0.0,0.0,2.817240022999613,2.5880572690002737,0,0,0,0,0,5.491001761000007,3.104173597999761,0.0,0.0,0.0,0.0,0.0,23.187303841001267,14.666556947000572,0.0,0.0,0.0,0.0,0.0,8.667227713000102,8.657404979998319,0,0,0,0,0,40.16277333800099,29.016192793998925,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,8,top-k-trajectory-651,Return the top 10 sales days in 2023 with total revenue and total units sold,2,The chosen agent is Retriever,,,1.0008225531785149,1.4637467829998059,1.4622428930015303,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+
+SELECT
+    s.Sold_Date,
+    SUM(s.Qty_Sold) AS total_units_sold,
+    SUM(s.Total_Sale_Value) AS total_revenue
+FROM
+    sales s
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY
+    s.Sold_Date
+ORDER BY
+    total_revenue DESC
+LIMIT 10
+
+'''
+
+The resulting DataFrame has 10 rows with columns : Sold_Date, total_units_sold, total_revenue",,0.0,1.0663936434237122,3.330054726000526,3.096741960000145,0,0,0,0,0,The chosen agent is Analyzer,,,1.0009210083332856,1.564527864999036,1.5624501839993172,0,0,0,0,0,"The top 10 sales days in 2023 were led by December 22 with $4,059 in revenue and 62,640.7 units sold. The remaining days in the top 10 all occurred in November or December, with revenues ranging from $2,406 to $4,059 and units sold between 34,630.77 and 62,640.7. The total revenue for these days was $30,810 and the total units sold were 454,756.59.",,0.5,1.1736779503387513,5.34393315700072,3.3974425269989297,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0535498874006994,0.8512619100001757,0.8481091909998213,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,,,,,,,,,,,3.330054726000526,3.096741960000145,0,0,0,0,0,5.34393315700072,3.3974425269989297,0.0,0.0,0.0,0.0,0.0,,,,,,,,3.8795365579990175,3.872802268000669,0,0,0,0,0,12.553524441000263,10.366986754999743,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,9,scoring-cascade-636,"Show store cities where total revenue in 2022 exceeded 200,000 as a bar chart",3,The chosen agent is Retriever,,,1.000531986893733,1.2408284310004092,1.2391655480005284,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    st.city,
+    SUM(s.Total_Sale_Value) AS total_revenue
+FROM
+    sales s
+JOIN
+    stores st ON s.Store_Number = st.Store_Number
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2022
+GROUP BY
+    st.city
+HAVING
+    SUM(s.Total_Sale_Value) > 200000
+ORDER BY
+    total_revenue DESC
+'''
+
+The resulting DataFrame has 7 rows with columns : city, total_revenue",,1.0,1.0376282367712686,2.60087779999958,2.3633447000011074,0,0,0,0,0,The chosen agent is Analyzer,,,1.0110623525055493,0.6522832259997813,0.6493829789997108,0,0,0,0,0,"The bar chart would show that Washington had the highest revenue in 2022 at $342,948.68, while San Antonio had the lowest among the cities exceeding $200,000 with $202,010.28. The mean revenue across all seven qualifiying cities was $243,808.01.
+
+(Note: Since I cannot create actual visualizations in this text-based interface, I've described what the bar chart would display if rendered. The values and rankings would be as shown in the provided data.)",,0.875,1.746099779586181,8.629023138000775,6.2398892259989225,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0086264003550387,0.735816292999516,0.7315033949998906,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(12, 6))
+plt.bar(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right', fontsize=9)
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'city', 'y_axis': 'total_revenue', 'title': 'Total Revenue by City (Exceeding $200,000 in 2022)'}",,1.0,1.035138314692709,9.290732233999734,4.892202859000463,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0028064251062683,0.7163042460015276,0.7147806760003732,0.0,0.0,0.0,0.0,0.0,2.60087779999958,2.3633447000011074,0,0,0,0,0,8.629023138000775,6.2398892259989225,0.0,0.0,0.0,0.0,0.0,9.290732233999734,4.892202859000463,0.0,0.0,0.0,0.0,0.0,3.345232196001234,3.334832598000503,0,0,0,0,0,23.865865368001323,16.830269383000996,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,10,querying-matrix-642,Show monthly revenue for product class code 22975 in 2022 as a line chart,2,The chosen agent is Retriever,,,1.0005213438336753,0.7451423660004366,0.7439958249997289,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+  DATE_TRUNC('month', sa.Sold_Date) AS month,
+  SUM(sa.Total_Sale_Value) AS monthly_revenue
+FROM
+  sales sa
+WHERE
+  sa.Product_Class_Code = 22975
+  AND EXTRACT(YEAR FROM sa.Sold_Date) = 2022
+GROUP BY
+  month
+ORDER BY
+  month
+'''
+
+The resulting DataFrame has 12 rows with columns : month, monthly_revenue",,1.0,1.0880648885233801,2.69520310200096,2.410855841999364,0,0,0,0,0,The chosen agent is Analyzer,,,1.0142187102577247,0.9815563309985009,0.9791587839990825,0,0,0,0,0,"The monthly revenue for product class code 22975 in 2022 ranged from $73,802.56 in July to $122,319.24 in December, with an average of $94,649.39 per month. Total revenue for the year was $1,135,792.65. The trend shows fluctuations, with notable decreases from January to July followed by a recovery in the latter half of the year.",,0.875,1.2716282010347977,11.068150810999214,7.105065663999994,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0049454554959067,0.749914218999038,0.7456014949984819,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+config = {'chart_type': 'line', 'x_axis': 'month_start', 'y_axis': 'total_revenue', 'title': 'Monthly Revenue for Product Class Code 22975 in 2022'}
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(12, 6))
+plt.plot(x_data, y_data, marker='o')
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right')
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'line', 'x_axis': 'month_start', 'y_axis': 'total_revenue', 'title': 'Monthly Revenue for Product Class Code 22975 in 2022'}",,1.0,1.0273288260449132,12.059235361999527,7.5289683469982265,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0038375855532717,1.0039532499995403,0.9993145419994107,0.0,0.0,0.0,0.0,0.0,2.69520310200096,2.410855841999364,0,0,0,0,0,11.068150810999214,7.105065663999994,0.0,0.0,0.0,0.0,0.0,12.059235361999527,7.5289683469982265,0.0,0.0,0.0,0.0,0.0,3.480566165997516,3.468070645996704,0,0,0,0,0,29.303155440997216,20.51296049899429,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,11,top-k-nexus-991,Show monthly revenue split by promo flag for 2023 as a grouped bar chart,2,The chosen agent is Retriever,,,1.0004787298550724,0.8503751439984626,0.8489365189998352,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    DATE_TRUNC('month', s.Sold_Date) AS month,
+    CASE WHEN s.On_Promo = 1 THEN 'Promo' ELSE 'Non-Promo' END AS promo_flag,
+    SUM(s.Total_Sale_Value) AS monthly_revenue
+FROM
+    sales s
+JOIN
+    stores st ON s.Store_Number = st.Store_Number
+WHERE
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY
+    DATE_TRUNC('month', s.Sold_Date),
+    promo_flag
+ORDER BY
+    DATE_TRUNC('month', s.Sold_Date),
+    promo_flag
+'''
+
+The resulting DataFrame has 20 rows with columns : month, promo_flag, monthly_revenue",,0.0,1.0824830260038023,10.101958753999497,9.81372290499894,0,0,0,0,0,The chosen agent is Analyzer,,,1.0054534506473045,3.271940504999293,3.269468439000775,0,0,0,0,0,"In 2023, the monthly revenue was significantly higher for non-promotional sales compared to promotional sales. Non-promotional revenue ranged from $69.98 in January to $835,289.24 in December, while promotional revenue peaked at $38,974.43 in December. Promotional sales only appeared in 8 out of 12 months with the highest being $38,974.43 in December and lowest $69.98 in January.",,0.75,1.5075265117247036,9.29627052000069,3.1999041870003566,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0034289029895083,0.9002691460009373,0.8983217519999016,0.0,0.0,0.0,0.0,0.0,The generated code couldn't be executed,,1.0,,16.292448279000382,9.977757188000396,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.011649966260894,1.5005193939996389,1.4985320150008192,0.0,0.0,0.0,0.0,0.0,10.101958753999497,9.81372290499894,0,0,0,0,0,9.29627052000069,3.1999041870003566,0.0,0.0,0.0,0.0,0.0,16.292448279000382,9.977757188000396,0.0,0.0,0.0,0.0,0.0,6.523104188998332,6.515258725001331,0,0,0,0,0,42.2137817419989,29.506643005001024,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,12,top-k-cascade-363,Show total revenue by store type for 2023 as a bar chart,3,The chosen agent is Retriever,,,1.000518701023531,1.0627554260008765,1.0615697049997834,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+
+SELECT
+    st.store_type AS store_type,
+    SUM(s.Total_Sale_Value) AS total_revenue_usd
+FROM
+    sales s
+JOIN
+    stores st ON s.Store_Number = st.Store_Number
+WHERE
+    YEAR(s.Sold_Date) = 2023
+GROUP BY
+    st.store_type
+ORDER BY
+    total_revenue_usd DESC
+
+'''
+
+The resulting DataFrame has 4 rows with columns : store_type, total_revenue_usd",,1.0,1.0904406907249022,3.1495835700006864,2.9016895839995414,0,0,0,0,0,The chosen agent is Analyzer,,,1.0068938547156834,0.9307012899989786,0.9285596839999926,0,0,0,0,0,"Based on the 2023 sales data, supermarkets generated the highest total revenue at $1,938,262.70, followed by discount stores ($1,574,739.14), hypermarkets ($1,188,793.49), and convenience stores ($714,323.60). The total combined revenue for all store types in 2023 was $5,416,118.93.",,0.75,1.1076960642683211,6.385432341001433,4.780795949998719,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.003900080427889,0.6677232699985325,0.6643733729997621,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+# Check configuration and extract appropriate data
+if 'y_axes' in config:
+    # Wide-format grouped bar chart
+    x_labels = data_df[config['x_axis']].astype(str)
+    y_axes = config['y_axes']
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axes'][0][:15] + '...' if len(config['y_axes'][0]) > 15 else config['y_axes'][0])
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+
+elif 'group_by' in config:
+    # Long-format grouped bar chart
+    group_col = config['group_by']
+    x_col = config['x_axis']
+    y_col = config['y_axis']
+
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+
+else:
+    # Single series chart
+    x_data = data_df[config['x_axis']]
+    y_data = data_df[config['y_axis']]
+
+    # Set figure size based on potential overlap
+    if len(x_data.unique()) > 10 or isinstance(x_data.iloc[0], str):
+        plt.figure(figsize=(12, 6))
+        rotation_angle = 45
+    else:
+        plt.figure(figsize=(10, 6))
+        rotation_angle = 0
+
+    if config['chart_type'] == 'bar':
+        plt.bar(x_data, y_data)
+    elif config['chart_type'] == 'line':
+        plt.plot(x_data, y_data, marker='o')
+    elif config['chart_type'] == 'scatter':
+        plt.scatter(x_data, y_data, alpha=0.6)
+    elif config['chart_type'] == 'area':
+        plt.fill_between(x_data, y_data, alpha=0.4)
+        plt.plot(x_data, y_data)
+    else:
+        raise ValueError(f""Unsupported chart type: {config['chart_type']}"")
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axis'])
+    plt.title(config['title'])
+    plt.xticks(rotation=rotation_angle, ha='right', fontsize=9 if rotation_angle > 0 else 10)
+    plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'store_type', 'y_axis': 'total_revenue', 'title': 'Total 2023 Revenue by Store Type'}",,0.9,1.0780553912377178,21.391785002000688,16.007392110999717,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.002925157614536,1.0119501709996257,1.009783615001652,0.0,0.0,0.0,0.0,0.0,3.1495835700006864,2.9016895839995414,0,0,0,0,0,6.385432341001433,4.780795949998719,0.0,0.0,0.0,0.0,0.0,21.391785002000688,16.007392110999717,0.0,0.0,0.0,0.0,0.0,3.6731301569980133,3.66428637700119,0,0,0,0,0,34.59993107000082,27.354164021999168,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,13,expanded-nexus-356,Show total units sold by product category for 2023 as a bar chart,3,The chosen agent is Retriever,,,1.0004391951419296,0.8306457809994754,0.8287566850012809,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT p.category, SUM(s.Qty_Sold) as total_units_sold
+FROM products p
+JOIN sales s ON p.SKU_Coded = s.SKU_Coded
+WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY p.category
+ORDER BY total_units_sold DESC
+'''
+
+The resulting DataFrame has 6 rows with columns : category, total_units_sold",,1.0,1.0526916489425533,3.7749934410003334,3.51537902400014,0,0,0,0,0,The chosen agent is Analyzer,,,1.0056556180471867,1.0775038309984666,1.0752693329995964,0,0,0,0,0,"In 2023, the product categories by total units sold were Dairy (141,284 units), Bakery (87,114 units), Beverages (71,131 units), Household (57,576 units), Personal Care (38,045 units), and Snacks (24,817 units), with Dairy being the top-selling category. The categories sold a combined total of 419,967 units that year, with average sales of approximately 70,000 units per category.",,0.875,1.2597365544480652,7.425227247998919,4.765778986000441,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0054750248664222,1.945650117999321,1.9422211649998644,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+if 'y_axes' in config:
+    x_labels = data_df[config['x_axis']].astype(str)
+    y_axes = config['y_axes']
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(', '.join(y_axes))  # Use joined y_axes for ylabel
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+
+elif 'group_by' in config:
+    group_col = config['group_by']
+    x_col = config['x_axis']
+    y_col = config['y_axis']
+
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+
+else:
+    x_data = data_df[config['x_axis']]
+    y_data = data_df[config['y_axis']]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(x_data, y_data)
+    plt.xlabel(config['x_axis'])
+    plt.ylabel(config['y_axis'])
+    plt.title(config['title'])
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'category', 'y_axis': 'total_units', 'title': 'Total Units Sold by Product Category in 2023'}",,1.0,1.0346405403293597,18.99141397099993,12.595857982998496,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.003291249349578,1.4998850350002613,1.4975315720002982,0.0,0.0,0.0,0.0,0.0,3.7749934410003334,3.51537902400014,0,0,0,0,0,7.425227247998919,4.765778986000441,0.0,0.0,0.0,0.0,0.0,18.99141397099993,12.595857982998496,0.0,0.0,0.0,0.0,0.0,5.353684764997524,5.34377875500104,0,0,0,0,0,35.545319424996705,26.220794748000117,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,14,vivid-cascade-505,"Return the top 3 brands by realized average selling price in 2023, where average price is computed as total revenue divided by total units sold, along with total units sold per brand",3,The chosen agent is Retriever,,,1.002419842647087,0.7980628609984706,0.7963483240000642,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    p.brand,
+    SUM(s.Total_Sale_Value) / SUM(s.Qty_Sold) AS avg_selling_price_usd,
+    SUM(s.Qty_Sold) AS total_units_sold
+FROM
+    sales s
+JOIN
+    products p ON s.SKU_Coded = p.SKU_Coded
+WHERE
+    YEAR(s.Sold_Date) = 2023
+GROUP BY
+    p.brand
+ORDER BY
+    avg_selling_price_usd DESC
+LIMIT 3
+'''
+
+The resulting DataFrame has 3 rows with columns : brand, avg_selling_price_usd, total_units_sold",,1.0,1.0540056833881715,3.4794047380000848,3.2353030960002798,0,0,0,0,0,The chosen agent is Analyzer,,,1.0007952204504786,0.8754886869992333,0.8730437080012052,0,0,0,0,0,"The top 3 brands by realized average selling price in 2023 are CrunchTime ($18.22), GlowUp ($17.93), and CleanHome ($17.11). The total units sold for these brands were 24,817, 38,045, and 57,576 respectively, with CleanHome having the highest volume.",,0.75,1.1221553629437753,5.15584361800029,2.1066507560008176,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.024799108725792,0.6526729430006526,0.6507772810000461,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,,,,,,,,,,,3.4794047380000848,3.2353030960002798,0,0,0,0,0,5.15584361800029,2.1066507560008176,0.0,0.0,0.0,0.0,0.0,,,,,,,,2.3262244909983565,2.3201693130013155,0,0,0,0,0,10.961472846998731,7.662123165002413,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,15,optimized-ledger-658,Return the top 8 cities by total revenue in 2023,3,The chosen agent is Retriever,,,1.0006825282844247,0.9624471410006663,0.9606196189997718,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT st.city, SUM(sl.Total_Sale_Value) as total_revenue
+FROM sales sl
+JOIN stores st ON sl.Store_Number = st.Store_Number
+JOIN products p ON sl.SKU_Coded = p.SKU_Coded AND sl.Product_Class_Code = p.Product_Class_Code
+WHERE YEAR(sl.Sold_Date) = 2023
+GROUP BY st.city
+ORDER BY total_revenue DESC
+LIMIT 8
+'''
+
+The resulting DataFrame has 8 rows with columns : city, total_revenue",,1.0,1.1505213954849807,3.0904671699991013,2.8385502569999517,0,0,0,0,0,The chosen agent is Analyzer,,,1.0011663908443553,0.9773750570002449,0.9747239369989984,0,0,0,0,0,"The top 8 cities by total revenue in 2023 are:
+1. Washington ($331,128.83)
+2. Dallas ($258,377.21)
+3. Memphis ($249,908.47)
+4. Austin ($224,162.19)
+5. San Antonio ($204,549.96)
+6. San Diego ($191,375.95)
+7. Las Vegas ($188,026.54)
+8. Seattle ($181,115.33)
+The combined revenue from these cities totaled $1,828,644.48.",,1.0,1.0824080066215886,7.988550133999524,4.476874804000545,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0093201394537685,0.6769407489991863,0.6743071380005858,0.0,0.0,0.0,0.0,0.0,,,,,,,,,,,,,,,,,,,,,,,3.0904671699991013,2.8385502569999517,0,0,0,0,0,7.988550133999524,4.476874804000545,0.0,0.0,0.0,0.0,0.0,,,,,,,,2.6167629470000975,2.609650693999356,0,0,0,0,0,13.695780250998723,9.925075754999853,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,16,top-k-beam-282,Show 2023 revenue by region comparing Organic and Non-Organic products as a grouped bar chart,3,The chosen agent is Retriever,,,1.0003715806266091,0.669798068000091,0.6682731399996555,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    st.region,
+    CASE
+        WHEN p.is_organic THEN 'Organic'
+        ELSE 'Non-Organic'
+    END AS product_type,
+    SUM(s.Total_Sale_Value) AS revenue_usd_2023
+FROM
+    sales s
+JOIN
+    products p ON s.SKU_Coded = p.SKU_Coded AND s.Product_Class_Code = p.Product_Class_Code
+JOIN
+    stores st ON s.Store_Number = st.Store_Number
+WHERE
+    YEAR(s.Sold_Date) = 2023
+GROUP BY
+    st.region,
+    CASE
+        WHEN p.is_organic THEN 'Organic'
+        ELSE 'Non-Organic'
+    END
+ORDER BY
+    st.region,
+    product_type
+'''
+
+The resulting DataFrame has 8 rows with columns : region, product_type, revenue_usd_2023",,1.0,1.0743805905845545,4.40021014299964,4.12057775500034,0,0,0,0,0,The chosen agent is Analyzer,,,1.0031083630233708,1.240334829000858,1.2381550560003234,0,0,0,0,0,"In 2023, the South region generated the highest revenue with \$1,560,531.43 from Non-Organic products and \$320,121.83 from Organic products. Across all regions, Non-Organic products consistently outperformed Organic products in total revenue.",,0.5,1.3491118379731026,4.523657260999244,2.584126739999192,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0042120372909125,0.6941320290006843,0.6905960830008553,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_col = config['x_axis']
+y_col = config['y_axis']
+group_col = config.get('group_by')
+y_axes = config.get('y_axes')
+
+if y_axes is not None:
+    # Multi-series grouped bar chart (wide format)
+    x_labels = data_df[x_col].astype(str)
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(x_col)
+    plt.ylabel('Value')
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+elif group_col is not None:
+    # Multi-series grouped bar chart (long format)
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+elif 'y_axis' in config:
+    # Single series bar chart
+    x_data = data_df[x_col]
+    y_data = data_df[y_col]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(x_data, y_data)
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(config['title'])
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'region', 'y_axis': 'total_revenue', 'group_by': 'is_organic', 'title': '2023 Revenue by Region for Organic and Non-Organic Products'}",,1.0,1.039581478974224,23.95823213299991,18.11842288799926,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0033938884549158,0.7866835340009857,0.783959804000915,0.0,0.0,0.0,0.0,0.0,4.40021014299964,4.12057775500034,0,0,0,0,0,4.523657260999244,2.584126739999192,0.0,0.0,0.0,0.0,0.0,23.95823213299991,18.11842288799926,0.0,0.0,0.0,0.0,0.0,3.390948460002619,3.3809840830017492,0,0,0,0,0,36.27304799700141,28.20411146600054,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,17,rendering-pipeline-350,Compare average monthly revenue between store types for 2022 and 2023,4,The chosen agent is Retriever,,,1.0003871754661409,0.8514168950005114,0.8500055250005971,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    sts.store_type,
+    s.yr AS year,
+    ROUND(AVG(s.monthly_rev), 2) AS avg_monthly_revenue
+FROM
+    (SELECT
+        Store_Number,
+        YEAR(Sold_Date) AS yr,
+        DATE_TRUNC('month', Sold_Date) AS month,
+        SUM(Total_Sale_Value) AS monthly_rev
+     FROM sales
+     WHERE YEAR(Sold_Date) IN (2022, 2023)
+     GROUP BY Store_Number, yr, month) s
+JOIN
+    stores sts ON s.Store_Number = sts.Store_Number
+GROUP BY
+    sts.store_type,
+    s.yr
+ORDER BY
+    s.yr,
+    sts.store_type
+'''
+
+The resulting DataFrame has 8 rows with columns : store_type, year, avg_monthly_revenue",,1.0,1.1219119837078906,4.208121129000574,3.9459758539996983,0,0,0,0,0,The chosen agent is Analyzer,,,1.0015983675527416,0.8707380870000634,0.8686135130010371,0,0,0,0,0,"In 2022, the Convenience store type had the highest average monthly revenue at $15,914.67, while Hypermarkets had the lowest at $12,657.14. In 2023, Convenience stores again led with $14,881.74, but all store types saw slightly lower average monthly revenues compared to 2022. The data shows a consistent pattern where Convenience stores outperform other types in both years, while Hypermarkets trail behind.",,0.75,1.3101213173597503,5.49359230600021,2.7003983310005424,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0047244350454012,1.4144182689997251,1.4111378189991228,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+chart_type = config['chart_type']
+x_col = config['x_axis']
+y_col = config['y_axis']
+title = config['title']
+
+if 'y_axes' in config:
+    # Wide-format multi-series grouped bar chart
+    y_axes = config['y_axes']
+    x_labels = data_df[x_col]
+    n_series = len(y_axes)
+    bar_width = 0.8 / n_series
+    x = np.arange(len(x_labels))
+
+    plt.figure(figsize=(12, 6))
+    for i, col in enumerate(y_axes):
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, data_df[col], width=bar_width, label=col)
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_axes[0])  # Assuming all y_axes have same units
+    plt.title(title)
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+elif 'group_by' in config:
+    # Long-format multi-series grouped bar chart
+    group_col = config['group_by']
+    groups = sorted(data_df[group_col].unique())
+    x_labels = sorted(data_df[x_col].unique())
+    x = np.arange(len(x_labels))
+    n_series = len(groups)
+    bar_width = 0.8 / n_series
+
+    plt.figure(figsize=(12, 6))
+    for i, group_val in enumerate(groups):
+        df_group = data_df[data_df[group_col] == group_val].set_index(x_col)
+        y_vals = [df_group.loc[xl, y_col] if xl in df_group.index else 0 for xl in x_labels]
+        offset = (i - n_series / 2 + 0.5) * bar_width
+        plt.bar(x + offset, y_vals, width=bar_width, label=str(group_val))
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(title)
+    plt.xticks(x, x_labels, rotation=45, ha='right')
+    plt.legend()
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+else:
+    # Single series bar chart
+    x_data = data_df[x_col]
+    y_data = data_df[y_col]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(x_data, y_data)
+
+    plt.xlabel(x_col)
+    plt.ylabel(y_col)
+    plt.title(title)
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'store_type', 'y_axis': 'avg_monthly_revenue', 'group_by': 'year', 'title': 'Average Monthly Revenue by Store Type: 2022 vs 2023'}",,1.0,1.0423075231042034,24.244484831999216,19.05221527499998,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.0027854442141517,1.3238180550015386,1.3213625739990675,0.0,0.0,0.0,0.0,0.0,4.208121129000574,3.9459758539996983,0,0,0,0,0,5.49359230600021,2.7003983310005424,0.0,0.0,0.0,0.0,0.0,24.244484831999216,19.05221527499998,0.0,0.0,0.0,0.0,0.0,4.4603913060018385,4.4511194309998245,0,0,0,0,0,38.40658957300184,30.149708891000046,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,18,branched-beam-194,"Show promo revenue share by product category for 2023 as a bar chart, expressing the share as a percentage of total revenue",4,The chosen agent is Retriever,,,1.0004697401899276,1.2495064319991798,1.2482530859997496,0,0,0,0,0,"I executed this query to retrieve the required data:
+
+'''SQL
+SELECT
+    p.category,
+    (SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END) /
+     SUM(s.Total_Sale_Value)) * 100 AS promo_revenue_share_percentage
+FROM sales s
+JOIN products p ON s.SKU_Coded = p.SKU_Coded
+WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY p.category
+ORDER BY promo_revenue_share_percentage DESC
+'''
+
+The resulting DataFrame has 6 rows with columns : category, promo_revenue_share_percentage",,1.0,1.1011623031681672,3.113206463000097,2.850724043999435,0,0,0,0,0,The chosen agent is Analyzer,,,1.003558916147622,2.309744170999693,2.3076100910002424,0,0,0,0,0,"The promo revenue share by product category for 2023 shows that ""Snacks"" had the highest share at 6.26%, followed by ""Dairy"" at 5.0%. Other categories like ""Beverages"" and ""Household"" had no promo revenue, and the total promo revenue share across all categories was 13.37%.
+
+(Note: A bar chart visualization would typically be created by a tool like Excel, Tableau, or Python's matplotlib/seaborn, but the data points to describe the chart are provided above.)",,1.0,1.642622047138913,8.350253729999167,3.342010221000237,0.0,0.0,0.0,0.0,0.0,The chosen agent is Visualizer,,,1.0038136887114215,0.7007888430016465,0.6971247849996871,0.0,0.0,0.0,0.0,0.0,"The code for a proper visualization is:
+
+'''python
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+x_data = data_df[config['x_axis']]
+y_data = data_df[config['y_axis']]
+
+plt.figure(figsize=(12, 6))
+plt.bar(x_data, y_data)
+plt.xlabel(config['x_axis'])
+plt.ylabel(config['y_axis'])
+plt.title(config['title'])
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+'''
+ The configuration for matplotlib is:
+{'chart_type': 'bar', 'x_axis': 'category', 'y_axis': 'promo_revenue_share', 'title': 'Revenue Share Generated by Promotions by Product Category'}",,1.0,1.1045097406571813,10.447800850999556,5.61047607799992,0.0,0.0,0.0,0.0,0.0,The chosen agent is End,,,1.003057122128425,0.7704016569987289,0.767867775999548,0.0,0.0,0.0,0.0,0.0,3.113206463000097,2.850724043999435,0,0,0,0,0,8.350253729999167,3.342010221000237,0.0,0.0,0.0,0.0,0.0,10.447800850999556,5.61047607799992,0.0,0.0,0.0,0.0,0.0,5.030441102999248,5.020855737999227,0,0,0,0,0,26.941702146998068,16.82406608099882,0,0,0,0,0
+mistral_small_3.2_24b_perplexity,19,vivid-canvas-838,"Return the top 10 region-category combinations by year-over-year revenue growth from 2022 to 2023, showing revenue for both years and the growth expressed as a percentage rounded to 2 decimal places",4,The chosen agent is Retriever,,,1.0024466924121327,1.3396528989997023,1.3383480979991873,0,0,0,0,0,Couldn't access data. Check error message for specific details,,0.0,,9.392399435000698,9.10950888699881,0,0,0,0,0,The chosen agent is End,,,1.0317237383516735,0.843578639000043,0.8419225689995073,0,0,0,0,0,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,9.392399435000698,9.10950888699881,0,0,0,0,0,,,,,,,,,,,,,,,2.1832315379997453,2.1802706669986947,0,0,0,0,0,11.575630973000443,11.289779553997505,0,0,0,0,0

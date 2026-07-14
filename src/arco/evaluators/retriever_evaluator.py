@@ -125,20 +125,16 @@ class RetrieverEvaluator(Evaluator):
         compare_dataframes_iou, which handles:
         - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
         """
-        ans_to_eval: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
-        if ans_to_eval is None:
-            raise ValueError("Answer is None")
-        ans_ret: Answer = ans_to_eval
-
-        if self.gt_data is None:
-            ans_ret.gt_evaluation = Evaluation(score=0.0)
-            return
-
+        ans_ret: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
         if not ans_ret:
             raise ValueError(
                 f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}")
 
-        result_df = self.gt_data.copy()
+        if self.gt_data is None or ans_ret.data_df is None:
+            ans_ret.gt_evaluation = Evaluation(score=0.0)
+            return
+
+        result_df = ans_ret.data_df.copy()
         result_df.columns = [c.lower() for c in result_df.columns]
 
         gt_df_cmp = self.gt_data.copy()

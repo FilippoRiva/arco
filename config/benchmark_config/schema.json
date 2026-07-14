@@ -32,7 +32,8 @@
           "type": "string",
           "enum": [
             "openai",
-            "ollama"
+            "ollama",
+            "openrouter"
           ],
           "description": "The AI model provider backend."
         },
@@ -160,6 +161,10 @@
             "type": "integer",
             "minimum": 1,
             "description": "Maximum top_k token cutoff pool limit."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Maximum number of tokens the agent should output at each generation"
           },
           "use_cache": {
             "type": "boolean",

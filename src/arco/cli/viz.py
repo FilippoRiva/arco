@@ -261,7 +261,7 @@ def _energy_impact_panel(energy_dict: dict[str, Any]) -> Panel:
 
 def print_benchmark_header(name: str, description: str, changes: dict[str, Any]) -> None:
     """Print a rich panel summarizing the benchmark run's name, description, and changes."""
-    header = Text(name, style="bold cyan", justify="center")
+    header = Text(f"Benchmark run : {name}", style="bold cyan", justify="center")
 
     body = Table.grid(padding=(0, 1))
     body.add_column(justify="right", style="bold dim")
@@ -434,7 +434,7 @@ def compact_agent_events_visualizer(events) -> State:
     return last_state
 
 
-def print_config_table(config: ArcoConfig, verbose: bool | None = None, interactive: bool | None = None):
+def print_config_table(config: ArcoConfig, verbose: bool | None = None):
     """Helper to render a consistent Rich tables."""
     configs_to_show = {f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()}
     configs_to_show.pop("schema")
@@ -446,8 +446,6 @@ def print_config_table(config: ArcoConfig, verbose: bool | None = None, interact
     ]
     if verbose is not None:
         params_list.append(("verbose", verbose))
-    if interactive is not None:
-        params_list.append(("interactive", interactive))
     table = Table(box=box.ROUNDED)
     table.add_column("Parameter", style="cyan", no_wrap=True)
     table.add_column("Current Value", style="white")

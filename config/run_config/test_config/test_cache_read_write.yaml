@@ -5,7 +5,7 @@
 # Test config for caching with both read and write
 
 global:
-  schema: "../../data"
+  schema: "../../../data"
   prompt: "What is the most common type of good?"
   use_cache: true
   run_id: "cache_rw_test_run_id"

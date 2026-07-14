@@ -1,5 +1,3 @@
-from arco import llm_tools
-from arco.llm_tools import CoTRefiner
 from arco.core.agent import AgentException
 from copy import deepcopy
 from typing import TYPE_CHECKING
@@ -7,10 +5,11 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType
+from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.evaluators import AnalyzerEvaluator
 
 if TYPE_CHECKING:
+    from arco.core.llm_tools import CoTRefiner
     from arco.core import State, AgentConfig, Evaluator
     from arco.tracing import TracingHelper
 

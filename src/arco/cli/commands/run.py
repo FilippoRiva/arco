@@ -1,10 +1,7 @@
-from argparse import ArgumentParser, Namespace
+from typing import TYPE_CHECKING
 
-from arco.cli.console import console
-
-import os, sys
-from arco.cli import viz
-from rich.rule import Rule
+if TYPE_CHECKING:
+    from argparse import ArgumentParser, Namespace
 
 
 # ---------------------------------------------------------------------------
@@ -23,11 +20,6 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
         help="Path to config YAML"
     )
     parser.add_argument(
-        "--interactive", "-i",
-        action='store_true',
-        help="Whether if an interactive run is needed",
-    )
-    parser.add_argument(
         "--verbose", "-v",
         action='store_true',
         help="Whether if the agent's configuration and other metrics should be shown after each execution"
@@ -43,56 +35,20 @@ _GLOBAL_PARAMS = [
 ]
 
 
-def _interactive_configure(config: ArcoConfig) -> ArcoConfig:
-    """Show YAML defaults and let the user override them one by one.
-
-    Returns the (possibly modified) config
-    """
-
-    def _prompt_value(name, current_value, param_type):
-        """Prompt for a single value; return current_value on empty input."""
-        while True:
-            raw = input(f"  {name} [{current_value}]: ").strip()
-            if not raw:
-                return current_value
-            try:
-                if param_type is bool:
-                    if raw.lower() in ("true", "1", "yes", "y"):
-                        return True
-                    if raw.lower() in ("false", "0", "no", "n"):
-                        return False
-                    raise ValueError
-                if param_type is str:
-                    if raw.lower() in ("none", "null", ""):
-                        return None
-                    return raw
-                return param_type(raw)
-            except (ValueError, TypeError):
-                print(f"    Invalid value for {name} (expected {param_type.__name__}). Try again.")
-
-    if not sys.stdin.isatty():
-        return config
-
-    agent_display = [(key, getattr(config, key)) for key, _, _ in _GLOBAL_PARAMS]
-    viz.print_config_table(agent_display)
-
-    choice = Prompt.ask("Accept [bold cyan]Global Settings[/bold cyan]? [Y/n]: ").strip().lower()
-    if choice in ("n", "no"):
-        choices = {}
-        for key, ptype, _ in _GLOBAL_PARAMS:
-            current = getattr(config, key)
-            new_val = _prompt_value(key, current, ptype)
-            choices.update({key: new_val})
-        return replace(config, **choices)
-
-    return config
-
-
 def handle(args: Namespace, parser: ArgumentParser) -> None:
-    # Load the required dependencies
-    with console.status("[bold cyan]Loading Arco...[/bold cyan]", spinner="dots"):
-        from arco.workflow import SalesDataWorkflow
-        from arco.core import ArcoConfig
+    # Dependencies
+    from arco.cli.console import console
+    status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
+    status.start()
+    import os, sys
+    console.print("[green]✓[/green] Built-in modules loaded")
+    from rich.rule import Rule
+    from arco.cli import viz
+    console.print("[green]✓[/green] Visualization tools loaded")
+    from arco.workflow import SalesDataWorkflow
+    from arco.core import ArcoConfig
+    console.print("[green]✓[/green] ARCO dependencies loaded")
+    status.stop()
 
     ## Initialization
     # Load config from YAML
@@ -104,11 +60,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
     config = ArcoConfig.from_yaml(args.config)
 
-    # Interactive YAML config change if interactive mode is selected
-    if args.interactive:
-        config = _interactive_configure(config)
-
-    viz.print_config_table(config, verbose=args.verbose, interactive=args.interactive)
+    viz.print_config_table(config, verbose=args.verbose)
     console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
 
     ## Run the agent
@@ -117,4 +69,5 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     )
 
     # runs the agent with a visualization logic in rich
-    viz.agent_events_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)
+    # viz.agent_events_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)
+    viz.streaming_agent_visualizer(agent.stream(), verbose=args.verbose, show_plot=True)

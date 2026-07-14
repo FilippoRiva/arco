@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=./../schema.json
 # =============================================================================
-# TEST AGENTS SECTION
+# TEST PROVIDER-MODEL GLOBAL PARAMETERS
 # =============================================================================
-# Test for the agents section
+# Test for the provider and model parameters
 
 global:
   prompt: "Show me the sales in Nov 2021"
   visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"
   schema: "../../../data" # path to YAML schemas for the database relative to this config
-  provider: openrouter
-  model: google/gemma-4-26b-a4b-it
+  provider: ollama
+  model: phi3

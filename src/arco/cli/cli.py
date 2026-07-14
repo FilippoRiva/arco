@@ -16,9 +16,6 @@ warnings.filterwarnings("ignore", category=LangChainPendingDeprecationWarning)
 if TYPE_CHECKING:
     pass
 
-# Ensure project root is on sys.path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 # Load the available commands
 from arco.cli.commands import run, cache, bench
 

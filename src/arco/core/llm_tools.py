@@ -7,8 +7,9 @@ from langchain_core.language_models import BaseChatModel
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
-from arco.global_vars import OLLAMA_REQUEST_TIMEOUT
 from arco.tracking import LLMCallAccumulator
+
+OLLAMA_REQUEST_TIMEOUT: int = 600
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
@@ -91,7 +92,7 @@ def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) 
 def get_llm(
         provider: str = 'openai',
         model: str = 'gpt-4o-mini',
-        streaming=False,
+        streaming=True,
         max_tokens: int = 2000,
         temperature: float | None = None,
         top_p: float | None = None,
@@ -99,7 +100,7 @@ def get_llm(
         num_beams: int | None = None,
         no_repeat_ngram_size: int | None = None,
         llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
-        ollama_url: str | None = None,
+        ollama_url: str = "localhost:11434",
         openrouter_url: str = "https://openrouter.ai/api/v1"
 ) -> BaseChatModel:
     """Factory method to create LLM instances with specific parameters.
@@ -145,19 +146,23 @@ def get_llm(
             api_key=api_key,
             base_url=openrouter_url,
             temperature=temperature,
-            max_tokens=max_tokens,
-            streaming=streaming,
+            #max_tokens=max_tokens,
+            #streaming=streaming,
             callbacks=[llm_accumulator],
-            top_p=top_p,
+            #top_p=top_p,
             logprobs=True,
+            extra_body={
+                "provider": {
+                    "require_parameters": True # use only providers that allow all the parameters from the request
+                }
+            }
         )
     else:
         kwargs = dict(
             model=model,
+            base_url=ollama_url,
             temperature=temperature,
             num_predict=max_tokens,
-            streaming=streaming,
-            base_url=ollama_url,
             top_p=top_p,
             client_kwargs={"timeout": OLLAMA_REQUEST_TIMEOUT},
             callbacks=[llm_accumulator],
@@ -172,13 +177,46 @@ def get_llm(
         return ChatOllama(**kwargs)
 
 def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
-    logprobs = None
-
     metadata = message.response_metadata
     if "logprobs" in metadata and metadata["logprobs"] is not None:
-        content_logprobs = metadata['logprobs'].get("content", [])
-        logprobs = [
-            (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if "logprob" in token_info
-        ]
+        logprobs_data = metadata["logprobs"]
 
-    return logprobs
+        # OPENAI / OPENROUTER
+        if isinstance(logprobs_data, dict) and "content" in logprobs_data:
+            content_logprobs = logprobs_data.get("content") or []
+            token_logprob_tuple_list = [
+                (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if "logprob" in token_info
+            ]
+
+            if "deepseek" in metadata['model_name']:
+                think_end = "</think>"
+                end_token = "<｜end▁of▁sentence｜>"  # Cleaned spacing
+                tokens = [item[0] for item in token_logprob_tuple_list]
+                start_idx = 0
+                if think_end in tokens:
+                    start_idx = tokens.index(think_end) + 1
+                end_idx = len(token_logprob_tuple_list)
+                if end_token in tokens:
+                    end_idx = tokens.index(end_token)
+                token_logprob_tuple_list = token_logprob_tuple_list[start_idx:end_idx]
+
+
+            return token_logprob_tuple_list
+        # OLLAMA
+        elif isinstance(logprobs_data, list) and len(logprobs_data) > 0:
+            if "gemma4" in metadata['model']:
+                # manually excluding thinking tokens
+                end_token = "<channel|>"
+                tokens = [logprobs_data[i]['token'] for i in range(len(logprobs_data))]
+                end_of_thinking_token_index = tokens.index(end_token)
+                return [
+                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"]) for i in range(end_of_thinking_token_index + 1, len(logprobs_data))
+                ]
+
+            return [
+                (logprobs_data[i]['token'], logprobs_data[i]['logprob']) for i in range(len(logprobs_data))
+            ]
+
+    return None
+
+

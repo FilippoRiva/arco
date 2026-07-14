@@ -7,14 +7,14 @@ import pandas as pd
 from langchain_core.language_models import BaseChatModel
 from pandas import DataFrame
 
-from arco import llm_tools, tracing
-from arco.core import Agent, Answer, AgentType
+from arco import tracing
+from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
 from arco.data import normalize_dataframe_values
 from arco.evaluators import RetrieverEvaluator
-from arco.llm_tools import CoTRefiner
 
 if TYPE_CHECKING:
+    from arco.core.llm_tools import CoTRefiner
     from arco.tracking import LLMCallAccumulator
     from arco.data import DatabaseSchema
     from arco.tracing import TracingHelper

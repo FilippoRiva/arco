@@ -11,8 +11,6 @@ Usage example:
     workflow = SalesDataWorkflow()
     result = workflow.run("Show me the sales in Nov 2021")
 """
-import json
-import re
 import time
 from typing import Any
 from typing import Generator
@@ -21,9 +19,9 @@ import requests
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from arco import llm_tools, tracing, tracking
+from arco import tracing, tracking
 from arco.agents import Analyzer, Orchestrator, Retriever, Visualizer
-from arco.core import ArcoConfig, State, AgentType
+from arco.core import ArcoConfig, State, AgentType, llm_tools
 from arco.data import RunCache
 from arco.tracing import (truncate_trace_text, _summarize_for_trace, TracingHelper)
 
@@ -224,7 +222,7 @@ class SalesDataWorkflow:
 
             current_state = None
 
-            for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates"]):
+            for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates", "messages"]):
                 stream_type, data = chunk
                 if stream_type == "tasks":
                     yield {

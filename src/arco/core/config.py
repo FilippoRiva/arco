@@ -172,6 +172,8 @@ class ArcoConfig:
 
     @classmethod
     def from_benchmark_yaml(cls, yaml_path: str, benchmark_dataset_path: str) -> list[dict[str, Any]]:
+        """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of
+        configurations, used by the benchmark script"""
         with open(yaml_path, 'r') as f:
             raw = yaml.safe_load(f)
 
