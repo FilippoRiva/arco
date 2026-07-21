@@ -3,10 +3,10 @@ from typing import Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Evaluator, Evaluation, AgentType, llm_tools
+from arco.core import Evaluator, Evaluation, AgentType, llm_tools, Answer
 
 if TYPE_CHECKING:
-    from arco.core import AgentConfig, State, Answer
+    from arco.core import AgentConfig, State
 
 
 class VisualizerEvaluator(Evaluator):
@@ -68,14 +68,6 @@ class VisualizerEvaluator(Evaluator):
       "code_quality": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
       "goal_alignment": {{"score": <1-5>, "reasoning": "<brief>"}}
     }}"""
-
-    def __init__(self, agent_config: AgentConfig):
-        super().__init__(agent_config)
-        self.judge_model = agent_config.model
-        self.provider = agent_config.provider
-        self.gt_config = agent_config.gt_chart_config
-        self.gt_code = agent_config.gt_code
-        self.gt_visual_requirements = agent_config.gt_visual_requirements
 
     @staticmethod
     def _parse_vis_no_gt_judge_json(raw_text: str) -> Dict:
@@ -141,7 +133,7 @@ class VisualizerEvaluator(Evaluator):
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
 
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_NO_GT_PROMPT.format(
-            visualization_goal=state.visualization_goal,
+            visualization_goal=state.prompt,
             data_columns=", ".join(data_columns),
             data_sample=data_sample[:1500],
             gen_config=json.dumps(last_visualizer_answer.chart_config, indent=2),
@@ -166,10 +158,7 @@ class VisualizerEvaluator(Evaluator):
         return
 
     VIS_JUDGE_PROMPT_GT = """You are an expert data visualization evaluator. Your task is to assess whether a generated visualization achieves the same analytical purpose as a reference visualization.
-
-    ## VISUALIZATION GOAL
-    {visualization_goal}
-
+    
     ## REFERENCE (GROUND TRUTH)
     Chart Configuration:
     {gt_config}
@@ -251,15 +240,12 @@ class VisualizerEvaluator(Evaluator):
 
                 return parsed
         except Exception as e:
-            print(f"Vis JSON parse error: {e}")
-
-        # Fallback
-        return {
-            "axis_correctness": {"score": 1, "reasoning": "Parse failed", "x_match": False, "y_match": False},
-            "chart_type": {"score": 1, "reasoning": "Parse failed", "type_match": False},
-            "functional_equivalence": {"score": 1, "reasoning": "Parse failed", "would_render": False},
-            "explicit_requirements": {"score": 5, "reasoning": "Parse failed - default N/A", "violations": []}
-        }
+            return {
+                "axis_correctness": {"score": 1, "reasoning": "Parse failed", "x_match": False, "y_match": False},
+                "chart_type": {"score": 1, "reasoning": "Parse failed", "type_match": False},
+                "functional_equivalence": {"score": 1, "reasoning": "Parse failed", "would_render": False},
+                "explicit_requirements": {"score": 5, "reasoning": "Parse failed - default N/A", "violations": []}
+            }
 
     @staticmethod
     def _compute_visualization_score(evaluation: Dict) -> float:
@@ -285,20 +271,19 @@ class VisualizerEvaluator(Evaluator):
         return round(total_score, 6)
 
     @staticmethod
-    def judge_from_ground_truth(state: State, llm: BaseChatModel, gt_config: str = None,
+    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_config: str = None,
                                 gt_code: str = None, gt_visual_requirements: Dict = None) -> State:
         """
         Evaluate visualization quality using LLM-as-a-Judge.
 
         Args:
-            state: The state to be evaluated.
+            answer: The state to be evaluated.
             llm: the BaseChatModel used for LLM-as-a-Judge inference.
             gt_config: Expected chart configuration dict.
             gt_code: Expected chart code string.
             gt_visual_requirements: Optional dict of explicit styling requirements.
         """
 
-        last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
         # Format explicit requirements for display
         if gt_visual_requirements:
             req_display = "\n".join([
@@ -310,9 +295,9 @@ class VisualizerEvaluator(Evaluator):
 
         if not gt_code: raise Exception("gt_code cannot be None")
 
-        code: str = last_visualizer_answer.code
+        code: str = answer.code
         if code is None:
-            last_visualizer_answer.gt_evaluation = Evaluation(score=0)
+            answer.gt_evaluation = Evaluation(score=0)
             return
 
         # Truncate code if too long
@@ -322,10 +307,9 @@ class VisualizerEvaluator(Evaluator):
 
         # Format the judge prompt
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_PROMPT_GT.format(
-            visualization_goal=state.visualization_goal,
             gt_config=json.dumps(gt_config, indent=2),
             gt_code=gt_code_truncated,
-            gen_config=json.dumps(last_visualizer_answer.chart_config, indent=2),
+            gen_config=json.dumps(answer.chart_config, indent=2),
             gen_code=gen_code_truncated,
             explicit_requirements=req_display
         )
@@ -339,15 +323,15 @@ class VisualizerEvaluator(Evaluator):
 
         # Compute overall score
         overall_score = VisualizerEvaluator._compute_visualization_score(evaluation_dict)
-        last_visualizer_answer.gt_evaluation = Evaluation(score=overall_score)
+        answer.gt_evaluation = Evaluation(score=overall_score)
         return
 
-    def _gt_eval(self, state: State):
-        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model)
+    def _gt_eval(self, answer: Answer, gt_data, judge_provider: str, judge_model: str):
+        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
         VisualizerEvaluator.judge_from_ground_truth(
-            state,
+            answer,
             llm=llm,
-            gt_config=self.gt_config,
-            gt_code=self.gt_code,
-            gt_visual_requirements=self.gt_visual_requirements,
+            gt_config=gt_data['chart_config'],
+            gt_code=gt_data['chart_code'],
+            gt_visual_requirements=gt_data['visual_requirements'],
         )

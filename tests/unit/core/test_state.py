@@ -3,7 +3,8 @@ import time
 import pytest
 
 from arco.core.config import AgentConfig
-from arco.core.state import State, Answer, AgentType
+from arco.core.state import State
+from arco.core import Answer, AgentType
 from unittest.mock import Mock
 
 @pytest.fixture()
@@ -14,7 +15,6 @@ def agent_config():
 def base_state_with_mock(agent_config):
     return State(
         prompt="Generate a bar chart",
-        visualization_goal="Show Q3 trends",
         run_id="test_run_123",
         agent_configs={AgentType.ANALYZER: agent_config, AgentType.VISUALIZER: agent_config},
     )
@@ -56,7 +56,6 @@ def full_answer(agent_config):
 def test_state_initialization(agent_config):
     base_state =  State(
         prompt="Generate a bar chart",
-        visualization_goal="Show Q3 trends",
         run_id="test_run_123",
         agent_configs={AgentType.ANALYZER: agent_config, AgentType.VISUALIZER: agent_config},
     )

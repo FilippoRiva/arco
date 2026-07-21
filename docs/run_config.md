@@ -31,7 +31,6 @@ agents:
 
 | Field | Type | Description |
 |---|---|---|
-| `visualization_goal` | string | Detailed guidelines on how data outputs should be plotted or visualized. |
 | `run_id` | string | Unique identifier for this specific execution. Omit to auto-generate a unique ID, or set a fixed string to enable reproducible caching behavior. |
 | `orchestration_enabled` | boolean | Determines the execution graph. If `true`, the workflow becomes LLM-orchestrated. |
 | `empower` | boolean | Enables Arco empowerment. Defaults to `true`. |
@@ -41,8 +40,6 @@ agents:
 | `ollama_url` | string (URI) | Base URL for local Ollama instances. Required if `provider` is `ollama`. |
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
-| `use_cache` | boolean | Enables or disables global caching. |
-| `cache_mode` | string (enum) | Cache subsystem behavior. One of: `r`, `read`, `w`, `write`, `rw`, `read_write`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
@@ -84,8 +81,6 @@ agents:
 | `top_k_min` | integer (≥ 1) | Minimum top-k token cutoff pool limit. |
 | `top_k_max` | integer (≥ 1) | Maximum top-k token cutoff pool limit. |
 | `max_tokens` | integer | Maximum number of tokens the agent should output per generation. |
-| `use_cache` | boolean | Enables or disables query caching for this agent. |
-| `cache_mode` | string (enum) | Cache behavior for this agent. One of: `read`, `r`, `write`, `w`, `read_write`, `rw`. |
 | `enabled` | boolean | Master toggle to enable or disable this agent entirely. |
 | `eval` | string (enum) | Evaluation system used by the agent to perform best-of-N selection. Currently: `default`. |
 
@@ -94,7 +89,6 @@ agents:
 ## Notes
 
 - `bon_param` selects which sampling dimension (`temperature`, `top_k`, or `top_p`) is varied across the `n` completions for best-of-N generation; pair it with the matching `*_min`/`*_max` bounds (e.g. `bon_param: temperature` with `temp_min`/`temp_max`).
-- `cache_mode` accepts both short and long forms (`r`/`read`, `w`/`write`, `rw`/`read_write`) at both the `global` and `agent` levels — note the agent-level enum lists long forms first, but both are accepted per the schema.
 - When `provider: ollama` is set (globally or per agent), `ollama_url` must be provided at the global level.
 - Per-agent settings override `global` settings only for that agent; any field left unset falls back to the global value.
 - A `schema.json` file is provided in the `./config/run_config/`  folder that can be used by a YAML language server to check configuration correctness

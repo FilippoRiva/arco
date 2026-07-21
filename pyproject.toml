@@ -43,8 +43,9 @@ dependencies = [
     "requests>=2.34.2",
     "pyyaml",
 
-    # Terminal
+    # Terminal and Visualization
     "rich>=15.0.0",
+    "grandalf"
 ]
 
 # --- Development & Evaluation Extras ---

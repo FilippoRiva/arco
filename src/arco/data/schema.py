@@ -181,27 +181,12 @@ class DatabaseSchema:
         }
 
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> DatabaseSchema:
+    def from_data_dir(cls, data_dir_path: str) -> DatabaseSchema:
         import yaml
-        with open(yaml_path, 'r') as f:
-            raw = yaml.safe_load(f)
+        from glob import glob
+        data_dir = os.path.abspath(data_dir_path)
 
-        config_dir = os.path.dirname(os.path.abspath(yaml_path))
-
-        # Initialize Config
-        # --- Build DatabaseSchema by discovering *_schema.yaml files ---
-        global_sec = raw.get('global', {})
-        data_dir = global_sec.get('schema')
-        if not data_dir:
-            raise Exception(f"No schema section specified in the YAML config file at : {yaml_path}")
-
-        import glob as _glob
-
-        if not os.path.isabs(data_dir):
-            data_dir = os.path.join(config_dir, data_dir)
-        data_dir = os.path.abspath(data_dir)
-
-        schema_files = sorted(_glob.glob(os.path.join(data_dir, '*_schema.yaml')))
+        schema_files = sorted(glob(os.path.join(data_dir, '*_schema.yaml')))
         tables = []
         for table_path in schema_files:
             with open(table_path, 'r') as tf:

@@ -126,9 +126,8 @@ class Analyzer(Agent):
     Provide a direct, concise answer in natural language (2-3 sentences). Focus only on facts from the data.
     """
 
-    def __init__(self, empower: bool = False):
-        super().__init__(empower)
-        self.type = AgentType.ANALYZER
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def _enrich_data_with_stats(data_csv: str | None) -> str:
@@ -198,5 +197,6 @@ class Analyzer(Agent):
 
             return state.add_answer(answer)
 
-    def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
-        return AnalyzerEvaluator(agent_config)
+    @staticmethod
+    def get_evaluator() -> Evaluator:
+        return AnalyzerEvaluator()

@@ -9,13 +9,12 @@ from pandas import DataFrame
 
 from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
-from arco.data import normalize_dataframe_values
+from arco.data import normalize_dataframe_values, DatabaseSchema
 from arco.evaluators import RetrieverEvaluator
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core.tracking import LLMCallAccumulator
-    from arco.data import DatabaseSchema
     from arco.core import AgentConfig, Evaluator, State
 
 
@@ -74,7 +73,6 @@ Generate a DuckDB SQL query to answer the user's question and provide data optim
 
 ## USER QUESTION
 - prompt : {prompt}
-- visualization_goal : {visualization_goal}
 
 ## INSTRUCTIONS
 1. Analyze the user's question to identify what data is needed
@@ -109,7 +107,7 @@ Before generating the SQL query, think step by step:
 - Do I need grouping? If yes, by which column(s)?
 
 **Step 3: Considering Visualization Needs**
-- Based on the visualization goal "{visualization_goal}", what chart type is likely?
+- Based on the visualization goal, what chart type is likely?
 - For time series: Need chronological ordering and proper date format
 - For comparisons: Need categorical grouping and clear labels
 - For correlations: Need two numeric columns without aggregation
@@ -252,10 +250,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
 {{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
 """
 
-    def __init__(self, schema: DatabaseSchema, empower: bool = False):
-        super().__init__(empower)
-        self.type = AgentType.RETRIEVER
-        self.schema = schema
+    def __init__(self, data_dir : str | None = None):
+        super().__init__()
+        self.schema: DatabaseSchema = DatabaseSchema.from_data_dir(data_dir or "./data")
 
     @staticmethod
     def _select_relevant_tables(
@@ -310,7 +307,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
         """Generate a DuckDB SQL query from the user prompt and schema context.
 
         Args:
-            state: Conversation state containing the user prompt and optionally visualization_goal.
+            state: Conversation state containing the user prompt.
             schema_context: Full schema string produced by DatabaseSchema.get_full_schema_str().
                             Includes table names, descriptions, and column details for all
                             relevant tables.
@@ -319,12 +316,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
         Returns:
             A plain SQL string suitable for DuckDB. Any Markdown fences are stripped.
         """
-        visualization_goal = state.visualization_goal or state.prompt
-
         formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
             prompt=state.prompt,
             schema_context=schema_context,
-            visualization_goal=visualization_goal,
         )
         response = llm.invoke(formatted_prompt)
         logprobs = llm_tools.extract_logprobs(response)
@@ -403,44 +397,12 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
             return state.add_answer(answer)
 
-    @staticmethod
-    def _apply_gt_alignment(state_to_align: State, canonic_cols: list):
-        """Rename and reorder df columns to match canonical_cols without LLM."""
-        last_retriever_answer: Answer | None = state_to_align.get_last_answer(AgentType.RETRIEVER)
-        if last_retriever_answer is None:
-            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        if last_retriever_answer.data_df is None:
-            raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        df_to_align: DataFrame = last_retriever_answer.data_df
-        current_cols = list(df_to_align.columns)
-        if len(current_cols) == len(canonic_cols):
-            # Case-insensitive rename
-            ci_map = {c.lower(): c for c in current_cols}
-            fixed = {ci_map[canon.lower()]: canon
-                     for canon in canonic_cols
-                     if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon}
-            if fixed:
-                df_to_align = df_to_align.rename(columns=fixed)
-            # Positional rename as last resort
-            if list(df_to_align.columns) != canonic_cols and len(df_to_align.columns) == len(canonic_cols):
-                df_to_align.columns = canonic_cols
-        # Reorder to canonical order if all columns present
-        if set(canonic_cols).issubset(set(df_to_align.columns)):
-            # pyrefly: ignore [bad-assignment]
-            df_to_align = df_to_align[canonic_cols]
-
-        # Normalize
-        normalized_df: DataFrame = normalize_dataframe_values(df_to_align)
-        # Assign normalized and aligned dataframe
-        last_retriever_answer.data_df = normalized_df
-        last_retriever_answer.data_str = normalized_df.to_csv(index=False)
 
     @staticmethod
     def apply_standardization(
             results: List[State],
             llm: BaseChatModel,
-            original_schema: DatabaseSchema,
-            gt_columns: List[str] | None = None) -> List[State]:
+            original_schema: DatabaseSchema) -> List[State]:
 
         # Collect candidate info
         candidates = []
@@ -457,14 +419,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             cols = list(df.columns)
             candidates.append({"idx": i, "df": df, "sql": sql, "cols": cols, "state": result})
 
-        if len(candidates) == 0:
-            # If all candidates failed execution
-            return results
-
-        if len(candidates) == 1:
-            # Special case: single candidate + gt_columns → apply GT column alignment without LLM
-            if gt_columns:
-                Retriever._apply_gt_alignment(candidates[0]['state'], list(gt_columns))
+        if len(candidates) == 0 or len(candidates) == 1:
             return results
 
         # When all candidates share the same columns AND gt_columns is provided but
@@ -472,16 +427,15 @@ name used by any candidate. Prefer lowercase_with_underscores.
         # candidates without calling the LLM (no inter-candidate disagreement to resolve).
         col_lists = [tuple(candidate["cols"]) for candidate in candidates]
         if len(set(col_lists)) == 1:  # all lists are equal
-            if gt_columns is None:
-                return results
-            column_names_lowered = [c.lower() for c in candidates[0]["cols"]]
-            if column_names_lowered == [c.lower() for c in gt_columns]:
-                return results
-            # All candidates agree but names don't match GT → rename all without LLM
-            canonical_cols = list(gt_columns)
-            for candidate in candidates:
-                Retriever._apply_gt_alignment(candidate['df'], canonical_cols)
             return results
+            # column_names_lowered = [c.lower() for c in candidates[0]["cols"]]
+            # if column_names_lowered == [c.lower() for c in gt_columns]:
+            #     return results
+            # # All candidates agree but names don't match GT → rename all without LLM
+            # canonical_cols = list(gt_columns)
+            # for candidate in candidates:
+            #     Retriever._apply_gt_alignment(candidate['df'], canonical_cols)
+            # return results
 
         # Build Prompt
         schema_context = original_schema.get_full_schema_str()
@@ -492,22 +446,23 @@ name used by any candidate. Prefer lowercase_with_underscores.
             )
         candidates_section = "\n".join(candidates_lines)
 
-        if gt_columns:
-            gt_hint = (
-                f"\n## Required Output Column Names (Ground Truth)\n"
-                f"The canonical_columns in your output MUST be exactly: {gt_columns} (in this order).\n"
-                f"Rename each candidate column to its semantically matching entry in this list.\n"
-                f"Do NOT use schema column names or candidate names — use only these GT names."
-            )
-            prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
-                schema_context=schema_context,
-                candidates_section=candidates_section,
-            ) + gt_hint
-        else:
-            prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
-                schema_context=schema_context,
-                candidates_section=candidates_section,
-            )
+        # if gt_columns:
+        #     gt_hint = (
+        #         f"\n## Required Output Column Names (Ground Truth)\n"
+        #         f"The canonical_columns in your output MUST be exactly: {gt_columns} (in this order).\n"
+        #         f"Rename each candidate column to its semantically matching entry in this list.\n"
+        #         f"Do NOT use schema column names or candidate names — use only these GT names."
+        #     )
+        #     prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
+        #         schema_context=schema_context,
+        #         candidates_section=candidates_section,
+        #     ) + gt_hint
+        # else:
+
+        prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
+            schema_context=schema_context,
+            candidates_section=candidates_section,
+        )
 
         # Call LLM
         response = llm.invoke(prompt)
@@ -577,9 +532,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         return Retriever.apply_standardization(results,
                                                standardize_llm,
-                                               original_schema=self.schema,
-                                               gt_columns=config.gt_columns)
+                                               original_schema=self.schema)
 
-    def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
-        return RetrieverEvaluator(agent_config)
+    @staticmethod
+    def get_evaluator() -> Evaluator:
+        return RetrieverEvaluator()
 

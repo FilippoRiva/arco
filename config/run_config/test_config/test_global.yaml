@@ -6,8 +6,7 @@
 
 global:
   schema: "../../../data"
-  prompt: "Show me the sales in Nov 2021"
-  visualization_goal: "Sales trend for Nov 2021, with date as x and sales value as y"
+  prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
   model: "gpt-5.4-nano"
   provider: "openai"
   orchestration_enabled: True

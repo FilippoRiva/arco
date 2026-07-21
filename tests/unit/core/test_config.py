@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from arco.core import ArcoConfig, AgentType, AgentConfig
+from arco.core import Config, AgentType, AgentConfig
 from arco.data import DatabaseSchema
 
 ROOT_DIR = Path(__file__).parent.parent.parent.parent
@@ -66,28 +66,28 @@ def base_config_path(tmp_path):
 
 @pytest.fixture
 def minimal_config(base_config_path):
-    return ArcoConfig.from_yaml(base_config_path)
+    return Config.from_yaml(base_config_path)
 
 @pytest.fixture
 def complete_config(complete_config_path):
-    return ArcoConfig.from_yaml(complete_config_path)
+    return Config.from_yaml(complete_config_path)
 
 def test_yaml_initialization(base_config_path, complete_config_path):
 
     # using the pytest tmp_path fixture to create a temp YAML file from a string
     os.environ['OPENAI_API_KEY'] = "test_api_key"
-    config = ArcoConfig.from_yaml(base_config_path)
-    complete_config = ArcoConfig.from_yaml(complete_config_path)
+    config = Config.from_yaml(base_config_path)
+    complete_config = Config.from_yaml(complete_config_path)
 
-    def check_config(conf:ArcoConfig):
+    def check_config(conf:Config):
         for agent_type in AgentType:
             agent_config = conf.get_agent_config(agent_type)
             assert isinstance(agent_config,
                               AgentConfig), "Should not be None and if not provided defaults should be loaded"
         assert isinstance(conf.schema, DatabaseSchema), "The schema should be initialized"
-        assert conf.model is not None, "Should be specified"
-        assert conf.provider in ["openai", "ollama"], "Should be a known provider"
-        if conf.provider == "ollama":
+        assert conf.default_model is not None, "Should be specified"
+        assert conf.default_provider in ["openai", "ollama"], "Should be a known provider"
+        if conf.default_provider == "ollama":
             assert conf.ollama_url is not None, "Should be set"
         for agent_type, agent_config in conf.agent_configs.items():
             assert isinstance(agent_config, AgentConfig), "Should be an AgentConfig"
@@ -103,7 +103,7 @@ def test_setters_and_getters(base_config_path):
     agent_config.n = n
 
     for agent_type in AgentType:
-        config = ArcoConfig.from_yaml(base_config_path)
+        config = Config.from_yaml(base_config_path)
         original_config = config.get_agent_config(agent_type)
         config.set_agent_config(agent_type, agent_config)
         final_config = config.get_agent_config(agent_type)

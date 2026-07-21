@@ -1,6 +1,12 @@
+import collections
 from typing import TYPE_CHECKING
 
+from arco.data.benchmark_dataset import BenchmarkDataset
+from arco.core import Config, evaluator
+from arco.workflows.workflow import WorkflowFactory
+
 if TYPE_CHECKING:
+    from arco.core import State, AgentType, Config
     from argparse import ArgumentParser, Namespace
 
 # ---------------------------------------------------------------------------
@@ -26,29 +32,61 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
     status.start()
-    from arco.core import ArcoConfig
+    from arco.core import Config
     from pathlib import Path
+    import os
+    import pandas as pd
+    import time
+    import json
     console.print("[green]✓[/green] Pre-benchmark dependencies loaded")
     status.stop()
 
 
-    df_list = []
+    start_time = time.time()
+    workflow, default_config = WorkflowFactory.get_from_config(args.config)
+    benchmark_dataset = BenchmarkDataset.from_json(args.dataset)
+
+    run_config_to_result_list : list[tuple[dict, pd.DataFrame]] = []
     with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
-        list_of_run_configs = ArcoConfig.from_benchmark_yaml(args.config, args.dataset)
+        list_of_run_configs = default_config.generate_benchmark_configs(args.config)
         console.print("[green]✓[/green] Run configurations loaded")
+
+    benchmark_id = args.id or Path(args.config).stem
+    benchmark_save_folder = Path(args.save_dir) / benchmark_id
+    os.makedirs(benchmark_save_folder, exist_ok=True)
+    runs_folder = benchmark_save_folder / 'runs'
+
     for run_config_dict in list_of_run_configs:
-        df_list.append(
-            run_benchmark(
+        run_name = run_config_dict['name'].replace(" ", "_")
+        run_csv_name =  run_name + ".csv"
+        if (runs_folder / run_name / run_csv_name).exists():
+            console.print(f"[yellow]Benchmark already exists: {runs_folder/ run_name / run_csv_name}. Skipping.[/yellow]")
+            result_df = pd.read_csv(runs_folder/ run_name / run_csv_name)
+        else :
+            result_df, resulting_states = run_benchmark(
                 **run_config_dict,
-                save_dir=args.save_dir,
-                benchmark_id=args.id or Path(args.config).stem,
+                benchmark_dataset=benchmark_dataset,
+                workflow=workflow,
+                benchmark_id=benchmark_id,
                 verbose=args.verbose
             )
-        )
+            # Save results
+            os.makedirs(runs_folder/run_name, exist_ok=True)
+            result_df.to_csv(runs_folder/run_name/run_csv_name, index=False)
+            for result in resulting_states:
+                result.save(runs_folder/run_name)
+            console.print(f"\nResults saved to [cyan]{runs_folder/run_name/run_csv_name}[/cyan]")
 
-    if len(df_list) > 1:
-        # Aggregate results to compute the needed statistics
-        pass
+        run_config_to_result_list.append((run_config_dict, result_df))
+
+    aggregated_df = aggregate_results(run_config_to_result_list)
+    aggregated_df.to_csv(benchmark_save_folder/'summary.csv', index=False)
+    bench_metadata = {
+        "benchmark_run" : args.config,
+        "total_runtime" : time.time() - start_time,
+    }
+    with open(benchmark_save_folder/'bench_metadata.json', 'w') as f:
+        json.dump(bench_metadata, f)
 
 
 def generate_benchmark_id():
@@ -75,25 +113,25 @@ def _set_prefix_keys(d, prefix):
 
 
 def run_benchmark(
+        workflow: Workflow,
         name: str,
         description: str,
-        configs: list[ArcoConfig],
-        difficulties: list[int],
+        config: ArcoConfig,
         changes: dict[str, Any],
+        benchmark_dataset: BenchmarkDataset,
         *,
-        save_dir: str = "./output/benchmarks",
         benchmark_id: str | None = None,
         verbose: bool = False
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[State]]:
     """Run benchmark against a unified GT dataset.
 
     Args:
+        workflow: the workflow tested on this benchmark.
         name: the name of this benchmark
         description: Description of the purpose for this benchmark
-        configs: The list of configs to run during this benchmark
-        difficulties: Difficulties associated to each config
+        config: The config to run during this benchmark
         changes: Changes associated to each config
-        save_dir: Directory to save results CSV.
+        benchmark_dataset: The Dataset to be used by the benchmark
         benchmark_id: id of this run
         verbose: set to true if verbose visualization is needed
 
@@ -102,96 +140,119 @@ def run_benchmark(
     """
     # Dependencies loaded dynamically
     from arco.cli.console import console
-    import collections, os
+    import collections
     from pathlib import Path
     from functools import partial
     import pandas as pd
     from rich.rule import Rule
     from arco.cli import viz
-    from arco.core import AgentType
-    from arco.core.state import ProfilingData
+    from arco.core.profiling_data import ProfilingData
     from arco.workflows.workflow_executor import WorkflowExecutor
+    import json
 
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
 
     viz.print_benchmark_header(name, description, changes)
 
-    bench_csv_name =  benchmark_id + "-[" + name.replace(" ", "_") + "].csv"
-    out_path = Path(save_dir) / bench_csv_name
-    if out_path.exists():
-        console.print(f"[yellow]Benchmark already exists: {out_path}. Skipping.[/yellow]")
-        return pd.read_csv(out_path)
-
-    results = []
-    agents_executed = []
+    df_rows : list[dict] = []
+    resulting_states : list[State] = []
 
     if verbose:
         visualization_logic = partial(viz.agent_events_visualizer, verbose=True, show_plot=False)
     else:
         visualization_logic = viz.compact_agent_events_visualizer
 
-    for idx, config in enumerate(configs):
+    for entry in benchmark_dataset:
         # Run agent
-        console.print(Rule(f"[bold blue]Test Case {idx + 1}/{len(configs)}"))
-        agent = WorkflowExecutor(config=config)
-        result = visualization_logic(agent.stream())
-
-        ## Handle Profiling Data
-        global_profiling_data: ProfilingData = result.global_profiling_data
-        agents_profiling_datas: dict[AgentType, ProfilingData] = result.agents_profiling_data
-
-        # Global Level Profiling
-        global_profiling_dict = _set_prefix_keys(global_profiling_data.get_energy_dict(), "global")
-
-        # Agent Level Profiling
-        agents_profiling_dict = collections.defaultdict(int)
-        for agent_type in AgentType:
-            answer = result.get_last_answer(agent_type)
-            if answer is None:
-                continue
-            if agent_type not in agents_executed:
-                agents_executed.append(agent_type)
-            agents_profiling_dict.update(_set_prefix_keys(agents_profiling_datas[agent_type].get_energy_dict(),
-                                                          agent_type.value + "_cumulative"))
+        console.print(Rule(f"[bold blue]Test Case {entry.id + 1}/{len(benchmark_dataset)}"))
+        config = config.update_prompt(entry.prompt)
+        executor = WorkflowExecutor(workflow=workflow, config=config)
+        resulting_state : State = visualization_logic(executor.stream())
+        with console.status("[bold cyan]Evaluating the run[/bold cyan]"):
+            evaluation_summary : EvaluationSummary = (
+                evaluator.evaluate_state(resulting_state, entry, workflow.get_evaluators(), config.default_provider_judge, config.default_model_judge))
+        viz.show_evaluation_summary(evaluation_summary)
 
         # Answer Level Profiling
-        answer_profiling_dict = collections.defaultdict(int)
-        agent_answer_count = collections.defaultdict(int)
-        for answer in result.answers:
-            agent_type: AgentType = answer.agent_id
-            agent_answer_count[agent_type] += 1
-            answer_energy_dict = answer.profiling_data.get_energy_dict()
+        execution_trace = {"answers": []}
+        for answer in resulting_state.answers:
+            answer_energy_dict = answer.profiling_data.as_dict()
             answer_dict = ({
+                "agent_type": answer.agent_id.value,
                 "message": answer.message,
-                "evaluation": answer.evaluation.score if answer.evaluation else None,
                 "evaluation_gt": answer.gt_evaluation.score if answer.gt_evaluation else None,
                 "perplexity": answer.perplexity if answer.perplexity else None,
                 **answer_energy_dict
             })
-            answer_profiling_dict.update(
-                _set_prefix_keys(answer_dict, agent_type.value + "_" + str(agent_answer_count[agent_type])))
+            execution_trace['answers'].append(answer_dict)
+
 
         # Store results into a df row
         row = {
-            "benchmark_id": benchmark_id,
-            "test_case_id": idx,
-            "run_id": result.run_id,
-            "prompt": config.prompt,
-            "difficulty": difficulties[idx],
-            **answer_profiling_dict,
-            **agents_profiling_dict,
-            **global_profiling_dict
+            "entry_id": entry.id,
+            "run_id": resulting_state.run_id,
+            "execution_trace": json.dumps(execution_trace),
         }
 
-        results.append(row)
+        df_rows.append(row)
+        resulting_states.append(resulting_state)
 
     # Build results DataFrame
-    df = pd.DataFrame(results)
+    df = pd.DataFrame(df_rows)
 
-    # Save results
-    os.makedirs(save_dir, exist_ok=True)
-    df.to_csv(out_path, index=False)
-    console.print(f"\nResults saved to [cyan]{out_path}[/cyan]")
+    return df, resulting_states
 
-    return df
+def aggregate_results(run_config_to_result_list: list[tuple[dict,pd.DataFrame]]) -> pd.DataFrame:
+    import json
+    import collections
+    import pandas as pd
+
+    to_aggregate = [
+        "evaluation_gt",
+        "perplexity",
+        "total_time",
+        "llm_time",
+        "cpu_energy_kwh",
+        "ram_energy_kwh",
+        "emissions_kg_co2",
+    ]
+
+    run_summaries = []
+
+    for run_config, result_df in run_config_to_result_list:
+        name = run_config['name']
+        description = run_config['description']
+        changes = run_config['changes']
+
+        traces = result_df["execution_trace"].apply(json.loads)
+
+        # agent -> metric -> list of values
+        agents_summary_stats = collections.defaultdict(
+            lambda: collections.defaultdict(list)
+        )
+
+        for trace in traces:
+            for answer in trace["answers"]:
+                agent = answer["agent_type"]
+
+                for metric in to_aggregate:
+                    value = answer.get(metric)
+
+                    # Ignore missing values
+                    if value is not None:
+                        agents_summary_stats[agent][metric].append(value)
+
+        # Compute averages
+        for agent, metrics in agents_summary_stats.items():
+            for metric, values in metrics.items():
+                metrics[metric] = sum(values) / len(values)
+
+        run_summaries.append({
+            "name": name,
+            "description": description,
+            "changes": changes,
+            "metrics_by_agent": json.dumps(agents_summary_stats),
+        })
+
+    return pd.DataFrame(run_summaries)

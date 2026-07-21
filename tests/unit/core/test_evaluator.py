@@ -11,17 +11,17 @@ def config():
 def test_evaluator(config):
     evaluator = Evaluator()
     states = [
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a", agent_config=config),
             Answer(agent_id=AgentType.ANALYZER, message="second_answer_a", agent_config=config),
             Answer(agent_id=AgentType.VISUALIZER, message="third_answer_a", agent_config=config),
         ]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_b", agent_config=config),
             Answer(agent_id=AgentType.ANALYZER, message="second_answer_b", agent_config=config),
             Answer(agent_id=AgentType.VISUALIZER, message="third_answer_b", agent_config=config),
         ]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_c", agent_config=config),
             Answer(agent_id=AgentType.ANALYZER, message="second_answer_c", agent_config=config),
             Answer(agent_id=AgentType.VISUALIZER, message="third_answer_c", agent_config=config),
@@ -39,17 +39,17 @@ def test_evaluator(config):
 def test_default_evaluator_selection(config):
     evaluator = Evaluator()
 
-    best_state = State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={},
+    best_state = State(prompt="First prompt", run_id="1", agent_configs={},
                        answers=[Answer(agent_id=AgentType.RETRIEVER, agent_config=config,
                                        message="first_answer_a", evaluation=Evaluation(score=1))])
 
     states_with_fake_evaluations = [
         best_state,
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a",
                    evaluation=Evaluation(score=0.8), agent_config=config),
         ]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a",
                    evaluation=Evaluation(score=0.85), agent_config=config),
         ]),
@@ -58,11 +58,11 @@ def test_default_evaluator_selection(config):
     selection = evaluator._selection(states_with_fake_evaluations)
 
     states_with_no_evaluation = [
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a",
                    evaluation=None, agent_config=config),
         ]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a",
                    evaluation=None, agent_config=config),
         ]),
@@ -78,11 +78,11 @@ def test_default_evaluator_gt_evaluation(config):
     evaluator = Evaluator()
 
     states = [
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_a", agent_config=config)]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_b", agent_config=config)]),
-        State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={}, answers=[
+        State(prompt="First prompt", run_id="1", agent_configs={}, answers=[
             Answer(agent_id=AgentType.RETRIEVER, message="first_answer_c", agent_config=config)]),
     ]
 
@@ -94,7 +94,7 @@ def test_default_evaluator_gt_evaluation(config):
 
 def test_no_answers_eval():
     evaluator = Evaluator()
-    state = State(prompt="First prompt", visualization_goal="Vis goal", run_id="1", agent_configs={},
+    state = State(prompt="First prompt", run_id="1", agent_configs={},
                   answers=[])
 
     with pytest.raises(ValueError):

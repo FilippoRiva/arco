@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from rich.spinner import Spinner
 
 if TYPE_CHECKING:
-    from arco.core import Answer, ArcoConfig
+    from arco.core import Answer, Config, AgentType
 
 # load singleton console
 from arco.cli.console import console
@@ -156,7 +156,6 @@ def streaming_agent_visualizer(events: Generator[str, Any], verbose=False, show_
             f"[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
             border_style="red"))
         return None
-    from arco.core import AgentType
     vis_answer: Answer | None = last_state.get_last_answer(AgentType.VISUALIZER)
     ret_answer: Answer | None = last_state.get_last_answer(AgentType.RETRIEVER)
     if show_plot and vis_answer and vis_answer.code and "plt" in vis_answer.code and ret_answer and ret_answer.data_df is not None:
@@ -197,7 +196,6 @@ def _generate_discarded_answer_panel(answer: Answer) -> Panel:
         border_style="dim",
         expand=True,
     )
-
 
 def generate_answer_panel(answer: Answer, verbose: bool) -> Panel:
     # Build the main panel
@@ -518,8 +516,6 @@ def agent_events_visualizer(events: Generator[str, Any], verbose=False, show_plo
 def compact_agent_events_visualizer(events) -> State:
     status = StatusDisplay()
 
-    agent_summaries = defaultdict(dict)
-
     with Live(status, refresh_per_second=8, screen=False) as live:
         last_state = None
         for update in events:
@@ -532,48 +528,115 @@ def compact_agent_events_visualizer(events) -> State:
                 last_state = update["state"]
                 answer = last_state.get_last_answer()
                 agent = answer.agent_id.value
-                agent_summaries[agent]["eval"] = (
-                    answer.evaluation.score
-                    if answer.evaluation else None
-                )
-                agent_summaries[agent]["gt"] = (
-                    answer.gt_evaluation.score
-                    if answer.gt_evaluation else None
-                )
-                agent_summaries[agent]["ppl"] = getattr(
-                    answer, "perplexity", None
-                )
                 status.set(f"{agent} completed")
             elif event_type == "completed":
                 status.stop()
-                runtime = update["state"].global_profiling_data.total_time
-                table = Table(title="Agent Evaluation Summary")
-                table.add_column("Agent")
-                table.add_column("Eval")
-                table.add_column("GT")
-                table.add_column("PPL")
-                for agent, m in agent_summaries.items():
-                    table.add_row(
-                        agent,
-                        f"{m.get('eval'):.3f}" if m.get("eval") else "-",
-                        f"{m.get('gt'):.3f}" if m.get("gt") else "-",
-                        f"{m.get('ppl'):.2f}" if m.get("ppl") else "-",
-                    )
-                live.console.print(
-                    Panel(
-                        table,
-                        title=f"[green]✓ Completed in {runtime:.2f}s[/green]",
-                        border_style="green",
-                    )
-                )
 
     return last_state
 
+from collections import defaultdict
+from statistics import mean
 
-def print_config_table(config: ArcoConfig, verbose: bool | None = None):
+PROFILE_FIELDS = [
+    "total_time",
+    "llm_time",
+    "energy_consumed_kwh",
+    "cpu_energy_kwh",
+    "gpu_energy_kwh",
+    "ram_energy_kwh",
+    "emissions_kg_co2",
+]
+
+
+def _avg(values: list[float | None]) -> float:
+    values = [v for v in values if v is not None]
+    return mean(values) if values else 0.0
+
+
+def show_evaluation_summary(summary: EvaluationSummary):
+    grouped = defaultdict(
+        lambda: {
+            "ppl": [],
+            "score": [],
+            **{field: [] for field in PROFILE_FIELDS},
+        }
+    )
+
+    # Aggregate
+    for agent, ppl, score, profiling in zip(
+        summary.agents,
+        summary.ppls,
+        summary.scores,
+        summary.profiling_datas,
+    ):
+        g = grouped[agent]
+        g["ppl"].append(ppl)
+        g["score"].append(score)
+
+        for field in PROFILE_FIELDS:
+            g[field].append(getattr(profiling, field))
+
+    # Table
+    table = Table(title="Evaluation Summary")
+
+    table.add_column("Agent")
+    table.add_column("#", justify="right")
+    table.add_column("Avg PPL", justify="right")
+    table.add_column("Avg Score", justify="right")
+    table.add_column("Time (s)", justify="right")
+    table.add_column("LLM (s)", justify="right")
+    table.add_column("Energy (Wh)", justify="right")
+    table.add_column("CPU (Wh)", justify="right")
+    table.add_column("GPU (Wh)", justify="right")
+    table.add_column("RAM (Wh)", justify="right")
+    table.add_column("CO₂ (gCO₂)", justify="right")
+
+    for agent, values in grouped.items():
+        table.add_row(
+            agent.value,
+            str(len(values["ppl"])),
+            f"{_avg(values['ppl']):.2f}",
+            f"{_avg(values['score']):.2f}",
+            f"{_avg(values['total_time']):.2f}",
+            f"{_avg(values['llm_time']):.2f}",
+            f"{_avg(values['energy_consumed_kwh'])*1000:.3f}",
+            f"{_avg(values['cpu_energy_kwh'])*1000:.3f}",
+            f"{_avg(values['gpu_energy_kwh'])*1000:.3f}",
+            f"{_avg(values['ram_energy_kwh'])*1000:.3f}",
+            f"{_avg(values['emissions_kg_co2'])*1000:.4f}",
+        )
+
+    console.print(table)
+
+    # Timeline
+    timeline = []
+
+    for agent, ppl, score in zip(summary.agents, summary.ppls, summary.scores):
+        color = (
+            "green" if score >= 0.9 else
+            "yellow" if score >= 0.7 else
+            "red"
+        )
+
+        t = Text()
+        t.append("█", style=color)
+        t.append(f"{agent.value[:3]}({ppl:.2f},{score:.2f})")
+        timeline.append(t)
+
+    console.print(
+        Panel(
+            Text(" → ").join(timeline),
+            title="Trace Summary",
+        )
+    )
+
+    console.print(
+        f"Completion: [bold cyan]{summary.completion_percentage:.1%}[/]"
+    )
+
+def print_config_table(config: Config, verbose: bool | None = None):
     """Helper to render a consistent Rich tables."""
     configs_to_show = {f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()}
-    configs_to_show.pop("schema")
     configs_to_show.pop("agent_configs")
 
     # Visualize run configuration
@@ -589,6 +652,13 @@ def print_config_table(config: ArcoConfig, verbose: bool | None = None):
         table.add_row(key, str(value))
     console.print(table)
 
+
+def print_workflow(workflow: Workflow):
+    console.print(Panel(
+        str(workflow),
+        title="Selected Workflow",
+        title_align="center",
+    ))
 
 def visualize_chart(df, chart_config, code):
     with Status("Waiting for image to render", spinner="dots", refresh_per_second=8) as status:

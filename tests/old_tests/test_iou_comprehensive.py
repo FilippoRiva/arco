@@ -42,7 +42,7 @@ def check(label: str, score: float, min_expected: float, max_expected: float = 1
 
 
 def load_benchmark():
-    path = os.path.join(os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset.json")
+    path = os.path.join(os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset_old.json")
     with open(path) as f:
         return json.load(f)
 

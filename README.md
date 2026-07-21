@@ -122,7 +122,6 @@ ARCO provides three main sub-commands:
 
 - `arco-cli run` - execute a single agent workflow
 - `arco-cli benchmark` - evaluate multiple configurations against a benchmark dataset
-- `arco-cli cache` - inspect and manage previous executions
 
 ---
 
@@ -176,68 +175,6 @@ arco-cli benchmark \
 Benchmark results are automatically saved as CSV files containing execution metrics, evaluations, and profiling information.
 
 Refer to [Benchmark Configuration Files](docs/benchmark_config.md) for writing benchmark configuration files.
-
-### `arco-cli cache`
-
-Provides tools to inspect, visualize, and manage cached ARCO executions.
-
-Usage
-```bash
-arco-cli cache [options]
-```
-Options
-
-```
---save-dir	-d	Directory containing cached runs (default: output)
---runs	    -r  List available cached executions
---stats	    -s	Display cache statistics
---view-run	-v	Visualize a specific cached run by ID
---delete		Delete a cached run by ID
---clear		    Remove all cached runs
-```
-Examples
-
-List available runs:
-
-```bash
-arco-cli cache --runs
-```
-
-View a previous execution:
-
-```bash
-arco-cli cache --view-run <run_id>
-```
-
-Clear the cache:
-
-```bash
-arco-cli cache --clear
-```
-
-## Tracing with Phoenix [optional]
-
-Enable OpenInference/Phoenix tracing to visualize agent runs. Configure in the `tracing:` block of the YAML:
-
-```yaml
-tracing:
-  enabled: true
-  phoenix_endpoint: "http://localhost:6006/v1/traces"
-  phoenix_api_key: null   # required for Phoenix Cloud
-  project_name: "evaluating-agent"
-```
-
-Install tracing dependencies:
-```bash
-pip install arize-phoenix openinference-instrumentation-langchain opentelemetry-api
-```
-
-Start Phoenix locally:
-```bash
-phoenix serve
-```
-
-Open the UI at `http://localhost:6006`. Top-level spans: `AgentRun`, `tool_choice`, `sql_query_exec`, `data_analysis`, `gen_visualization`.
 
 ---
 

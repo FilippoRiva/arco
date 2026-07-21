@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     pass
 
 # Load the available commands
-from arco.cli.commands import run, cache, bench
+from arco.cli.commands import run, bench
 
 # Load the console singleton
 from arco.cli.console import console
@@ -37,13 +37,11 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
     commands = {
         "run": run.register(subparsers),
-        "cache": cache.register(subparsers),
         "benchmark": bench.register(subparsers),
     }
 
     handlers = {
         "run": run.handle,
-        "cache": cache.handle,
         "benchmark": bench.handle,
     }
 

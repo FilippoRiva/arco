@@ -5,17 +5,16 @@ controlling agent execution at the step level.
 """
 import dataclasses
 import random
-from dataclasses import dataclass, field, fields, asdict
+from dataclasses import dataclass, field, fields, replace
 from typing import Literal, Dict, Any, List, TYPE_CHECKING
 
-import numpy as np
 import yaml
-from pandas import DataFrame
 
+from .agent_config import AgentConfig
 from .exceptions import ConfigException
 
 if TYPE_CHECKING:
-    from .state import AgentType
+    from . import AgentType
     from arco.data import DatabaseSchema
 
 
@@ -35,30 +34,27 @@ def generate_readable_id():
     number = random.randint(100, 999)
     return f"{random.choice(prefixes)}-{random.choice(nouns)}-{number}"
 
-
 @dataclass(frozen=True)
-class ArcoConfig:
+class Config:
     """Complete agent configuration with per-agent settings."""
     # #
     # GLOBAL CONFIGURATION
     # #
     # mandatory
-    schema: DatabaseSchema
+    workflow: str
+
     # optional
     prompt: str = ""
-    visualization_goal: str = ""  # a specific goal for visualization
     run_id: str = field(
         default_factory=lambda: generate_readable_id())  # the identifier for this run, generated if not provided
-    orchestration_enabled: bool = False  # graph mode, if true the orchestrator is enabled
-    empower: bool = True  # whether if the arco empowerment is active
-    enable_budget_controller: bool = True  # whether if the arco budget controller is active
-    provider: Literal["openai", "ollama"] = "openai"  # global model provider
-    model: str = "gpt-4o-mini"  # the model string
+    enable_budget_controller: bool = True  # whether if the budget controller is active
+    default_provider: Literal["openai", "ollama", "openrouter"] = "openai"  # global model provider
+    default_model: str = "gpt-4o-mini"  # the model string
+    default_provider_judge: Literal["openai", "ollama", "openrouter"] = "openai"
+    default_model_judge: str = "gpt-4o-mini"
     ollama_url: str = "http://localhost:11434"  # the url to the ollama server
-    save_state: bool = False  # toggle for state artifact creation
-    use_cache: bool = False  # toggle for cache usage
-    cache_mode: Literal["read", "r", "write", "w", "read_write", "rw"] = "rw"  # cache usage mode
-    save_dir: str = "./output"  # save directory for cache or artifacts
+    enable_storage: bool = False  # toggle for state artifact creation
+    save_dir: str = "./output"  # save directory for artifacts
     enable_codecarbon: bool = False  # toggle for codecarbon
 
     # #
@@ -71,8 +67,9 @@ class ArcoConfig:
     # #
     config_path: str | None = None  # The path to this config YAML file
 
-    def update_prompt(self, prompt: str, visualization_goal: str | None = None):
-        return dataclasses.replace(self, prompt=prompt, visualization_goal=visualization_goal)
+    def update_prompt(self, prompt: str):
+        temp = self._shuffle_id()
+        return dataclasses.replace(temp, prompt=prompt)
 
     def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
         """Get configuration for a specific agent by type"""
@@ -85,17 +82,24 @@ class ArcoConfig:
         """Set configuration for a specific step."""
         self.agent_configs[agent_type] = config
 
-    def copy(self) -> 'ArcoConfig':
+    def copy(self) -> 'Config':
         """Create a deep copy of this configuration."""
         from copy import deepcopy
         return deepcopy(self)
 
     def set_gt(self, gt_data: dict[str, Any]):
-        for agent_config in self.agent_configs.values():
-            agent_config.set_gt(gt_data)
+        for (agent_type, agent_config) in self.agent_configs.items():
+            agent_config.set_gt(gt_data, agent_type)
+
+    def hydrate_agent_configs(self, yaml_path: str):
+        """Populate the agent_configs when the agent types are known"""
+        from arco.core.state import AgentType
+        for agent_type in AgentType.all():
+            agent_cfg = AgentConfig.from_yaml(yaml_path, agent_type.value, inherit_globals_from=self)
+            self.agent_configs[agent_type] = agent_cfg
 
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> ArcoConfig:
+    def from_yaml(cls, yaml_path: str) -> Config:
         """Load configuration from a YAML file.
 
         The YAML file should have sections: agent, steps, schema, run
@@ -113,57 +117,23 @@ class ArcoConfig:
         with open(yaml_path, 'r') as f:
             raw = yaml.safe_load(f)
 
-        # Fallback to a default instance fields for missing global values
-        g = raw.get('global', {})
+        global_section = raw.get('global', {})
 
         from arco.data import DatabaseSchema
-        # Set particular configs from the yaml
+        # Set particular configs from the yaml (that needs to be instantiated or cannot be derived from the file)
         global_params = {
             "config_path": yaml_path,
-            "schema": DatabaseSchema.from_yaml(yaml_path),
         }
 
         # Load all the global configs that are overridden in the YAML file
-        for field_meta in fields(ArcoConfig):
-            if field_meta.name in g:
+        for field_meta in fields(Config):
+            if field_meta.name in global_section:
                 if field_meta.name not in global_params.keys():  # avoids redefining schema or other specific params
-                    global_params[field_meta.name] = g[field_meta.name]
+                    global_params[field_meta.name] = global_section[field_meta.name]
 
-        # Create intermediate config containing resolved globals so agents can inherit from it
-        temp_config = cls(**global_params)  # pyrefly: ignore [missing-argument]
+        return cls(**global_params)
 
-        from arco.core.state import AgentType
-        agent_configs = {}
-        for agent_type in AgentType:
-            agent_cfg = AgentConfig.from_yaml(yaml_path, agent_type.value, inherit_globals_from=temp_config)
-            agent_configs[agent_type] = agent_cfg
-
-        # Generate final config
-        # pyrefly: ignore [missing-argument]
-        return cls(
-            **{
-                **global_params,
-                "agent_configs": agent_configs
-            }
-        )
-
-    @staticmethod
-    def _load_benchmark_dataset(path: str) -> List[Dict]:
-        """Load and validate a unified GT dataset JSON."""
-        with open(path) as f:
-            import json
-            entries = json.load(f)
-        if not entries:
-            raise ValueError(f"Empty dataset: {path}")
-        first = entries[0]
-        if "prompt" not in first:
-            raise ValueError("Dataset entries must have a 'prompt' field")
-        if "gt_data" not in first and "gt_chart_config" not in first:
-            raise ValueError("Dataset entries must have 'gt_data' and/or 'gt_chart_config'")
-        return entries
-
-    @classmethod
-    def from_benchmark_yaml(cls, yaml_path: str, benchmark_dataset_path: str) -> list[dict[str, Any]]:
+    def generate_benchmark_configs(self, yaml_path: str) -> list [dict[str, Any]]:
         """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of
         configurations, used by the benchmark script"""
         with open(yaml_path, 'r') as f:
@@ -172,212 +142,27 @@ class ArcoConfig:
         runs = raw.get("runs")
 
         full_benchmark_config_list = []
-        benchmark_dataset = ArcoConfig._load_benchmark_dataset(benchmark_dataset_path)
 
         for i, run in enumerate(runs):
             changes = run.get("changes", [])
 
+            run_config = self.copy()
+
+            # set the changes for this specific run configuration
+            for agent in changes:
+                from arco.core import AgentType
+                agent_type = AgentType(agent)
+                run_config.agent_configs[agent_type].update(changes.get(agent))
+
             single_run_config_dict = {
-                "name" : run.get("name"),
-                "description" : run.get("description"),
-                "configs" : [],
-                "difficulties": [],
-                "changes": changes
+                "name": run.get("name"),
+                "description": run.get("description"),
+                "config": run_config,
+                "changes": changes,
             }
-
-            for entry in benchmark_dataset:
-                # loads the default config
-                default_config = ArcoConfig.from_yaml(yaml_path)
-
-                # updates prompts and ground truth from benchmark dataset
-                prompt = entry["prompt"]
-                visualization_goal = entry.get("visualization_goal")
-                gt_dict = {key: value for key, value in entry.items() if key.startswith("gt_")}
-                run_entry_config = default_config.update_prompt(prompt, visualization_goal)
-                run_entry_config.set_gt(gt_dict)
-
-                # set the changes for this specific run configuration
-                for agent in changes:
-                    from arco.core import AgentType
-                    agent_type = AgentType(agent)
-                    run_entry_config.agent_configs[agent_type].update(changes.get(agent))
-
-                single_run_config_dict["configs"].append(run_entry_config)
-                single_run_config_dict["difficulties"].append(entry.get("difficulty"))
 
             full_benchmark_config_list.append(single_run_config_dict)
         return full_benchmark_config_list
 
-
-@dataclass
-class AgentConfig:
-    """Configuration for a single agent execution.
-
-    Attributes:
-        provider: model provider for this specific agent
-        model: The LLM model from the provider used for this agent
-        n: Number of best-of-n runs for this step (default 1)
-        temp_min: Minimum temperature for sampling (default 0.1)
-        temp_max: Maximum temperature for sampling (default 0.1)
-        max_tokens: Maximum tokens for LLM generation (default 2000)
-        top_p_min: Top-p sampling parameter, lower bound (default 1.0)
-        top_k_min: Top-k sampling parameter, lower bound (default None, skipped for OpenAI)
-        num_beams: Beam search width; 1 = greedy/disabled (default 1, skipped for OpenAI)
-        no_repeat_ngram_size: Prevent repeating n-grams of this size (default None, skipped for OpenAI)
-        use_cache: Whether to check cache for this step (default True)
-        cache_mode: Cache behavior - "auto", "skip", or "force_fresh"
-        schema: DatabaseSchema used by the retriever
-    """
-    # Optional per-step LLM overrides
-    _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
-    provider: str = _DUMMY_STR
-    model: str = _DUMMY_STR
-
-    # Best-of-n sampling parameters
-    n: int = 1
-    bon_parameter: Literal["temperature", "top_p", "top_k"] = "temperature"
-    _TEMP = 0.1
-    temp_min: float = _TEMP
-    temp_max: float = _TEMP
-
-    # LLM generation parameters
-    max_tokens: int = 2000
-    top_p_min: float | None = None
-    top_p_max: float | None = None
-    top_k_min: int | None = None  # Top-k sampling; skipped for OpenAI provider
-    top_k_max: int | None = None
-    num_beams: int = 1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
-    no_repeat_ngram_size: int | None = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
-
-    # GT Evaluation configuration
-    run_gt_eval: bool = False
-    gt_data: DataFrame | None = None  # Retriever gt dataframe
-    gt_columns: List[str] | None = None  # Retriever gt_columns for alignment (from gt_data)
-    gt_metric = None  # Analyzer evaluation technique
-    gt_analysis = None  # Analyzer gt text
-    gt_chart_config = None  # Visualizer chart configuration gt
-    gt_code = None  # Visualizer code gt
-    gt_visual_requirements = None  # Visualizer visual requirements gt
-
-    # Caching control
-    use_cache: bool | None = None
-
-    # CoT iterative refinement
-    cot_n: int = 1
-
-    def get_candidate_params(self) -> list[tuple[float, float | None, int | None]]:
-        """Generate (temperature, top_p, top_k) tuples for each best-of-n candidate.
-
-        The parameter selected by bon_param is varied linearly; the others are fixed.
-        """
-        if self.n <= 1:
-            return [(self.temp_min, self.top_p_min, self.top_k_min)]
-        if self.bon_parameter == "top_p":
-            if self.top_p_min is None or self.top_p_max is None:
-                raise ConfigException("Cannot generate candidates if top_p_min or top_p_max are None")
-            top_ps = np.linspace(self.top_p_min, self.top_p_max, self.n).tolist()
-            return [(self.temp_min, p, self.top_k_min) for p in top_ps]
-        if self.bon_parameter == "top_k":
-            if self.top_k_min is None or self.top_k_max is None:
-                raise ConfigException("Cannot generate candidates if top_p_min or top_p_max are None")
-            top_ks = [int(k) for k in np.linspace(self.top_k_min, self.top_k_max, self.n)]
-            return [(self.temp_min, self.top_p_min, k) for k in top_ks]
-        # default: temperature
-        temps = np.linspace(self.temp_min, self.temp_max, self.n).tolist()
-        return [(t, self.top_p_min, self.top_k_min) for t in temps]
-
-    def _inherit_from_arco_config(self, global_config: ArcoConfig):
-        if self.provider == self._DUMMY_STR:
-            self.provider = global_config.provider
-        if self.model == self._DUMMY_STR:
-            self.model = global_config.model
-        if self.use_cache is None:
-            self.use_cache = global_config.use_cache
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> AgentConfig:
-        """Create StepConfig from dict (for deserialization)."""
-        # Filter out unknown keys and non-serializable fields
-        valid_keys = [f.name for f in dataclasses.fields(AgentConfig)]
-        filtered = {k: v for k, v in data.items() if k in valid_keys}
-        return cls(**filtered)
-
-    @classmethod
-    def from_yaml(cls, yaml_path: str, agent_name, inherit_globals_from: ArcoConfig | None = None) -> AgentConfig:
-        with open(yaml_path, 'r') as f:
-            raw = yaml.safe_load(f)
-
-        agents_section = raw.get('agents', {})
-        if agents_section == {}:
-            agents_section = raw.get('defaults', {})
-
-        if agent_name in agents_section.keys():
-            agent_dict = dict(agents_section[agent_name])
-        else:
-            agent_dict = {}
-
-        config = AgentConfig.from_dict(agent_dict)
-
-        if inherit_globals_from:
-            config._inherit_from_arco_config(inherit_globals_from)
-
-        config._normalize_ranges()
-        return config
-
-    def set_gt(self, gt_dict: dict[str, Any]):
-        from arco.core.state import AgentType
-        if self.agent_name == AgentType.RETRIEVER:
-            if "gt_data" in gt_dict.keys():
-                import pandas as pd
-                csv = pd.io.common.StringIO(gt_dict["gt_data"])
-            elif "gt_csv_path" in gt_dict.keys():
-                import pandas as pd
-                with open(gt_dict["gt_csv_path"], "r", encoding="utf-8") as f:
-                    csv = pd.io.common.StringIO(f.read())
-            else:
-                self.run_gt_eval = False
-                return
-            self.gt_data = pd.read_csv(csv)
-            self.gt_columns = [c.lower() for c in self.gt_data.columns]
-            self.run_gt_eval = True
-        elif self.agent_name == AgentType.ANALYZER:
-            if "gt_analysis" in gt_dict.keys():
-                self.gt_analysis = gt_dict["gt_analysis"]
-                self.run_gt_eval = True
-            if "gt_metric" in gt_dict.keys():
-                self.gt_metric = gt_dict["gt_metric"]
-        elif self.agent_name == AgentType.VISUALIZER:
-            if "gt_chart_config" in gt_dict.keys() and "gt_chart_code" in gt_dict.keys():
-                self.gt_chart_config = gt_dict["gt_chart_config"]
-                self.gt_code = gt_dict["gt_chart_code"]
-                self.run_gt_eval = True
-            if "gt_visual_requirements" in gt_dict.keys():
-                self.gt_visual_requirements = gt_dict["gt_visual_requirements"]
-
-    def update(self, update_dict: dict[str, Any]):
-        """Update fields on this AgentConfig from a dict, ignoring unspecified/unknown keys."""
-        valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
-        for key, value in update_dict.items():
-            if key in valid_keys:
-                setattr(self, key, value)
-        self._normalize_ranges()
-
-    def _normalize_ranges(self):
-        if self.n == 1:
-            self.temp_max = self.temp_min
-            self.top_k_max = self.top_k_min
-            self.top_p_max = self.top_p_min
-        else:
-            if self.temp_max < self.temp_min:
-                self.temp_max = self.temp_min
-            if self.top_k_min and self.top_k_max and self.top_k_max < self.top_k_min:
-                self.top_k_max = self.top_k_min
-            if self.top_p_min and self.top_p_max and self.top_p_max < self.top_p_min:
-                self.top_p_max = self.top_p_min
-
-
-    def __rich_repr__(self):
-        # Rich automatically detects this method when you pass the object to Pretty()
-        for key, value in asdict(self).items():
-            if value is not None:
-                yield key, value
+    def _shuffle_id(self) -> Config:
+        return replace(self, run_id = generate_readable_id())

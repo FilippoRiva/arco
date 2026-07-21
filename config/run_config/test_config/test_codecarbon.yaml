@@ -9,7 +9,5 @@ global:
   prompt: "Show me the sales in Nov 2021"
   enable_codecarbon: true
   # Additional caching (not strictly needed for codecarbon)
-  use_cache: true
   run_id: "codecarbon_test"
-  cache_mode: "w"
   save_dir: "./output"

@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from arco.workflows import sales
+from arco.workflows.workflow import WorkflowFactory
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
@@ -48,7 +49,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli import viz
     console.print("[green]✓[/green] Visualization tools loaded")
     from arco.workflows.workflow_executor import WorkflowExecutor
-    from arco.core import ArcoConfig
+    from arco.core import Config
     console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
 
@@ -60,17 +61,20 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         sys.exit(1)
 
     console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
-    config = ArcoConfig.from_yaml(args.config)
+    workflow, config = WorkflowFactory.get_from_config(args.config)
 
     viz.print_config_table(config, verbose=args.verbose)
+    viz.print_workflow(workflow)
+
     console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
 
+
     ## Get the agent
-    workflow = WorkflowExecutor(
+    executor = WorkflowExecutor(
         config=config,
-        graph=sales.build_graph(config)
+        workflow=workflow,
     )
 
     # runs the agent with a visualization logic in rich
-    viz.agent_events_visualizer(workflow.stream(), verbose=args.verbose, show_plot=True)
+    viz.agent_events_visualizer(executor.stream(), verbose=args.verbose, show_plot=True)
     # viz.streaming_agent_visualizer(workflow.stream(), verbose=args.verbose, show_plot=True)

@@ -10,9 +10,8 @@ global:
     For each product class, compare the average revenue per unit sold during
     promotions vs non-promotions throughout 2021. Rank the product classes by
     the absolute difference in average revenue per unit between the two conditions,
-    and include the total number of transactions for each group.
-  visualization_goal: >
-    Bar chart comparing average revenue per unit (promo vs non-promo) for each
+    and include the total number of transactions for each group. The visualize a bar chart 
+    comparing average revenue per unit (promo vs non-promo) for each
     product class in 2021, sorted by absolute difference descending.
   enable_codecarbon: true
   orchestration_enabled: true

@@ -1,6 +1,8 @@
 from typing import List, TYPE_CHECKING
 
 from pandas import DataFrame
+import pandas as pd
+from six import StringIO
 
 from arco.core import Evaluation, Evaluator, State, Answer, AgentType
 from arco.data import normalize_dataframe_values
@@ -79,10 +81,6 @@ def compare_dataframes_iou(df1: DataFrame, df2: DataFrame, atol: float = 1e-2) -
 
 
 class RetrieverEvaluator(Evaluator):
-    def __init__(self, config: AgentConfig):
-        super().__init__(config)
-        self.gt_data = config.gt_data
-
     def _batch_eval(self, states: List[State]):
         """
         Each result's score is its average pairwise row-IoU to all other results.
@@ -119,26 +117,59 @@ class RetrieverEvaluator(Evaluator):
 
         return True  # if success
 
-    def _gt_eval(self, state: State):
+    @staticmethod
+    def _apply_gt_alignment(answer: Answer, canonic_cols: list):
+        """Rename and reorder df columns to match canonical_cols without LLM."""
+        if answer is None:
+            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
+        if answer.data_df is None:
+            raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
+        df_to_align: DataFrame = answer.data_df
+        current_cols = list(df_to_align.columns)
+        if len(current_cols) == len(canonic_cols):
+            # Case-insensitive rename
+            ci_map = {c.lower(): c for c in current_cols}
+            fixed = {ci_map[canon.lower()]: canon
+                     for canon in canonic_cols
+                     if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon}
+            if fixed:
+                df_to_align = df_to_align.rename(columns=fixed)
+            # Positional rename as last resort
+            if list(df_to_align.columns) != canonic_cols and len(df_to_align.columns) == len(canonic_cols):
+                df_to_align.columns = canonic_cols
+        # Reorder to canonical order if all columns present
+        if set(canonic_cols).issubset(set(df_to_align.columns)):
+            # pyrefly: ignore [bad-assignment]
+            df_to_align = df_to_align[canonic_cols]
+
+        # Normalize
+        normalized_df: DataFrame = normalize_dataframe_values(df_to_align)
+        # Assign normalized and aligned dataframe
+        answer.data_df = normalized_df
+        answer.data_str = normalized_df.to_csv(index=False)
+
+
+    def _gt_eval(self, answer:Answer, gt_data: dict, judge_provider: str, judge_model: str):
         """
         Compares the agent's result DataFrame against a ground-truth CSV using
         compare_dataframes_iou, which handles:
         - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
         """
-        ans_ret: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
-        if not ans_ret:
+        if not answer:
             raise ValueError(
                 f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}")
 
-        if self.gt_data is None or ans_ret.data_df is None:
-            ans_ret.gt_evaluation = Evaluation(score=0.0)
+        if answer.data_df is None:
+            answer.gt_evaluation = Evaluation(score=0.0)
             return
 
-        result_df = ans_ret.data_df.copy()
-        result_df.columns = [c.lower() for c in result_df.columns]
-
-        gt_df_cmp = self.gt_data.copy()
+        gt_df_cmp = pd.read_csv(StringIO(gt_data['data_str']))
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
+
+        RetrieverEvaluator._apply_gt_alignment(answer, list(gt_df_cmp.columns))
+
+        result_df = answer.data_df.copy()
+        result_df.columns = [c.lower() for c in result_df.columns]
 
         score = compare_dataframes_iou(result_df, gt_df_cmp)
         if score < 1.0:
@@ -158,5 +189,5 @@ class RetrieverEvaluator(Evaluator):
                 gt_r0 = dict(zip(gt_df_cmp.columns, gt_df_cmp.iloc[0].tolist()))
                 mod_r0 = dict(zip(result_df.columns, result_df.iloc[0].tolist())) if n_model > 0 else {}
 
-        ans_ret.gt_evaluation = Evaluation(score=score)
+        answer.gt_evaluation = Evaluation(score=score)
         return

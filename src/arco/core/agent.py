@@ -1,36 +1,36 @@
-from langchain_core.runnables import RunnableLambda
-
 import difflib
 import time
+import math
+import sys
+from abc import ABC, abstractmethod
 from typing import List, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
 from . import llm_tools
+from .agent_type import AgentType
 from .evaluator import Evaluator
-from .empower import empower
-from .state import State, AgentType, ProfilingData
 from .exceptions import AgentException
+from .profiling_data import ProfilingData
+from .state import State
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core.tracking import LLMCallAccumulator
     from .config import AgentConfig
 
-class Agent:
-    _COT_SIMILARITY_THRESHOLD = 0.95
-    _empower : bool = False
 
-    def __init__(self, empower_bool: bool = True):
-        self._empower: bool = empower_bool
-        self.type: AgentType = AgentType.NONE
-        runnable = RunnableLambda(self.get_config_and_execute)
-        self._runnable = empower(runnable) if self._empower else runnable
+class Agent(ABC):
+    _COT_SIMILARITY_THRESHOLD = 0.95
+
+    def __init__(self):
+        self.type = AgentType(self.__class__.__name__)
 
     @property
     def name(self) -> str:
         return self.type.value
 
+    @abstractmethod
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """
             Provides the core functionality of the agent.
@@ -42,7 +42,7 @@ class Agent:
             Returns:
                 Updated state with analysis appended to answers
         """
-        return state
+        ...
 
     def execute_greedy(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> List[State]:
         # Instantiate LLM
@@ -146,6 +146,57 @@ class Agent:
 
         return result
 
+    def arco_evaluation(self, state: State) -> State:
+        # Fetch the last answer object using your parent node identifier
+        answer = state.get_last_answer(self.type)
+        if not answer:
+            raise Exception("No answer found during ARCO evaluation")
+        if answer.logprobs is None or len(answer.logprobs) == 0:
+            answer.perplexity = 0.0
+            return state.replace_last_answer(answer)
+
+        # Compute Perplexity
+        numeric_logprobs: list[float | int] = [probs for _, probs in answer.logprobs]
+        avg_logprob = sum(numeric_logprobs) / len(numeric_logprobs)
+        if avg_logprob < -math.log(sys.float_info.max):
+            perplexity = math.inf
+        else:
+            perplexity = math.exp(-avg_logprob)
+
+        answer.perplexity = perplexity
+        return state.replace_last_answer(answer)
+
+    def budget_controller(self, state: State) -> State:
+        answer = state.get_last_answer(self.type)
+        if not answer:
+            raise Exception("No answer found during budget controller phase")
+
+        if self.type == AgentType.RETRIEVER:
+            max_perplexity = 2
+        elif self.type == AgentType.ANALYZER:
+            max_perplexity = 15
+        elif self.type == AgentType.VISUALIZER:
+            max_perplexity = 3
+        elif self.type == AgentType.ORCHESTRATOR:
+            max_perplexity = 1.3
+        else:
+            raise Exception(
+                f"The Budget Controller does not implement answer evaluation for this type of Agent : {parent_node.value}")
+
+        if answer.perplexity > max_perplexity:
+            answer.budget_controller_choice = "rollback"
+
+            agent_config = state.get_agent_config(self.type)
+            agent_config.temp_min = agent_config.temp_min * 0.9
+            agent_config.temp_max = agent_config.temp_max * 0.95
+            if agent_config.n < 3:
+                agent_config.n = agent_config.n + 1
+
+            return state
+
+        answer.budget_controller_choice = "end"
+        return state
+
     def post_generation_hooks(self, results: List[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> List[
         State]:
         return results
@@ -160,18 +211,12 @@ class Agent:
 
         agent_config: AgentConfig = state.get_agent_config(self.type)
 
-        # Loads results from the cache if requested and returns if it hits
-        if agent_config.use_cache:
-            if state.cached_results:
-                if answer := state.cached_results.get(self.type):
-                    return state.add_answer(answer)
-
         # Start timers
         agent_t0 = time.perf_counter()
 
         # Get llm call time accumulator for profiling
         from arco.core.llm_tools import LLMCallAccumulator
-        llm_acc = LLMCallAccumulator(self.name)
+        llm_acc = LLMCallAccumulator(self.type)
 
         ###
         # Inference
@@ -187,23 +232,30 @@ class Agent:
         ###
         # Evaluation
         ###
-        evaluator: Evaluator = self.get_evaluator(agent_config)
-        results, best_result = evaluator.evaluate_and_select(results=results)
+        results, best_result = self.get_evaluator().evaluate_and_select(results=results)
 
         ###
         # Profiling
         ###
         total_agent_time = time.perf_counter() - agent_t0
-        profiling_data = ProfilingData(total_time= total_agent_time,
-                                       llm_time = llm_acc.total_time)
-        profiling_data = profiling_data.add_energy_data(energy_dict=llm_acc.energy_dict)
+        profiling_data = ProfilingData(total_time=total_agent_time,
+                                       llm_time=llm_acc.total_time)
+        profiling_data = profiling_data.add(**llm_acc.energy_dict)
         best_result = best_result.set_profiling_data(profiling_data, self.type)
 
         return best_result
 
+    def invoke(self, state: State) -> State:
+        while True:
+            state = self.get_config_and_execute(state)
+            state = self.arco_evaluation(state)
+            state = self.budget_controller(state)
+            if state.get_last_answer(self.type).budget_controller_choice == "end":
+                return state
 
-    def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
-        return Evaluator(agent_config)
+    @staticmethod
+    def get_evaluator() -> Evaluator:
+        return Evaluator()
 
     def __call__(self, state: State) -> State:
-        return self._runnable.invoke(state)
+        return self.invoke(state)

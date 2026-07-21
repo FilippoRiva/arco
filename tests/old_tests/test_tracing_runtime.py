@@ -78,8 +78,8 @@ def make_agent(tracer=None):
     agent.tracing_enabled = tracer is not None
     agent.current_run_step_results = {}
     agent.parameter_provider = types.SimpleNamespace(get_step_config=lambda step_name, config, state: config)
-    agent.provider = "openai"
-    agent.model = "test-model"
+    agent.default_provider = "openai"
+    agent.default_model = "test-model"
     agent.streaming = False
     agent.ollama_url = "http://localhost:11434"
     agent.openai_api_key = "test"
@@ -293,8 +293,8 @@ def test_end_to_end_graph_run_with_tracing(tmp_path):
     )
 
     agent = SalesDataWorkflow.__new__(SalesDataWorkflow)
-    agent.provider = "ollama"
-    agent.model = "scripted-model"
+    agent.default_provider = "ollama"
+    agent.default_model = "scripted-model"
     agent.streaming = False
     agent.ollama_url = "http://localhost:11434"
     agent.openai_api_key = None
@@ -355,8 +355,8 @@ def test_step_config_serialization_preserves_llm_overrides():
     serialized = config.to_dict()
     restored = AgentConfig.from_dict(serialized)
 
-    assert restored.provider == "openai"
-    assert restored.model == "gpt-4o-mini"
+    assert restored.default_provider == "openai"
+    assert restored.default_model == "gpt-4o-mini"
     assert restored.ollama_url == "http://remote-ollama:11434"
 
 
@@ -384,14 +384,14 @@ run:
         encoding="utf-8",
     )
 
-    agent_config, run_params, schema = ArcoConfig.from_yaml(str(config_path))
+    agent_config, run_params, schema = ArcoConfig.from_data_dir(str(config_path))
 
     assert schema is None
     assert run_params["prompt"] == "test"
-    assert agent_config.orchestrator_config.provider == "openai"
-    assert agent_config.orchestrator_config.model == "gpt-4.1-mini"
-    assert agent_config.retriever_config.provider == "ollama"
-    assert agent_config.retriever_config.model == "llama3.2:3b"
+    assert agent_config.orchestrator_config.default_provider == "openai"
+    assert agent_config.orchestrator_config.default_model == "gpt-4.1-mini"
+    assert agent_config.retriever_config.default_provider == "ollama"
+    assert agent_config.retriever_config.default_model == "llama3.2:3b"
     assert agent_config.retriever_config.ollama_url == "http://ollama.internal:11434"
 
 

@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .state import AgentType
+    from . import AgentType
+
 
 class AgentException(Exception):
     """This exception is risen if the Agent occurs in a fatal exception"""

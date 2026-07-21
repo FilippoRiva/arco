@@ -1,157 +1,10 @@
 import json
-import math
-import os
-import re
-import subprocess
-import tempfile
-from typing import Optional, Dict, List, Tuple, TYPE_CHECKING
+from typing import Optional, Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
 from arco.core import AgentType, State, Answer, Evaluation, Evaluator
 from arco.core.llm_tools import get_llm
-
-if TYPE_CHECKING:
-    from arco.core import AgentConfig
-
-
-def _tokenize_for_bleu(text: str) -> List[str]:
-    """Simple, dependency-free tokenization (words + numbers) for BLEU."""
-    return re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?", (text or "").lower())
-
-
-def bleu_score(hypothesis: str, reference: str, *, max_n: int = 4, smooth: bool = True) -> float:
-    """Compute a simple BLEU score (0..1) with optional add-one smoothing.
-
-    Intended for quick evaluation of generated analysis text; not a full SacreBLEU replacement.
-    """
-
-    ref_tokens = _tokenize_for_bleu(reference)
-    hyp_tokens = _tokenize_for_bleu(hypothesis)
-    if not hyp_tokens or not ref_tokens:
-        return 0.0
-
-    def ngrams(tokens: List[str], n_grams: int) -> List[Tuple[str, ...]]:
-        return [tuple(tokens[i: i + n_grams]) for i in range(0, len(tokens) - n_grams + 1)]
-
-    precisions: List[float] = []
-    for n in range(1, max_n + 1):
-        hyp_ngrams = ngrams(hyp_tokens, n)
-        ref_ngrams = ngrams(ref_tokens, n)
-        if not hyp_ngrams:
-            precisions.append(0.0)
-            continue
-        hyp_counts: Dict[Tuple[str, ...], int] = {}
-        ref_counts: Dict[Tuple[str, ...], int] = {}
-        for g in hyp_ngrams:
-            hyp_counts[g] = hyp_counts.get(g, 0) + 1
-        for g in ref_ngrams:
-            ref_counts[g] = ref_counts.get(g, 0) + 1
-
-        match = 0
-        total = 0
-        for g, c in hyp_counts.items():
-            total += c
-            match += min(c, ref_counts.get(g, 0))
-        precisions.append((match + 1.0) / (total + 1.0) if smooth else (match / total if total else 0.0))
-
-    ref_len = len(ref_tokens)
-    hyp_len = len(hyp_tokens)
-    bp = 1.0 if hyp_len > ref_len else math.exp(1.0 - (ref_len / max(hyp_len, 1)))
-
-    if any(p <= 0.0 for p in precisions):
-        return 0.0
-    log_mean = sum(math.log(p) for p in precisions) / float(max_n)
-    return float(bp * math.exp(log_mean))
-
-
-def spice_score_java(
-        hypothesis: str,
-        reference: str,
-        *,
-        spice_jar: str,
-        java_bin: str = "java",
-        timeout_seconds: int = 120,
-) -> float:
-    """Compute SPICE score (0..1) by calling the official Java SPICE jar.
-
-    This uses the common COCO-caption SPICE JSON format:
-      [{"image_id": 0, "test": "<candidate>", "refs": ["<ref1>", "<ref2>", ...]}]
-
-    Args:
-        reference: Ground-truth/reference text.
-        hypothesis: Generated text to evaluate.
-        spice_jar: Path to SPICE jar (e.g., spice-1.0.jar).
-        java_bin: Java executable to use.
-        timeout_seconds: Kill the Java process if it exceeds this time.
-
-    Returns:
-        SPICE F-score in [0,1].
-    """
-    if not spice_jar:
-        raise ValueError("spice_jar is required")
-    if not isinstance(reference, str) or not isinstance(hypothesis, str):
-        raise TypeError("reference and hypothesis must be strings")
-    if not reference.strip() or not hypothesis.strip():
-        return 0.0
-
-    # Use absolute paths to avoid cwd-related issues inside the Java tool
-    spice_jar_abs = os.path.abspath(spice_jar)
-    jar_dir = os.path.dirname(spice_jar_abs)
-
-    payload = [
-        {
-            "image_id": 0,
-            "test": hypothesis,
-            "refs": [reference],
-        }
-    ]
-
-    with tempfile.TemporaryDirectory() as td:
-        in_json = os.path.abspath(os.path.join(td, "spice_in.json"))
-        out_json = os.path.abspath(os.path.join(td, "spice_out.json"))
-        with open(in_json, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
-
-        # Simple command: java -Xmx8G -jar spice-*.jar input.json
-        cmd = [
-            java_bin,
-            "-Xmx8G",  # Add memory limit like your working command
-            "-jar",
-            spice_jar_abs,
-            in_json,
-            "-out",
-            out_json,
-        ]
-
-        try:
-            subprocess.run(
-                cmd,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=timeout_seconds,
-                cwd=jar_dir,  # Run from jar directory
-            )
-        except subprocess.TimeoutExpired as e:
-            raise RuntimeError(f"SPICE timed out after {timeout_seconds}s") from e
-        except subprocess.CalledProcessError as e:
-            stderr = (e.stderr or "").strip()
-            raise RuntimeError(f"SPICE failed: {stderr}") from e
-
-        if not os.path.exists(out_json):
-            raise RuntimeError("SPICE did not produce an output file")
-
-        with open(out_json, "r", encoding="utf-8") as f:
-            out = json.load(f)
-
-        # Expected (COCO-caption): list with one element; element has `scores` -> `All` -> `f`
-        item = out[0] if isinstance(out, list) else out
-        scores = item.get("scores") or {}
-        all_scores = scores.get("All") or scores.get("all") or {}
-        f1 = all_scores.get("f") or all_scores.get("f1")
-        return float(f1) if f1 is not None else 0.0
 
 
 class AnalyzerEvaluator(Evaluator):
@@ -214,13 +67,6 @@ class AnalyzerEvaluator(Evaluator):
       "completeness": {{"score": <1-5>, "reasoning": "<brief>", "missing": []}},
       "faithfulness": {{"score": <1-5>, "reasoning": "<brief>", "hallucinations": []}}
     }}"""
-
-    def __init__(self, agent_config: AgentConfig):
-        super().__init__(agent_config)
-        self.provider = agent_config.provider
-        self.judge_model = agent_config.model
-        self.gt_metric = agent_config.gt_metric
-        self.gt_analysis = agent_config.gt_analysis
 
     @staticmethod
     def _parse_judge_json(raw_text: str) -> Dict:
@@ -291,11 +137,10 @@ class AnalyzerEvaluator(Evaluator):
         return
 
     @staticmethod
-    def judge_from_ground_truth(state: State, llm: BaseChatModel, gt_analysis: Optional[str] = None) -> Evaluation:
+    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_analysis: Optional[str] = None) -> Evaluation:
         """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
-        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        generated_analysis = last_analyzer_answer.analysis
+        generated_analysis = answer.analysis
 
         formatted_prompt = AnalyzerEvaluator.ANALYZE_JUDGE_PROMPT_GT.format(
             gt_analysis=gt_analysis,
@@ -309,7 +154,10 @@ class AnalyzerEvaluator(Evaluator):
         json_match = _re.search(r'\{.*}', raw, _re.DOTALL)
         if not json_match:
             raise ValueError(f"No JSON found in judge response: {raw[:200]}")
-        evaluation = json.loads(json_match.group())
+        try:
+            evaluation = json.loads(json_match.group())
+        except e as _:
+            return Evaluation(score=1)
 
         factual = float(evaluation.get("factual_accuracy", 1))
         coverage = float(evaluation.get("coverage", 1))
@@ -325,26 +173,18 @@ class AnalyzerEvaluator(Evaluator):
         llm = get_llm(provider=self.provider, model=self.judge_model)
         AnalyzerEvaluator.judge(state, llm)
 
-    def _gt_eval(self, state: State):
-        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        analysis = last_analyzer_answer.analysis
+    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+        analysis = answer.analysis
         if not analysis:
-            last_analyzer_answer.evaluation = Evaluation(score=0)
+            answer.evaluation = Evaluation(score=0)
             return
 
-        if self.gt_metric == "spice":
-            score = spice_score_java(analysis, self.gt_analysis, spice_jar=None)
-            evaluation = Evaluation(score=score)
-        elif self.gt_metric == "judge":
-            llm = get_llm(provider=self.provider, model=self.judge_model)
-            evaluation = AnalyzerEvaluator.judge_from_ground_truth(
-                state=state,
-                llm=llm,
-                gt_analysis=self.gt_analysis,
-            )
-        else:
-            score = bleu_score(analysis, self.gt_analysis)
-            evaluation = Evaluation(score=score)
+        llm = get_llm(provider=judge_provider, model=judge_model)
+        evaluation = AnalyzerEvaluator.judge_from_ground_truth(
+            answer=answer,
+            llm=llm,
+            gt_analysis=gt_data['analysis']
+        )
 
-        last_analyzer_answer.gt_evaluation = evaluation
+        answer.gt_evaluation = evaluation
         return

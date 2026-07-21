@@ -2,9 +2,12 @@ from dataclasses import dataclass
 from typing import List, Tuple, TYPE_CHECKING
 
 from .exceptions import EvaluatorException
+from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
-    from .state import State, Answer
+    from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
+    from .state import State
+    from . import Answer, State, AgentType, Agent
 
 
 @dataclass(frozen=True)
@@ -12,15 +15,14 @@ class Evaluation:
     score: float
     success: bool = True
 
+    @classmethod
+    def from_dict(cls, dictionary: dict):
+        return Evaluation(
+            score = float(dictionary['score']),
+            success = bool(dictionary['success']))
+
 class Evaluator:
-    def __init__(self, config: AgentConfig):
-        self.run_gt_eval = config.run_gt_eval
-
     def evaluate_and_select(self, results: List[State]) -> Tuple[List[State], State]:
-        # gt evaluation
-        if self.run_gt_eval:
-            self.evaluate_ground_truth(results)
-
         if len(results) == 1:
             return results, results[0]
 
@@ -64,16 +66,40 @@ class Evaluator:
         best_state.get_last_answer().discarded_bon_answers = [state.get_last_answer() for state in discarded_states]
         return best_state
 
-    def evaluate_ground_truth(self, results: List[State]):
-        """Run ground-truth evaluation for tracking/logging only.
-        This NEVER influences selection — it only logs GT scores on the
-        results so performance can be tracked without steering the agent.
-        """
-        for result in results:
-            self._gt_eval(result)
+    def evaluate_ground_truth(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+        """Run ground-truth evaluation for tracking/logging only."""
+        self._gt_eval(answer=answer, gt_data=gt_data, judge_provider=judge_provider, judge_model=judge_model)
 
-    def _gt_eval(self, state: State):
-        la : Answer | None = state.get_last_answer()
-        if la is not None:
-            la.gt_evaluation = Evaluation(score=0.0, success=False)
+    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+        answer.gt_evaluation = Evaluation(score=0.0, success=False)
         return
+
+
+def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentType, Evaluator], judge_provider: str, judge_model : str) -> BenchmarkSummary:
+    correct_path = 0
+    ppls: list[float] =[]
+    scores: list[float] = []
+    agents: list[AgentType] = []
+    profiling_datas: list[ProfilingData] = []
+    for idx, answer in enumerate(state.answers):
+        correct_trace = entry.trace[idx]
+        if answer.agent_id == correct_trace.agent_type:
+            correct_path += 1
+        else:
+            break
+
+        evaluators[answer.agent_id].evaluate_ground_truth(answer=answer, gt_data=correct_trace.data, judge_provider=judge_provider, judge_model=judge_model)
+        evaluation = answer.gt_evaluation
+        ppls.append(answer.perplexity)
+        scores.append(evaluation.score)
+        agents.append(answer.agent_id)
+        profiling_datas.append(answer.profiling_data)
+    completion_percentage = correct_path / len(entry.trace)
+    from arco.data import BenchmarkSummary
+    return BenchmarkSummary(
+        completion_percentage=completion_percentage,
+        ppls = ppls,
+        scores = scores,
+        agents = agents,
+        profiling_datas=profiling_datas
+    )

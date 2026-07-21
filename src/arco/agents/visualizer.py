@@ -500,9 +500,8 @@ class Visualizer(Agent):
     Return ONLY the Python code. No markdown formatting. No code fences. No explanations. Just the executable Python code.
     """
 
-    def __init__(self, empower: bool = False):
-        super().__init__(empower)
-        self.type = AgentType.VISUALIZER
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def _parse_chart_config(raw_text: str) -> Dict[str, str]:
@@ -550,7 +549,7 @@ class Visualizer(Agent):
         Python dict. Data is NOT included in the config (it's passed separately as DataFrame).
 
         Args:
-            state: Conversation state; should include 'data' and optionally 'visualization_goal'.
+            state: Conversation state; should include 'data'.
             llm: ChatOllama instance used to infer the chart configuration.
 
         Returns:
@@ -564,7 +563,7 @@ class Visualizer(Agent):
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
         data_text = last_retriever_answer.data_str
 
-        visualization_goal = state.visualization_goal or state.prompt
+        visualization_goal = state.prompt
 
         formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
             data=data_text, visualization_goal=visualization_goal
@@ -672,5 +671,6 @@ class Visualizer(Agent):
             )
             return state.add_answer(answer)
 
-    def get_evaluator(self, agent_config: AgentConfig) -> Evaluator:
-        return VisualizerEvaluator(agent_config=agent_config)
+    @staticmethod
+    def get_evaluator() -> Evaluator:
+        return VisualizerEvaluator()

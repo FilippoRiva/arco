@@ -1,30 +1,27 @@
 import time
+from pathlib import Path
 from typing import Any
 from typing import Generator
 
 import requests
 from langgraph.graph.state import CompiledStateGraph
 
-from arco.core import ArcoConfig, State, llm_tools, tracking
-from arco.data import RunCache
+from arco.core import Config, State, llm_tools, tracking
 
 
 class WorkflowExecutor:
     def __init__(
             self,
             *,
-            graph: CompiledStateGraph,
-            config: ArcoConfig
+            workflow: Workflow,
+            config: Config
     ) -> None:
         self.config = config
-        self.graph: CompiledStateGraph = graph
+        self.graph: CompiledStateGraph = workflow.graph
         self.model_is_reachable = False
 
         # Updates global parameters from config
         llm_tools.OLLAMA_URL = config.ollama_url
-
-        # Caching
-        self.cache = RunCache(config.save_dir)
 
         # codecarbon Emission Tracking
         tracking.initialize_tracking(config)
@@ -36,30 +33,16 @@ class WorkflowExecutor:
         # Global Tracking start
         tracking.start_tracking()
 
-        # Cache load
-        cached_results = {}
-        if self.config.use_cache and self.config.cache_mode in ["read", "r", "read_write", "rw"]:
-            yield {"event": "cache", "value": "start"}
-            # Auto-find similar runs
-            similar_runs = self.cache.find_similar_runs(self.config.prompt, top_k=3)
-            if similar_runs:
-                cached_results = self.cache.load_all_step_results(similar_runs[0])
-                yield {"event": "cache", "value": "hit"}
-            else:
-                yield {"event": "cache", "value": "miss"}
-
-        # Initialize state with loaded cache results
+        # Initialize state
         input_state: State = State(
             prompt=self.config.prompt,
             run_id=self.config.run_id,
-            cached_results=cached_results,
-            visualization_goal=self.config.visualization_goal,
             agent_configs=self.config.agent_configs
         )
 
         # Check Model Reachability
         if not self.model_is_reachable:
-            self.model_is_reachable = self.check_model()
+            self.model_is_reachable = self._check_model()
             if not self.model_is_reachable:
                 yield {"event": "error",
                        "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server."}
@@ -76,7 +59,6 @@ class WorkflowExecutor:
         }
 
         current_state = None
-        final_result = None
 
         for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates", "messages"]):
             stream_type, data = chunk
@@ -102,16 +84,8 @@ class WorkflowExecutor:
             yield {"event": "error",
                    "message": "The Graph was not able to produce a result"}
 
-        if self.config.use_cache and self.config.cache_mode in ["write", "w", "read_write", "rw"]:
-            yield {"event": "cache", "value": "store"}
-            self.cache.save_run(
-                config=self.config,
-                final_result=final_result,
-            )
-            yield {"event": "cache", "value": "store_completed"}
-
-        if final_result is not None and self.config.save_state:
-            final_result.save(self.config.save_dir)
+        if final_result is not None and self.config.enable_storage:
+            final_result.save(Path(self.config.save_dir)/'storage')
 
         # Global tracking stop
         tracking.stop_tracking()
@@ -119,23 +93,13 @@ class WorkflowExecutor:
         yield {"event": "completed", "state": final_result}
         return final_result
 
-    def check_ollama(self):
-        try:
-            llm_tools.get_llm(
-                provider=self.config.provider,
-                model=self.config.model,
-            ).invoke("Hello, how are you?")
-            return True
-        except Exception as e:
-            return False
-
-    def check_model(self):
+    def _check_model(self):
         """Check if the model is running locally (Ollama) or accessible (OpenAI)"""
-        if self.config.provider == "openai" or self.config.provider == "openrouter":
+        if self.config.default_provider == "openai" or self.config.default_provider == "openrouter":
             try:
                 llm_tools.get_llm(
-                    provider=self.config.provider,
-                    model=self.config.model,
+                    provider=self.config.default_provider,
+                    model=self.config.default_model,
                 )
                 return True
             except Exception as e:
@@ -146,10 +110,20 @@ class WorkflowExecutor:
             try:
                 base = self.config.ollama_url.rstrip("/")
                 requests.get(f"{base}/api/version", timeout=3).json()
-                reachable = self.check_ollama()
+                reachable = self._check_ollama()
                 return reachable
             except Exception as e:
                 return False
+
+    def _check_ollama(self):
+        try:
+            llm_tools.get_llm(
+                provider=self.config.default_provider,
+                model=self.config.default_model,
+            ).invoke("Hello, how are you?")
+            return True
+        except Exception as e:
+            return False
 
 
 __all__ = ["WorkflowExecutor"]

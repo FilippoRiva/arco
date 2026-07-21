@@ -46,14 +46,12 @@ runs:
 | `ollama_url` | string (URI) | Base URL for local Ollama instances. Required if `provider` is `ollama`. |
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
-| `use_cache` | boolean | Enables or disables global caching. |
-| `cache_mode` | string (enum) | Cache subsystem behavior. One of: `r`, `read`, `w`, `write`, `rw`, `read_write`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
 | `phoenix_project_name` | string | Project name registered with the Arize Phoenix client. |
 
-> **Note:** unlike earlier versions of this schema, `global` no longer carries `prompt` or `visualization_goal` — the execution instruction and any output-plotting guidance are expected to live elsewhere (e.g. per-run) in this version.
+> **Note:** unlike earlier versions of this schema, `global` no longer carries `prompt` — the execution instruction and any output-plotting guidance are expected to live elsewhere (e.g. per-run) in this version.
 
 ---
 
@@ -91,8 +89,6 @@ defaults:
 | `top_k_min` | integer (≥ 1) | Minimum top-k token cutoff pool limit. |
 | `top_k_max` | integer (≥ 1) | Maximum top-k token cutoff pool limit. |
 | `max_tokens` | integer | Maximum number of tokens the agent should output per generation. |
-| `use_cache` | boolean | Enables or disables query caching for this agent. |
-| `cache_mode` | string (enum) | Cache behavior for this agent. One of: `read`, `r`, `write`, `w`, `read_write`, `rw`. |
 | `enabled` | boolean | Master toggle to enable or disable this agent entirely. |
 | `eval` | string (enum) | Evaluation system used by the agent to perform best-of-N selection. Currently: `default`. |
 
@@ -128,8 +124,6 @@ Each key in `changes` is an agent name, and its value is an override object with
 | `top_k_min` | integer | ≥ 1 |
 | `top_k_max` | integer | ≥ 1 |
 | `max_tokens` | integer | ≥ 1 — maximum output tokens for this agent |
-| `use_cache` | boolean | — |
-| `cache_mode` | string (enum) | `read`, `r`, `write`, `w`, `read_write`, `rw` |
 | `enabled` | boolean | — |
 | `eval` | string (enum) | `default` |
 
@@ -151,7 +145,6 @@ runs:
 ## Notes
 
 - `bon_param` selects which sampling dimension (`temperature`, `top_k`, or `top_p`) is varied across the `n` completions for best-of-N generation; pair it with the matching `*_min`/`*_max` bounds (e.g. `bon_param: temperature` with `temp_min`/`temp_max`).
-- `cache_mode` accepts both short and long forms (`r`/`read`, `w`/`write`, `rw`/`read_write`) at the `global`, `defaults`, and `runs.changes` levels.
 - When `provider: ollama` is set (globally or per agent), `ollama_url` must be provided at the global level.
 - Precedence for any given agent field is: `runs[].changes.<agent>` (highest) → `defaults.<agent>` → `global` (lowest).
 - Unlike `defaults.<agent>` objects, `changes.<agent>` objects in `runs` explicitly disallow unknown properties (`additionalProperties: false`) — only the fields listed above are accepted.

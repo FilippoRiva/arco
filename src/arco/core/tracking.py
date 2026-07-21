@@ -3,7 +3,7 @@ import time
 from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from arco.core import ArcoConfig
+    from arco.core import Config
 
 from langchain_core.callbacks import BaseCallbackHandler
 from codecarbon import EmissionsTracker
@@ -12,9 +12,9 @@ import logging
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
 
-tracker: EmissionTracker | None = None
+tracker: EmissionsTracker | None = None
 
-def initialize_tracking(config: ArcoConfig):
+def initialize_tracking(config: Config):
     if not config.enable_codecarbon:
         return
 

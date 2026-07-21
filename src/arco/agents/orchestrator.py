@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType, llm_tools
+from arco.core import Agent, Answer, AgentType, llm_tools, Evaluator
+from arco.evaluators.orchestrator_evaluator import OrchestratorEvaluator
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
@@ -62,7 +63,6 @@ Before selecting the next tool, think step by step:
 Example 1 - Initial state:
     User Prompt: 
     - prompt = "Show sales data", 
-    - visualization_goal = None, 
     Current State:
     - agents_used = []
     - error = false
@@ -79,7 +79,6 @@ Example 1 - Initial state:
 Example 2 - After data lookup:
     User Prompt: 
     - prompt = "Show sales data", 
-    - visualization_goal = None, 
     Current State:
     - agents_used = ['retriever']
     - error = false
@@ -96,7 +95,6 @@ Example 2 - After data lookup:
 Example 3 - After analysis and visualization:
     User Prompt: 
     - prompt = "Show sales trends", 
-    - visualization_goal = None, 
     Current State:
     - agents_used = ['retriever', 'analyzer', 'visualizer']
     - error = false
@@ -113,7 +111,6 @@ Decision: end
 Example 4 - After analysis only (no visualization needed):
     User Prompt: 
     - prompt = "What were total sales in 2022", 
-    - visualization_goal = None, 
     Current State:
     - agents_used = ['retriever', 'analyzer']
     - error = false
@@ -130,7 +127,6 @@ Example 4 - After analysis only (no visualization needed):
 Example 5 - After lookup only (visualization needed):
     User Prompt: 
     - prompt = "Show me a chart of montly sales",
-    - visualization_goal = "Give me a bar chart, where x axis is months", 
     Current State:
     - agents_used = ['retriever']
     - error = false
@@ -162,7 +158,6 @@ Based on the chain of thought reasoning above and the current state, select the 
           
 ## USER PROMPT 
 - prompt = {prompt}
-- visualization_goal = {visualization_goal}
 
 ## CURRENT STATE
 - agents_used = {agents_used}
@@ -172,9 +167,8 @@ Based on the chain of thought reasoning above and the current state, select the 
 Respond with ONLY the tool name: retriever, analyzer, visualizer, or end
 No explanations. Just the agent's name."""
 
-    def __init__(self, empower: bool = False):
-        super().__init__(empower)
-        self.type = AgentType.ORCHESTRATOR
+    def __init__(self):
+        super().__init__()
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """Core tool decision logic - LLM-based routing.
@@ -196,7 +190,6 @@ No explanations. Just the agent's name."""
 
         decision_prompt = Orchestrator._ORCHESTRATOR_PROMPT.format(
             prompt=state.prompt,
-            visualization_goal=state.visualization_goal,
             agents_used=state.get_agents_used(),
             error_is_present=error_is_present)
 
@@ -235,3 +228,6 @@ No explanations. Just the agent's name."""
             logprobs=logprobs
         )
         return state.add_answer(answer)
+
+    def get_evaluator(self) -> Evaluator:
+        return OrchestratorEvaluator()
