@@ -6,37 +6,24 @@
     "global": {
       "type": "object",
       "properties": {
+        "workflow": {
+          "type": "string",
+          "description": "Unique identifier for the workflow that should be executed in this benchmark run"
+        },
         "prompt": {
           "type": "string",
           "description": "The execution instruction or query passed to the agent system."
         },
-        "schema": {
-          "type": "string",
-          "description": "Path to YAML schemas for the database relative to this config file."
-        },
-        "visualization_goal": {
-          "type": "string",
-          "description": "Detailed guidelines on how data outputs should be plotted or visualized."
-        },
         "run_id": {
           "type": "string",
           "description": "Unique identifier for this specific execution. Ignore to auto-generate a unique ID, or set a fixed string to enable reproducible caching behavior."
-        },
-        "orchestration_enabled": {
-          "type": "boolean",
-          "description": "Toggle to determine the graph used for execution. If true the workflow becomes LLM-orchestrated"
-        },
-        "empower": {
-          "type": "boolean",
-          "description": "Toggle to determine if the arco empowerment is enabled. Defaults to true",
-          "default": "true"
         },
         "enable_budget_controller": {
           "type": "boolean",
           "description": "Toggle to determine if the arco budget controller is enabled. Defaults to true",
           "default": "true"
         },
-        "provider": {
+        "default_provider": {
           "type": "string",
           "enum": [
             "openai",
@@ -45,16 +32,29 @@
           ],
           "description": "The AI model provider backend."
         },
-        "model": {
+        "default_model": {
           "type": "string",
           "description": "The specific model identifier."
+        },
+        "default_provider_judge": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "ollama",
+            "openrouter"
+          ],
+          "description": "The AI model provider backend for the LLM judges."
+        },
+        "default_model_judge": {
+          "type": "string",
+          "description": "The specific model identifier for the LLM judges."
         },
         "ollama_url": {
           "type": "string",
           "format": "uri",
           "description": "The base URL for local Ollama instances. Needed if provider is ollama"
         },
-        "save_state": {
+        "enable_storage": {
           "type": "boolean",
           "description": "Toggle to determine whether final output artifacts should be persisted to disk."
         },
@@ -63,19 +63,6 @@
           "default": "./output",
           "description": "Directory path where output artifacts and execution metrics will be saved. This path is used also for codecarbon results"
         },
-        "use_cache": {
-          "type": "boolean",
-          "description": "Toggle to enable or disable global caching."
-        },
-        "cache_mode": {
-          "type": "string",
-          "enum": [
-            "r", "read",
-            "w", "write",
-            "rw", "read_write"
-          ],
-          "description": "Behavior mode for the cache subsystem when interacting with data storage."
-        },
         "enable_codecarbon": {
           "type": "boolean",
           "description": "Toggle to enable codecarbon consumption measurements. The output dir is set with the save_dir option"
@@ -83,8 +70,7 @@
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
       "required": [
-        "prompt",
-        "schema"
+        "workflow", "prompt"
       ]
     },
     "agents": {

@@ -34,6 +34,8 @@ class AgentConfig:
     _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
     provider: str = _DUMMY_STR
     model: str = _DUMMY_STR
+    provider_judge: str = _DUMMY_STR
+    model_judge: str = _DUMMY_STR
 
     # Best-of-n sampling parameters
     n: int = 1
@@ -83,6 +85,10 @@ class AgentConfig:
             self.provider = global_config.default_provider
         if self.model == self._DUMMY_STR:
             self.model = global_config.default_model
+        if self.provider_judge == self._DUMMY_STR:
+            self.provider_judge = global_config.default_provider_judge
+        if self.model_judge == self._DUMMY_STR:
+            self.model_judge = global_config.default_model_judge
         if self.enable_budget_controller is None:
             self.enable_budget_controller = global_config.enable_budget_controller
 

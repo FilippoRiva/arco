@@ -7,7 +7,7 @@ from .profiling_data import ProfilingData
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from .state import State
-    from . import Answer, State, AgentType, Agent
+    from . import Answer, State, AgentType, Agent, AgentConfig
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class Evaluation:
             success = bool(dictionary['success']))
 
 class Evaluator:
-    def evaluate_and_select(self, results: List[State]) -> Tuple[List[State], State]:
+    def evaluate_and_select(self, results: List[State], config: AgentConfig) -> Tuple[List[State], State]:
         if len(results) == 1:
             return results, results[0]
 
@@ -30,13 +30,13 @@ class Evaluator:
         batch_eval_success = self._batch_eval(results)
         if not batch_eval_success:
             for result in results:
-                self._eval(result)
+                self._eval(result, judge_provider= config.provider_judge, judge_model= config.model_judge)
 
 
         # finally selects the best result
         return results, self._selection(results)
 
-    def _eval(self, state: State):
+    def _eval(self, state: State, judge_provider: str, judge_model: str):
         la = state.get_last_answer()
         if not la:
             raise ValueError("Tried to evaluate a State with no Answers")

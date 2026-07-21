@@ -164,13 +164,13 @@ class AnalyzerEvaluator(Evaluator):
         score = ((factual + coverage) / 2 - 1) / 4  # normalize [1,5] → [0,1]
         return Evaluation(score=round(score, 4))
 
-    def _eval(self, state: State):
+    def _eval(self, state: State, judge_provider:str, judge_model: str):
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
         analysis = last_analyzer_answer.analysis
         if not analysis:
             raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
 
-        llm = get_llm(provider=self.provider, model=self.judge_model)
+        llm = get_llm(provider=judge_provider, model=judge_model)
         AnalyzerEvaluator.judge(state, llm)
 
     def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):

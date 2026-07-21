@@ -232,15 +232,15 @@ class Agent(ABC):
         ###
         # Evaluation
         ###
-        results, best_result = self.get_evaluator().evaluate_and_select(results=results)
+        results, best_result = self.get_evaluator().evaluate_and_select(results=results, config=agent_config)
 
         ###
         # Profiling
         ###
         total_agent_time = time.perf_counter() - agent_t0
         profiling_data = ProfilingData(total_time=total_agent_time,
-                                       llm_time=llm_acc.total_time)
-        profiling_data = profiling_data.add(**llm_acc.energy_dict)
+                                       llm_time=llm_acc.total_time,
+                                       **llm_acc.energy_dict)
         best_result = best_result.set_profiling_data(profiling_data, self.type)
 
         return best_result

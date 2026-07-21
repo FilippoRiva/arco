@@ -148,12 +148,12 @@ class VisualizerEvaluator(Evaluator):
         last_visualizer_answer.evaluation = Evaluation(score=overall_score)
         return
 
-    def _eval(self, state: State):
+    def _eval(self, state: State, judge_provider: str, judge_model: str):
         """
         Uses an LLM judge to score chart quality based on data suitability,
         axis mapping, code quality, and goal alignment.
         """
-        llm = llm_tools.get_llm(provider=self.provider, model=self.judge_model)
+        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
         VisualizerEvaluator.judge(state, llm)
         return
 
