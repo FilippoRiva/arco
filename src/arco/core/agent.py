@@ -180,7 +180,7 @@ class Agent(ABC):
 
         max_perplexity = self._AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
 
-        if answer.perplexity > max_perplexity:
+        if answer.perplexity is not None and answer.perplexity > max_perplexity:
             answer.budget_controller_choice = "rollback"
 
             agent_config = state.get_agent_config(self.type)
