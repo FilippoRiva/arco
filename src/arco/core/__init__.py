@@ -1,9 +1,9 @@
 from .agent import Agent
-from .config import Config, AgentConfig
-from .state import State
 from .agent_type import AgentType
 from .answer import Answer
+from .config import Config, AgentConfig
 from .evaluator import Evaluator, Evaluation
+from .state import State
 
 __all__ = [
     "Agent",

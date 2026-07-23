@@ -1,6 +1,5 @@
 import inspect
 from abc import abstractmethod, ABC
-import inspect
 
 from langgraph.graph.state import CompiledStateGraph
 
@@ -24,7 +23,7 @@ class Workflow(ABC):
         Workflow._registry[id] = cls
 
     def __init__(self, config: Config):
-        self.graph : CompiledStateGraph = self._initialize(config)
+        self.graph: CompiledStateGraph = self._initialize(config)
 
     @abstractmethod
     def _initialize(self, config: Config) -> CompiledStateGraph:

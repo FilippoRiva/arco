@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import sys
 import warnings
 from typing import TYPE_CHECKING
@@ -21,6 +20,7 @@ from arco.cli.commands import run, bench
 
 # Load the console singleton
 from arco.cli.console import console
+
 
 # ---------------------------------------------------------------------------
 # Main

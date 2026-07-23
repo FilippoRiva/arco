@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from typing import List, Tuple, TYPE_CHECKING
 
-from .exceptions import EvaluatorException
 from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from .state import State
-    from . import Answer, State, AgentType, Agent, AgentConfig
+    from . import Answer, State, AgentType, AgentConfig
 
 
 @dataclass(frozen=True)
@@ -18,8 +17,9 @@ class Evaluation:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return Evaluation(
-            score = float(dictionary['score']),
-            success = bool(dictionary['success']))
+            score=float(dictionary['score']),
+            success=bool(dictionary['success']))
+
 
 class Evaluator:
     def evaluate_and_select(self, results: List[State], config: AgentConfig) -> Tuple[List[State], State]:
@@ -30,8 +30,7 @@ class Evaluator:
         batch_eval_success = self._batch_eval(results)
         if not batch_eval_success:
             for result in results:
-                self._eval(result, judge_provider= config.provider_judge, judge_model= config.model_judge)
-
+                self._eval(result, judge_provider=config.provider_judge, judge_model=config.model_judge)
 
         # finally selects the best result
         return results, self._selection(results)
@@ -57,7 +56,7 @@ class Evaluator:
         answers = [ans for ans in answers_with_none if ans is not None]
         if any(answer.evaluation is None for answer in answers):
             return states[0]
-        if any(answer.evaluation.success == False for answer in answers): # pyrefly: ignore [missing-attribute]
+        if any(answer.evaluation.success == False for answer in answers):  # pyrefly: ignore [missing-attribute]
             return states[0]
         best_state = max(states, key=lambda r: r.get_last_answer().evaluation.score)
         discarded_states = [*states]
@@ -75,9 +74,10 @@ class Evaluator:
         return
 
 
-def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentType, Evaluator], judge_provider: str, judge_model : str) -> BenchmarkSummary:
+def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentType, Evaluator], judge_provider: str,
+                   judge_model: str) -> BenchmarkSummary:
     correct_path = 0
-    ppls: list[float] =[]
+    ppls: list[float] = []
     scores: list[float] = []
     agents: list[AgentType] = []
     profiling_datas: list[ProfilingData] = []
@@ -88,7 +88,8 @@ def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentTy
         else:
             break
 
-        evaluators[answer.agent_id].evaluate_ground_truth(answer=answer, gt_data=correct_trace.data, judge_provider=judge_provider, judge_model=judge_model)
+        evaluators[answer.agent_id].evaluate_ground_truth(answer=answer, gt_data=correct_trace.data,
+                                                          judge_provider=judge_provider, judge_model=judge_model)
         evaluation = answer.gt_evaluation
         ppls.append(answer.perplexity)
         scores.append(evaluation.score)
@@ -98,8 +99,8 @@ def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentTy
     from arco.data import BenchmarkSummary
     return BenchmarkSummary(
         completion_percentage=completion_percentage,
-        ppls = ppls,
-        scores = scores,
-        agents = agents,
+        ppls=ppls,
+        scores=scores,
+        agents=agents,
         profiling_datas=profiling_datas
     )

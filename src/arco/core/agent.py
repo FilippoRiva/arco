@@ -1,7 +1,7 @@
 import difflib
-import time
 import math
 import sys
+import time
 from abc import ABC, abstractmethod
 from typing import List, TYPE_CHECKING
 

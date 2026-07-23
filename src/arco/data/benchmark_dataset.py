@@ -46,10 +46,10 @@ class BenchmarkEntry:
     @classmethod
     def from_dict(cls, entry_dict: dict[str, Any]) -> BenchmarkEntry:
         return cls(
-            prompt = entry_dict['prompt'],
-            id = int(entry_dict['id']),
-            difficulty = int(entry_dict['difficulty']),
-            trace = Trace.from_trace_data(entry_dict['trace'])
+            prompt=entry_dict['prompt'],
+            id=int(entry_dict['id']),
+            difficulty=int(entry_dict['difficulty']),
+            trace=Trace.from_trace_data(entry_dict['trace'])
         )
 
 
@@ -58,7 +58,7 @@ class Trace:
     trace_list: list[TraceElement]
 
     @classmethod
-    def from_trace_data(cls, trace_list_data: list[dict[str,Any]]):
+    def from_trace_data(cls, trace_list_data: list[dict[str, Any]]):
         trace_list = []
         for trace_element in trace_list_data:
             agent_type = AgentType(trace_element['agent_type'])

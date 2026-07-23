@@ -1,5 +1,6 @@
 import re
 
+
 class AgentType(str):
     """
     An open-ended, string-based agent identifier.

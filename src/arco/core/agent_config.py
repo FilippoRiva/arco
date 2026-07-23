@@ -1,12 +1,10 @@
 import dataclasses
 from dataclasses import dataclass, asdict
-from typing import Literal, List, Dict, Any, TYPE_CHECKING
+from typing import Literal, Dict, Any, TYPE_CHECKING
 
 import numpy as np
 import yaml
-from pandas import DataFrame
 
-from .agent_type import AgentType
 from .exceptions import ConfigException
 
 if TYPE_CHECKING:
@@ -105,8 +103,8 @@ class AgentConfig:
         with open(yaml_path, 'r') as f:
             raw = yaml.safe_load(f)
 
-        agents_section = raw.get('agents', {}) # for run configs
-        if agents_section == {}: # for benchmark configs
+        agents_section = raw.get('agents', {})  # for run configs
+        if agents_section == {}:  # for benchmark configs
             agents_section = raw.get('defaults', {})
 
         if agent_name in agents_section.keys():

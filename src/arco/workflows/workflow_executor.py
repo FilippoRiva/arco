@@ -85,7 +85,7 @@ class WorkflowExecutor:
                    "message": "The Graph was not able to produce a result"}
 
         if final_result is not None and self.config.enable_storage:
-            final_result.save(Path(self.config.save_dir)/'storage')
+            final_result.save(Path(self.config.save_dir) / 'storage')
 
         # Global tracking stop
         tracking.stop_tracking()
@@ -103,8 +103,6 @@ class WorkflowExecutor:
                 )
                 return True
             except Exception as e:
-                yield {"event": "error",
-                       "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server."}
                 return False
         else:
             try:
@@ -124,6 +122,3 @@ class WorkflowExecutor:
             return True
         except Exception as e:
             return False
-
-
-__all__ = ["WorkflowExecutor"]

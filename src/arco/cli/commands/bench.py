@@ -1,13 +1,15 @@
-import collections
 from typing import TYPE_CHECKING
 
+from arco.cli.viz import display, printer
+from arco.core import evaluator
+from arco.data import BenchmarkSummary
 from arco.data.benchmark_dataset import BenchmarkDataset
-from arco.core import Config, evaluator
 from arco.workflows.workflow import WorkflowFactory
 
 if TYPE_CHECKING:
-    from arco.core import State, AgentType, Config
+    from arco.core import State
     from argparse import ArgumentParser, Namespace
+
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
@@ -32,7 +34,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
     status.start()
-    from arco.core import Config
     from pathlib import Path
     import os
     import pandas as pd
@@ -41,12 +42,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     console.print("[green]✓[/green] Pre-benchmark dependencies loaded")
     status.stop()
 
-
     start_time = time.time()
     workflow, default_config = WorkflowFactory.get_from_config(args.config)
     benchmark_dataset = BenchmarkDataset.from_json(args.dataset)
 
-    run_config_to_result_list : list[tuple[dict, pd.DataFrame]] = []
+    run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
     with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
         list_of_run_configs = default_config.generate_benchmark_configs(args.config)
         console.print("[green]✓[/green] Run configurations loaded")
@@ -58,11 +58,12 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     for run_config_dict in list_of_run_configs:
         run_name = run_config_dict['name'].replace(" ", "_")
-        run_csv_name =  run_name + ".csv"
+        run_csv_name = run_name + ".csv"
         if (runs_folder / run_name / run_csv_name).exists():
-            console.print(f"[yellow]Benchmark already exists: {runs_folder/ run_name / run_csv_name}. Skipping.[/yellow]")
-            result_df = pd.read_csv(runs_folder/ run_name / run_csv_name)
-        else :
+            console.print(
+                f"[yellow]Benchmark already exists: {runs_folder / run_name / run_csv_name}. Skipping.[/yellow]")
+            result_df = pd.read_csv(runs_folder / run_name / run_csv_name)
+        else:
             result_df, resulting_states = run_benchmark(
                 **run_config_dict,
                 benchmark_dataset=benchmark_dataset,
@@ -71,21 +72,21 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 verbose=args.verbose
             )
             # Save results
-            os.makedirs(runs_folder/run_name, exist_ok=True)
-            result_df.to_csv(runs_folder/run_name/run_csv_name, index=False)
+            os.makedirs(runs_folder / run_name, exist_ok=True)
+            result_df.to_csv(runs_folder / run_name / run_csv_name, index=False)
             for result in resulting_states:
-                result.save(runs_folder/run_name)
-            console.print(f"\nResults saved to [cyan]{runs_folder/run_name/run_csv_name}[/cyan]")
+                result.save(runs_folder / run_name)
+            console.print(f"\nResults saved to [cyan]{runs_folder / run_name / run_csv_name}[/cyan]")
 
         run_config_to_result_list.append((run_config_dict, result_df))
 
     aggregated_df = aggregate_results(run_config_to_result_list)
-    aggregated_df.to_csv(benchmark_save_folder/'summary.csv', index=False)
+    aggregated_df.to_csv(benchmark_save_folder / 'summary.csv', index=False)
     bench_metadata = {
-        "benchmark_run" : args.config,
-        "total_runtime" : time.time() - start_time,
+        "benchmark_run": args.config,
+        "total_runtime": time.time() - start_time,
     }
-    with open(benchmark_save_folder/'bench_metadata.json', 'w') as f:
+    with open(benchmark_save_folder / 'bench_metadata.json', 'w') as f:
         json.dump(bench_metadata, f)
 
 
@@ -140,39 +141,36 @@ def run_benchmark(
     """
     # Dependencies loaded dynamically
     from arco.cli.console import console
-    import collections
-    from pathlib import Path
     from functools import partial
     import pandas as pd
     from rich.rule import Rule
-    from arco.cli import viz
-    from arco.core.profiling_data import ProfilingData
     from arco.workflows.workflow_executor import WorkflowExecutor
     import json
 
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
 
-    viz.print_benchmark_header(name, description, changes)
+    printer.print_benchmark_header(name, description, changes)
 
-    df_rows : list[dict] = []
-    resulting_states : list[State] = []
+    df_rows: list[dict] = []
+    resulting_states: list[State] = []
 
     if verbose:
-        visualization_logic = partial(viz.agent_events_visualizer, verbose=True, show_plot=False)
+        visualization_logic = partial(display.display_workflow, verbose=True, show_plot=False)
     else:
-        visualization_logic = viz.compact_agent_events_visualizer
+        visualization_logic = display.display_workflow_compact
 
     for entry in benchmark_dataset:
         # Run agent
         console.print(Rule(f"[bold blue]Test Case {entry.id + 1}/{len(benchmark_dataset)}"))
         config = config.update_prompt(entry.prompt)
         executor = WorkflowExecutor(workflow=workflow, config=config)
-        resulting_state : State = visualization_logic(executor.stream())
+        resulting_state: State = visualization_logic(executor.stream())
         with console.status("[bold cyan]Evaluating the run[/bold cyan]"):
-            evaluation_summary : EvaluationSummary = (
-                evaluator.evaluate_state(resulting_state, entry, workflow.get_evaluators(), config.default_provider_judge, config.default_model_judge))
-        viz.show_evaluation_summary(evaluation_summary)
+            evaluation_summary: BenchmarkSummary = (
+                evaluator.evaluate_state(resulting_state, entry, workflow.get_evaluators(),
+                                         config.default_provider_judge, config.default_model_judge))
+        printer.print_benchmark_summary(evaluation_summary)
 
         # Answer Level Profiling
         execution_trace = {"answers": []}
@@ -186,7 +184,6 @@ def run_benchmark(
                 **answer_energy_dict
             })
             execution_trace['answers'].append(answer_dict)
-
 
         # Store results into a df row
         row = {
@@ -203,7 +200,8 @@ def run_benchmark(
 
     return df, resulting_states
 
-def aggregate_results(run_config_to_result_list: list[tuple[dict,pd.DataFrame]]) -> pd.DataFrame:
+
+def aggregate_results(run_config_to_result_list: list[tuple[dict, pd.DataFrame]]) -> pd.DataFrame:
     import json
     import collections
     import pandas as pd

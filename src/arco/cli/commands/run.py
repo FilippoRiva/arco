@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from arco.workflows import sales
+from arco.cli.viz import display, printer
 from arco.workflows.workflow import WorkflowFactory
 
 if TYPE_CHECKING:
@@ -45,11 +45,8 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     status.start()
     import os, sys
     console.print("[green]✓[/green] Built-in modules loaded")
-    from rich.rule import Rule
-    from arco.cli import viz
     console.print("[green]✓[/green] Visualization tools loaded")
     from arco.workflows.workflow_executor import WorkflowExecutor
-    from arco.core import Config
     console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
 
@@ -63,11 +60,8 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
     workflow, config = WorkflowFactory.get_from_config(args.config)
 
-    viz.print_config_table(config, verbose=args.verbose)
-    viz.print_workflow(workflow)
-
-    console.print(Rule(title="[bold green]Running the Agent[/bold green]"))
-
+    printer.print_config_table(config, verbose=args.verbose)
+    printer.print_workflow_graph(workflow)
 
     ## Get the agent
     executor = WorkflowExecutor(
@@ -76,5 +70,4 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     )
 
     # runs the agent with a visualization logic in rich
-    viz.agent_events_visualizer(executor.stream(), verbose=args.verbose, show_plot=True)
-    # viz.streaming_agent_visualizer(workflow.stream(), verbose=args.verbose, show_plot=True)
+    display.display_workflow(executor.stream(), verbose=args.verbose)

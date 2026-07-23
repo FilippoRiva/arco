@@ -1,9 +1,8 @@
 import os
-
-from langchain_core.messages import AIMessage
 from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
@@ -15,6 +14,7 @@ OLLAMA_URL: str = "http://localhost:11434"
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
+
 
 class CoTRefiner:
     """Transparent LLM wrapper that appends the previous iteration's response for iterative CoT refinement.
@@ -50,7 +50,7 @@ class CoTRefiner:
     You MUST fix this error. Output only the corrected response with no meta-commentary.
     """
 
-    def __init__(self, base_llm, previous_response: str, execution_error: str | None = None ) -> None:
+    def __init__(self, base_llm, previous_response: str, execution_error: str | None = None) -> None:
         self._llm = base_llm
         self._previous_response = previous_response
         self._execution_error = execution_error
@@ -146,14 +146,14 @@ def get_llm(
             api_key=api_key,
             base_url=openrouter_url,
             temperature=temperature,
-            #max_tokens=max_tokens,
-            #streaming=streaming,
+            # max_tokens=max_tokens,
+            # streaming=streaming,
             callbacks=[llm_accumulator],
-            #top_p=top_p,
+            # top_p=top_p,
             logprobs=True,
             extra_body={
                 "provider": {
-                    "require_parameters": True # use only providers that allow all the parameters from the request
+                    "require_parameters": True  # use only providers that allow all the parameters from the request
                 }
             }
         )
@@ -176,6 +176,7 @@ def get_llm(
             kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
         return ChatOllama(**kwargs)
 
+
 def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
     metadata = message.response_metadata
     if "logprobs" in metadata and metadata["logprobs"] is not None:
@@ -185,7 +186,8 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
         if isinstance(logprobs_data, dict) and "content" in logprobs_data:
             content_logprobs = logprobs_data.get("content") or []
             token_logprob_tuple_list = [
-                (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if "logprob" in token_info
+                (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if
+                "logprob" in token_info
             ]
 
             if "deepseek" in metadata['model_name']:
@@ -200,7 +202,6 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
                     end_idx = tokens.index(end_token)
                 token_logprob_tuple_list = token_logprob_tuple_list[start_idx:end_idx]
 
-
             return token_logprob_tuple_list
         # OLLAMA
         elif isinstance(logprobs_data, list) and len(logprobs_data) > 0:
@@ -210,7 +211,8 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
                 tokens = [logprobs_data[i]['token'] for i in range(len(logprobs_data))]
                 end_of_thinking_token_index = tokens.index(end_token)
                 return [
-                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"]) for i in range(end_of_thinking_token_index + 1, len(logprobs_data))
+                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"]) for i in
+                    range(end_of_thinking_token_index + 1, len(logprobs_data))
                 ]
 
             return [
@@ -218,5 +220,3 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
             ]
 
     return None
-
-

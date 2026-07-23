@@ -6,7 +6,7 @@ controlling agent execution at the step level.
 import dataclasses
 import random
 from dataclasses import dataclass, field, fields, replace
-from typing import Literal, Dict, Any, List, TYPE_CHECKING
+from typing import Literal, Dict, Any, TYPE_CHECKING
 
 import yaml
 
@@ -15,7 +15,6 @@ from .exceptions import ConfigException
 
 if TYPE_CHECKING:
     from . import AgentType
-    from arco.data import DatabaseSchema
 
 
 def generate_readable_id():
@@ -33,6 +32,7 @@ def generate_readable_id():
     ]
     number = random.randint(100, 999)
     return f"{random.choice(prefixes)}-{random.choice(nouns)}-{number}"
+
 
 @dataclass(frozen=True)
 class Config:
@@ -119,7 +119,6 @@ class Config:
 
         global_section = raw.get('global', {})
 
-        from arco.data import DatabaseSchema
         # Set particular configs from the yaml (that needs to be instantiated or cannot be derived from the file)
         global_params = {
             "config_path": yaml_path,
@@ -133,7 +132,7 @@ class Config:
 
         return cls(**global_params)
 
-    def generate_benchmark_configs(self, yaml_path: str) -> list [dict[str, Any]]:
+    def generate_benchmark_configs(self, yaml_path: str) -> list[dict[str, Any]]:
         """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of
         configurations, used by the benchmark script"""
         with open(yaml_path, 'r') as f:
@@ -165,4 +164,4 @@ class Config:
         return full_benchmark_config_list
 
     def _shuffle_id(self) -> Config:
-        return replace(self, run_id = generate_readable_id())
+        return replace(self, run_id=generate_readable_id())

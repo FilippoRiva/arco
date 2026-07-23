@@ -14,6 +14,7 @@ logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warni
 
 tracker: EmissionsTracker | None = None
 
+
 def initialize_tracking(config: Config):
     if not config.enable_codecarbon:
         return

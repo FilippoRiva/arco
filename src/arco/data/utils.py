@@ -3,7 +3,6 @@ import os
 from typing import List, Optional
 
 import pandas as pd
-from pandas import DataFrame
 from pandas import Series
 
 
@@ -38,7 +37,7 @@ def text_to_csv(text: str) -> List[List[str]]:
     return rows
 
 
-def text_to_dataframe(text: str) -> Optional[DataFrame]:
+def text_to_dataframe(text: str) -> Optional[pd.DataFrame]:
     """Convert text table (from DataFrame.to_string()) back to a pandas DataFrame.
 
     This function handles the output format from DuckDB query results that have been
@@ -115,7 +114,7 @@ def save_csv(rows: List[List[str]], filepath: str):
         writer.writerows(rows)
 
 
-def normalize_dataframe_values(df: DataFrame) -> DataFrame:
+def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
     """Normalize cell values in a DataFrame for consistent comparison.
 
     Per-column transformations based on auto-detected type:
@@ -125,7 +124,7 @@ def normalize_dataframe_values(df: DataFrame) -> DataFrame:
     - Strings: strip leading/trailing whitespace
     """
 
-    df_copy: DataFrame = df.copy()
+    df_copy: pd.DataFrame = df.copy()
     for col in df_copy.columns:
         df_column: pd.Series = df_copy[col]
 
@@ -133,7 +132,7 @@ def normalize_dataframe_values(df: DataFrame) -> DataFrame:
         # Handle datetime dtype first (before numeric, since datetime64 is numeric-castable)
         if pd.api.types.is_datetime64_any_dtype(df_column):
             df_copy[col] = df_column.dt.strftime("%Y-%m-%d")
-        elif numeric.notna().all() and not df_column.isna().all(): # Try numeric
+        elif numeric.notna().all() and not df_column.isna().all():  # Try numeric
             # Check if all values are whole numbers → cast to int
             if (numeric == numeric.round(0)).all():
                 df_copy[col] = numeric.astype(int)
@@ -146,9 +145,9 @@ def normalize_dataframe_values(df: DataFrame) -> DataFrame:
                 if datetime.notna().all() and not df_column.isna().all():
                     df_copy[col] = datetime.map(lambda x: x.strftime("%Y-%m-%d"))
                     continue
-            except TypeError, AttributeError, ValueError:
+            except (TypeError, AttributeError, ValueError):
                 pass
-            
+
             df_copy[col] = df_column.astype(str).str.strip()
 
     return df_copy

@@ -3,8 +3,8 @@ from typing import override
 from langgraph.graph import StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 
-from arco.core import Config, State
 from arco.agents import Analyzer, Orchestrator, Retriever, Visualizer
+from arco.core import Config, State
 from arco.workflows.workflow import Workflow
 
 
@@ -64,8 +64,9 @@ class OrchestratedSales(Workflow):
                 analyzer.name,
                 visualizer.name
             ]
-            if answer and answer.agent_choice and answer.agent_choice in valid_choices:
-                return answer.agent_choice
+            if answer and 'agent_choice' in answer.agent_output and answer.agent_output[
+                'agent_choice'] in valid_choices:
+                return answer.agent_output['agent_choice']
             return "end"
 
         # Routing logic
@@ -86,4 +87,3 @@ class OrchestratedSales(Workflow):
         graph.add_edge(visualizer.name, orchestrator.name)
 
         return graph.compile()
-
