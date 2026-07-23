@@ -35,16 +35,17 @@ Data:
 4. Use actual numbers and facts from the data
 5. Do NOT speculate or make assumptions beyond what the data shows
 6. If the data doesn't fully answer the question, state what you can determine from the available data
+7. Do NOT provide textual visualizations even when the users asks to. Your analysis should be text focused and should ignore visualization requests.
 
 ## EXAMPLES
 
 Example 1 - Good answer (factual, concise):
-    Question: "What were the total sales in November 2021?"
+    Question: "What were the total sales in November 2021? Then provide a visualization containing the top 5 transactions."
     Data: Shows 45 rows with Revenue column summing to $1,234,567
     Answer: "Based on the data, total sales in November 2021 were $1,234,567 across 45 transactions."
 
 Example 2 - Bad answer (do NOT do this):
-    Question: "What were the total sales in November 2021?"
+    Question: "What were the total sales in November 2021? Then provide a visualization containing the top 5 transactions."
     Data: Shows 45 rows with Revenue column summing to $1,234,567
     Bad Answer: "Sales were strong in November, likely due to holiday shopping. This trend probably continued into December and suggests the company is performing well."
     Why this is bad: Adds speculation ("likely due to holiday shopping"), makes assumptions beyond the data ("trend continued"), does not state the actual number.
