@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=./schema.json
+global:
+  workflow: "planned_sales"
+  enable_budget_controller: false
+  default_provider: openai
+  default_model: gpt-4.1-nano
+  default_provider_judge: openai
+  default_model_judge: gpt-4.1-nano
+  enable_storage: true
+  enable_codecarbon: false
+
+defaults:
+  Retriever:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Analyzer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Visualizer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+
+runs:
+  - name: Baseline
+    description: baseline benchmark at standard configs
+  - name: Temperature (low - 0.2)
+    description: Temperature test on low temperature settings
+    changes:
+      Retriever:
+        temp_min: 0.2
+      Analyzer:
+        temp_min: 0.2
+      Visualizer:
+        temp_min: 0.2

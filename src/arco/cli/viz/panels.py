@@ -1,5 +1,6 @@
 import math
 
+from langchain_community.chat_models import perplexity
 from rich.console import Group
 from rich.panel import Panel
 from rich.pretty import Pretty
@@ -90,23 +91,26 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         )
 
         # perplexity
-        colored_text = Text()
+        perplexity_text = Text()
 
-        for token, logprob in answer.logprobs:
-            try:
-                token_ppl = math.exp(-logprob)
-            except OverflowError:
-                token_ppl = float('inf')
-            if token_ppl < 1.2:
-                style = "bold green"
-            elif token_ppl < 5.0:
-                style = "yellow"
-            else:
-                style = "bold red"
-            colored_text.append(token, style=style)
+        if answer.logprobs:
+            for token, logprob in answer.logprobs:
+                try:
+                    token_ppl = math.exp(-logprob)
+                except OverflowError:
+                    token_ppl = float('inf')
+                if token_ppl < 1.2:
+                    style = "bold green"
+                elif token_ppl < 5.0:
+                    style = "yellow"
+                else:
+                    style = "bold red"
+                perplexity_text.append(token, style=style)
+        else:
+            perplexity_text = "-"
 
         perplexity_subpanel = Panel(
-            colored_text,
+            perplexity_text,
             title="[dim]Token Perplexity Analysis[/dim]",
             title_align="left",
             subtitle="[bold green]■ <1.2 (High)[/bold green] [yellow]■ <5.0 (Mid)[/yellow] [bold red]■ ≥5.0 (Low Confidence)[/bold red]",

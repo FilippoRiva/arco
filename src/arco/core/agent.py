@@ -151,9 +151,8 @@ class Agent(ABC):
         answer = state.get_last_answer(self.type)
         if not answer:
             raise Exception("No answer found during ARCO evaluation")
-        if answer.logprobs is None or len(answer.logprobs) == 0:
-            answer.perplexity = 0.0
-            return state.replace_last_answer(answer)
+        if answer.logprobs is None:
+            return state
 
         # Compute Perplexity
         numeric_logprobs: list[float | int] = [probs for _, probs in answer.logprobs]
@@ -166,22 +165,20 @@ class Agent(ABC):
         answer.perplexity = perplexity
         return state.replace_last_answer(answer)
 
+    _AGENT_MAX_PERPLEXITY: dict[str, float] = {
+        "retriever": 2,
+        "analyzer": 15,
+        "visualizer": 3,
+        "orchestrator": 1.3,
+        "planner": 1.3,
+    }
+
     def budget_controller(self, state: State) -> State:
         answer = state.get_last_answer(self.type)
         if not answer:
             raise Exception("No answer found during budget controller phase")
 
-        if self.type == AgentType.RETRIEVER:
-            max_perplexity = 2
-        elif self.type == AgentType.ANALYZER:
-            max_perplexity = 15
-        elif self.type == AgentType.VISUALIZER:
-            max_perplexity = 3
-        elif self.type == AgentType.ORCHESTRATOR:
-            max_perplexity = 1.3
-        else:
-            raise Exception(
-                f"The Budget Controller does not implement answer evaluation for this type of Agent : {parent_node.value}")
+        max_perplexity = self._AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
 
         if answer.perplexity > max_perplexity:
             answer.budget_controller_choice = "rollback"

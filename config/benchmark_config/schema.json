@@ -65,9 +65,7 @@
         }
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
-      "required": [
-        "schema"
-      ]
+      "required": []
     },
     "defaults": {
       "type": "object",

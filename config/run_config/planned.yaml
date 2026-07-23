@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# ORCHESTRATED RUN CONFIGURATION
+# =============================================================================
+# The minimal set of parameters to run the orchestrated version of the agent
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+global:
+  workflow: "planned_sales"
+  prompt: "Analyze the sales in Nov 2021. Which is the most productive brand? Then provide a visualization representing also the top 5 brands"

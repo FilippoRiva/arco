@@ -375,7 +375,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
             answer: Answer = Answer(
                 agent_id=self.type,
-                message=f"I executed this query to retrieve the required data:\n\n'''SQL\n{sql_query}\n'''\n\nThe resulting DataFrame has {len(result_df)} rows with columns : {", ".join(result_df.columns.to_list())}",
+                message=f"The data has been retrieved ({len(result_df)} {"entries" if len(result_df)>1 else "entry"} with columns : {", ".join(result_df.columns.to_list())})",
                 agent_output={
                     "data_str": result_str,
                     "data_df": result_df,
