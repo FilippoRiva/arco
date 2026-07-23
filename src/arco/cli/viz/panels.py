@@ -146,18 +146,20 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
                 expand=False
             )
             group_elements += [error_subpanel]
-        content = Group(*group_elements)
 
         # Create a subpanel for discarded answers
         if answer.agent_config.n > 1:
             group_elements.append(Panel(
-                Group(_render_discarded_answer_panel(discarded_answer)
-                      for discarded_answer in (answer.discarded_bon_answers if answer.discarded_bon_answers else [])),
+                Group(*[_render_discarded_answer_panel(discarded_answer)
+                      for discarded_answer in (answer.discarded_bon_answers if answer.discarded_bon_answers else [])]),
                 title="[dim]Discarded Answer[/dim]",
                 title_align="left",
                 border_style="dim",
                 expand=False
             ))
+
+        content = Group(*group_elements)
+
     else:
         content = answer.message
 
