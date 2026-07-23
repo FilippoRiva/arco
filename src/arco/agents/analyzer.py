@@ -1,4 +1,3 @@
-from arco.core.agent import AgentException
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -6,11 +5,12 @@ import pandas as pd
 from langchain_core.language_models import BaseChatModel
 
 from arco.core import Agent, Answer, AgentType, llm_tools
+from arco.core.agent import AgentException
 from arco.evaluators import AnalyzerEvaluator
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
-    from arco.core import State, AgentConfig, Evaluator
+    from arco.core import State, Evaluator
 
 
 class Analyzer(Agent):
@@ -165,20 +165,21 @@ class Analyzer(Agent):
         """
         try:
             last_retriever_answer: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
-            if last_retriever_answer is None :
+            if last_retriever_answer is None:
                 raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-            enriched_data = Analyzer._enrich_data_with_stats(last_retriever_answer.data_str)
+            enriched_data = Analyzer._enrich_data_with_stats(last_retriever_answer.agent_output['data_str'])
             formatted_prompt = Analyzer._ANALYSE_DATA_PROMPT.format(
-                data=enriched_data, prompt=state.prompt, sql_query=last_retriever_answer.sql_query
+                data=enriched_data, prompt=state.prompt, sql_query=last_retriever_answer.agent_output['sql_query']
             )
             analysis_result = llm.invoke(formatted_prompt)
-            analysis_text = str(analysis_result.content) if hasattr(analysis_result, "content") else str(analysis_result)
+            analysis_text = str(analysis_result.content) if hasattr(analysis_result, "content") else str(
+                analysis_result)
             logprobs = llm_tools.extract_logprobs(analysis_result)
             analyzer_config = deepcopy(state.get_agent_config(self.type))
             answer: Answer = Answer(
                 agent_id=self.type,
                 message=f"{analysis_text}",
-                analysis=analysis_text,
+                agent_output={"analysis": analysis_text},
                 agent_config=analyzer_config,
                 logprobs=logprobs
             )

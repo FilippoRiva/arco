@@ -5,7 +5,6 @@ from typing import List, TYPE_CHECKING
 import duckdb
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
-from pandas import DataFrame
 
 from arco.core import Agent, Answer, AgentType, llm_tools
 from arco.core.agent import AgentException
@@ -250,7 +249,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 {{"canonical_columns": ["col1", "col2"], "mappings": [{{"original_col": "canonical_col", ...}}, ...]}}
 """
 
-    def __init__(self, data_dir : str | None = None):
+    def __init__(self, data_dir: str | None = None):
         super().__init__()
         self.schema: DatabaseSchema = DatabaseSchema.from_data_dir(data_dir or "./data")
 
@@ -371,17 +370,19 @@ name used by any candidate. Prefer lowercase_with_underscores.
         # --- Generate and execute SQL ---
         sql_query, logprobs_gen_sql = Retriever._generate_sql_query(state, schema_context, llm)
         try:
-            result_df: DataFrame = con.execute(sql_query).df()
+            result_df: pd.DataFrame = con.execute(sql_query).df()
             result_str = result_df.to_csv(index=False)
 
             answer: Answer = Answer(
                 agent_id=self.type,
                 message=f"I executed this query to retrieve the required data:\n\n'''SQL\n{sql_query}\n'''\n\nThe resulting DataFrame has {len(result_df)} rows with columns : {", ".join(result_df.columns.to_list())}",
-                data_str=result_str,
-                data_df=result_df,
-                sql_query=sql_query,
+                agent_output={
+                    "data_str": result_str,
+                    "data_df": result_df,
+                    "sql_query": sql_query,
+                },
                 agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs= logprobs_relevant_tables + logprobs_gen_sql if logprobs_relevant_tables is not None and logprobs_gen_sql is not None else None
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql if logprobs_relevant_tables is not None and logprobs_gen_sql is not None else None
             )
 
             return state.add_answer(answer)
@@ -397,7 +398,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
             return state.add_answer(answer)
 
-
     @staticmethod
     def apply_standardization(
             results: List[State],
@@ -410,10 +410,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             last_retriever_answer: Answer | None = result.get_last_answer(AgentType.RETRIEVER)
             if last_retriever_answer is None:
                 continue
-            if last_retriever_answer.data_df is None:
+            if last_retriever_answer.agent_output['data_df'] is None:
                 continue
-            df = last_retriever_answer.data_df
-            sql = last_retriever_answer.sql_query
+            df = last_retriever_answer.agent_output['data_df']
+            sql = last_retriever_answer.agent_output['sql_query']
             if df is None or sql is None:
                 continue
             cols = list(df.columns)
@@ -491,9 +491,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
             if ans_to_check is None:
                 raise AgentException(f"Cannot standardize states with missing {AgentType.RETRIEVER.value} answers")
             ret_ans: Answer = ans_to_check
-            if ret_ans.data_df is None:
+            if ret_ans.agent_output['data_df'] is None:
                 raise AgentException(f"Cannot standardize states with missing {AgentType.RETRIEVER.value} DataFrame")
-            df: DataFrame = ret_ans.data_df
+            df: pd.DataFrame = ret_ans.agent_output['data_df']
 
             # Rename
             rename_map = {old: new for old, new in col_map.items() if old in df.columns}
@@ -508,8 +508,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
             result_df = normalize_dataframe_values(df)
 
             # Update result
-            ret_ans.data_df = result_df
-            ret_ans.data_str = result_df.to_csv(index=False)
+            ret_ans.agent_output['data_df'] = result_df
+            ret_ans.agent_output['data_str'] = result_df.to_csv(index=False)
         return results
 
     def post_generation_hooks(self, results: List[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> List[
@@ -537,4 +537,3 @@ name used by any candidate. Prefer lowercase_with_underscores.
     @staticmethod
     def get_evaluator() -> Evaluator:
         return RetrieverEvaluator()
-

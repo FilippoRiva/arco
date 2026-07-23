@@ -208,8 +208,8 @@ No explanations. Just the agent's name."""
 
         # Anti-loop guard: if lookup already ran but returned no data (SQL error), stop
         if (last_orchestrator_answer and matched_agent == "retriever" and
-                last_orchestrator_answer.agent_choice == "retriever" and last_retriever_answer and
-                not last_retriever_answer.data_str):
+                last_orchestrator_answer.agent_output['agent_choice'] == "retriever" and last_retriever_answer and
+                not last_retriever_answer.agent_output['data_str']):
             matched_agent = "end"
 
         # Override decision if reached max number of calls
@@ -223,7 +223,7 @@ No explanations. Just the agent's name."""
         answer = Answer(
             agent_id=self.type,
             message=f"The chosen agent is {matched_agent}",
-            agent_choice=matched_agent,
+            agent_output={"agent_choice": matched_agent},
             agent_config=deepcopy(state.get_agent_config(AgentType.ORCHESTRATOR)),
             logprobs=logprobs
         )

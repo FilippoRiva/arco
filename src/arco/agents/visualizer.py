@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 from json import JSONDecodeError
-from typing import Optional, Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
@@ -11,7 +11,7 @@ from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
-    from arco.core import Evaluator, AgentConfig, State
+    from arco.core import Evaluator, State
 
 
 class Visualizer(Agent):
@@ -559,9 +559,9 @@ class Visualizer(Agent):
         if ans_to_check is None:
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
         last_retriever_answer: Answer = ans_to_check
-        if last_retriever_answer.data_str is None:
+        if last_retriever_answer.agent_output['data_str'] is None:
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        data_text = last_retriever_answer.data_str
+        data_text = last_retriever_answer.agent_output['data_str']
 
         visualization_goal = state.prompt
 
@@ -605,71 +605,64 @@ class Visualizer(Agent):
             also contains an 'error' key so the CoT refinement loop can feed the
             error message back to the LLM on the next iteration.
         """
+        ans_to_check = state.get_last_answer(AgentType.RETRIEVER)
+        if ans_to_check is None:
+            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
+        last_retriever_answer: Answer = ans_to_check
+
+        data_df = last_retriever_answer.agent_output['data_df']
+        # if data_df is not None:
+        #    print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
+        # else:
+        #    print("Warning: No DataFrame available in state")
+
+        # Extract chart configuration
+        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(state, llm)
+
+        # Generate chart code
+        code, logprobs_code = Visualizer._create_chart(chart_config=chart_config, llm=llm)
+
+        # --- Validate by executing in a headless namespace (no display) ---
+        # Switch to Agg (non-interactive) backend to avoid tkinter threading
+        # issues when running best-of-n from a non-main thread on Windows.
+        exec_code = (
+                "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
+                + code.replace("plt.show()", "plt.close('all')")
+        )
+        namespace: Dict = {
+            "data_df": data_df,
+            "config": chart_config
+        }
         try:
-            ans_to_check = state.get_last_answer(AgentType.RETRIEVER)
-            if ans_to_check is None:
-                raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-            last_retriever_answer: Answer = ans_to_check
-
-            data_df = last_retriever_answer.data_df
-            # if data_df is not None:
-            #    print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
-            # else:
-            #    print("Warning: No DataFrame available in state")
-
-            # Extract chart configuration
-            chart_config, logprobs_chart_config = Visualizer._extract_chart_config(state, llm)
-
-            # Generate chart code
-            code, logprobs_code = Visualizer._create_chart(chart_config=chart_config, llm=llm)
-
-            # --- Validate by executing in a headless namespace (no display) ---
-            # Switch to Agg (non-interactive) backend to avoid tkinter threading
-            # issues when running best-of-n from a non-main thread on Windows.
-            exec_code = (
-                    "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
-                    + code.replace("plt.show()", "plt.close('all')")
-            )
-            namespace: Dict = {
-                "data_df": data_df,
-                "config": chart_config
-            }
-            try:
-                exec(exec_code, namespace)  # noqa: S102
-                exec_error = ""
-            except Exception as e:
-                exec_error = f"{type(e).__name__}: {e}"
-
-            if exec_error:
-                answer = Answer(
-                    agent_id=self.type,
-                    message="The generated code couldn't be executed",
-                    code=code,
-                    chart_config=chart_config,
-                    agent_config=deepcopy(state.get_agent_config(self.type)),
-                    error=exec_error
-                )
-            else:
-                answer = Answer(
-                    agent_id=self.type,
-                    message="The code for a proper visualization is:\n\n'''python\n" + code + f"\n'''\n The configuration for matplotlib is:\n{chart_config}",
-                    code=code,
-                    chart_config=chart_config,
-                    agent_config=deepcopy(state.get_agent_config(self.type)),
-                    logprobs=logprobs_code + logprobs_chart_config if logprobs_code is not None and logprobs_chart_config is not None else None
-                )
-
-            return state.add_answer(answer)
+            exec(exec_code, namespace)  # noqa: S102
+            exec_error = ""
         except Exception as e:
-            print(f"Error creating visualization: {str(e)}")
-            # Handle the case where the LLM or logic failed entirely
+            exec_error = f"{type(e).__name__}: {e}"
+
+        if exec_error:
             answer = Answer(
                 agent_id=self.type,
-                message="Couldn't create the visualization code",
-                error=f"Internal Exception: {str(e)}",
+                message="The generated code couldn't be executed",
+                agent_output={
+                    "code": code,
+                    "chart_config": chart_config
+                },
                 agent_config=deepcopy(state.get_agent_config(self.type)),
+                error=exec_error
             )
-            return state.add_answer(answer)
+        else:
+            answer = Answer(
+                agent_id=self.type,
+                message="The code for a proper visualization is:\n\n'''python\n" + code + f"\n'''\n The configuration for matplotlib is:\n{chart_config}",
+                agent_output={
+                    "code": code,
+                    "chart_config": chart_config
+                },
+                agent_config=deepcopy(state.get_agent_config(self.type)),
+                logprobs=logprobs_code + logprobs_chart_config if logprobs_code is not None and logprobs_chart_config is not None else None
+            )
+
+        return state.add_answer(answer)
 
     @staticmethod
     def get_evaluator() -> Evaluator:

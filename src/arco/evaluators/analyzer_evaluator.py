@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Dict, TYPE_CHECKING
+from typing import Optional, Dict
 
 from langchain_core.language_models import BaseChatModel
 
@@ -105,9 +105,9 @@ class AnalyzerEvaluator(Evaluator):
         prompt = state.prompt
         last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        sql_query: str = last_retriever_answer.sql_query
-        data: str = last_retriever_answer.data_str
-        analysis: str = last_analyzer_answer.analysis
+        sql_query: str = last_retriever_answer.agent_output['sql_query']
+        data: str = last_retriever_answer.agent_output['data_str']
+        analysis: str = last_analyzer_answer.agent_output['analysis']
 
         # Truncate data if too long
         truncated_data = data[:2000] if len(data) > 2000 else data
@@ -140,7 +140,7 @@ class AnalyzerEvaluator(Evaluator):
     def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_analysis: Optional[str] = None) -> Evaluation:
         """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
-        generated_analysis = answer.analysis
+        generated_analysis = answer.agent_output['analysis']
 
         formatted_prompt = AnalyzerEvaluator.ANALYZE_JUDGE_PROMPT_GT.format(
             gt_analysis=gt_analysis,
@@ -156,7 +156,7 @@ class AnalyzerEvaluator(Evaluator):
             raise ValueError(f"No JSON found in judge response: {raw[:200]}")
         try:
             evaluation = json.loads(json_match.group())
-        except e as _:
+        except Exception as _:
             return Evaluation(score=1)
 
         factual = float(evaluation.get("factual_accuracy", 1))
@@ -164,9 +164,9 @@ class AnalyzerEvaluator(Evaluator):
         score = ((factual + coverage) / 2 - 1) / 4  # normalize [1,5] → [0,1]
         return Evaluation(score=round(score, 4))
 
-    def _eval(self, state: State, judge_provider:str, judge_model: str):
+    def _eval(self, state: State, judge_provider: str, judge_model: str):
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        analysis = last_analyzer_answer.analysis
+        analysis = last_analyzer_answer.agent_output['analysis']
         if not analysis:
             raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
 
@@ -174,7 +174,7 @@ class AnalyzerEvaluator(Evaluator):
         AnalyzerEvaluator.judge(state, llm)
 
     def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
-        analysis = answer.analysis
+        analysis = answer.agent_output['analysis']
         if not analysis:
             answer.evaluation = Evaluation(score=0)
             return

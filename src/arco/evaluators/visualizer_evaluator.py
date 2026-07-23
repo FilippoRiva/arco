@@ -6,7 +6,7 @@ from langchain_core.language_models import BaseChatModel
 from arco.core import Evaluator, Evaluation, AgentType, llm_tools, Answer
 
 if TYPE_CHECKING:
-    from arco.core import AgentConfig, State
+    from arco.core import State
 
 
 class VisualizerEvaluator(Evaluator):
@@ -118,13 +118,13 @@ class VisualizerEvaluator(Evaluator):
 
         last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
         last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
-        data_df = last_retriever_answer.data_df
+        data_df = last_retriever_answer.agent_output['data_df']
 
         if data_df is not None and hasattr(data_df, 'columns'):
             data_columns = list(data_df.columns)
             data_sample = data_df.head(5).to_string(index=False)
         else:
-            data_text = last_retriever_answer.data_str
+            data_text = last_retriever_answer.agent_output['data_str']
             data_columns = []
             data_sample = data_text[:500] if data_text else ""
 
@@ -136,7 +136,7 @@ class VisualizerEvaluator(Evaluator):
             visualization_goal=state.prompt,
             data_columns=", ".join(data_columns),
             data_sample=data_sample[:1500],
-            gen_config=json.dumps(last_visualizer_answer.chart_config, indent=2),
+            gen_config=json.dumps(last_visualizer_answer.agent_output['chart_config'], indent=2),
             gen_code=gen_code_truncated,
         )
 
@@ -295,7 +295,7 @@ class VisualizerEvaluator(Evaluator):
 
         if not gt_code: raise Exception("gt_code cannot be None")
 
-        code: str = answer.code
+        code: str = answer.agent_output['code']
         if code is None:
             answer.gt_evaluation = Evaluation(score=0)
             return
@@ -309,7 +309,7 @@ class VisualizerEvaluator(Evaluator):
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_PROMPT_GT.format(
             gt_config=json.dumps(gt_config, indent=2),
             gt_code=gt_code_truncated,
-            gen_config=json.dumps(answer.chart_config, indent=2),
+            gen_config=json.dumps(answer.agent_output['chart_config'], indent=2),
             gen_code=gen_code_truncated,
             explicit_requirements=req_display
         )

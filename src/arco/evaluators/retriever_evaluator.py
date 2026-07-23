@@ -1,17 +1,16 @@
+from io import StringIO
 from typing import List, TYPE_CHECKING
 
-from pandas import DataFrame
 import pandas as pd
-from six import StringIO
 
 from arco.core import Evaluation, Evaluator, State, Answer, AgentType
 from arco.data import normalize_dataframe_values
 
 if TYPE_CHECKING:
-    from arco.core import AgentConfig
+    pass
 
 
-def compare_dataframes_iou(df1: DataFrame, df2: DataFrame, atol: float = 1e-2) -> float:
+def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2) -> float:
     """Compute row-level IoU between two DataFrames.
 
     Column selection strategy:
@@ -98,7 +97,7 @@ class RetrieverEvaluator(Evaluator):
             answers[0].evaluation = Evaluation(score=1.0)
             return True
 
-        dfs = [a.data_df for a in answers]
+        dfs = [a.agent_output['data_df'] for a in answers]
 
         # Compute pairwise IoU matrix
         for i in range(len(dfs)):
@@ -122,9 +121,9 @@ class RetrieverEvaluator(Evaluator):
         """Rename and reorder df columns to match canonical_cols without LLM."""
         if answer is None:
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        if answer.data_df is None:
+        if answer.agent_output['data_df'] is None:
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        df_to_align: DataFrame = answer.data_df
+        df_to_align: pd.DataFrame = answer.agent_output['data_df']
         current_cols = list(df_to_align.columns)
         if len(current_cols) == len(canonic_cols):
             # Case-insensitive rename
@@ -143,13 +142,12 @@ class RetrieverEvaluator(Evaluator):
             df_to_align = df_to_align[canonic_cols]
 
         # Normalize
-        normalized_df: DataFrame = normalize_dataframe_values(df_to_align)
+        normalized_df: pd.DataFrame = normalize_dataframe_values(df_to_align)
         # Assign normalized and aligned dataframe
-        answer.data_df = normalized_df
-        answer.data_str = normalized_df.to_csv(index=False)
+        answer.agent_output['data_df'] = normalized_df
+        answer.agent_output['data_str'] = normalized_df.to_csv(index=False)
 
-
-    def _gt_eval(self, answer:Answer, gt_data: dict, judge_provider: str, judge_model: str):
+    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
         """
         Compares the agent's result DataFrame against a ground-truth CSV using
         compare_dataframes_iou, which handles:
@@ -159,7 +157,7 @@ class RetrieverEvaluator(Evaluator):
             raise ValueError(
                 f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}")
 
-        if answer.data_df is None:
+        if answer.agent_output['data_df'] is None:
             answer.gt_evaluation = Evaluation(score=0.0)
             return
 
@@ -168,7 +166,7 @@ class RetrieverEvaluator(Evaluator):
 
         RetrieverEvaluator._apply_gt_alignment(answer, list(gt_df_cmp.columns))
 
-        result_df = answer.data_df.copy()
+        result_df = answer.agent_output['data_df'].copy()
         result_df.columns = [c.lower() for c in result_df.columns]
 
         score = compare_dataframes_iou(result_df, gt_df_cmp)
