@@ -361,7 +361,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         else:
             answer = Answer(
                 agent_id=self.type,
-                message="The code for a proper visualization is:\n\n'''python\n" + code + f"\n'''\n The configuration for matplotlib is:\n{chart_config}",
+                message="Visualization generated",
                 agent_output={
                     "code": code,
                     "chart_config": chart_config

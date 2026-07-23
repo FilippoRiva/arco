@@ -86,15 +86,13 @@ class VisualizerEvaluator(Evaluator):
                     if criterion not in parsed:
                         parsed[criterion] = {"score": 1, "reasoning": "Missing"}
                 return parsed
-        except Exception as e:
-            print(f"Vis no-GT JSON parse error: {e}")
-
-        return {
-            "data_suitability": {"score": 1, "reasoning": "Parse failed"},
-            "axis_mapping": {"score": 1, "reasoning": "Parse failed", "columns_exist": False},
-            "code_quality": {"score": 1, "reasoning": "Parse failed", "would_render": False},
-            "goal_alignment": {"score": 1, "reasoning": "Parse failed"},
-        }
+        except Exception as _:
+            return {
+                "data_suitability": {"score": 1, "reasoning": "Parse failed"},
+                "axis_mapping": {"score": 1, "reasoning": "Parse failed", "columns_exist": False},
+                "code_quality": {"score": 1, "reasoning": "Parse failed", "would_render": False},
+                "goal_alignment": {"score": 1, "reasoning": "Parse failed"},
+            }
 
     @staticmethod
     def _compute_vis_no_gt_score(evaluation: Dict) -> float:
@@ -129,7 +127,7 @@ class VisualizerEvaluator(Evaluator):
             data_sample = data_text[:500] if data_text else ""
 
         max_code_len = 2000
-        code: str = last_visualizer_answer.code
+        code: str = last_visualizer_answer.agent_output['code']
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
 
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_NO_GT_PROMPT.format(

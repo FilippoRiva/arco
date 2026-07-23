@@ -11,6 +11,9 @@ class RunStatusPanel:
         self.spinner = Spinner("dots")
         self.stopped = False
 
+    def start(self):
+        self.stopped = False
+
     def stop(self):
         self.stopped = True
 

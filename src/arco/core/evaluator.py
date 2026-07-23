@@ -61,7 +61,6 @@ class Evaluator:
         best_state = max(states, key=lambda r: r.get_last_answer().evaluation.score)
         discarded_states = [*states]
         discarded_states.remove(best_state)
-        # pyrefly: ignore [bad-assignment, missing-attribute]
         best_state.get_last_answer().discarded_bon_answers = [state.get_last_answer() for state in discarded_states]
         return best_state
 

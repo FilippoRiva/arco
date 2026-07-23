@@ -7,6 +7,7 @@ from rich.panel import Panel
 from arco.cli.console import console
 from arco.cli.viz.panels import render_answer, render_energy_impact_panel
 from arco.cli.viz.status import RunStatusPanel
+from arco.cli.viz.utils import execute_chart_code
 
 if TYPE_CHECKING:
     from arco.core import Answer, State
@@ -56,14 +57,28 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
             elif event_type == "node_finished":
                 last_state = update["state"]
                 last_answer: Answer = last_state.get_last_answer()
-                status.set(f"{last_answer.agent_id.value} ended its run ")
                 live.console.print(render_answer(answer=last_answer, verbose=verbose))
+
+                # If this was the visualizer, render the chart inline
+                if last_answer.agent_id.value.lower() == "visualizer":
+                    status.stop()
+                    from arco.core import AgentType
+                    retriever_answer = last_state.get_last_answer(AgentType.RETRIEVER)
+                    if retriever_answer:
+                        df = retriever_answer.agent_output.get("data_df")
+                        chart_config = last_answer.agent_output.get("chart_config")
+                        code = last_answer.agent_output.get("code")
+                        if df is not None and chart_config and code:
+                            execute_chart_code(df, chart_config, code)
+                    status.start()
+
+                status.set(f"{last_answer.agent_id.value} ended its run ")
             elif event_type == "codecarbon":
                 energy_dict = update["energy_dict"]
             elif event_type == "completed":
                 status.stop()
                 live.console.print(Panel(
-                    f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time}s[/dim]",
+                    f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time:.2f}s[/dim]",
                     border_style="blue"))
             elif event_type == "error":
                 live.console.print(Panel(f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
