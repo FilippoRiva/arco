@@ -60,97 +60,27 @@ Before selecting the next tool, think step by step:
 
 ## EXAMPLES WITH REASONING
 
-Example 1 - Initial state:
-    User Prompt: 
-    - prompt = "Show sales data", 
+Example 1 - Initial state (need data + visualization):
+    User Prompt: "Show me a chart of monthly sales"
     Current State:
     - agents_used = []
     - error = false
-
     Reasoning:
-    - Step 1: User wants a visualization of sales data. It explicitly requires a visualization
-    - Step 2: No agent executed yet 
-    - Step 3: Since there's no data the retriever agent is needed
-    - Step 4: Rule 1 applies - need data first, Rule 2 : N/A , Rule 3 : no
-    - Step 5: Must start with retriever
-
+    - Step 1: User explicitly wants a chart → visualization needed.
+    - Step 2: No agents executed yet — no data, no analysis, no chart.
+    - Step 3: Data is needed first.
+    - Step 4: Rule 1 applies (data prerequisite), Rule 2 N/A, Rule 3 not met.
+    - Step 5: Must start with retriever.
     Decision: retriever
 
-Example 2 - After data lookup:
-    User Prompt: 
-    - prompt = "Show sales data", 
-    Current State:
-    - agents_used = ['retriever']
-    - error = false
-
-    Reasoning:
-    - Step 1: User wants sales data shown (implies analysis/presentation needed)
-    - Step 2: retriever executed, only the retriever query is available
-    - Step 3: We have data and we need analysis for a proper visualization, missing analysis
-    - Step 4: Rule 1 satisfied (retriever executed), Rule 2 check (can't repeat lookup), Rule 3 not met
-    - Step 5: Next logical step is analyzer
-
-    Decision: analyzer
-
-Example 3 - After analysis and visualization:
-    User Prompt: 
-    - prompt = "Show sales trends", 
-    Current State:
-    - agents_used = ['retriever', 'analyzer', 'visualizer']
-    - error = false
-    
-Reasoning:
-- Step 1: User wanted trends (implies analysis + visualization)
-- Step 2: All tools executed, 2 answers generated (analysis + chart code)
-- Step 3: Nothing missing - workflow complete
-- Step 4: Rule 1 satisfied (retriever executed), Rule 2 check (can't repeat retriever, analyzer and visualizer), Rule 3 met (all answers given)
-- Step 5: Should end the workflow
-
-Decision: end 
-
-Example 4 - After analysis only (no visualization needed):
-    User Prompt: 
-    - prompt = "What were total sales in 2022", 
-    Current State:
-    - agents_used = ['retriever', 'analyzer']
-    - error = false
-
-    Reasoning:
-    - Step 1: User wants a simple factual answer (no visualization implied)
-    - Step 2: lookup and analysis already executed
-    - Step 3: Question fully answered with analysis alone
-    - Step 4: Rule 1 satisfied, Rule 2 satisfied, Rule 3 check (all RELEVANT tools done)
-    - Step 5: No visualization needed for this query - can end
-
-    Decision: end (all relevant tools executed, question answered)
-
-Example 5 - After lookup only (visualization needed):
-    User Prompt: 
-    - prompt = "Show me a chart of montly sales",
-    Current State:
-    - agents_used = ['retriever']
-    - error = false
-
-    Reasoning:
-    - Step 1: User explicitly wants a chart (visualization required)
-    - Step 2: Only retriever executed so the data is available, no analysis or visualization available
-    - Step 3: Missing both analysis and visualization for the task
-    - Step 4: Rule 1 satisfied, Rule 2 check (do not repeat retriever), Rule 3 not met (no visualization provided)
-    - Step 5: Should analyze first, then visualize
-
-    Decision: analyzer (analyze before visualizing)
-    
-Example 6 - Error present:
+Example 2 - Error present:
     Current State:
     - agents_used = ['retriever']
     - error = true
-
     Reasoning:
-    - Step 0: An error is present.
-    - Highest-priority rule applies.
+    - Step 0: An error is present — highest-priority rule applies.
     - Workflow must stop immediately.
-
-    Decision: end 
+    Decision: end
 
 
 ## YOUR TASK

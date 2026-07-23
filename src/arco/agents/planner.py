@@ -32,6 +32,14 @@ Given the user's question, decide which agents to execute and in what order.
 - For raw data requests, just retriever.
 - Include all needed agents. Do not skip necessary steps.
 
+## EXAMPLES
+
+Question: "Show me a bar chart of monthly sales by region"
+Plan: ["retriever", "analyzer", "visualizer"]
+
+Question: "What were the total sales in 2022?"
+Plan: ["retriever", "analyzer"]
+
 ## USER QUESTION
 {prompt}
 
