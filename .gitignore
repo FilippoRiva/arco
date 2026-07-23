@@ -11,11 +11,7 @@
 venv/
 build/
 
-# Codecarbon outputs
-codecarbon
-
-# Local benchmark outputs
-data/runs/
-data/output/
+# Local outputs
 output/storage/
+output/charts/
 src/arco.egg-info/
