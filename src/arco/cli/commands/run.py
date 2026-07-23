@@ -1,8 +1,5 @@
 from typing import TYPE_CHECKING
 
-from arco.cli.viz import display, printer
-from arco.workflows.workflow import WorkflowFactory
-
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
 
@@ -39,8 +36,10 @@ _GLOBAL_PARAMS = [
 
 
 def handle(args: Namespace, parser: ArgumentParser) -> None:
-    # Dependencies
     from arco.cli.console import console
+    from arco.cli.viz import display, printer
+    from arco.workflows.workflow import WorkflowFactory
+
     status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
     status.start()
     import os, sys

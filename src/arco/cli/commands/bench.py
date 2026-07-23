@@ -1,13 +1,6 @@
 from typing import TYPE_CHECKING
 
-from arco.cli.viz import display, printer
-from arco.core import evaluator
-from arco.data import BenchmarkSummary
-from arco.data.benchmark_dataset import BenchmarkDataset
-from arco.workflows.workflow import WorkflowFactory
-
 if TYPE_CHECKING:
-    from arco.core import State
     from argparse import ArgumentParser, Namespace
 
 
@@ -29,8 +22,12 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # Script Handler
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
-    # Dependencies
     from arco.cli.console import console
+    from arco.cli.viz import display, printer
+    from arco.core import evaluator
+    from arco.data import BenchmarkSummary
+    from arco.data.benchmark_dataset import BenchmarkDataset
+    from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
     status.start()
@@ -91,6 +88,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
 
 def generate_benchmark_id():
+    import random
     prefixes = [
         "measured", "scored", "ranked", "evaluated", "tested",
         "validated", "benchmarked", "profiled", "timed", "calibrated",
@@ -117,30 +115,17 @@ def run_benchmark(
         workflow: Workflow,
         name: str,
         description: str,
-        config: ArcoConfig,
+        config: Config,
         changes: dict[str, Any],
         benchmark_dataset: BenchmarkDataset,
         *,
         benchmark_id: str | None = None,
         verbose: bool = False
 ) -> tuple[pd.DataFrame, list[State]]:
-    """Run benchmark against a unified GT dataset.
-
-    Args:
-        workflow: the workflow tested on this benchmark.
-        name: the name of this benchmark
-        description: Description of the purpose for this benchmark
-        config: The config to run during this benchmark
-        changes: Changes associated to each config
-        benchmark_dataset: The Dataset to be used by the benchmark
-        benchmark_id: id of this run
-        verbose: set to true if verbose visualization is needed
-
-    Returns:
-        DataFrame with per-test-case information.
-    """
-    # Dependencies loaded dynamically
     from arco.cli.console import console
+    from arco.cli.viz import display, printer
+    from arco.core import evaluator
+    from arco.data import BenchmarkSummary
     from functools import partial
     import pandas as pd
     from rich.rule import Rule

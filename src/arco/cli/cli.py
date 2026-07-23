@@ -15,17 +15,14 @@ warnings.filterwarnings("ignore", category=LangChainPendingDeprecationWarning)
 if TYPE_CHECKING:
     pass
 
-# Load the available commands
-from arco.cli.commands import run, bench
-
-# Load the console singleton
-from arco.cli.console import console
-
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
+    from arco.cli.commands import run, bench
+    from arco.cli.console import console
+
     ## Parsing with argparse
     parser = argparse.ArgumentParser(
         description=(
@@ -57,6 +54,7 @@ def main():
             sys.exit(1)
     except KeyboardInterrupt:
         console.print("[bold red]Stopped[/bold red]: Keyboard Interrupt")
+        exit(1)
 
 
 if __name__ == "__main__":
