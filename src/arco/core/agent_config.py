@@ -120,7 +120,7 @@ class AgentConfig:
         if agents_section == {}:  # for benchmark configs
             agents_section = raw.get("defaults", {})
 
-        if agent_name in agents_section.keys():
+        if agent_name in agents_section:
             agent_dict = dict(agents_section[agent_name])
         else:
             agent_dict = {}

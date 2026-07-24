@@ -75,11 +75,7 @@ def execute_chart_code(df, chart_config, code, save_dir: str | None = None):
         "plt.savefig(buf, format='png', dpi=100, bbox_inches='tight'); plt.close()",
     )
 
-    try:
-        exec(modified_code, namespace)  # noqa: S102
-    except Exception as e:
-        console.print(f"[red]Chart rendering failed:[/red] {e}")
-        return
+    exec(modified_code, namespace)  # noqa: S102 - trust me, at most it's just a bad plot
 
     buf.seek(0)
     png_data = buf.getvalue()

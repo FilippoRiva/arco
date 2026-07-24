@@ -121,7 +121,11 @@ for i, prompt in enumerate(queries[PREFIX]):
     try:
         result = duckdb.sql(sql_query).df()
         data = result.to_string()
-    except Exception as e:
+    except (
+        duckdb.ParserException,
+        duckdb.BinderException,
+        duckdb.CatalogExceptionl,
+    ) as e:
         print(f"\nError executing query: {e}")
 
     formatted_prompt = DATA_ANALYSIS_PROMPT.format(

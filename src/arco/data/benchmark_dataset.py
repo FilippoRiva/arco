@@ -1,4 +1,5 @@
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 from arco.core import AgentType
@@ -44,7 +45,9 @@ class BenchmarkEntry:
     difficulty: int
 
     @classmethod
-    def from_dict(cls, entry_dict: dict[str, Any]) -> BenchmarkEntry:
+    def from_dict(
+        cls, entry_dict: dict[str, str | int | float | dict]
+    ) -> BenchmarkEntry:
         return cls(
             prompt=entry_dict["prompt"],
             id=int(entry_dict["id"]),
@@ -58,7 +61,9 @@ class Trace:
     trace_list: list[TraceElement]
 
     @classmethod
-    def from_trace_data(cls, trace_list_data: list[dict[str, Any]]):
+    def from_trace_data(
+        cls, trace_list_data: list[dict[str, str | int | float | dict]]
+    ):
         trace_list = []
         for trace_element in trace_list_data:
             agent_type = AgentType(trace_element["agent_type"])
@@ -79,4 +84,4 @@ class Trace:
 @dataclass(frozen=True)
 class TraceElement:
     agent_type: AgentType
-    data: dict[str, Any]
+    data: dict[str, str | int | float | dict]

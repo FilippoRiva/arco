@@ -95,49 +95,36 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
         Returns:
             Updated state with analysis appended to 'answer'.
         """
-        try:
-            last_retriever_answer: Answer | None = state.get_last_answer(
-                AgentType.RETRIEVER
-            )
-            if last_retriever_answer is None:
-                raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-            enriched_data = Analyzer._enrich_data_with_stats(
-                last_retriever_answer.agent_output["data_str"]
-            )
-            formatted_prompt = Analyzer._ANALYSE_DATA_PROMPT.format(
-                data=enriched_data,
-                prompt=state.prompt,
-                sql_query=last_retriever_answer.agent_output["sql_query"],
-            )
-            analysis_result = llm.invoke(formatted_prompt)
-            analysis_text = (
-                str(analysis_result.content)
-                if hasattr(analysis_result, "content")
-                else str(analysis_result)
-            )
-            logprobs = llm_tools.extract_logprobs(analysis_result)
-            analyzer_config = deepcopy(state.get_agent_config(self.type))
-            answer: Answer = Answer(
-                agent_id=self.type,
-                message=f"{analysis_text}",
-                agent_output={"analysis": analysis_text},
-                agent_config=analyzer_config,
-                logprobs=logprobs,
-            )
+        last_retriever_answer: Answer | None = state.get_last_answer(
+            AgentType.RETRIEVER
+        )
+        if last_retriever_answer is None:
+            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
+        enriched_data = Analyzer._enrich_data_with_stats(
+            last_retriever_answer.agent_output["data_str"]
+        )
+        formatted_prompt = Analyzer._ANALYSE_DATA_PROMPT.format(
+            data=enriched_data,
+            prompt=state.prompt,
+            sql_query=last_retriever_answer.agent_output["sql_query"],
+        )
+        analysis_result = llm.invoke(formatted_prompt)
+        analysis_text = (
+            str(analysis_result.content)
+            if hasattr(analysis_result, "content")
+            else str(analysis_result)
+        )
+        logprobs = llm_tools.extract_logprobs(analysis_result)
+        analyzer_config = deepcopy(state.get_agent_config(self.type))
+        answer: Answer = Answer(
+            agent_id=self.type,
+            message=f"{analysis_text}",
+            agent_output={"analysis": analysis_text},
+            agent_config=analyzer_config,
+            logprobs=logprobs,
+        )
 
-            return state.add_answer(answer)
-
-        except Exception as e:
-            print(f"Error analyzing data: {e!s}")
-
-            answer: Answer = Answer(
-                agent_id=self.type,
-                message="Couldn't analyze data. Check error message for details",
-                error=f"Error accessing data: {e!s}",
-                agent_config=deepcopy(state.get_agent_config(AgentType.ANALYZER)),
-            )
-
-            return state.add_answer(answer)
+        return state.add_answer(answer)
 
     @staticmethod
     def get_evaluator() -> Evaluator:

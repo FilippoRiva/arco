@@ -79,10 +79,6 @@ class State:
         return self.get_agent_config(agent_type)
 
     def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
-        if agent_type not in self.agent_configs.keys():
-            raise Exception(
-                f"The specified agent type ({agent_type}) is not defined in the {AgentType.__name__} enum. Please provide a known agent_type"
-            )
         return self.agent_configs[agent_type]
 
     def get_agents_used(self) -> list[str]:
@@ -148,7 +144,7 @@ class State:
         agent_configs = {}
         answers = []
         for agent_type in AgentType:
-            if agent_type.value in state.agent_configs.keys():
+            if agent_type.value in state.agent_configs:
                 agent_configs[agent_type] = AgentConfig.from_dict(
                     dictionary["agent_configs"][agent_type.value]
                 )

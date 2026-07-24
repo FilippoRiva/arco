@@ -56,53 +56,46 @@ def text_to_dataframe(text: str) -> pd.DataFrame | None:
     if not text or not text.strip():
         return None
 
-    try:
-        rows = text_to_csv(text)
-        if not rows:
-            return None
-
-        # Detect index by comparing row lengths
-        # If data rows have one more column than header row, it's likely the index
-        has_index = False
-        if len(rows) > 1:
-            # Check if data rows have more columns than header
-            if len(rows[1]) > len(rows[0]):
-                has_index = True
-
-        if has_index and len(rows) > 0:
-            # Header row doesn't have index, use all columns
-            # Data rows have index as first element, skip it
-            headers = rows[0]
-            data_rows = [row[1:] for row in rows[1:] if len(row) > 1]
-        else:
-            # No index column, first row is headers
-            headers = rows[0]
-            data_rows = rows[1:]
-
-        if not headers or not data_rows:
-            return None
-
-        # Create DataFrame and infer types
-        df = pd.DataFrame(data_rows, columns=headers)
-
-        # Try to convert columns to appropriate types
-        for col in df.columns:
-            try:
-                # Try numeric conversion
-                df[col] = pd.to_numeric(df[col])
-            except ValueError, TypeError:
-                # Try datetime conversion
-                try:
-                    df[col] = pd.to_datetime(df[col])
-                except ValueError, TypeError:
-                    # Keep as string
-                    pass
-
-        return df
-
-    except Exception as e:
-        print(f"Error converting text to DataFrame: {e}")
+    rows = text_to_csv(text)
+    if not rows:
         return None
+
+    # Detect index by comparing row lengths
+    # If data rows have one more column than header row, it's likely the index
+    has_index = False
+    if len(rows) > 1 and len(rows[1]) > len(rows[0]):
+        has_index = True
+
+    if has_index and len(rows) > 0:
+        # Header row doesn't have index, use all columns
+        # Data rows have index as first element, skip it
+        headers = rows[0]
+        data_rows = [row[1:] for row in rows[1:] if len(row) > 1]
+    else:
+        # No index column, first row is headers
+        headers = rows[0]
+        data_rows = rows[1:]
+
+    if not headers or not data_rows:
+        return None
+
+    # Create DataFrame and infer types
+    df = pd.DataFrame(data_rows, columns=headers)
+
+    # Try to convert columns to appropriate types
+    for col in df.columns:
+        try:
+            # Try numeric conversion
+            df[col] = pd.to_numeric(df[col])
+        except ValueError, TypeError:
+            # Try datetime conversion
+            try:
+                df[col] = pd.to_datetime(df[col])
+            except ValueError, TypeError:
+                # Keep as string
+                pass
+
+    return df
 
 
 def save_csv(rows: list[list[str]], filepath: str):

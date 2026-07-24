@@ -3,11 +3,12 @@ from io import StringIO
 import pandas as pd
 
 from arco.core import AgentType, Answer, Evaluation, Evaluator, State
+from arco.core.exceptions import AgentException
 from arco.data import normalize_dataframe_values
 
 
 def compare_dataframes_iou(
-    df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2
+    df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2
 ) -> float:
     """Compute row-level IoU between two DataFrames.
 
@@ -190,13 +191,6 @@ class RetrieverEvaluator(Evaluator):
                     parts.append(f"Missing cols: {missing}.")
                 if extra:
                     parts.append(f"Extra cols: {extra}.")
-            else:
-                gt_r0 = dict(zip(gt_df_cmp.columns, gt_df_cmp.iloc[0].tolist()))
-                mod_r0 = (
-                    dict(zip(result_df.columns, result_df.iloc[0].tolist()))
-                    if n_model > 0
-                    else {}
-                )
 
         answer.gt_evaluation = Evaluation(score=score)
         return

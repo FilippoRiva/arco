@@ -171,7 +171,7 @@ No explanations. Just the agent's name."""
             agent_id=self.type,
             message=f"The chosen agent is {matched_agent}",
             agent_output={"agent_choice": matched_agent},
-            agent_config=deepcopy(state.get_agent_config(AgentType.ORCHESTRATOR)),
+            agent_config=deepcopy(state.get_agent_config(self.type)),
             logprobs=logprobs,
         )
         return state.add_answer(answer)

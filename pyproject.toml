@@ -47,7 +47,7 @@ build-backend = "hatchling.build"
 
 # --- Development & Workflows-specific extras ---
 # These are only installed when explicitly requested (e.g., 'uv sync --all-extras' or 'uv sync --extra dev')
-[dependency-groups]
+[project.optional-dependencies]
 sales = [
     "matplotlib>=3.11.1",
     "pyarrow>=25.0.0",
@@ -58,5 +58,6 @@ dev = [
     "ipykernel>=7.2.0",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
-    "scipy"
+    "scipy",
+    "pre-commit>=4.6.1",
 ]

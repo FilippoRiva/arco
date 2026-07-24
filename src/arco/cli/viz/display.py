@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def display_workflow_compact(events: Generator[str, Any]) -> State:
     status = RunStatusPanel()
 
-    with Live(status, refresh_per_second=8, screen=False) as live:
+    with Live(status, refresh_per_second=8, screen=False):
         last_state = None
         for update in events:
             event_type = update["event"]
@@ -46,52 +46,56 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
     status = RunStatusPanel()
     last_state = None
 
-    with Live(status, refresh_per_second=8, screen=False) as live:
-        energy_dict: dict = {}
-        for update in events:
-            event_type = update["event"]
-            if event_type == "started":
-                status.set("Started the graph execution ")
-            elif event_type == "node_started":
-                start_time = time.time()
-                status.set(f"{update['node']} is running ", start_time)
-            elif event_type == "node_finished":
-                last_state = update["state"]
-                last_answer: Answer = last_state.get_last_answer()
-                live.console.print(render_answer(answer=last_answer, verbose=verbose))
+    live = Live(status, refresh_per_second=8, screen=False)
+    live.__enter__()
 
-                # If this was the visualizer, render the chart inline
-                if last_answer.agent_id.value.lower() == "visualizer":
-                    status.stop()
-                    from arco.core import AgentType
+    energy_dict: dict = {}
+    for update in events:
+        event_type = update["event"]
+        if event_type == "check_connection":
+            status.set(f"Checking models availability : {update['models']}")
+        elif event_type == "started":
+            status.set("Started the graph execution ")
+        elif event_type == "node_started":
+            start_time = time.time()
+            status.set(f"{update['node']} is running ", start_time)
+        elif event_type == "node_finished":
+            last_state = update["state"]
+            last_answer: Answer = last_state.get_last_answer()
+            live.console.print(render_answer(answer=last_answer, verbose=verbose))
 
-                    retriever_answer = last_state.get_last_answer(AgentType.RETRIEVER)
-                    if retriever_answer:
-                        df = retriever_answer.agent_output.get("data_df")
-                        chart_config = last_answer.agent_output.get("chart_config")
-                        code = last_answer.agent_output.get("code")
-                        if df is not None and chart_config and code:
-                            execute_chart_code(df, chart_config, code)
-                    status.start()
-
-                status.set(f"{last_answer.agent_id.value} ended its run ")
-            elif event_type == "codecarbon":
-                energy_dict = update["energy_dict"]
-            elif event_type == "completed":
+            # If this was the visualizer, render the chart inline
+            if last_answer.agent_id.value.lower() == "visualizer":
                 status.stop()
-                live.console.print(
-                    Panel(
-                        f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time:.2f}s[/dim]",
-                        border_style="blue",
-                    )
+                from arco.core import AgentType
+
+                retriever_answer = last_state.get_last_answer(AgentType.RETRIEVER)
+                if retriever_answer:
+                    df = retriever_answer.agent_output.get("data_df")
+                    chart_config = last_answer.agent_output.get("chart_config")
+                    code = last_answer.agent_output.get("code")
+                    if df is not None and chart_config and code:
+                        execute_chart_code(df, chart_config, code)
+                status.start()
+
+            status.set(f"{last_answer.agent_id.value} ended its run ")
+        elif event_type == "codecarbon":
+            energy_dict = update["energy_dict"]
+        elif event_type == "completed":
+            status.stop()
+            live.console.print(
+                Panel(
+                    f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time:.2f}s[/dim]",
+                    border_style="blue",
                 )
-            elif event_type == "error":
-                live.console.print(
-                    Panel(
-                        f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
-                        border_style="red",
-                    )
+            )
+        elif event_type == "error":
+            live.console.print(
+                Panel(
+                    f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
+                    border_style="red",
                 )
+            )
 
     if energy_dict:
         console.print(render_energy_impact_panel(energy_dict))
@@ -101,7 +105,7 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
         status.stop()
         live.console.print(
             Panel(
-                "[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
+                "[bold red]Agent Run Failed[/bold red]\n[dim]No output produced[/dim]",
                 border_style="red",
             )
         )

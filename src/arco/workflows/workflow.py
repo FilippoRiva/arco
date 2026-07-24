@@ -1,14 +1,19 @@
 import inspect
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar
 
 from langgraph.graph.state import CompiledStateGraph
 
 from arco.core import Agent, AgentType, Config
 
+if TYPE_CHECKING:
+    from arco.core import Evaluator
+
+_workflow_registry: dict[str, type[Workflow]] = {}
+
 
 class Workflow(ABC):
-    _registry: dict[str, type[Workflow]] = {}
-    _agent_list: dict[AgentType, Agent] = {}
+    _agent_list: ClassVar[dict[AgentType, Agent]] = {}
 
     def __init_subclass__(cls, **kwargs):
         """When a subclass inherits this ABC, the workflow_id of that subclass is stored and the WorkflowFactory can
@@ -18,11 +23,11 @@ class Workflow(ABC):
         if inspect.isabstract(cls):
             return  # don't register intermediate abstract subclasses
         id = getattr(cls, "workflow_id", cls.__name__)
-        if id in Workflow._registry and Workflow._registry[id] is not cls:
+        if id in _workflow_registry and _workflow_registry[id] is not cls:
             raise TypeError(
-                f"Workflow id {id!r} already registered to {Workflow._registry[id]!r}"
+                f"Workflow id {id!r} already registered to {_workflow_registry[id]}"
             )
-        Workflow._registry[id] = cls
+        _workflow_registry[id] = cls
 
     def __init__(self, config: Config):
         self.graph: CompiledStateGraph = self._initialize(config)
@@ -33,15 +38,15 @@ class Workflow(ABC):
     @classmethod
     def get(cls, name: str) -> type[Workflow]:
         try:
-            return cls._registry[name]
+            return _workflow_registry[name]
         except KeyError:
             raise ValueError(
-                f"Unknown workflow {name!r}. Available: {sorted(cls._registry)}"
+                f"Unknown workflow {name!r}. Available: {sorted(_workflow_registry)}"
             ) from None
 
     @classmethod
     def all(cls) -> dict[str, type[Workflow]]:
-        return dict(cls._registry)
+        return dict(_workflow_registry)
 
     def get_agent(self, agent_type: AgentType) -> Agent:
         return self._agent_list[agent_type]

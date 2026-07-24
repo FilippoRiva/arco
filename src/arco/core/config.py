@@ -175,11 +175,11 @@ class Config:
 
         # Load all the global configs that are overridden in the YAML file
         for field_meta in fields(Config):
-            if field_meta.name in global_section:
-                if (
-                    field_meta.name not in global_params
-                ):  # avoids redefining schema or other specific params
-                    global_params[field_meta.name] = global_section[field_meta.name]
+            if (
+                field_meta.name in global_section
+                and field_meta.name not in global_params
+            ):
+                global_params[field_meta.name] = global_section[field_meta.name]
 
         return cls(**global_params)
 

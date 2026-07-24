@@ -142,9 +142,7 @@ class Agent(ABC):
     def arco_evaluation(self, state: State) -> State:
         # Fetch the last answer object using your parent node identifier
         answer = state.get_last_answer(self.type)
-        if not answer:
-            raise Exception("No answer found during ARCO evaluation")
-        if answer.logprobs is None:
+        if not answer or answer.logprobs is None:
             return state
 
         # Compute Perplexity
@@ -158,18 +156,18 @@ class Agent(ABC):
         answer.perplexity = perplexity
         return state.replace_last_answer(answer)
 
-    _AGENT_MAX_PERPLEXITY: dict[str, float] = {
-        "retriever": 2,
-        "analyzer": 15,
-        "visualizer": 3,
-        "orchestrator": 1.3,
-        "planner": 1.3,
-    }
-
     def budget_controller(self, state: State) -> State:
+        _AGENT_MAX_PERPLEXITY: dict[str, float] = {
+            "retriever": 2,
+            "analyzer": 15,
+            "visualizer": 3,
+            "orchestrator": 1.3,
+            "planner": 1.3,
+        }
+
         answer = state.get_last_answer(self.type)
         if not answer:
-            raise Exception("No answer found during budget controller phase")
+            return state
 
         max_perplexity = self._AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
 

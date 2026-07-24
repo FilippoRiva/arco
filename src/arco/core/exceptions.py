@@ -31,3 +31,7 @@ class EvaluatorException(AgentException):
 
 class ConfigException(Exception):
     """Raised when there's some fatal error in the usage of an ArcoConfig or AgentConfig"""
+
+
+class StateException(Exception):
+    """Raised when"""

@@ -179,7 +179,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
                 selected.append(name_map[normalized])
 
         if not selected:
-            # print("[select_relevant_tables] Warning: could not parse table selection, using all tables")
             selected = [t.name for t in schema.tables]
         return selected, logprobs
 
@@ -273,15 +272,29 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
             return state.add_answer(answer)
 
-        except Exception as e:
+        except duckdb.ParserException as e:
             answer: Answer = Answer(
                 agent_id=self.type,
-                message="Couldn't access data. Check error message for specific details",
-                error=f"Error accessing data: {e!s}",
+                message="Couldn't retrieve the data.",
+                error=f"SQL query parsing erro: {e!s}",
+                agent_config=deepcopy(state.get_agent_config(self.type)),
+            )
+        except duckdb.CatalogException as e:
+            answer: Answer = Answer(
+                agent_id=self.type,
+                message="Couldn't retrieve the data.",
+                error=f"SQL query is selecting missing tables: {e!s}",
+                agent_config=deepcopy(state.get_agent_config(self.type)),
+            )
+        except duckdb.BinderException as e:
+            answer: Answer = Answer(
+                agent_id=self.type,
+                message="Couldn't retrieve the data.",
+                error=f"SQL query references do not resolve : {e!s}",
                 agent_config=deepcopy(state.get_agent_config(self.type)),
             )
 
-            return state.add_answer(answer)
+        return state.add_answer(answer)
 
     @staticmethod
     def apply_standardization(

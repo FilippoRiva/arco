@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 
 from langchain_core.language_models import BaseChatModel
 
@@ -92,19 +93,20 @@ class AnalyzerEvaluator(Evaluator):
                         }
 
                 return parsed
-        except Exception as e:
-            print(f"JSON parse error: {e}")
-
-        # Fallback
-        return {
-            "correctness": {"score": 0, "reasoning": "Parse failed", "issues": []},
-            "completeness": {"score": 0, "reasoning": "Parse failed", "missing": []},
-            "faithfulness": {
-                "score": 0,
-                "reasoning": "Parse failed",
-                "hallucinations": [],
-            },
-        }
+        except JSONDecodeError:
+            return {
+                "correctness": {"score": 0, "reasoning": "Parse failed", "issues": []},
+                "completeness": {
+                    "score": 0,
+                    "reasoning": "Parse failed",
+                    "missing": [],
+                },
+                "faithfulness": {
+                    "score": 0,
+                    "reasoning": "Parse failed",
+                    "hallucinations": [],
+                },
+            }
 
     @staticmethod
     def judge(state: State, llm: BaseChatModel):
@@ -164,7 +166,7 @@ class AnalyzerEvaluator(Evaluator):
             raise ValueError(f"No JSON found in judge response: {raw[:200]}")
         try:
             evaluation = json.loads(json_match.group())
-        except Exception as _:
+        except JSONDecodeError:
             return Evaluation(score=1)
 
         factual = float(evaluation.get("factual_accuracy", 1))

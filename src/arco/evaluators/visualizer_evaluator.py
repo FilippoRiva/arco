@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
@@ -91,7 +92,7 @@ class VisualizerEvaluator(Evaluator):
                     if criterion not in parsed:
                         parsed[criterion] = {"score": 1, "reasoning": "Missing"}
                 return parsed
-        except Exception as _:
+        except JSONDecodeError:
             return {
                 "data_suitability": {"score": 1, "reasoning": "Parse failed"},
                 "axis_mapping": {
@@ -261,7 +262,7 @@ class VisualizerEvaluator(Evaluator):
                         }
 
                 return parsed
-        except Exception:
+        except JSONDecodeError:
             return {
                 "axis_correctness": {
                     "score": 1,
@@ -313,9 +314,9 @@ class VisualizerEvaluator(Evaluator):
     def judge_from_ground_truth(
         answer: Answer,
         llm: BaseChatModel,
-        gt_config: str = None,
-        gt_code: str = None,
-        gt_visual_requirements: dict = None,
+        gt_config: str,
+        gt_code: str,
+        gt_visual_requirements: dict,
     ) -> State:
         """
         Evaluate visualization quality using LLM-as-a-Judge.
@@ -340,9 +341,6 @@ class VisualizerEvaluator(Evaluator):
             )
         else:
             req_display = "None specified - ignore all styling requirements"
-
-        if not gt_code:
-            raise Exception("gt_code cannot be None")
 
         code: str = answer.agent_output["code"]
         if code is None:

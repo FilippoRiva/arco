@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 import sys
 import warnings
@@ -48,7 +47,7 @@ def main():
             sys.exit(1)
     except KeyboardInterrupt:
         console.print("[bold red]Stopped[/bold red]: Keyboard Interrupt")
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

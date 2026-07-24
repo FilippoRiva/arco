@@ -40,26 +40,22 @@ def initialize_tracking(config: Config):
 
 
 def start_tracking():
-    global tracker
     if tracker is None:
         return
     tracker.start()
 
 
 def stop_tracking():
-    global tracker
     if tracker is None:
         return
     tracker.stop()
 
 
 def is_enabled():
-    global tracker
     return tracker is not None
 
 
 def get_energy_dict() -> dict:
-    global tracker
     if tracker is None:
         return {}
     ed = tracker.final_emissions_data
@@ -119,48 +115,35 @@ class LLMCallAccumulator(BaseCallbackHandler):
     def _start_cc_tracker(self, key: str) -> None:
         if not self._enabled:
             return
-        try:
-            tracker = EmissionsTracker(  # type: ignore[call-arg]
-                project_name="llm_invoke",
-                output_dir=self._cc_output_dir,
-                save_to_file=False,
-                measure_power_secs=1,
-                log_level="error",
-                allow_multiple_runs=True,
-            )
-            tracker.start()
-            self._cc_trackers[key] = tracker
-        except Exception as _e:
-            pass
-            # print(f"[CodeCarbon] per-invoke tracker start failed: {_e}")
+        emission_tracker = EmissionsTracker(  # type: ignore[call-arg]
+            project_name="llm_invoke",
+            output_dir=self._cc_output_dir,
+            save_to_file=False,
+            measure_power_secs=1,
+            log_level="error",
+            allow_multiple_runs=True,
+        )
+        emission_tracker.start()
+        self._cc_trackers[key] = emission_tracker
 
     def _stop_cc_tracker(self, key: str) -> None:
-        tracker = self._cc_trackers.pop(key, None)
-        if tracker is None:
+        emission_tracker: EmissionsTracker = self._cc_trackers.pop(key, None)
+        if emission_tracker is None:
             return
-        try:
-            tracker.stop()
-            # tracker.stop() returns a float (CO2 kg), not EmissionsData.
-            # The full breakdown is in final_emissions_data, same as the original code.
-            _ed = getattr(tracker, "final_emissions_data", None)
-            if _ed is not None:
-                self.energy_dict["energy_consumed_kwh"] += (
-                    getattr(_ed, "energy_consumed", 0.0) or 0.0
-                )
-                self.energy_dict["cpu_energy_kwh"] += (
-                    getattr(_ed, "cpu_energy", 0.0) or 0.0
-                )
-                self.energy_dict["gpu_energy_kwh"] += (
-                    getattr(_ed, "gpu_energy", 0.0) or 0.0
-                )
-                self.energy_dict["ram_energy_kwh"] += (
-                    getattr(_ed, "ram_energy", 0.0) or 0.0
-                )
-                self.energy_dict["emissions_kg_co2"] += (
-                    getattr(_ed, "emissions", 0.0) or 0.0
-                )
-        except Exception as _e:
-            print(f"[CodeCarbon] per-invoke tracker stop failed: {_e}")
+        emission_tracker.stop()
+        # tracker.stop() returns a float (CO2 kg), not EmissionsData.
+        # The full breakdown is in final_emissions_data, same as the original code.
+        _ed = getattr(emission_tracker, "final_emissions_data", None)
+        if _ed is not None:
+            self.energy_dict["energy_consumed_kwh"] += (
+                getattr(_ed, "energy_consumed", 0.0) or 0.0
+            )
+            self.energy_dict["cpu_energy_kwh"] += getattr(_ed, "cpu_energy", 0.0) or 0.0
+            self.energy_dict["gpu_energy_kwh"] += getattr(_ed, "gpu_energy", 0.0) or 0.0
+            self.energy_dict["ram_energy_kwh"] += getattr(_ed, "ram_energy", 0.0) or 0.0
+            self.energy_dict["emissions_kg_co2"] += (
+                getattr(_ed, "emissions", 0.0) or 0.0
+            )
 
     def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
         key = str(run_id)

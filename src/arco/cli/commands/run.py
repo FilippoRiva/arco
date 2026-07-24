@@ -21,6 +21,13 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
         action="store_true",
         help="Whether if the agent's configuration and other metrics should be shown after each execution",
     )
+    parser.add_argument(
+        "--log",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Log level for arco internals (default: INFO). Libraries always log at WARNING+.",
+    )
     return parser
 
 
@@ -35,12 +42,14 @@ _GLOBAL_PARAMS = [
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
     from arco.cli.viz import display, printer
+    from arco.logs import initialize as init_logging
     from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
     status.start()
     import os
     import sys
+    from pathlib import Path
 
     console.print("[green]✓[/green] Built-in modules loaded")
     console.print("[green]✓[/green] Visualization tools loaded")
@@ -60,6 +69,8 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
     workflow, config = WorkflowFactory.get_from_config(args.config)
+
+    init_logging(config.run_id, log_dir=Path(config.save_dir) / "logs", level=args.log)
 
     printer.print_config_table(config, verbose=args.verbose)
     printer.print_workflow_graph(workflow)

@@ -255,7 +255,7 @@ def render_answer_compact(answer: Answer) -> Panel:
     )
 
 
-def render_energy_impact_panel(energy_dict: dict[str, Any]) -> Panel:
+def render_energy_impact_panel(energy_dict: dict[str, float]) -> Panel:
     """Pretty prints CodeCarbon metrics from a structured energy_dict."""
     if not energy_dict:
         return Panel("No energy dict")

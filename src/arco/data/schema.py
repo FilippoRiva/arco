@@ -17,7 +17,6 @@ Usage example:
             ]
         )
     ])
-    print(schema.get_full_schema_str())
 """
 
 from __future__ import annotations
@@ -25,6 +24,8 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from typing import Any
+
+from arco.data.exceptions import SchemaParsingException
 
 
 @dataclass
@@ -225,4 +226,4 @@ class DatabaseSchema:
             schema = cls(tables=tables, compact_threshold=5)
             return schema
         else:
-            raise Exception("The schema was not parsable")
+            raise SchemaParsingException("The schema was not parsable")

@@ -3,6 +3,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
 
+    import pandas as pd
+
+    from arco.core import Config, State
+    from arco.data import BenchmarkDataset
+    from arco.workflows import Workflow
+
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
@@ -28,6 +34,13 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
         default=False,
         help="Whether if all the agent output should be shown",
     )
+    parser.add_argument(
+        "--log",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Log level for arco internals (default: INFO). Libraries always log at WARNING+.",
+    )
     return parser
 
 
@@ -37,6 +50,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
     from arco.data.benchmark_dataset import BenchmarkDataset
+    from arco.logs import initialize as init_logging
     from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
@@ -55,14 +69,17 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     workflow, default_config = WorkflowFactory.get_from_config(args.config)
     benchmark_dataset = BenchmarkDataset.from_json(args.dataset)
 
+    benchmark_id = args.id or Path(args.config).stem
+    benchmark_save_folder = Path(args.save_dir) / benchmark_id
+    os.makedirs(benchmark_save_folder, exist_ok=True)
+
+    init_logging(benchmark_id, log_dir=benchmark_save_folder / "logs", level=args.log)
+
     run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
     with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
         list_of_run_configs = default_config.generate_benchmark_configs(args.config)
         console.print("[green]✓[/green] Run configurations loaded")
 
-    benchmark_id = args.id or Path(args.config).stem
-    benchmark_save_folder = Path(args.save_dir) / benchmark_id
-    os.makedirs(benchmark_save_folder, exist_ok=True)
     runs_folder = benchmark_save_folder / "runs"
 
     for run_config_dict in list_of_run_configs:
@@ -164,7 +181,7 @@ def run_benchmark(
     name: str,
     description: str,
     config: Config,
-    changes: dict[str, Any],
+    changes: dict[str, str | float | int],
     benchmark_dataset: BenchmarkDataset,
     *,
     benchmark_id: str | None = None,

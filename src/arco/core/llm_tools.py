@@ -12,6 +12,8 @@ from arco.core.tracking import LLMCallAccumulator
 OLLAMA_REQUEST_TIMEOUT: int = 600
 OLLAMA_URL: str = "http://localhost:11434"
 
+DEFAULT_LLM_ACC = LLMCallAccumulator("None")
+
 if TYPE_CHECKING:
     from arco.core import AgentConfig
 
@@ -78,9 +80,6 @@ def get_llm_from_config(
 ) -> BaseChatModel:
     temp, top_p, top_k = agent_config.get_candidate_params()[0]
 
-    if agent_config.provider is None or agent_config.model is None:
-        raise Exception("Agent's provider and model should be specified")
-
     return get_llm(
         provider=agent_config.provider,
         model=agent_config.model,
@@ -104,7 +103,7 @@ def get_llm(
     top_k: int | None = None,
     num_beams: int | None = None,
     no_repeat_ngram_size: int | None = None,
-    llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
+    llm_accumulator: LLMCallAccumulator = DEFAULT_LLM_ACC,
     openrouter_url: str = "https://openrouter.ai/api/v1",
 ) -> BaseChatModel:
     """Factory method to create LLM instances with specific parameters.
@@ -162,16 +161,17 @@ def get_llm(
             },
         )
     else:
-        kwargs = dict(
-            model=model,
-            base_url=OLLAMA_URL,
-            temperature=temperature,
-            num_predict=max_tokens,
-            top_p=top_p,
-            client_kwargs={"timeout": OLLAMA_REQUEST_TIMEOUT},
-            callbacks=[llm_accumulator],
-            logprobs=True,
-        )
+        kwargs = {
+            "model": model,
+            "base_url": OLLAMA_URL,
+            "temperature": temperature,
+            "num_predict": max_tokens,
+            "top_p": top_p,
+            "client_kwargs": {"timeout": OLLAMA_REQUEST_TIMEOUT},
+            "callbacks": [llm_accumulator],
+            "logprobs": True,
+        }
+
         if top_k is not None:
             kwargs["top_k"] = top_k
         if num_beams is not None and num_beams > 1:

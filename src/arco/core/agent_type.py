@@ -1,4 +1,5 @@
 import re
+from typing import ClassVar, Self
 
 
 class AgentType(str):
@@ -10,9 +11,9 @@ class AgentType(str):
     AgentType("SomeName") — no need to touch this class.
     """
 
-    _registry: dict[str, AgentType] = {}
+    _registry: ClassVar[dict[str, AgentType]] = {}
 
-    def __new__(cls, value: str) -> AgentType:
+    def __new__(cls, value: str) -> Self:
         # Records into the registry of AgentTypes
         if value in cls._registry:
             return cls._registry[value]

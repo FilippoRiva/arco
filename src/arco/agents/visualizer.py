@@ -350,9 +350,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         )
         namespace: dict = {"data_df": data_df, "config": chart_config}
         try:
-            exec(exec_code, namespace)  # noqa: S102
+            exec(exec_code, namespace)  # noqa: S102 - trust me, at most it's just a bad plot
             exec_error = ""
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - exec() can raise arbitrary user exceptions
             exec_error = f"{type(e).__name__}: {e}"
 
         if exec_error:

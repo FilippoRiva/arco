@@ -6,7 +6,6 @@ from .profiling_data import ProfilingData
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from . import AgentConfig, AgentType, Answer, State
-    from .state import State
 
 
 @dataclass(frozen=True)

@@ -5,7 +5,7 @@
 # Test for the provider and model parameters
 
 global:
+  workflow: "sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
-  schema: "../../../data" # path to YAML schemas for the database relative to this config
-  provider: ollama
-  model: phi3
+  default_provider: ollama
+  default_model: phi3

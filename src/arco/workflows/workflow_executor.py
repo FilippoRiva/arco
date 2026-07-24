@@ -1,12 +1,19 @@
+import logging
+import os
 import time
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import requests
 from langgraph.graph.state import CompiledStateGraph
 
 from arco.core import Config, State, llm_tools, tracking
+
+if TYPE_CHECKING:
+    from arco.workflows.workflow import Workflow
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowExecutor:
@@ -36,13 +43,24 @@ class WorkflowExecutor:
         )
 
         # Check Model Reachability
-        if not self.model_is_reachable:
-            self.model_is_reachable = self._check_model()
+        requested_models = [
+            *[
+                (agent_config.provider, agent_config.model)
+                for agent_config in self.config.agent_configs.values()
+            ],
+            *[
+                (agent_config.provider_judge, agent_config.model_judge)
+                for agent_config in self.config.agent_configs.values()
+            ],
+        ]
+        unique_models = list(set(requested_models))
+        yield {"event": "check_connection", "models": unique_models}
+        for provider, model in unique_models:
+            self.model_is_reachable, message = self._check_model(
+                provider=provider, model=model
+            )
             if not self.model_is_reachable:
-                yield {
-                    "event": "error",
-                    "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server.",
-                }
+                yield {"event": "error", "message": message}
                 return None
 
         # Start Inference and Generator Loop
@@ -66,7 +84,7 @@ class WorkflowExecutor:
             if stream_type == "tasks":
                 yield {"event": "node_started", "node": data["name"]}
             elif stream_type == "updates":
-                node_name = list(data.keys())[0]
+                node_name = next(iter(data.keys()))
                 current_state = State(**data[node_name])
                 yield {
                     "event": "node_finished",
@@ -97,35 +115,68 @@ class WorkflowExecutor:
         yield {"event": "completed", "state": final_result}
         return final_result
 
-    def _check_model(self):
-        """Check if the model is running locally (Ollama) or accessible (OpenAI)"""
-        if (
-            self.config.default_provider == "openai"
-            or self.config.default_provider == "openrouter"
-        ):
-            try:
-                llm_tools.get_llm(
-                    provider=self.config.default_provider,
-                    model=self.config.default_model,
-                )
-                return True
-            except Exception:
-                return False
-        else:
-            try:
-                base = self.config.ollama_url.rstrip("/")
-                requests.get(f"{base}/api/version", timeout=3).json()
-                reachable = self._check_ollama()
-                return reachable
-            except Exception:
-                return False
+    def _check_model(self, provider: str, model: str) -> tuple[bool, str]:
+        """Check if the configured LLM provider is reachable.
 
-    def _check_ollama(self):
+        Uses lightweight probes — no inference calls are made.
+        """
+        if provider in ("openai", "openrouter"):
+            import openai
+
+            try:
+                api_key = os.environ.get(
+                    "OPENROUTER_API_KEY"
+                    if provider == "openrouter"
+                    else "OPENAI_API_KEY"
+                )
+                if not api_key:
+                    error_message = f"Missing API key for {provider}. Set the {'OPENROUTER_API_KEY' if provider == 'openrouter' else 'OPENAI_API_KEY'} environment variable."
+                    logger.error(error_message)
+                    return False, error_message
+
+                models = []
+                if provider == "openai":
+                    models = openai.OpenAI(api_key=api_key, timeout=5.0).models.list()
+                elif provider == "openrouter":
+                    models = openai.OpenAI(
+                        api_key=api_key,
+                        timeout=5.0,
+                        base_url="https://openrouter.ai/api/v1",
+                    ).models.list()
+
+                models = [provider_model.id for provider_model in models]
+                if model not in models:
+                    raise ValueError(
+                        f"The requested model is not available: '{model}'. Available models are {models}"
+                    )
+                return True, f"Connection to {provider} succeeded."
+            except openai.OpenAIError as e:
+                error_message = f"{provider} connection failed: {e}"
+                logger.error(error_message)
+                return False, error_message
+            except ValueError as e:
+                error_message = f"{provider} connection failed: {e}"
+                logger.error(error_message)
+                return False, error_message
+
+        # Ollama
         try:
-            llm_tools.get_llm(
-                provider=self.config.default_provider,
-                model=self.config.default_model,
-            ).invoke("Hello, how are you?")
-            return True
-        except Exception:
-            return False
+            base = self.config.ollama_url.rstrip("/")
+            resp = requests.get(f"{base}/api/tags", timeout=5.0)
+            resp.raise_for_status()
+            models = [
+                model.get("model").split(":")[0] for model in resp.json()["models"]
+            ]
+            if model.split(":")[0] not in models:
+                raise ValueError(
+                    f"The requested model is not available: '{model}'. Available models are {models}"
+                )
+            return True, f"Connection to {provider} succeeded."
+        except requests.RequestException as e:
+            error_message = f"{provider} connection failed: {e}"
+            logger.error(error_message)
+            return False, error_message
+        except ValueError as e:
+            error_message = f"{provider} connection failed: {e}"
+            logger.error(error_message)
+            return False, error_message
