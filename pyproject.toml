@@ -3,7 +3,7 @@ name = "arco"
 version = "0.1.0"
 description = "Agentic Runtime Compute Optimizer"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 authors = [{ name = "Filippo Riva" }]
 
 
@@ -13,47 +13,36 @@ dependencies = [
     # LangGraph
     "langgraph>=1.2.0",
     "langgraph-sdk>=0.3.14",
-    "langgraph-checkpoint-sqlite>=3.1.0",
-
     # LangChain
     "langchain-core>=1.4.0",
     "langchain-openai>=1.2.1",
     "langchain-ollama>=1.1.0",
-    "langchain-community>=0.4.1",
-
     # LLM and models
     "ollama>=0.6.2",
     "llama-index>=0.14.22",
-    "litellm>=1.83.7",
-
     # Tracing and Profiling
-    "arize-phoenix-otel>=0.16.1",
-    "openinference-instrumentation-langchain>=0.1.65",
-    "openinference-instrumentation-openai>=0.1.49",
-    "openinference-instrumentation-llama_index>=4.4.1",
-    "opentelemetry-api>=1.41.1",
     "codecarbon>=3.2.7",
-
     # SQL, DuckDB and Data Management
-    "duckdb>=1.5.2",
     "pandas>=3.0.3",
-
     # Utils
     "numpy>=2.4.5",
     "requests>=2.34.2",
     "pyyaml",
-
     # Terminal and Visualization
     "rich>=15.0.0",
-    "grandalf"
+    "grandalf",
 ]
 
 # --- Development & Evaluation Extras ---
 # These are only installed when explicitly requested (e.g., pip install -e ".[dev]")
 [project.optional-dependencies]
+sales = [
+    "matplotlib>=3.11.1",
+    "pyarrow>=25.0.0",
+    "duckdb>=1.5.2",
+]
 dev = [
     "ipykernel>=7.2.0",
-    "matplotlib>=3.10.9",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "scipy"
@@ -65,4 +54,8 @@ dev = [
 "Original Project" = "https://github.com/ossaleon/DataAgent/tree/main"
 
 [project.scripts]
-arco-cli = "arco.cli.cli:main"
+arco = "arco.cli.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

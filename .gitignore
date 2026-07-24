@@ -8,7 +8,7 @@
 .codex/
 
 # Python libraries and build files
-venv/
+.venv/
 build/
 
 # Local outputs
