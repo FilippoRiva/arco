@@ -1,6 +1,5 @@
 import math
 
-from langchain_community.chat_models import perplexity
 from rich.console import Group
 from rich.panel import Panel
 from rich.pretty import Pretty
@@ -120,6 +119,15 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         )
 
         # config panel
+        agent_output_subpanel = Panel(
+            Pretty(answer.agent_output, max_length=2, max_depth=2, indent_size=2),
+            title="[dim]Agent Output[/dim]",
+            title_align="left",
+            border_style="dim",
+            expand=False
+        )
+
+        # config panel
         config_subpanel = Panel(
             Pretty(answer.agent_config, max_length=2, max_depth=2, indent_size=2),
             title="[dim]Config[/dim]",
@@ -132,6 +140,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             generation_and_eval_info,
             profiling_subpanel,
             perplexity_subpanel,
+            agent_output_subpanel,
             config_subpanel,
         ]
 

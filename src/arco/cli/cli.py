@@ -26,7 +26,7 @@ def main():
     ## Parsing with argparse
     parser = argparse.ArgumentParser(
         description=(
-            "The arco-cli utility tool to run the agent, manage cache or benchmark on ground-truth data"
+            "The arco cli to run or benchmark a workflow"
         )
     )
 
