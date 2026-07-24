@@ -1,9 +1,9 @@
 import inspect
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
 from langgraph.graph.state import CompiledStateGraph
 
-from arco.core import Config, AgentType, Agent
+from arco.core import Agent, AgentType, Config
 
 
 class Workflow(ABC):

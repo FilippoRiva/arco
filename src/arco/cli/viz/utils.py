@@ -1,11 +1,9 @@
 import base64
 import io
 import os
-from pathlib import Path
-
 import sys
-
 import time
+from pathlib import Path
 
 from arco.cli.console import console
 

@@ -1,9 +1,9 @@
-import duckdb
-import pandas as pd
 import json
 import os
 import sys
-from typing import Dict, List, Tuple
+
+import duckdb
+import pandas as pd
 
 # Add workspace root to sys.path
 workspace_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -145,6 +145,6 @@ with open(f"evaluation/{PREFIX}_dataset.json", 'w') as f:
     json.dump(dataset, f, indent=2)
 
 print(f'\n{"="*80}')
-print(f'Dataset completed and saved!')
+print('Dataset completed and saved!')
 print(f'Total entries: {len(dataset)}')
 print(f'{"="*80}')

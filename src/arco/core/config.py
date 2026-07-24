@@ -6,7 +6,7 @@ controlling agent execution at the step level.
 import dataclasses
 import random
 from dataclasses import dataclass, field, fields, replace
-from typing import Literal, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 import yaml
 
@@ -60,7 +60,7 @@ class Config:
     # #
     # AGENTS CONFIGURATION
     # #
-    agent_configs: Dict[AgentType, AgentConfig] = field(default_factory=dict)
+    agent_configs: dict[AgentType, AgentConfig] = field(default_factory=dict)
 
     # #
     # NOT CONFIGURABLE FROM YAML
@@ -82,7 +82,7 @@ class Config:
         """Set configuration for a specific step."""
         self.agent_configs[agent_type] = config
 
-    def copy(self) -> 'Config':
+    def copy(self) -> Config:
         """Create a deep copy of this configuration."""
         from copy import deepcopy
         return deepcopy(self)
@@ -127,7 +127,7 @@ class Config:
         # Load all the global configs that are overridden in the YAML file
         for field_meta in fields(Config):
             if field_meta.name in global_section:
-                if field_meta.name not in global_params.keys():  # avoids redefining schema or other specific params
+                if field_meta.name not in global_params:  # avoids redefining schema or other specific params
                     global_params[field_meta.name] = global_section[field_meta.name]
 
         return cls(**global_params)

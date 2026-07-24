@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import List, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
+    from . import AgentConfig, AgentType, Answer, State
     from .state import State
-    from . import Answer, State, AgentType, AgentConfig
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class Evaluation:
 
 
 class Evaluator:
-    def evaluate_and_select(self, results: List[State], config: AgentConfig) -> Tuple[List[State], State]:
+    def evaluate_and_select(self, results: list[State], config: AgentConfig) -> tuple[list[State], State]:
         if len(results) == 1:
             return results, results[0]
 
@@ -41,18 +41,17 @@ class Evaluator:
             raise ValueError("Tried to evaluate a State with no Answers")
 
         la.evaluation = Evaluation(score=0.0, success=False)
-        return
 
-    def _batch_eval(self, states: List[State]) -> bool:
-        answers_with_none: List[Answer | None] = [state.get_last_answer() for state in states]
+    def _batch_eval(self, states: list[State]) -> bool:
+        answers_with_none: list[Answer | None] = [state.get_last_answer() for state in states]
         answers = [ans for ans in answers_with_none if ans is not None]
         for answer in answers:
             answer.gt_evaluation = Evaluation(score=0.0, success=False)
         return False  # default implementation has no success
 
     # noinspection PyMethodMayBeStatic
-    def _selection(self, states: List[State]) -> State:
-        answers_with_none: List[Answer | None] = [state.get_last_answer() for state in states]
+    def _selection(self, states: list[State]) -> State:
+        answers_with_none: list[Answer | None] = [state.get_last_answer() for state in states]
         answers = [ans for ans in answers_with_none if ans is not None]
         if any(answer.evaluation is None for answer in answers):
             return states[0]
@@ -70,7 +69,6 @@ class Evaluator:
 
     def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
         answer.gt_evaluation = Evaluation(score=0.0, success=False)
-        return
 
 
 def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentType, Evaluator], judge_provider: str,

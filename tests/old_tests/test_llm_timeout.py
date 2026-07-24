@@ -11,18 +11,19 @@ Esecuzione:
     py test_code/test_llm_timeout.py
 """
 
-import sys
-import os
-import time
-import socket
-import threading
 import http.server
+import os
+import socket
+import sys
+import threading
+import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
 # ── Import moduli da patchare ────────────────────────────────────────────────
 import workflow as da
+
 import data as utils_module
 
 _ORIG_DA   = da.OLLAMA_REQUEST_TIMEOUT
@@ -163,7 +164,7 @@ try:
         _type_lower = type(exc).__name__.lower()
         if "timeout" in _err_lower or "timed out" in _err_lower or "timeout" in _type_lower:
             _existing = state.get("_step_errors") or {}
-            _existing[step_name] = f"[LLM_TIMEOUT:{da.OLLAMA_REQUEST_TIMEOUT}s] {str(exc)}"
+            _existing[step_name] = f"[LLM_TIMEOUT:{da.OLLAMA_REQUEST_TIMEOUT}s] {exc!s}"
             result["_step_errors"] = _existing
 
         step_err = (result.get("_step_errors") or {}).get(step_name, "")

@@ -1,13 +1,9 @@
 from io import StringIO
-from typing import List, TYPE_CHECKING
 
 import pandas as pd
 
-from arco.core import Evaluation, Evaluator, State, Answer, AgentType
+from arco.core import AgentType, Answer, Evaluation, Evaluator, State
 from arco.data import normalize_dataframe_values
-
-if TYPE_CHECKING:
-    pass
 
 
 def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2) -> float:
@@ -80,7 +76,7 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2
 
 
 class RetrieverEvaluator(Evaluator):
-    def _batch_eval(self, states: List[State]):
+    def _batch_eval(self, states: list[State]):
         """
         Each result's score is its average pairwise row-IoU to all other results.
         The most "agreed upon" DataFrame wins.
@@ -88,7 +84,7 @@ class RetrieverEvaluator(Evaluator):
 
         # Extract DataFrames from results
         # pyrefly: ignore [bad-assignment]
-        answers: List[Answer] = [r.get_last_answer(AgentType.RETRIEVER) for r in states]
+        answers: list[Answer] = [r.get_last_answer(AgentType.RETRIEVER) for r in states]
         if None in answers:
             raise ValueError(f"One {State.__name__} did not contain a {AgentType.RETRIEVER.value} {Answer.__name__}")
 

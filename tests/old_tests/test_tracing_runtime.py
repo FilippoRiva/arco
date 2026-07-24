@@ -2,9 +2,9 @@ import types
 from pathlib import Path
 
 import pandas as pd
-
-from core.config import ArcoConfig, AgentConfig
+from core.config import AgentConfig, ArcoConfig
 from workflow import SalesDataWorkflow, TracingHelper
+
 from data import ColumnSchema, DatabaseSchema, TableSchema
 
 
@@ -90,7 +90,7 @@ def make_agent(tracer=None):
     agent.cache = types.SimpleNamespace(save_run=lambda **kwargs: None)
     agent.agent_config = types.SimpleNamespace(
         get_step_config=lambda name: AgentConfig(agent_name=name, use_cache=False),
-        to_dict=lambda: {},
+        to_dict=dict,
     )
     agent.graph = types.SimpleNamespace(invoke=lambda state: {**state, "answer": ["graph-answer"]})
     return agent

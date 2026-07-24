@@ -9,9 +9,9 @@ class AgentType(str):
     but new agent types can be defined anywhere just by instantiating
     AgentType("SomeName") — no need to touch this class.
     """
-    _registry: dict[str, "AgentType"] = {}
+    _registry: dict[str, AgentType] = {}
 
-    def __new__(cls, value: str) -> "AgentType":
+    def __new__(cls, value: str) -> AgentType:
         # Records into the registry of AgentTypes
         if value in cls._registry:
             return cls._registry[value]
@@ -31,6 +31,6 @@ class AgentType(str):
         return str(self)
 
     @classmethod
-    def all(cls) -> list["AgentType"]:
+    def all(cls) -> list[AgentType]:
         """All agent types registered so far."""
         return list(cls._registry.values())

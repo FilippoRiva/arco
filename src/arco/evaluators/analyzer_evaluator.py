@@ -1,9 +1,8 @@
 import json
-from typing import Optional, Dict
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import AgentType, State, Answer, Evaluation, Evaluator
+from arco.core import AgentType, Answer, Evaluation, Evaluator, State
 from arco.core.llm_tools import get_llm
 
 
@@ -69,7 +68,7 @@ class AnalyzerEvaluator(Evaluator):
     }}"""
 
     @staticmethod
-    def _parse_judge_json(raw_text: str) -> Dict:
+    def _parse_judge_json(raw_text: str) -> dict:
         """Parse judge JSON response with robust error handling."""
         try:
             # Clean Markdown and find JSON
@@ -134,10 +133,9 @@ class AnalyzerEvaluator(Evaluator):
         ]
         score = sum(scores) / 3.0
         last_analyzer_answer.evaluation = Evaluation(score=(score - 1) / 4.0)
-        return
 
     @staticmethod
-    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_analysis: Optional[str] = None) -> Evaluation:
+    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_analysis: str | None = None) -> Evaluation:
         """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
         generated_analysis = answer.agent_output['analysis']

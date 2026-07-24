@@ -33,21 +33,6 @@ dependencies = [
     "grandalf",
 ]
 
-# --- Development & Evaluation Extras ---
-# These are only installed when explicitly requested (e.g., pip install -e ".[dev]")
-[project.optional-dependencies]
-sales = [
-    "matplotlib>=3.11.1",
-    "pyarrow>=25.0.0",
-    "duckdb>=1.5.2",
-]
-dev = [
-    "ipykernel>=7.2.0",
-    "pytest>=9.0.3",
-    "pytest-cov>=7.1.0",
-    "scipy"
-]
-
 
 [project.urls]
 # Arco is a fork from the original DataAgent project
@@ -59,3 +44,19 @@ arco = "arco.cli.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# --- Development & Workflows-specific extras ---
+# These are only installed when explicitly requested (e.g., 'uv sync --all-extras' or 'uv sync --extra dev')
+[dependency-groups]
+sales = [
+    "matplotlib>=3.11.1",
+    "pyarrow>=25.0.0",
+    "duckdb>=1.5.2",
+]
+dev = [
+    "ruff>=0.16.0",
+    "ipykernel>=7.2.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "scipy"
+]

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, replace, asdict
+from dataclasses import asdict, dataclass, replace
 
 
 @dataclass(frozen=True)

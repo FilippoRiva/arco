@@ -1,6 +1,6 @@
 import dataclasses
-from dataclasses import dataclass, asdict
-from typing import Literal, Dict, Any, TYPE_CHECKING
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import yaml
@@ -91,7 +91,7 @@ class AgentConfig:
             self.enable_budget_controller = global_config.enable_budget_controller
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> AgentConfig:
+    def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
         """Create StepConfig from dict (for deserialization)."""
         # Filter out unknown keys and non-serializable fields
         valid_keys = [f.name for f in dataclasses.fields(AgentConfig)]
@@ -134,8 +134,7 @@ class AgentConfig:
             self.top_k_max = self.top_k_min
             self.top_p_max = self.top_p_min
         else:
-            if self.temp_max < self.temp_min:
-                self.temp_max = self.temp_min
+            self.temp_max = max(self.temp_max, self.temp_min)
             if self.top_k_min and self.top_k_max and self.top_k_max < self.top_k_min:
                 self.top_k_max = self.top_k_min
             if self.top_p_min and self.top_p_max and self.top_p_max < self.top_p_min:

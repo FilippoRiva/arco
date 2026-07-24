@@ -17,8 +17,8 @@ import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.utils import (
-    compute_csv_iou,
     compare_dataframes_iou,
+    compute_csv_iou,
     make_csv_evaluator_no_gt,
     normalize_dataframe_values,
 )

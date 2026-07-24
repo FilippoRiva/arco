@@ -1,7 +1,9 @@
+from unittest.mock import Mock
+
 import pytest
 
-from arco.core import Evaluator, State, Answer, AgentType, Evaluation
-from unittest.mock import Mock
+from arco.core import AgentType, Answer, Evaluation, Evaluator, State
+
 
 @pytest.fixture
 def config():

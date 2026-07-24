@@ -1,5 +1,6 @@
 import time
-from typing import Any, Generator, TYPE_CHECKING
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any
 
 from rich.live import Live
 from rich.panel import Panel
@@ -91,7 +92,7 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
     if not last_state:
         status.stop()
         live.console.print(Panel(
-            f"[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
+            "[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
             border_style="red"))
         return None
 

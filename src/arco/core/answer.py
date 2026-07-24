@@ -1,10 +1,7 @@
-import io
 from collections import defaultdict
 from copy import deepcopy
-from dataclasses import dataclass, field, asdict
-from typing import List, Any, Literal
-
-import pandas as pd
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal
 
 from .agent import AgentType
 from .agent_config import AgentConfig
@@ -26,7 +23,7 @@ class Answer:
     gt_evaluation: Evaluation | None = None
 
     # Discarded Best-of-N Answers
-    discarded_bon_answers: List[Answer] | None = None
+    discarded_bon_answers: list[Answer] | None = None
 
     # Error message
     error: str | None = None

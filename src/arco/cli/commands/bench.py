@@ -23,19 +23,17 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
-    from arco.cli.viz import display, printer
-    from arco.core import evaluator
-    from arco.data import BenchmarkSummary
     from arco.data.benchmark_dataset import BenchmarkDataset
     from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
     status.start()
-    from pathlib import Path
-    import os
-    import pandas as pd
-    import time
     import json
+    import os
+    import time
+    from pathlib import Path
+
+    import pandas as pd
     console.print("[green]✓[/green] Pre-benchmark dependencies loaded")
     status.stop()
 
@@ -122,15 +120,17 @@ def run_benchmark(
         benchmark_id: str | None = None,
         verbose: bool = False
 ) -> tuple[pd.DataFrame, list[State]]:
+    import json
+    from functools import partial
+
+    import pandas as pd
+    from rich.rule import Rule
+
     from arco.cli.console import console
     from arco.cli.viz import display, printer
     from arco.core import evaluator
     from arco.data import BenchmarkSummary
-    from functools import partial
-    import pandas as pd
-    from rich.rule import Rule
     from arco.workflows.workflow_executor import WorkflowExecutor
-    import json
 
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
@@ -187,8 +187,9 @@ def run_benchmark(
 
 
 def aggregate_results(run_config_to_result_list: list[tuple[dict, pd.DataFrame]]) -> pd.DataFrame:
-    import json
     import collections
+    import json
+
     import pandas as pd
 
     to_aggregate = [

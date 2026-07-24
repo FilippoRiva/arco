@@ -1,16 +1,14 @@
 import csv
 import os
-from typing import List, Optional
 
 import pandas as pd
 from pandas import Series
-
 
 # -----------------------------
 # Utils for DataFrame Management
 # -----------------------------
 
-def text_to_csv(text: str) -> List[List[str]]:
+def text_to_csv(text: str) -> list[list[str]]:
     """Convert text table to CSV rows.
 
     Handles both space-separated and pipe-separated formats.
@@ -37,7 +35,7 @@ def text_to_csv(text: str) -> List[List[str]]:
     return rows
 
 
-def text_to_dataframe(text: str) -> Optional[pd.DataFrame]:
+def text_to_dataframe(text: str) -> pd.DataFrame | None:
     """Convert text table (from DataFrame.to_string()) back to a pandas DataFrame.
 
     This function handles the output format from DuckDB query results that have been
@@ -106,7 +104,7 @@ def text_to_dataframe(text: str) -> Optional[pd.DataFrame]:
         return None
 
 
-def save_csv(rows: List[List[str]], filepath: str):
+def save_csv(rows: list[list[str]], filepath: str):
     """Save rows to CSV file."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w', newline='', encoding='utf-8') as f:

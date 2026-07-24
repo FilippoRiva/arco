@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType, llm_tools
+from arco.core import Agent, AgentType, Answer, llm_tools
 from arco.core.agent import AgentException
 from arco.evaluators import AnalyzerEvaluator
 
 if TYPE_CHECKING:
+    from arco.core import Evaluator, State
     from arco.core.llm_tools import CoTRefiner
-    from arco.core import State, Evaluator
 
 
 class Analyzer(Agent):
@@ -115,12 +115,12 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             return state.add_answer(answer)
 
         except Exception as e:
-            print(f"Error analyzing data: {str(e)}")
+            print(f"Error analyzing data: {e!s}")
 
             answer: Answer = Answer(
                 agent_id=self.type,
                 message="Couldn't analyze data. Check error message for details",
-                error=f"Error accessing data: {str(e)}",
+                error=f"Error accessing data: {e!s}",
                 agent_config=deepcopy(state.get_agent_config(AgentType.ANALYZER)),
             )
 

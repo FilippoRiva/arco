@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType, llm_tools, Evaluator
+from arco.core import Agent, Answer, Evaluator, llm_tools
 
 if TYPE_CHECKING:
-    from arco.core.llm_tools import CoTRefiner
     from arco.core import State
+    from arco.core.llm_tools import CoTRefiner
 
 _VALID_AGENTS = {"retriever", "analyzer", "visualizer"}
 

@@ -4,10 +4,11 @@ that join with Store_Sales_Price_Elasticity_Promotions_Data.parquet.
 
 Run once: py data/generate_synthetic_tables.py
 """
+import os
+
+import duckdb
 import numpy as np
 import pandas as pd
-import duckdb
-import os
 
 RNG = np.random.default_rng(seed=42)
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))

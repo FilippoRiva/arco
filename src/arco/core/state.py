@@ -1,8 +1,8 @@
 import dataclasses
 import json
-from dataclasses import dataclass, field, replace, asdict
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any
 
 from .agent_type import AgentType
 from .answer import Answer
@@ -23,7 +23,7 @@ class State:
     agent_configs: dict[AgentType, AgentConfig]
 
     # List of agent's answers
-    answers: List[Answer] = field(default_factory=list)
+    answers: list[Answer] = field(default_factory=list)
 
     # List of metrics profiling the current state
     global_profiling_data: ProfilingData = field(default_factory=ProfilingData)
@@ -37,7 +37,7 @@ class State:
         """
         return dataclasses.replace(self, answers=self.answers + [answer])
 
-    def get_last_answer(self, agent_type: Optional[AgentType] = None) -> Answer | None:
+    def get_last_answer(self, agent_type: AgentType | None = None) -> Answer | None:
         """
         Retrieve the most recent answer entry for a specific agent type from the state.
 

@@ -1,4 +1,9 @@
-import httpx, http.server, socket, threading, time
+import http.server
+import socket
+import threading
+import time
+
+import httpx
 
 _stop = threading.Event()
 

@@ -1,14 +1,15 @@
 import os
 import time
-from typing import Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from arco.core import Config
 
-from langchain_core.callbacks import BaseCallbackHandler
-from codecarbon import EmissionsTracker
-from collections import defaultdict
 import logging
+from collections import defaultdict
+
+from codecarbon import EmissionsTracker
+from langchain_core.callbacks import BaseCallbackHandler
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
 
@@ -95,14 +96,14 @@ class LLMCallAccumulator(BaseCallbackHandler):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._starts: Dict[str, float | int] = {}
-        self._cc_trackers: Dict[str, Any] = {}
+        self._starts: dict[str, float | int] = {}
+        self._cc_trackers: dict[str, Any] = {}
         self.total_time: float | int = 0.0
         self._cc_output_dir: str | None = os.path.join(LLMCallAccumulator._save_dir,
                                                        name) if LLMCallAccumulator._save_dir else None
         self._enabled: bool = LLMCallAccumulator._enabled
         # Accumulated energy across all invoke() calls for this step
-        self.energy_dict: Dict[str, float | int] = defaultdict(float)
+        self.energy_dict: dict[str, float | int] = defaultdict(float)
 
         if self._cc_output_dir:
             os.makedirs(self._cc_output_dir, exist_ok=True)

@@ -42,7 +42,8 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
     status.start()
-    import os, sys
+    import os
+    import sys
     console.print("[green]✓[/green] Built-in modules loaded")
     console.print("[green]✓[/green] Visualization tools loaded")
     from arco.workflows.workflow_executor import WorkflowExecutor

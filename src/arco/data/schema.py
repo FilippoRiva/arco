@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 
 @dataclass
@@ -41,7 +41,7 @@ class ColumnSchema:
     name: str
     description: str
     data_type: str = "VARCHAR"
-    example_values: Optional[List[str]] = None
+    example_values: list[str] | None = None
     nullable: bool = True
 
     def to_dict(self):
@@ -67,7 +67,7 @@ class TableSchema:
     name: str
     description: str
     file_path: str
-    columns: List[ColumnSchema] = field(default_factory=list)
+    columns: list[ColumnSchema] = field(default_factory=list)
 
     def to_dict(self):
         return {
@@ -96,9 +96,9 @@ class DatabaseSchema:
             two-step table-selection approach. Default is 5.
     """
 
-    tables: List[TableSchema] = field(default_factory=list)
+    tables: list[TableSchema] = field(default_factory=list)
     compact_threshold: int = 5
-    _table_index: Dict[str, TableSchema] = field(default_factory=dict, init=False)
+    _table_index: dict[str, TableSchema] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
         # Initialize the index once tables are provided
@@ -107,7 +107,7 @@ class DatabaseSchema:
         else:
             self.tables = []
 
-    def get_table(self, name: str) -> Optional[TableSchema]:
+    def get_table(self, name: str) -> TableSchema | None:
         """Return the TableSchema for a given table name, or None if not found."""
         return self._table_index.get(name)
 
@@ -137,7 +137,7 @@ class DatabaseSchema:
             lines.append("")
         return "\n".join(lines).strip()
 
-    def get_full_schema_str(self, table_names: Optional[List[str]] = None) -> str:
+    def get_full_schema_str(self, table_names: list[str] | None = None) -> str:
         """Return full schema details including column descriptions.
 
         Args:
@@ -175,15 +175,16 @@ class DatabaseSchema:
             lines.append("")
         return "\n".join(lines).strip()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             table_name: table_schema.to_dict() for (table_name, table_schema) in self._table_index.items()
         }
 
     @classmethod
     def from_data_dir(cls, data_dir_path: str) -> DatabaseSchema:
-        import yaml
         from glob import glob
+
+        import yaml
         data_dir = os.path.abspath(data_dir_path)
 
         schema_files = sorted(glob(os.path.join(data_dir, '*_schema.yaml')))

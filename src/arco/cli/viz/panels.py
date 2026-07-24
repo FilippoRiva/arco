@@ -32,7 +32,7 @@ def _format_answer_subtitle(answer: Answer) -> str:
 def _render_discarded_answer_panel(answer: Answer) -> Panel:
     return Panel(
         renderable=answer.message,
-        title=f"[dim cyan]Discarded[/dim cyan]",
+        title="[dim cyan]Discarded[/dim cyan]",
         subtitle=_format_answer_subtitle(answer),
         subtitle_align="right",
         border_style="dim",

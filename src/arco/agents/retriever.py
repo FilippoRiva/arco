@@ -1,20 +1,20 @@
 import json
 from copy import deepcopy
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import duckdb
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType, llm_tools
+from arco.core import Agent, AgentType, Answer, llm_tools
 from arco.core.agent import AgentException
-from arco.data import normalize_dataframe_values, DatabaseSchema
+from arco.data import DatabaseSchema, normalize_dataframe_values
 from arco.evaluators import RetrieverEvaluator
 
 if TYPE_CHECKING:
+    from arco.core import AgentConfig, Evaluator, State
     from arco.core.llm_tools import CoTRefiner
     from arco.core.tracking import LLMCallAccumulator
-    from arco.core import AgentConfig, Evaluator, State
 
 
 class Retriever(Agent):
@@ -280,7 +280,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             answer: Answer = Answer(
                 agent_id=self.type,
                 message="Couldn't access data. Check error message for specific details",
-                error=f"Error accessing data: {str(e)}",
+                error=f"Error accessing data: {e!s}",
                 agent_config=deepcopy(state.get_agent_config(self.type))
             )
 
@@ -288,9 +288,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
     @staticmethod
     def apply_standardization(
-            results: List[State],
+            results: list[State],
             llm: BaseChatModel,
-            original_schema: DatabaseSchema) -> List[State]:
+            original_schema: DatabaseSchema) -> list[State]:
 
         # Collect candidate info
         candidates = []
@@ -388,7 +388,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             df = df.rename(columns=rename_map)
 
             # Reorder to canonical order (only if all canonical cols are present)
-            cols_to_order: List[str] = list(canonical_cols)
+            cols_to_order: list[str] = list(canonical_cols)
             if set(cols_to_order).issubset(set(df.columns)):
                 df = df.reindex(columns=cols_to_order)
 
@@ -400,7 +400,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             ret_ans.agent_output['data_str'] = result_df.to_csv(index=False)
         return results
 
-    def post_generation_hooks(self, results: List[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> List[
+    def post_generation_hooks(self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> list[
         State]:
         """Use an LLM to standardize column names across best-of-n candidates.
 

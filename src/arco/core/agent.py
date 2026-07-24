@@ -3,7 +3,7 @@ import math
 import sys
 import time
 from abc import ABC, abstractmethod
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
@@ -17,6 +17,7 @@ from .state import State
 if TYPE_CHECKING:
     from arco.core.llm_tools import CoTRefiner
     from arco.core.tracking import LLMCallAccumulator
+
     from .config import AgentConfig
 
 
@@ -44,7 +45,7 @@ class Agent(ABC):
         """
         ...
 
-    def execute_greedy(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> List[State]:
+    def execute_greedy(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> list[State]:
         # Instantiate LLM
         llm = llm_tools.get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
@@ -59,7 +60,7 @@ class Agent(ABC):
             )
         return [result]
 
-    def execute_best_of_n(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> List[State]:
+    def execute_best_of_n(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> list[State]:
         # Initialize results and their scores
         results = []
 
@@ -194,7 +195,7 @@ class Agent(ABC):
         answer.budget_controller_choice = "end"
         return state
 
-    def post_generation_hooks(self, results: List[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> List[
+    def post_generation_hooks(self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> list[
         State]:
         return results
 

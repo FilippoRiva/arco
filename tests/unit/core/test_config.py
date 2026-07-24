@@ -1,10 +1,9 @@
 import os
-from dataclasses import fields
 from pathlib import Path
 
 import pytest
 
-from arco.core import Config, AgentType, AgentConfig
+from arco.core import AgentConfig, AgentType, Config
 from arco.data import DatabaseSchema
 
 ROOT_DIR = Path(__file__).parent.parent.parent.parent

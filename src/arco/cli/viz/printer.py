@@ -1,6 +1,6 @@
 from collections import defaultdict
 from statistics import mean
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from rich import box
 from rich.panel import Panel
@@ -11,8 +11,8 @@ from arco.cli.console import console
 from arco.core import Config
 
 if TYPE_CHECKING:
-    from arco.workflows import Workflow
     from arco.data import BenchmarkSummary
+    from arco.workflows import Workflow
 
 
 def print_benchmark_header(name: str, description: str, changes: dict[str, Any]) -> None:

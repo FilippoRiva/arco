@@ -1,9 +1,9 @@
 import json
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Evaluator, Evaluation, AgentType, llm_tools, Answer
+from arco.core import AgentType, Answer, Evaluation, Evaluator, llm_tools
 
 if TYPE_CHECKING:
     from arco.core import State
@@ -70,7 +70,7 @@ class VisualizerEvaluator(Evaluator):
     }}"""
 
     @staticmethod
-    def _parse_vis_no_gt_judge_json(raw_text: str) -> Dict:
+    def _parse_vis_no_gt_judge_json(raw_text: str) -> dict:
         """Parse no-GT visualization judge JSON response."""
         try:
             content = raw_text.strip().replace("```json", "").replace("```", "").strip()
@@ -95,7 +95,7 @@ class VisualizerEvaluator(Evaluator):
             }
 
     @staticmethod
-    def _compute_vis_no_gt_score(evaluation: Dict) -> float:
+    def _compute_vis_no_gt_score(evaluation: dict) -> float:
         """Compute weighted normalized score from no-GT vis judge evaluation."""
         weights = {
             "data_suitability": 0.30,
@@ -144,7 +144,6 @@ class VisualizerEvaluator(Evaluator):
         evaluation = VisualizerEvaluator._parse_vis_no_gt_judge_json(raw_content)
         overall_score = VisualizerEvaluator._compute_vis_no_gt_score(evaluation)
         last_visualizer_answer.evaluation = Evaluation(score=overall_score)
-        return
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         """
@@ -153,7 +152,6 @@ class VisualizerEvaluator(Evaluator):
         """
         llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
         VisualizerEvaluator.judge(state, llm)
-        return
 
     VIS_JUDGE_PROMPT_GT = """You are an expert data visualization evaluator. Your task is to assess whether a generated visualization achieves the same analytical purpose as a reference visualization.
     
@@ -218,7 +216,7 @@ class VisualizerEvaluator(Evaluator):
     }}"""
 
     @staticmethod
-    def _parse_vis_judge_json(raw_text: str) -> Dict:
+    def _parse_vis_judge_json(raw_text: str) -> dict:
         """Parse visualization judge JSON response with robust error handling."""
         try:
             content = raw_text.strip().replace("```json", "").replace("```", "").strip()
@@ -237,7 +235,7 @@ class VisualizerEvaluator(Evaluator):
                         parsed[criterion] = {"score": 1, "reasoning": "Missing", "violations": []}
 
                 return parsed
-        except Exception as e:
+        except Exception:
             return {
                 "axis_correctness": {"score": 1, "reasoning": "Parse failed", "x_match": False, "y_match": False},
                 "chart_type": {"score": 1, "reasoning": "Parse failed", "type_match": False},
@@ -246,7 +244,7 @@ class VisualizerEvaluator(Evaluator):
             }
 
     @staticmethod
-    def _compute_visualization_score(evaluation: Dict) -> float:
+    def _compute_visualization_score(evaluation: dict) -> float:
         """Compute weighted normalized score from judge evaluation.
 
         Returns:
@@ -270,7 +268,7 @@ class VisualizerEvaluator(Evaluator):
 
     @staticmethod
     def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_config: str = None,
-                                gt_code: str = None, gt_visual_requirements: Dict = None) -> State:
+                                gt_code: str = None, gt_visual_requirements: dict = None) -> State:
         """
         Evaluate visualization quality using LLM-as-a-Judge.
 

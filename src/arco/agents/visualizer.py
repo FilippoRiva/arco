@@ -1,17 +1,17 @@
 import json
 from copy import deepcopy
 from json import JSONDecodeError
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, AgentType, llm_tools
+from arco.core import Agent, AgentType, Answer, llm_tools
 from arco.core.agent import AgentException
 from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core.llm_tools import CoTRefiner
     from arco.core import Evaluator, State
+    from arco.core.llm_tools import CoTRefiner
 
 
 class Visualizer(Agent):
@@ -212,7 +212,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         super().__init__()
 
     @staticmethod
-    def _parse_chart_config(raw_text: str) -> Dict[str, str]:
+    def _parse_chart_config(raw_text: str) -> dict[str, str]:
         """Parse a chart configuration JSON from a raw LLM response.
 
         The function attempts to tolerate code fences and extra prose, extracting the
@@ -337,7 +337,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
                 + code.replace("plt.show()", "plt.close('all')")
         )
-        namespace: Dict = {
+        namespace: dict = {
             "data_df": data_df,
             "config": chart_config
         }

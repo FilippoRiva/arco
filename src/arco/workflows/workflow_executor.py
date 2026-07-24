@@ -1,7 +1,7 @@
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from typing import Generator
 
 import requests
 from langgraph.graph.state import CompiledStateGraph
@@ -102,7 +102,7 @@ class WorkflowExecutor:
                     model=self.config.default_model,
                 )
                 return True
-            except Exception as e:
+            except Exception:
                 return False
         else:
             try:
@@ -110,7 +110,7 @@ class WorkflowExecutor:
                 requests.get(f"{base}/api/version", timeout=3).json()
                 reachable = self._check_ollama()
                 return reachable
-            except Exception as e:
+            except Exception:
                 return False
 
     def _check_ollama(self):
@@ -120,5 +120,5 @@ class WorkflowExecutor:
                 model=self.config.default_model,
             ).invoke("Hello, how are you?")
             return True
-        except Exception as e:
+        except Exception:
             return False

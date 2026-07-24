@@ -2,7 +2,6 @@
 import argparse
 import sys
 import warnings
-from typing import TYPE_CHECKING
 
 # Suppress all general UserWarnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -12,15 +11,13 @@ from langchain_core._api.deprecation import LangChainPendingDeprecationWarning
 
 warnings.filterwarnings("ignore", category=LangChainPendingDeprecationWarning)
 
-if TYPE_CHECKING:
-    pass
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    from arco.cli.commands import run, bench
+    from arco.cli.commands import bench, run
     from arco.cli.console import console
 
     ## Parsing with argparse

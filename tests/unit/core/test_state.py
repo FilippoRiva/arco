@@ -1,11 +1,12 @@
 import time
+from unittest.mock import Mock
 
 import pytest
 
+from arco.core import AgentType, Answer
 from arco.core.config import AgentConfig
 from arco.core.state import State
-from arco.core import Answer, AgentType
-from unittest.mock import Mock
+
 
 @pytest.fixture()
 def agent_config():
