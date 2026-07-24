@@ -58,8 +58,6 @@ class Answer:
             ans.discarded_bon_answers = [
                 Answer.from_dict(discarded_ans) for discarded_ans in dictionary['discarded_bon_answers']
             ]
-        if 'data_str' in ans.agent_output.keys():
-            ans.agent_output['data_df'] = pd.read_csv(io.StringIO(ans.agent_output['data_str']))
         if ans.profiling_data:
             ans.profiling_data = ProfilingData(**dictionary["profiling_data"])
         return ans
