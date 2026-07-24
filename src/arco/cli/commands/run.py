@@ -9,20 +9,17 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 def register(subparsers: ArgumentParser) -> ArgumentParser:
     parser = subparsers.add_parser(
-        "run",
-        help="Invokes the agent given an arco configuration file"
+        "run", help="Invokes the agent given an arco configuration file"
     )
 
     parser.add_argument(
-        "--config", "-c",
-        type=str,
-        required=True,
-        help="Path to config YAML"
+        "--config", "-c", type=str, required=True, help="Path to config YAML"
     )
     parser.add_argument(
-        "--verbose", "-v",
-        action='store_true',
-        help="Whether if the agent's configuration and other metrics should be shown after each execution"
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Whether if the agent's configuration and other metrics should be shown after each execution",
     )
     return parser
 
@@ -44,16 +41,20 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     status.start()
     import os
     import sys
+
     console.print("[green]✓[/green] Built-in modules loaded")
     console.print("[green]✓[/green] Visualization tools loaded")
     from arco.workflows.workflow_executor import WorkflowExecutor
+
     console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
 
     ## Initialization
     # Load config from YAML
     if not os.path.isfile(args.config):
-        console.print(f"[bold red]Error[/bold red]: config file not found at [bold cyan]{args.config}[/bold cyan]")
+        console.print(
+            f"[bold red]Error[/bold red]: config file not found at [bold cyan]{args.config}[/bold cyan]"
+        )
         parser.print_help()
         sys.exit(1)
 

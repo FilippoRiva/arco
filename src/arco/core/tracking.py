@@ -33,7 +33,7 @@ def initialize_tracking(config: Config):
         measure_power_secs=1,
         log_level="error",
         allow_multiple_runs=True,
-        experiment_id=config.run_id
+        experiment_id=config.run_id,
     )
     # LLM Emission Tracking
     LLMCallAccumulator.enable(codecarbon_dir)
@@ -99,8 +99,11 @@ class LLMCallAccumulator(BaseCallbackHandler):
         self._starts: dict[str, float | int] = {}
         self._cc_trackers: dict[str, Any] = {}
         self.total_time: float | int = 0.0
-        self._cc_output_dir: str | None = os.path.join(LLMCallAccumulator._save_dir,
-                                                       name) if LLMCallAccumulator._save_dir else None
+        self._cc_output_dir: str | None = (
+            os.path.join(LLMCallAccumulator._save_dir, name)
+            if LLMCallAccumulator._save_dir
+            else None
+        )
         self._enabled: bool = LLMCallAccumulator._enabled
         # Accumulated energy across all invoke() calls for this step
         self.energy_dict: dict[str, float | int] = defaultdict(float)
@@ -141,11 +144,21 @@ class LLMCallAccumulator(BaseCallbackHandler):
             # The full breakdown is in final_emissions_data, same as the original code.
             _ed = getattr(tracker, "final_emissions_data", None)
             if _ed is not None:
-                self.energy_dict["energy_consumed_kwh"] += getattr(_ed, "energy_consumed", 0.0) or 0.0
-                self.energy_dict["cpu_energy_kwh"] += getattr(_ed, "cpu_energy", 0.0) or 0.0
-                self.energy_dict["gpu_energy_kwh"] += getattr(_ed, "gpu_energy", 0.0) or 0.0
-                self.energy_dict["ram_energy_kwh"] += getattr(_ed, "ram_energy", 0.0) or 0.0
-                self.energy_dict["emissions_kg_co2"] += getattr(_ed, "emissions", 0.0) or 0.0
+                self.energy_dict["energy_consumed_kwh"] += (
+                    getattr(_ed, "energy_consumed", 0.0) or 0.0
+                )
+                self.energy_dict["cpu_energy_kwh"] += (
+                    getattr(_ed, "cpu_energy", 0.0) or 0.0
+                )
+                self.energy_dict["gpu_energy_kwh"] += (
+                    getattr(_ed, "gpu_energy", 0.0) or 0.0
+                )
+                self.energy_dict["ram_energy_kwh"] += (
+                    getattr(_ed, "ram_energy", 0.0) or 0.0
+                )
+                self.energy_dict["emissions_kg_co2"] += (
+                    getattr(_ed, "emissions", 0.0) or 0.0
+                )
         except Exception as _e:
             print(f"[CodeCarbon] per-invoke tracker stop failed: {_e}")
 

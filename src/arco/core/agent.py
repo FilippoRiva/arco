@@ -34,33 +34,32 @@ class Agent(ABC):
     @abstractmethod
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """
-            Provides the core functionality of the agent.
+        Provides the core functionality of the agent.
 
-            Args:
-                state (State): State of the agent.
-                llm : BaseChatModel instance of a large language model to be used at inference
+        Args:
+            state (State): State of the agent.
+            llm : BaseChatModel instance of a large language model to be used at inference
 
-            Returns:
-                Updated state with analysis appended to answers
+        Returns:
+            Updated state with analysis appended to answers
         """
         ...
 
-    def execute_greedy(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> list[State]:
+    def execute_greedy(
+        self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator
+    ) -> list[State]:
         # Instantiate LLM
         llm = llm_tools.get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
         # Run inference
         result: State = self.core(state, llm)
         if config.cot_n > 1:
-            result: State = self.apply_cot_iteration(
-                state,
-                llm,
-                result,
-                config
-            )
+            result: State = self.apply_cot_iteration(state, llm, result, config)
         return [result]
 
-    def execute_best_of_n(self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator) -> list[State]:
+    def execute_best_of_n(
+        self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator
+    ) -> list[State]:
         # Initialize results and their scores
         results = []
 
@@ -85,21 +84,12 @@ class Agent(ABC):
 
             result: State = self.core(state, llm)
             if config.cot_n > 1:
-                result: State = self.apply_cot_iteration(
-                    state,
-                    llm,
-                    result,
-                    config
-                )
+                result: State = self.apply_cot_iteration(state, llm, result, config)
             results.append(result)
         return results
 
     def apply_cot_iteration(
-            self,
-            state: State,
-            llm,
-            initial_result: State,
-            config: AgentConfig
+        self, state: State, llm, initial_result: State, config: AgentConfig
     ) -> State:
         """Apply up to cot_n iterative CoT refinement steps to a single LLM call.
 
@@ -136,7 +126,9 @@ class Agent(ABC):
                 result = new_result
             else:
                 new_output = str(new_result.answers[-1])
-                ratio = difflib.SequenceMatcher(None, previous_output, new_output).ratio()
+                ratio = difflib.SequenceMatcher(
+                    None, previous_output, new_output
+                ).ratio()
 
                 if ratio >= self._COT_SIMILARITY_THRESHOLD:
                     break
@@ -195,8 +187,9 @@ class Agent(ABC):
         answer.budget_controller_choice = "end"
         return state
 
-    def post_generation_hooks(self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> list[
-        State]:
+    def post_generation_hooks(
+        self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
+    ) -> list[State]:
         return results
 
     def get_config_and_execute(self, state: State) -> State:
@@ -214,31 +207,42 @@ class Agent(ABC):
 
         # Get llm call time accumulator for profiling
         from arco.core.llm_tools import LLMCallAccumulator
+
         llm_acc = LLMCallAccumulator(self.type)
 
         ###
         # Inference
         ###
         if agent_config.n == 1:
-            results = self.execute_greedy(state=state, config=agent_config, llm_acc=llm_acc)
+            results = self.execute_greedy(
+                state=state, config=agent_config, llm_acc=llm_acc
+            )
         else:
-            results = self.execute_best_of_n(state=state, config=agent_config, llm_acc=llm_acc)
+            results = self.execute_best_of_n(
+                state=state, config=agent_config, llm_acc=llm_acc
+            )
 
         # Run Post Generation Hooks (dynamically overridden if needed, see Retriever as an example)
-        results = self.post_generation_hooks(results, llm_acc=llm_acc, config=agent_config)
+        results = self.post_generation_hooks(
+            results, llm_acc=llm_acc, config=agent_config
+        )
 
         ###
         # Evaluation
         ###
-        results, best_result = self.get_evaluator().evaluate_and_select(results=results, config=agent_config)
+        results, best_result = self.get_evaluator().evaluate_and_select(
+            results=results, config=agent_config
+        )
 
         ###
         # Profiling
         ###
         total_agent_time = time.perf_counter() - agent_t0
-        profiling_data = ProfilingData(total_time=total_agent_time,
-                                       llm_time=llm_acc.total_time,
-                                       **llm_acc.energy_dict)
+        profiling_data = ProfilingData(
+            total_time=total_agent_time,
+            llm_time=llm_acc.total_time,
+            **llm_acc.energy_dict,
+        )
         best_result = best_result.set_profiling_data(profiling_data, self.type)
 
         return best_result

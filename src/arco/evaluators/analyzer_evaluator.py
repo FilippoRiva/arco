@@ -80,12 +80,16 @@ class AnalyzerEvaluator(Evaluator):
             end = content.rfind("}")
 
             if start != -1 and end != -1:
-                parsed = json.loads(content[start:end + 1])
+                parsed = json.loads(content[start : end + 1])
 
                 # Ensure all criteria exist
                 for criterion in ["correctness", "completeness", "faithfulness"]:
                     if criterion not in parsed:
-                        parsed[criterion] = {"score": 0, "reasoning": "Missing", "issues": []}
+                        parsed[criterion] = {
+                            "score": 0,
+                            "reasoning": "Missing",
+                            "issues": [],
+                        }
 
                 return parsed
         except Exception as e:
@@ -95,7 +99,11 @@ class AnalyzerEvaluator(Evaluator):
         return {
             "correctness": {"score": 0, "reasoning": "Parse failed", "issues": []},
             "completeness": {"score": 0, "reasoning": "Parse failed", "missing": []},
-            "faithfulness": {"score": 0, "reasoning": "Parse failed", "hallucinations": []}
+            "faithfulness": {
+                "score": 0,
+                "reasoning": "Parse failed",
+                "hallucinations": [],
+            },
         }
 
     @staticmethod
@@ -104,23 +112,22 @@ class AnalyzerEvaluator(Evaluator):
         prompt = state.prompt
         last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        sql_query: str = last_retriever_answer.agent_output['sql_query']
-        data: str = last_retriever_answer.agent_output['data_str']
-        analysis: str = last_analyzer_answer.agent_output['analysis']
+        sql_query: str = last_retriever_answer.agent_output["sql_query"]
+        data: str = last_retriever_answer.agent_output["data_str"]
+        analysis: str = last_analyzer_answer.agent_output["analysis"]
 
         # Truncate data if too long
         truncated_data = data[:2000] if len(data) > 2000 else data
 
         # Get judgment
         formatted_prompt = AnalyzerEvaluator.ANALYSIS_JUDGE_PROMPT_NO_GT.format(
-            prompt=prompt,
-            sql_query=sql_query,
-            data=truncated_data,
-            analysis=analysis
+            prompt=prompt, sql_query=sql_query, data=truncated_data, analysis=analysis
         )
 
         response = llm.invoke(formatted_prompt)
-        raw_content = response.content if hasattr(response, "content") else str(response)
+        raw_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
 
         # Parse JSON
         evaluation = AnalyzerEvaluator._parse_judge_json(raw_content)
@@ -129,16 +136,18 @@ class AnalyzerEvaluator(Evaluator):
         scores = [
             evaluation.get("correctness", {}).get("score", 0),
             evaluation.get("completeness", {}).get("score", 0),
-            evaluation.get("faithfulness", {}).get("score", 0)
+            evaluation.get("faithfulness", {}).get("score", 0),
         ]
         score = sum(scores) / 3.0
         last_analyzer_answer.evaluation = Evaluation(score=(score - 1) / 4.0)
 
     @staticmethod
-    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_analysis: str | None = None) -> Evaluation:
+    def judge_from_ground_truth(
+        answer: Answer, llm: BaseChatModel, gt_analysis: str | None = None
+    ) -> Evaluation:
         """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
-        generated_analysis = answer.agent_output['analysis']
+        generated_analysis = answer.agent_output["analysis"]
 
         formatted_prompt = AnalyzerEvaluator.ANALYZE_JUDGE_PROMPT_GT.format(
             gt_analysis=gt_analysis,
@@ -149,7 +158,8 @@ class AnalyzerEvaluator(Evaluator):
 
         # Parse JSON response
         import re as _re
-        json_match = _re.search(r'\{.*}', raw, _re.DOTALL)
+
+        json_match = _re.search(r"\{.*}", raw, _re.DOTALL)
         if not json_match:
             raise ValueError(f"No JSON found in judge response: {raw[:200]}")
         try:
@@ -164,24 +174,26 @@ class AnalyzerEvaluator(Evaluator):
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        analysis = last_analyzer_answer.agent_output['analysis']
+        analysis = last_analyzer_answer.agent_output["analysis"]
         if not analysis:
-            raise ValueError(f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}")
+            raise ValueError(
+                f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}"
+            )
 
         llm = get_llm(provider=judge_provider, model=judge_model)
         AnalyzerEvaluator.judge(state, llm)
 
-    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
-        analysis = answer.agent_output['analysis']
+    def _gt_eval(
+        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
+    ):
+        analysis = answer.agent_output["analysis"]
         if not analysis:
             answer.evaluation = Evaluation(score=0)
             return
 
         llm = get_llm(provider=judge_provider, model=judge_model)
         evaluation = AnalyzerEvaluator.judge_from_ground_truth(
-            answer=answer,
-            llm=llm,
-            gt_analysis=gt_data['analysis']
+            answer=answer, llm=llm, gt_analysis=gt_data["analysis"]
         )
 
         answer.gt_evaluation = evaluation

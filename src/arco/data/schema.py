@@ -38,6 +38,7 @@ class ColumnSchema:
         example_values: Optional list of sample values to help the LLM understand the data.
         nullable: Whether the column can contain NULL values.
     """
+
     name: str
     description: str
     data_type: str = "VARCHAR"
@@ -50,7 +51,7 @@ class ColumnSchema:
             "description": self.description,
             "data_type": self.data_type,
             "example_values": self.example_values,
-            "nullable": self.nullable
+            "nullable": self.nullable,
         }
 
 
@@ -64,6 +65,7 @@ class TableSchema:
         file_path: Absolute or relative path to the parquet file.
         columns: Ordered list of column definitions.
     """
+
     name: str
     description: str
     file_path: str
@@ -74,9 +76,7 @@ class TableSchema:
             "name": self.name,
             "description": self.description,
             "file_path": self.file_path,
-            "columns": {
-                column.name: column.to_dict() for column in self.columns
-            }
+            "columns": {column.name: column.to_dict() for column in self.columns},
         }
 
 
@@ -177,7 +177,8 @@ class DatabaseSchema:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            table_name: table_schema.to_dict() for (table_name, table_schema) in self._table_index.items()
+            table_name: table_schema.to_dict()
+            for (table_name, table_schema) in self._table_index.items()
         }
 
     @classmethod
@@ -185,43 +186,43 @@ class DatabaseSchema:
         from glob import glob
 
         import yaml
+
         data_dir = os.path.abspath(data_dir_path)
 
-        schema_files = sorted(glob(os.path.join(data_dir, '*_schema.yaml')))
+        schema_files = sorted(glob(os.path.join(data_dir, "*_schema.yaml")))
         tables = []
         for table_path in schema_files:
-            with open(table_path, 'r') as tf:
+            with open(table_path, "r") as tf:
                 t = yaml.safe_load(tf)
 
             columns = [
                 ColumnSchema(
-                    name=c['name'],
-                    description=c.get('description', c['name']),
-                    data_type=c.get('data_type', 'VARCHAR'),
-                    example_values=c.get('example_values'),
-                    nullable=c.get('nullable', True),
+                    name=c["name"],
+                    description=c.get("description", c["name"]),
+                    data_type=c.get("data_type", "VARCHAR"),
+                    example_values=c.get("example_values"),
+                    nullable=c.get("nullable", True),
                 )
-                for c in t.get('columns', [])
+                for c in t.get("columns", [])
             ]
 
             # Resolve file_path relative to schema file directory
             schema_dir = os.path.dirname(table_path)
-            file_path = t['file_path']
+            file_path = t["file_path"]
             if not os.path.isabs(file_path):
                 file_path = os.path.join(schema_dir, file_path)
 
-            tables.append(TableSchema(
-                name=t['name'],
-                description=t.get('description', t['name']),
-                file_path=file_path,
-                columns=columns,
-            ))
+            tables.append(
+                TableSchema(
+                    name=t["name"],
+                    description=t.get("description", t["name"]),
+                    file_path=file_path,
+                    columns=columns,
+                )
+            )
 
         if tables:
-            schema = cls(
-                tables=tables,
-                compact_threshold=5
-            )
+            schema = cls(tables=tables, compact_threshold=5)
             return schema
         else:
             raise Exception("The schema was not parsable")

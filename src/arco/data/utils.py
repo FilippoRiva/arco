@@ -8,26 +8,27 @@ from pandas import Series
 # Utils for DataFrame Management
 # -----------------------------
 
+
 def text_to_csv(text: str) -> list[list[str]]:
     """Convert text table to CSV rows.
 
     Handles both space-separated and pipe-separated formats.
     """
-    lines = [line.strip() for line in text.strip().split('\n') if line.strip()]
+    lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
     if not lines:
         return []
 
     rows = []
     for line in lines:
         # Try splitting by multiple spaces first
-        if '  ' in line:
+        if "  " in line:
             parts = [p.strip() for p in line.split() if p.strip()]
         # Try pipe separator
-        elif '|' in line:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
+        elif "|" in line:
+            parts = [p.strip() for p in line.split("|") if p.strip()]
         # Fallback to comma
         else:
-            parts = [p.strip() for p in line.split(',') if p.strip()]
+            parts = [p.strip() for p in line.split(",") if p.strip()]
 
         if parts:
             rows.append(parts)
@@ -89,11 +90,11 @@ def text_to_dataframe(text: str) -> pd.DataFrame | None:
             try:
                 # Try numeric conversion
                 df[col] = pd.to_numeric(df[col])
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 # Try datetime conversion
                 try:
                     df[col] = pd.to_datetime(df[col])
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     # Keep as string
                     pass
 
@@ -107,7 +108,7 @@ def text_to_dataframe(text: str) -> pd.DataFrame | None:
 def save_csv(rows: list[list[str]], filepath: str):
     """Save rows to CSV file."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, 'w', newline='', encoding='utf-8') as f:
+    with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerows(rows)
 
@@ -139,11 +140,13 @@ def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
         else:
             # Try datetime (for string columns like "2023-01-01")
             try:
-                datetime: Series = pd.to_datetime(df_column, errors="coerce", format="mixed")
+                datetime: Series = pd.to_datetime(
+                    df_column, errors="coerce", format="mixed"
+                )
                 if datetime.notna().all() and not df_column.isna().all():
                     df_copy[col] = datetime.map(lambda x: x.strftime("%Y-%m-%d"))
                     continue
-            except (TypeError, AttributeError, ValueError):
+            except TypeError, AttributeError, ValueError:
                 pass
 
             df_copy[col] = df_column.astype(str).str.strip()

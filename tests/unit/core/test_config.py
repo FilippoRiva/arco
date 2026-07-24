@@ -9,6 +9,7 @@ from arco.data import DatabaseSchema
 ROOT_DIR = Path(__file__).parent.parent.parent.parent
 DATA_DIR = ROOT_DIR / "data"
 
+
 @pytest.fixture
 def complete_config_path(tmp_path):
     config = f"""
@@ -63,29 +64,37 @@ def base_config_path(tmp_path):
     config_file.write_text(minimal)
     return str(config_file.absolute())
 
+
 @pytest.fixture
 def minimal_config(base_config_path):
     return Config.from_yaml(base_config_path)
+
 
 @pytest.fixture
 def complete_config(complete_config_path):
     return Config.from_yaml(complete_config_path)
 
+
 def test_yaml_initialization(base_config_path, complete_config_path):
 
     # using the pytest tmp_path fixture to create a temp YAML file from a string
-    os.environ['OPENAI_API_KEY'] = "test_api_key"
+    os.environ["OPENAI_API_KEY"] = "test_api_key"
     config = Config.from_yaml(base_config_path)
     complete_config = Config.from_yaml(complete_config_path)
 
-    def check_config(conf:Config):
+    def check_config(conf: Config):
         for agent_type in AgentType:
             agent_config = conf.get_agent_config(agent_type)
-            assert isinstance(agent_config,
-                              AgentConfig), "Should not be None and if not provided defaults should be loaded"
-        assert isinstance(conf.schema, DatabaseSchema), "The schema should be initialized"
+            assert isinstance(agent_config, AgentConfig), (
+                "Should not be None and if not provided defaults should be loaded"
+            )
+        assert isinstance(conf.schema, DatabaseSchema), (
+            "The schema should be initialized"
+        )
         assert conf.default_model is not None, "Should be specified"
-        assert conf.default_provider in ["openai", "ollama"], "Should be a known provider"
+        assert conf.default_provider in ["openai", "ollama"], (
+            "Should be a known provider"
+        )
         if conf.default_provider == "ollama":
             assert conf.ollama_url is not None, "Should be set"
         for agent_type, agent_config in conf.agent_configs.items():
@@ -95,6 +104,7 @@ def test_yaml_initialization(base_config_path, complete_config_path):
 
     check_config(config)
     check_config(complete_config)
+
 
 def test_setters_and_getters(base_config_path):
     n = 100
@@ -111,11 +121,13 @@ def test_setters_and_getters(base_config_path):
         assert final_config == agent_config
         assert final_config.n == n
 
+
 def test_copy(minimal_config):
     conf = minimal_config
     copy_conf = conf.copy()
-    assert conf == copy_conf # deep checks
-    assert conf is not copy_conf # class check
+    assert conf == copy_conf  # deep checks
+    assert conf is not copy_conf  # class check
+
 
 def test_candidate_parameters(complete_config):
     for agent_type in AgentType:
@@ -140,5 +152,3 @@ def test_candidate_parameters(complete_config):
                 assert len(set(column_values)) == 1, (
                     f"Non-BON parameter at index {idx} should be identical across all candidates"
                 )
-
-

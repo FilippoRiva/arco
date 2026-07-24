@@ -28,6 +28,7 @@ class AgentConfig:
         no_repeat_ngram_size: Prevent repeating n-grams of this size (default None, skipped for OpenAI)
         schema: DatabaseSchema used by the retriever
     """
+
     # Optional per-step LLM overrides
     _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
     provider: str = _DUMMY_STR
@@ -48,8 +49,12 @@ class AgentConfig:
 
     # LLM generation parameters
     max_tokens: int = 2000
-    num_beams: int = 1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
-    no_repeat_ngram_size: int | None = None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
+    num_beams: int = (
+        1  # Beam search width (1 = greedy/disabled); skipped for OpenAI provider
+    )
+    no_repeat_ngram_size: int | None = (
+        None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
+    )
 
     # CoT iterative refinement
     cot_n: int = 1
@@ -66,13 +71,19 @@ class AgentConfig:
             return [(self.temp_min, self.top_p_min, self.top_k_min)]
         if self.bon_parameter == "top_p":
             if self.top_p_min is None or self.top_p_max is None:
-                raise ConfigException("Cannot generate candidates if top_p_min or top_p_max are None")
+                raise ConfigException(
+                    "Cannot generate candidates if top_p_min or top_p_max are None"
+                )
             top_ps = np.linspace(self.top_p_min, self.top_p_max, self.n).tolist()
             return [(self.temp_min, p, self.top_k_min) for p in top_ps]
         if self.bon_parameter == "top_k":
             if self.top_k_min is None or self.top_k_max is None:
-                raise ConfigException("Cannot generate candidates if top_p_min or top_p_max are None")
-            top_ks = [int(k) for k in np.linspace(self.top_k_min, self.top_k_max, self.n)]
+                raise ConfigException(
+                    "Cannot generate candidates if top_p_min or top_p_max are None"
+                )
+            top_ks = [
+                int(k) for k in np.linspace(self.top_k_min, self.top_k_max, self.n)
+            ]
             return [(self.temp_min, self.top_p_min, k) for k in top_ks]
         # default: temperature
         temps = np.linspace(self.temp_min, self.temp_max, self.n).tolist()
@@ -99,13 +110,15 @@ class AgentConfig:
         return cls(**filtered)
 
     @classmethod
-    def from_yaml(cls, yaml_path: str, agent_name, inherit_globals_from: Config | None = None) -> AgentConfig:
-        with open(yaml_path, 'r') as f:
+    def from_yaml(
+        cls, yaml_path: str, agent_name, inherit_globals_from: Config | None = None
+    ) -> AgentConfig:
+        with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 
-        agents_section = raw.get('agents', {})  # for run configs
+        agents_section = raw.get("agents", {})  # for run configs
         if agents_section == {}:  # for benchmark configs
-            agents_section = raw.get('defaults', {})
+            agents_section = raw.get("defaults", {})
 
         if agent_name in agents_section.keys():
             agent_dict = dict(agents_section[agent_name])

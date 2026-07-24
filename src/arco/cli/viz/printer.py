@@ -15,19 +15,26 @@ if TYPE_CHECKING:
     from arco.workflows import Workflow
 
 
-def print_benchmark_header(name: str, description: str, changes: dict[str, Any]) -> None:
+def print_benchmark_header(
+    name: str, description: str, changes: dict[str, Any]
+) -> None:
     """Print a rich panel summarizing the benchmark run's name, description, and changes."""
     header = Text(f"Benchmark run : {name}", style="bold cyan", justify="center")
 
     body = Table.grid(padding=(0, 1))
     body.add_column(justify="right", style="bold dim")
     body.add_column()
-    body.add_row("Description:", description or "[dim italic]none provided[/dim italic]")
+    body.add_row(
+        "Description:", description or "[dim italic]none provided[/dim italic]"
+    )
 
     if changes:
         changes_table = Table(
-            title="Overrides", show_header=True, header_style="bold magenta",
-            box=box.SIMPLE_HEAVY, expand=False
+            title="Overrides",
+            show_header=True,
+            header_style="bold magenta",
+            box=box.SIMPLE_HEAVY,
+            expand=False,
         )
         changes_table.add_column("Agent", style="bold yellow")
         changes_table.add_column("Parameter", style="cyan")
@@ -38,25 +45,21 @@ def print_benchmark_header(name: str, description: str, changes: dict[str, Any])
                 first = True
                 for param, value in params.items():
                     changes_table.add_row(
-                        agent_name if first else "",
-                        param,
-                        str(value)
+                        agent_name if first else "", param, str(value)
                     )
                     first = False
             else:
                 changes_table.add_row(agent_name, "-", str(params))
     else:
-        changes_table = Text("No overrides — running with defaults.", style="dim italic")
+        changes_table = Text(
+            "No overrides — running with defaults.", style="dim italic"
+        )
 
     body.add_row("Changes:", changes_table)
 
-    console.print(Panel(
-        body,
-        title=header,
-        border_style="blue",
-        box=box.ROUNDED,
-        padding=(1, 2)
-    ))
+    console.print(
+        Panel(body, title=header, border_style="blue", box=box.ROUNDED, padding=(1, 2))
+    )
 
 
 PROFILE_FIELDS = [
@@ -86,10 +89,10 @@ def print_benchmark_summary(summary: BenchmarkSummary):
 
     # Aggregate
     for agent, ppl, score, profiling in zip(
-            summary.agents,
-            summary.ppls,
-            summary.scores,
-            summary.profiling_datas,
+        summary.agents,
+        summary.ppls,
+        summary.scores,
+        summary.profiling_datas,
     ):
         g = grouped[agent]
         g["ppl"].append(ppl)
@@ -134,15 +137,13 @@ def print_benchmark_summary(summary: BenchmarkSummary):
     timeline = []
 
     for agent, ppl, score in zip(summary.agents, summary.ppls, summary.scores):
-        color = (
-            "green" if score >= 0.9 else
-            "yellow" if score >= 0.7 else
-            "red"
-        )
+        color = "green" if score >= 0.9 else "yellow" if score >= 0.7 else "red"
 
         t = Text()
         t.append("█", style=color)
-        t.append(f" {agent.value if len(agent.value) < 15 else agent.value[:5] + "..."}({score:.2f})")
+        t.append(
+            f" {agent.value if len(agent.value) < 15 else agent.value[:5] + '...'}({score:.2f})"
+        )
         timeline.append(t)
 
     console.print(
@@ -152,14 +153,14 @@ def print_benchmark_summary(summary: BenchmarkSummary):
         )
     )
 
-    console.print(
-        f"Completion: [bold cyan]{summary.completion_percentage:.1%}[/]"
-    )
+    console.print(f"Completion: [bold cyan]{summary.completion_percentage:.1%}[/]")
 
 
 def print_config_table(config: Config, verbose: bool | None = None):
     """Helper to render a consistent Rich tables."""
-    configs_to_show = {f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()}
+    configs_to_show = {
+        f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()
+    }
     configs_to_show.pop("agent_configs")
 
     # Visualize run configuration
@@ -177,9 +178,8 @@ def print_config_table(config: Config, verbose: bool | None = None):
 
 
 def print_workflow_graph(workflow: Workflow):
-    console.print(Panel(
-        str(workflow),
-        title="Selected Workflow",
-        title_align="center",
-        expand=False
-    ))
+    console.print(
+        Panel(
+            str(workflow), title="Selected Workflow", title_align="center", expand=False
+        )
+    )

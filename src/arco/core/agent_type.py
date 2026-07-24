@@ -9,6 +9,7 @@ class AgentType(str):
     but new agent types can be defined anywhere just by instantiating
     AgentType("SomeName") — no need to touch this class.
     """
+
     _registry: dict[str, AgentType] = {}
 
     def __new__(cls, value: str) -> AgentType:

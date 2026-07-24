@@ -10,12 +10,7 @@ from arco.core import Config, State, llm_tools, tracking
 
 
 class WorkflowExecutor:
-    def __init__(
-            self,
-            *,
-            workflow: Workflow,
-            config: Config
-    ) -> None:
+    def __init__(self, *, workflow: Workflow, config: Config) -> None:
         self.config = config
         self.graph: CompiledStateGraph = workflow.graph
         self.model_is_reachable = False
@@ -37,15 +32,17 @@ class WorkflowExecutor:
         input_state: State = State(
             prompt=self.config.prompt,
             run_id=self.config.run_id,
-            agent_configs=self.config.agent_configs
+            agent_configs=self.config.agent_configs,
         )
 
         # Check Model Reachability
         if not self.model_is_reachable:
             self.model_is_reachable = self._check_model()
             if not self.model_is_reachable:
-                yield {"event": "error",
-                       "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server."}
+                yield {
+                    "event": "error",
+                    "message": "Model is not reachable. Please set your OPENAI_API_KEY/OPENROUTER_API_KEY environment variable if using openai/openrouter models or properly start the ollama server.",
+                }
                 return None
 
         # Start Inference and Generator Loop
@@ -54,38 +51,45 @@ class WorkflowExecutor:
         graph_config = {
             "configurable": {
                 "thread_id": self.config.run_id,
-                "enable_budget_controller": self.config.enable_budget_controller
+                "enable_budget_controller": self.config.enable_budget_controller,
             }
         }
 
         current_state = None
 
-        for chunk in self.graph.stream(input_state, config=graph_config, stream_mode=["tasks", "updates", "messages"]):
+        for chunk in self.graph.stream(
+            input_state,
+            config=graph_config,
+            stream_mode=["tasks", "updates", "messages"],
+        ):
             stream_type, data = chunk
             if stream_type == "tasks":
-                yield {
-                    "event": "node_started",
-                    "node": data['name']
-                }
+                yield {"event": "node_started", "node": data["name"]}
             elif stream_type == "updates":
                 node_name = list(data.keys())[0]
                 current_state = State(**data[node_name])
-                yield {"event": "node_finished", "node": node_name, "state": current_state}
+                yield {
+                    "event": "node_finished",
+                    "node": node_name,
+                    "state": current_state,
+                }
             elif stream_type == "messages":
                 message_chunk, metadata = data
                 yield {
                     "event": "token",
                     "node": metadata.get("langgraph_node"),
-                    "content": message_chunk.content
+                    "content": message_chunk.content,
                 }
 
         final_result = current_state
         if not final_result:
-            yield {"event": "error",
-                   "message": "The Graph was not able to produce a result"}
+            yield {
+                "event": "error",
+                "message": "The Graph was not able to produce a result",
+            }
 
         if final_result is not None and self.config.enable_storage:
-            final_result.save(Path(self.config.save_dir) / 'storage')
+            final_result.save(Path(self.config.save_dir) / "storage")
 
         # Global tracking stop
         tracking.stop_tracking()
@@ -95,7 +99,10 @@ class WorkflowExecutor:
 
     def _check_model(self):
         """Check if the model is running locally (Ollama) or accessible (OpenAI)"""
-        if self.config.default_provider == "openai" or self.config.default_provider == "openrouter":
+        if (
+            self.config.default_provider == "openai"
+            or self.config.default_provider == "openrouter"
+        ):
             try:
                 llm_tools.get_llm(
                     provider=self.config.default_provider,

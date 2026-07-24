@@ -237,7 +237,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             start = text.find("{")
             end = text.rfind("}")
             if start != -1 and end != -1 and end > start:
-                return json.loads(text[start: end + 1])
+                return json.loads(text[start : end + 1])
             raise JSONDecodeError  # Falls to default
         except (JSONDecodeError, AttributeError) as _:
             # fallback config
@@ -249,8 +249,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             }
 
     @staticmethod
-    def _extract_chart_config(state: State, llm: BaseChatModel | CoTRefiner) \
-            -> tuple[dict[str, str], list[float | int] | None]:
+    def _extract_chart_config(
+        state: State, llm: BaseChatModel | CoTRefiner
+    ) -> tuple[dict[str, str], list[float | int] | None]:
         """Infer a compact chart configuration from the looked-up data.
 
         Prompts the LLM to return a minified JSON config and parses it into a
@@ -267,9 +268,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         if ans_to_check is None:
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
         last_retriever_answer: Answer = ans_to_check
-        if last_retriever_answer.agent_output['data_str'] is None:
+        if last_retriever_answer.agent_output["data_str"] is None:
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        data_text = last_retriever_answer.agent_output['data_str']
+        data_text = last_retriever_answer.agent_output["data_str"]
 
         visualization_goal = state.prompt
 
@@ -278,12 +279,16 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         )
         response = llm.invoke(formatted_prompt)
         logprobs = llm_tools.extract_logprobs(response)
-        raw: str = str(response.content) if hasattr(response, "content") else str(response)
+        raw: str = (
+            str(response.content) if hasattr(response, "content") else str(response)
+        )
         chart_config = Visualizer._parse_chart_config(raw)
         return chart_config, logprobs
 
     @staticmethod
-    def _create_chart(chart_config: dict, llm: BaseChatModel | CoTRefiner) -> tuple[str, list[float | int] | None]:
+    def _create_chart(
+        chart_config: dict, llm: BaseChatModel | CoTRefiner
+    ) -> tuple[str, list[float | int] | None]:
         """Ask the LLM to emit matplotlib code for the given chart configuration.
 
         Args:
@@ -296,7 +301,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
         response = llm.invoke(formatted_prompt)
         logprobs = llm_tools.extract_logprobs(response)
-        code: str = str(response.content) if hasattr(response, "content") else str(response)
+        code: str = (
+            str(response.content) if hasattr(response, "content") else str(response)
+        )
         cleaned_code = code.replace("```python", "").replace("```", "").strip()
         return cleaned_code, logprobs
 
@@ -318,29 +325,30 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
         last_retriever_answer: Answer = ans_to_check
 
-        data_df = last_retriever_answer.agent_output['data_df']
+        data_df = last_retriever_answer.agent_output["data_df"]
         # if data_df is not None:
         #    print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
         # else:
         #    print("Warning: No DataFrame available in state")
 
         # Extract chart configuration
-        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(state, llm)
+        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(
+            state, llm
+        )
 
         # Generate chart code
-        code, logprobs_code = Visualizer._create_chart(chart_config=chart_config, llm=llm)
+        code, logprobs_code = Visualizer._create_chart(
+            chart_config=chart_config, llm=llm
+        )
 
         # --- Validate by executing in a headless namespace (no display) ---
         # Switch to Agg (non-interactive) backend to avoid tkinter threading
         # issues when running best-of-n from a non-main thread on Windows.
         exec_code = (
-                "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
-                + code.replace("plt.show()", "plt.close('all')")
+            "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
+            + code.replace("plt.show()", "plt.close('all')")
         )
-        namespace: dict = {
-            "data_df": data_df,
-            "config": chart_config
-        }
+        namespace: dict = {"data_df": data_df, "config": chart_config}
         try:
             exec(exec_code, namespace)  # noqa: S102
             exec_error = ""
@@ -351,23 +359,19 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             answer = Answer(
                 agent_id=self.type,
                 message="The generated code couldn't be executed",
-                agent_output={
-                    "code": code,
-                    "chart_config": chart_config
-                },
+                agent_output={"code": code, "chart_config": chart_config},
                 agent_config=deepcopy(state.get_agent_config(self.type)),
-                error=exec_error
+                error=exec_error,
             )
         else:
             answer = Answer(
                 agent_id=self.type,
                 message="Visualization generated",
-                agent_output={
-                    "code": code,
-                    "chart_config": chart_config
-                },
+                agent_output={"code": code, "chart_config": chart_config},
                 agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs=logprobs_code + logprobs_chart_config if logprobs_code is not None and logprobs_chart_config is not None else None
+                logprobs=logprobs_code + logprobs_chart_config
+                if logprobs_code is not None and logprobs_chart_config is not None
+                else None,
             )
 
         return state.add_answer(answer)

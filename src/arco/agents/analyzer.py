@@ -68,11 +68,15 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
         if not data_csv or not data_csv.strip():
             return data_csv if data_csv else ""
         import io
+
         df: pd.DataFrame = pd.read_csv(filepath_or_buffer=io.StringIO(data_csv))  # type: ignore
         num_cols = df.select_dtypes(include="number").columns.tolist()
         if not num_cols:
             return data_csv
-        lines = ["\n--- Pre-computed Statistics (use these exact values) ---", f"Total rows: {len(df)}"]
+        lines = [
+            "\n--- Pre-computed Statistics (use these exact values) ---",
+            f"Total rows: {len(df)}",
+        ]
         for col in num_cols:
             s = df[col]
             lines.append(
@@ -92,16 +96,25 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             Updated state with analysis appended to 'answer'.
         """
         try:
-            last_retriever_answer: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
+            last_retriever_answer: Answer | None = state.get_last_answer(
+                AgentType.RETRIEVER
+            )
             if last_retriever_answer is None:
                 raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-            enriched_data = Analyzer._enrich_data_with_stats(last_retriever_answer.agent_output['data_str'])
+            enriched_data = Analyzer._enrich_data_with_stats(
+                last_retriever_answer.agent_output["data_str"]
+            )
             formatted_prompt = Analyzer._ANALYSE_DATA_PROMPT.format(
-                data=enriched_data, prompt=state.prompt, sql_query=last_retriever_answer.agent_output['sql_query']
+                data=enriched_data,
+                prompt=state.prompt,
+                sql_query=last_retriever_answer.agent_output["sql_query"],
             )
             analysis_result = llm.invoke(formatted_prompt)
-            analysis_text = str(analysis_result.content) if hasattr(analysis_result, "content") else str(
-                analysis_result)
+            analysis_text = (
+                str(analysis_result.content)
+                if hasattr(analysis_result, "content")
+                else str(analysis_result)
+            )
             logprobs = llm_tools.extract_logprobs(analysis_result)
             analyzer_config = deepcopy(state.get_agent_config(self.type))
             answer: Answer = Answer(
@@ -109,7 +122,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
                 message=f"{analysis_text}",
                 agent_output={"analysis": analysis_text},
                 agent_config=analyzer_config,
-                logprobs=logprobs
+                logprobs=logprobs,
             )
 
             return state.add_answer(answer)

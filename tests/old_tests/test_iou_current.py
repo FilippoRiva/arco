@@ -19,7 +19,9 @@ from data.utils import compare_dataframes_iou, normalize_dataframe_values
 
 
 def load_benchmark():
-    path = os.path.join(os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset_old.json")
+    path = os.path.join(
+        os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset_old.json"
+    )
     with open(path) as f:
         return json.load(f)
 
@@ -52,24 +54,40 @@ def test_case_1(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["Sale_Date", "Total_Sales_Value"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Different col name (Sold_Date→Sale_Date), same order", score, "LOW without prior LLM standardization")
+    print_result(
+        "Different col name (Sold_Date→Sale_Date), same order",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test C: Completely different column names, same data & order
     candidate_c = gt_df.copy()
     candidate_c.columns = ["transaction_date", "revenue"]
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Completely different col names, same order", score, "LOW without prior LLM standardization")
+    print_result(
+        "Completely different col names, same order",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test D: Same data, reversed column order
     candidate_d = gt_df[gt_df.columns[::-1]].copy()
     score = compare_dataframes_iou(gt_df, candidate_d)
-    print_result("Reversed column order, same names", score, "LOW unless order was standardized first")
+    print_result(
+        "Reversed column order, same names",
+        score,
+        "LOW unless order was standardized first",
+    )
 
     # Test E: Different names AND reversed order
     candidate_e = gt_df[gt_df.columns[::-1]].copy()
     candidate_e.columns = ["revenue", "transaction_date"]
     score = compare_dataframes_iou(gt_df, candidate_e)
-    print_result("Different names + reversed order", score, "LOW without prior LLM standardization")
+    print_result(
+        "Different names + reversed order",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test F: Date values with " 00:00:00" suffix
     candidate_f = gt_df.copy()
@@ -81,7 +99,9 @@ def test_case_1(entries):
     candidate_g = gt_df.copy()
     candidate_g.columns = ["sold_date", "total_sales_value"]
     score = compare_dataframes_iou(gt_df, candidate_g)
-    print_result("Lowercase column names", score, "LOW without prior LLM standardization")
+    print_result(
+        "Lowercase column names", score, "LOW without prior LLM standardization"
+    )
 
     # Test H: Float precision difference
     candidate_h = gt_df.copy()
@@ -108,18 +128,30 @@ def test_case_2(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["Month", "Revenue", "Units_Sold"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Different col names (Month/Revenue/Units_Sold)", score, "LOW without prior LLM standardization")
+    print_result(
+        "Different col names (Month/Revenue/Units_Sold)",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test C: Same names, shuffled column order
     candidate_c = gt_df[["total_revenue", "month_start", "total_units"]].copy()
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Shuffled column order (rev, month, units)", score, "LOW unless order was standardized first")
+    print_result(
+        "Shuffled column order (rev, month, units)",
+        score,
+        "LOW unless order was standardized first",
+    )
 
     # Test D: Different names AND shuffled order
     candidate_d = gt_df[["total_revenue", "month_start", "total_units"]].copy()
     candidate_d.columns = ["Revenue", "Month", "Units"]
     score = compare_dataframes_iou(gt_df, candidate_d)
-    print_result("Different names + shuffled order", score, "LOW without prior LLM standardization")
+    print_result(
+        "Different names + shuffled order",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test E: Missing one column (2 cols vs 3 cols)
     candidate_e = gt_df[["month_start", "total_revenue"]].copy()
@@ -151,12 +183,18 @@ def test_case_3(entries):
     candidate_b = gt_df.copy()
     candidate_b.columns = ["store_number", "Total_Revenue"]
     score = compare_dataframes_iou(gt_df, candidate_b)
-    print_result("Case difference (store_number/Total_Revenue)", score, "LOW without prior LLM standardization")
+    print_result(
+        "Case difference (store_number/Total_Revenue)",
+        score,
+        "LOW without prior LLM standardization",
+    )
 
     # Test C: Reversed column order
     candidate_c = gt_df[gt_df.columns[::-1]].copy()
     score = compare_dataframes_iou(gt_df, candidate_c)
-    print_result("Reversed column order", score, "LOW unless order was standardized first")
+    print_result(
+        "Reversed column order", score, "LOW unless order was standardized first"
+    )
 
     # Test D: Different row order (sorted differently)
     candidate_d = gt_df.sort_values("Store_Number").reset_index(drop=True)
@@ -185,10 +223,14 @@ def test_normalize(entries):
         lambda x: float(f"{x:.10f}")  # extra decimal precision
     )
     norm = normalize_dataframe_values(candidate)
-    print(f"  Before normalize: dates like '{candidate['Sold_Date'].iloc[0]}', "
-          f"floats like {candidate['Total_Sales_Value'].iloc[0]}")
-    print(f"  After normalize:  dates like '{norm['Sold_Date'].iloc[0]}', "
-          f"floats like {norm['Total_Sales_Value'].iloc[0]}")
+    print(
+        f"  Before normalize: dates like '{candidate['Sold_Date'].iloc[0]}', "
+        f"floats like {candidate['Total_Sales_Value'].iloc[0]}"
+    )
+    print(
+        f"  After normalize:  dates like '{norm['Sold_Date'].iloc[0]}', "
+        f"floats like {norm['Total_Sales_Value'].iloc[0]}"
+    )
 
     score = compare_dataframes_iou(gt_df, candidate)
     print_result("Timestamp dates + extra float precision", score, "~1.0")
@@ -198,8 +240,12 @@ def test_normalize(entries):
     candidate2 = gt_df2.copy()
     candidate2["total_units"] = candidate2["total_units"].astype(float)
     norm2 = normalize_dataframe_values(candidate2)
-    print(f"  Float int before: {candidate2['total_units'].iloc[0]} (type: {type(candidate2['total_units'].iloc[0]).__name__})")
-    print(f"  Float int after:  {norm2['total_units'].iloc[0]} (type: {type(norm2['total_units'].iloc[0]).__name__})")
+    print(
+        f"  Float int before: {candidate2['total_units'].iloc[0]} (type: {type(candidate2['total_units'].iloc[0]).__name__})"
+    )
+    print(
+        f"  Float int after:  {norm2['total_units'].iloc[0]} (type: {type(norm2['total_units'].iloc[0]).__name__})"
+    )
 
     score = compare_dataframes_iou(gt_df2, candidate2)
     print_result("Float-encoded ints with normalization", score, "~1.0")
@@ -224,7 +270,10 @@ def test_cross_candidate():
     c2 = pd.DataFrame(data)
     c2.columns = ["store_number", "Total_Revenue"]
 
-    c3_data = {"total_revenue": data["total_revenue"], "Store_Number": data["Store_Number"]}
+    c3_data = {
+        "total_revenue": data["total_revenue"],
+        "Store_Number": data["Store_Number"],
+    }
     c3 = pd.DataFrame(c3_data)  # reversed column order
 
     pairs = [("C1 vs C2", c1, c2), ("C1 vs C3", c1, c3), ("C2 vs C3", c2, c3)]
@@ -247,5 +296,7 @@ if __name__ == "__main__":
     test_normalize(entries)
 
     print("\n" + "=" * 70)
-    print("SUMMARY: [LOW] is expected for schema mismatches unless LLM standardization ran first")
+    print(
+        "SUMMARY: [LOW] is expected for schema mismatches unless LLM standardization ran first"
+    )
     print("=" * 70)

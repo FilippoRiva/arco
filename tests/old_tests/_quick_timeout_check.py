@@ -7,9 +7,14 @@ import httpx
 
 _stop = threading.Event()
 
+
 class H(http.server.BaseHTTPRequestHandler):
-    def do_POST(self): _stop.wait(3600)
-    def log_message(self, *a): pass
+    def do_POST(self):
+        _stop.wait(3600)
+
+    def log_message(self, *a):
+        pass
+
 
 s = socket.socket()
 s.bind(("127.0.0.1", 0))
@@ -26,19 +31,26 @@ try:
     print("FAIL: no timeout!")
 except Exception as e:
     elapsed = time.perf_counter() - t0
-    print(f"httpx timeout=5: {elapsed:.1f}s → {type(e).__name__}: {str(e)[:60]}", flush=True)
+    print(
+        f"httpx timeout=5: {elapsed:.1f}s → {type(e).__name__}: {str(e)[:60]}",
+        flush=True,
+    )
 
 # Test 2: ollama.Client con timeout=5
 try:
     import ollama
+
     cli = ollama.Client(host=f"http://127.0.0.1:{port}", timeout=5)
     t0 = time.perf_counter()
     try:
-        cli.chat(model="x", messages=[{"role":"user","content":"hi"}])
+        cli.chat(model="x", messages=[{"role": "user", "content": "hi"}])
         print("FAIL: no timeout!")
     except Exception as e:
         elapsed = time.perf_counter() - t0
-        print(f"ollama.Client timeout=5: {elapsed:.1f}s → {type(e).__name__}: {str(e)[:60]}", flush=True)
+        print(
+            f"ollama.Client timeout=5: {elapsed:.1f}s → {type(e).__name__}: {str(e)[:60]}",
+            flush=True,
+        )
 except Exception as e:
     print(f"ollama import/setup error: {e}", flush=True)
 

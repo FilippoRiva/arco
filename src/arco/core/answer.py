@@ -16,7 +16,8 @@ class Answer:
     message: str  # for visualization purposes
     agent_config: AgentConfig
     agent_output: dict = field(
-        default_factory=defaultdict(lambda: None))  # whatever the agent outputs is put here for other agents to access
+        default_factory=defaultdict(lambda: None)
+    )  # whatever the agent outputs is put here for other agents to access
 
     # Evaluation
     evaluation: Evaluation | None = None
@@ -48,12 +49,13 @@ class Answer:
         if ans.agent_id:
             ans.agent_id = AgentType(ans.agent_id)
         if ans.evaluation:
-            ans.evaluation = Evaluation.from_dict(dictionary['evaluation'])
+            ans.evaluation = Evaluation.from_dict(dictionary["evaluation"])
         if ans.gt_evaluation:
-            ans.gt_evaluation = Evaluation.from_dict(dictionary['gt_evaluation'])
+            ans.gt_evaluation = Evaluation.from_dict(dictionary["gt_evaluation"])
         if ans.discarded_bon_answers:
             ans.discarded_bon_answers = [
-                Answer.from_dict(discarded_ans) for discarded_ans in dictionary['discarded_bon_answers']
+                Answer.from_dict(discarded_ans)
+                for discarded_ans in dictionary["discarded_bon_answers"]
             ]
         if ans.profiling_data:
             ans.profiling_data = ProfilingData(**dictionary["profiling_data"])

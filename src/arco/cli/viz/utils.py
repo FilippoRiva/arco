@@ -29,6 +29,7 @@ def _display_kitty(png_data: bytes):
     sys.stdout.flush()
     time.sleep(1)
 
+
 def _display_iterm2(png_data: bytes):
     """Display PNG inline using iTerm2's imgcat protocol."""
     chunk = base64.b64encode(png_data).decode()
@@ -46,12 +47,15 @@ def execute_chart_code(df, chart_config, code, save_dir: str | None = None):
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import numpy as np
         import pandas as pd
     except ImportError:
-        console.print("[yellow]matplotlib not available — skipping chart rendering[/yellow]")
+        console.print(
+            "[yellow]matplotlib not available — skipping chart rendering[/yellow]"
+        )
         return
 
     buf = io.BytesIO()
@@ -68,7 +72,7 @@ def execute_chart_code(df, chart_config, code, save_dir: str | None = None):
     # Replace plt.show() with savefig to capture the output
     modified_code = code.replace(
         "plt.show()",
-        "plt.savefig(buf, format='png', dpi=100, bbox_inches='tight'); plt.close()"
+        "plt.savefig(buf, format='png', dpi=100, bbox_inches='tight'); plt.close()",
     )
 
     try:

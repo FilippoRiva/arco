@@ -6,7 +6,9 @@ from arco.core import AgentType, Answer, Evaluation, Evaluator, State
 from arco.data import normalize_dataframe_values
 
 
-def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2) -> float:
+def compare_dataframes_iou(
+    df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2
+) -> float:
     """Compute row-level IoU between two DataFrames.
 
     Column selection strategy:
@@ -45,7 +47,7 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2
             try:
                 if abs(float(a) - float(b)) <= atol:
                     continue
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 pass
             # Normalize: strip trailing midnight time from date strings
             sa = str(a).replace(" 00:00:00", "")
@@ -54,8 +56,8 @@ def compare_dataframes_iou(df1: pd.DataFrame, df2: DataFrame, atol: float = 1e-2
                 continue
             # Handle YYYY-MM vs YYYY-MM-DD: treat first-of-month as equivalent
             if sa[:7] == sb[:7] and (
-                    (len(sa) == 7 and len(sb) == 10 and sb.endswith("-01")) or
-                    (len(sb) == 7 and len(sa) == 10 and sa.endswith("-01"))
+                (len(sa) == 7 and len(sb) == 10 and sb.endswith("-01"))
+                or (len(sb) == 7 and len(sa) == 10 and sa.endswith("-01"))
             ):
                 continue
             return False
@@ -86,14 +88,16 @@ class RetrieverEvaluator(Evaluator):
         # pyrefly: ignore [bad-assignment]
         answers: list[Answer] = [r.get_last_answer(AgentType.RETRIEVER) for r in states]
         if None in answers:
-            raise ValueError(f"One {State.__name__} did not contain a {AgentType.RETRIEVER.value} {Answer.__name__}")
+            raise ValueError(
+                f"One {State.__name__} did not contain a {AgentType.RETRIEVER.value} {Answer.__name__}"
+            )
 
         # Default when Best-of-1
         if len(answers) == 1:
             answers[0].evaluation = Evaluation(score=1.0)
             return True
 
-        dfs = [a.agent_output['data_df'] for a in answers]
+        dfs = [a.agent_output["data_df"] for a in answers]
 
         # Compute pairwise IoU matrix
         for i in range(len(dfs)):
@@ -117,20 +121,24 @@ class RetrieverEvaluator(Evaluator):
         """Rename and reorder df columns to match canonical_cols without LLM."""
         if answer is None:
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        if answer.agent_output['data_df'] is None:
+        if answer.agent_output["data_df"] is None:
             raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        df_to_align: pd.DataFrame = answer.agent_output['data_df']
+        df_to_align: pd.DataFrame = answer.agent_output["data_df"]
         current_cols = list(df_to_align.columns)
         if len(current_cols) == len(canonic_cols):
             # Case-insensitive rename
             ci_map = {c.lower(): c for c in current_cols}
-            fixed = {ci_map[canon.lower()]: canon
-                     for canon in canonic_cols
-                     if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon}
+            fixed = {
+                ci_map[canon.lower()]: canon
+                for canon in canonic_cols
+                if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon
+            }
             if fixed:
                 df_to_align = df_to_align.rename(columns=fixed)
             # Positional rename as last resort
-            if list(df_to_align.columns) != canonic_cols and len(df_to_align.columns) == len(canonic_cols):
+            if list(df_to_align.columns) != canonic_cols and len(
+                df_to_align.columns
+            ) == len(canonic_cols):
                 df_to_align.columns = canonic_cols
         # Reorder to canonical order if all columns present
         if set(canonic_cols).issubset(set(df_to_align.columns)):
@@ -140,10 +148,12 @@ class RetrieverEvaluator(Evaluator):
         # Normalize
         normalized_df: pd.DataFrame = normalize_dataframe_values(df_to_align)
         # Assign normalized and aligned dataframe
-        answer.agent_output['data_df'] = normalized_df
-        answer.agent_output['data_str'] = normalized_df.to_csv(index=False)
+        answer.agent_output["data_df"] = normalized_df
+        answer.agent_output["data_str"] = normalized_df.to_csv(index=False)
 
-    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+    def _gt_eval(
+        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
+    ):
         """
         Compares the agent's result DataFrame against a ground-truth CSV using
         compare_dataframes_iou, which handles:
@@ -151,18 +161,19 @@ class RetrieverEvaluator(Evaluator):
         """
         if not answer:
             raise ValueError(
-                f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}")
+                f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}"
+            )
 
-        if answer.agent_output['data_df'] is None:
+        if answer.agent_output["data_df"] is None:
             answer.gt_evaluation = Evaluation(score=0.0)
             return
 
-        gt_df_cmp = pd.read_csv(StringIO(gt_data['data_str']))
+        gt_df_cmp = pd.read_csv(StringIO(gt_data["data_str"]))
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
         RetrieverEvaluator._apply_gt_alignment(answer, list(gt_df_cmp.columns))
 
-        result_df = answer.agent_output['data_df'].copy()
+        result_df = answer.agent_output["data_df"].copy()
         result_df.columns = [c.lower() for c in result_df.columns]
 
         score = compare_dataframes_iou(result_df, gt_df_cmp)
@@ -181,7 +192,11 @@ class RetrieverEvaluator(Evaluator):
                     parts.append(f"Extra cols: {extra}.")
             else:
                 gt_r0 = dict(zip(gt_df_cmp.columns, gt_df_cmp.iloc[0].tolist()))
-                mod_r0 = dict(zip(result_df.columns, result_df.iloc[0].tolist())) if n_model > 0 else {}
+                mod_r0 = (
+                    dict(zip(result_df.columns, result_df.iloc[0].tolist()))
+                    if n_model > 0
+                    else {}
+                )
 
         answer.gt_evaluation = Evaluation(score=score)
         return

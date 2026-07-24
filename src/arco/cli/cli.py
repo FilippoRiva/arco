@@ -12,7 +12,6 @@ from langchain_core._api.deprecation import LangChainPendingDeprecationWarning
 warnings.filterwarnings("ignore", category=LangChainPendingDeprecationWarning)
 
 
-
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -22,9 +21,7 @@ def main():
 
     ## Parsing with argparse
     parser = argparse.ArgumentParser(
-        description=(
-            "The arco cli to run or benchmark a workflow"
-        )
+        description=("The arco cli to run or benchmark a workflow")
     )
 
     # Add subcommands

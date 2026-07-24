@@ -42,7 +42,9 @@ def check(label: str, score: float, min_expected: float, max_expected: float = 1
 
 
 def load_benchmark():
-    path = os.path.join(os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset_old.json")
+    path = os.path.join(
+        os.path.dirname(__file__), "../../data/benchmarks/benchmark_dataset_old.json"
+    )
     with open(path) as f:
         return json.load(f)
 
@@ -52,6 +54,7 @@ def gt_to_df(text: str) -> pd.DataFrame:
 
 
 # ── 1. compare_dataframes_iou ───────────────────────────────────────────────
+
 
 def test_exact_match(entries):
     """Baseline: identical DataFrames should always score 1.0."""
@@ -63,7 +66,7 @@ def test_exact_match(entries):
             continue
         df = gt_to_df(e["gt_data"])
         score = compare_dataframes_iou(df, df.copy())
-        check(f"Case {i+1} ({e['prompt'][:40]}...)", score, 1.0)
+        check(f"Case {i + 1} ({e['prompt'][:40]}...)", score, 1.0)
 
 
 def test_column_name_variations(entries):
@@ -76,7 +79,9 @@ def test_column_name_variations(entries):
     df = gt_to_df(entries[0]["gt_data"])
     c = df.copy()
     c.columns = ["Sale_Date", "Total_Sales_Value"]
-    check("Partial rename (Sold_Date→Sale_Date)", compare_dataframes_iou(df, c), 0.0, 0.1)
+    check(
+        "Partial rename (Sold_Date→Sale_Date)", compare_dataframes_iou(df, c), 0.0, 0.1
+    )
 
     # Case 2: full rename
     c2 = df.copy()
@@ -97,7 +102,12 @@ def test_column_name_variations(entries):
     df3 = gt_to_df(entries[1]["gt_data"])
     c5 = df3.copy()
     c5.columns = ["Month", "Revenue", "Units_Sold"]
-    check("3-col rename (month_start→Month, etc.)", compare_dataframes_iou(df3, c5), 0.0, 0.1)
+    check(
+        "3-col rename (month_start→Month, etc.)",
+        compare_dataframes_iou(df3, c5),
+        0.0,
+        0.1,
+    )
 
 
 def test_column_order_variations(entries):
@@ -152,19 +162,27 @@ def test_value_normalization(entries):
 
     # Extra precision
     c3 = df.copy()
-    c3["Total_Sales_Value"] = c3["Total_Sales_Value"].apply(lambda x: float(f"{x:.15f}"))
+    c3["Total_Sales_Value"] = c3["Total_Sales_Value"].apply(
+        lambda x: float(f"{x:.15f}")
+    )
     check("Floats with 15 decimal digits", compare_dataframes_iou(df, c3), 0.95)
 
     # Float-encoded ints
     df3 = gt_to_df(entries[1]["gt_data"])
     c4 = df3.copy()
     c4["total_units"] = c4["total_units"].astype(float)
-    check("Float-encoded ints (33653.0 vs 33653)", compare_dataframes_iou(df3, c4), 0.95)
+    check(
+        "Float-encoded ints (33653.0 vs 33653)", compare_dataframes_iou(df3, c4), 0.95
+    )
 
     # String whitespace
     c5 = df.copy()
     c5["Sold_Date"] = c5["Sold_Date"].astype(str).apply(lambda x: f"  {x}  ")
-    check("String values with leading/trailing spaces", compare_dataframes_iou(df, c5), 0.95)
+    check(
+        "String values with leading/trailing spaces",
+        compare_dataframes_iou(df, c5),
+        0.95,
+    )
 
 
 def test_row_order(entries):
@@ -227,17 +245,28 @@ def test_completely_different():
 
     df1 = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
     df2 = pd.DataFrame({"x": [10, 20, 30], "y": [40, 50, 60]})
-    check("Completely different data, same shape", compare_dataframes_iou(df1, df2), 0.0, 0.1)
+    check(
+        "Completely different data, same shape",
+        compare_dataframes_iou(df1, df2),
+        0.0,
+        0.1,
+    )
 
     df3 = pd.DataFrame({"a": [1]})
     df4 = pd.DataFrame({"x": [10], "y": [20], "z": [30]})
-    check("Different col count, no shared names", compare_dataframes_iou(df3, df4), 0.0, 0.1)
+    check(
+        "Different col count, no shared names",
+        compare_dataframes_iou(df3, df4),
+        0.0,
+        0.1,
+    )
 
     check("None vs DataFrame", compare_dataframes_iou(None, df1), 0.0, 0.0)
     check("Empty vs DataFrame", compare_dataframes_iou(pd.DataFrame(), df1), 0.0, 0.0)
 
 
 # ── 2. normalize_dataframe_values ───────────────────────────────────────────
+
 
 def test_normalize():
     """Test normalize_dataframe_values directly."""
@@ -246,17 +275,21 @@ def test_normalize():
     print("=" * 70)
 
     # Mixed types
-    df = pd.DataFrame({
-        "date_col": ["2021-01-01 00:00:00", "2021-02-15 00:00:00"],
-        "float_col": [123.456789, 987.654321],
-        "int_col": [100.0, 200.0],
-        "str_col": ["  hello  ", "  world  "],
-    })
+    df = pd.DataFrame(
+        {
+            "date_col": ["2021-01-01 00:00:00", "2021-02-15 00:00:00"],
+            "float_col": [123.456789, 987.654321],
+            "int_col": [100.0, 200.0],
+            "str_col": ["  hello  ", "  world  "],
+        }
+    )
     norm = normalize_dataframe_values(df)
 
     ok_date = norm["date_col"].iloc[0] == "2021-01-01"
     ok_float = norm["float_col"].iloc[0] == 123.46
-    ok_int = norm["int_col"].iloc[0] == 100 and isinstance(norm["int_col"].iloc[0], (int, np.integer))
+    ok_int = norm["int_col"].iloc[0] == 100 and isinstance(
+        norm["int_col"].iloc[0], (int, np.integer)
+    )
     ok_str = norm["str_col"].iloc[0] == "hello"
 
     check("Date normalization (→ YYYY-MM-DD)", 1.0 if ok_date else 0.0, 1.0)
@@ -265,12 +298,17 @@ def test_normalize():
     check("String stripping", 1.0 if ok_str else 0.0, 1.0)
 
     # Edge: None/empty
-    check("None input returns None", 1.0 if normalize_dataframe_values(None) is None else 0.0, 1.0)
+    check(
+        "None input returns None",
+        1.0 if normalize_dataframe_values(None) is None else 0.0,
+        1.0,
+    )
     empty = normalize_dataframe_values(pd.DataFrame())
     check("Empty input returns empty", 1.0 if empty.empty else 0.0, 1.0)
 
 
 # ── 3. compare_csv (legacy) ────────────────────────────────────────────────
+
 
 def test_compare_csv(entries):
     """Test the legacy compare_csv function with file-based inputs."""
@@ -312,6 +350,7 @@ def test_compare_csv(entries):
 
 # ── 4. make_csv_evaluator_no_gt (consensus) ────────────────────────────────
 
+
 def test_consensus_evaluator(entries):
     """Test best-of-n consensus scoring with varied candidates."""
     print("\n" + "=" * 70)
@@ -331,7 +370,10 @@ def test_consensus_evaluator(entries):
     results = [
         {"data_df": c1, "sql_query": "SELECT Store_Number, total_revenue ..."},
         {"data_df": c2, "sql_query": "SELECT store_number, Total_Revenue ..."},
-        {"data_df": c3, "sql_query": "SELECT total_revenue AS revenue, Store_Number AS store_id ..."},
+        {
+            "data_df": c3,
+            "sql_query": "SELECT total_revenue AS revenue, Store_Number AS store_id ...",
+        },
     ]
     scores = batch_eval(results, {})
     print(f"  Consensus scores: {[f'{s:.4f}' for s in scores]}")
@@ -356,6 +398,7 @@ def test_consensus_evaluator(entries):
 
 # ── 5. Combined stress test ─────────────────────────────────────────────────
 
+
 def test_combined_stress(entries):
     """Everything at once: different names, order, case, value formats."""
     print("\n" + "=" * 70)
@@ -373,7 +416,11 @@ def test_combined_stress(entries):
     stress = stress.iloc[::-1].reset_index(drop=True)  # reverse rows
 
     score = compare_dataframes_iou(df, stress)
-    check("Max stress: reversed cols + renamed + timestamps + round(2) + reversed rows", score, 0.90)
+    check(
+        "Max stress: reversed cols + renamed + timestamps + round(2) + reversed rows",
+        score,
+        0.90,
+    )
 
     # Extreme: round(1) creates >0.01 gaps — should still get partial credit
     stress_extreme = df[df.columns[::-1]].copy()
@@ -395,7 +442,11 @@ def test_combined_stress(entries):
     stress3 = stress3.sample(frac=1, random_state=99).reset_index(drop=True)
 
     score3 = compare_dataframes_iou(df3, stress3)
-    check("3-col stress: shuffled + renamed + timestamps + round(2) + shuffled rows", score3, 0.90)
+    check(
+        "3-col stress: shuffled + renamed + timestamps + round(2) + shuffled rows",
+        score3,
+        0.90,
+    )
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

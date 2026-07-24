@@ -1,3 +1,1 @@
-__all__ = [
-    "bench", "cache", "run"
-]
+__all__ = ["bench", "cache", "run"]

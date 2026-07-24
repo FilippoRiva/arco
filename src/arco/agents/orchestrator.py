@@ -111,17 +111,28 @@ No explanations. Just the agent's name."""
             Updated state with 'tool_choice'.
         """
 
-        last_orchestrator_answer: Answer | None = state.get_last_answer(AgentType.ORCHESTRATOR)
-        last_retriever_answer: Answer | None = state.get_last_answer(AgentType.RETRIEVER)
-        last_visualizer_answer: Answer | None = state.get_last_answer(AgentType.VISUALIZER)
+        last_orchestrator_answer: Answer | None = state.get_last_answer(
+            AgentType.ORCHESTRATOR
+        )
+        last_retriever_answer: Answer | None = state.get_last_answer(
+            AgentType.RETRIEVER
+        )
+        last_visualizer_answer: Answer | None = state.get_last_answer(
+            AgentType.VISUALIZER
+        )
 
-        error_is_present = (last_retriever_answer is not None and last_retriever_answer.error is not None
-                            or last_visualizer_answer is not None and last_visualizer_answer.error is not None)
+        error_is_present = (
+            last_retriever_answer is not None
+            and last_retriever_answer.error is not None
+            or last_visualizer_answer is not None
+            and last_visualizer_answer.error is not None
+        )
 
         decision_prompt = Orchestrator._ORCHESTRATOR_PROMPT.format(
             prompt=state.prompt,
             agents_used=state.get_agents_used(),
-            error_is_present=error_is_present)
+            error_is_present=error_is_present,
+        )
 
         # try:
         orchestrator_response = llm.invoke(decision_prompt)
@@ -129,7 +140,9 @@ No explanations. Just the agent's name."""
         response_content: str = str(orchestrator_response.content)
         tool_choice = response_content.strip().lower()
         valid_tools = ["retriever", "analyzer", "visualizer", "end"]
-        closest_match = difflib.get_close_matches(tool_choice, valid_tools, n=1, cutoff=0.6)
+        closest_match = difflib.get_close_matches(
+            tool_choice, valid_tools, n=1, cutoff=0.6
+        )
         matched_agent = closest_match[0] if closest_match else "retriever"
 
         # fallback if the agent selects analysis without data
@@ -137,9 +150,13 @@ No explanations. Just the agent's name."""
             matched_agent = "retriever"
 
         # Anti-loop guard: if lookup already ran but returned no data (SQL error), stop
-        if (last_orchestrator_answer and matched_agent == "retriever" and
-                last_orchestrator_answer.agent_output['agent_choice'] == "retriever" and last_retriever_answer and
-                not last_retriever_answer.agent_output['data_str']):
+        if (
+            last_orchestrator_answer
+            and matched_agent == "retriever"
+            and last_orchestrator_answer.agent_output["agent_choice"] == "retriever"
+            and last_retriever_answer
+            and not last_retriever_answer.agent_output["data_str"]
+        ):
             matched_agent = "end"
 
         # Override decision if reached max number of calls
@@ -155,7 +172,7 @@ No explanations. Just the agent's name."""
             message=f"The chosen agent is {matched_agent}",
             agent_output={"agent_choice": matched_agent},
             agent_config=deepcopy(state.get_agent_config(AgentType.ORCHESTRATOR)),
-            logprobs=logprobs
+            logprobs=logprobs,
         )
         return state.add_answer(answer)
 

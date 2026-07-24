@@ -143,9 +143,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
     @staticmethod
     def _select_relevant_tables(
-            state: State,
-            schema: DatabaseSchema,
-            llm
+        state: State, schema: DatabaseSchema, llm
     ) -> tuple[list[str], list[float | int] | None]:
         """Use the LLM to select relevant tables from a large schema.
 
@@ -187,9 +185,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
     @staticmethod
     def _generate_sql_query(
-            state: State,
-            schema_context: str,
-            llm
+        state: State, schema_context: str, llm
     ) -> tuple[str, list[float | int] | None]:
         """Generate a DuckDB SQL query from the user prompt and schema context.
 
@@ -210,11 +206,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
         response = llm.invoke(formatted_prompt)
         logprobs = llm_tools.extract_logprobs(response)
         sql_query = response.content if hasattr(response, "content") else str(response)
-        cleaned_sql = (
-            sql_query.strip()
-            .replace("```sql", "")
-            .replace("```", "")
-        )
+        cleaned_sql = sql_query.strip().replace("```sql", "").replace("```", "")
         return cleaned_sql, logprobs
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
@@ -248,7 +240,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # --- Build schema context (two-step when many tables) ---
         if schema.should_use_table_selection():
-            selected_names, logprobs_relevant_tables = Retriever._select_relevant_tables(state, schema, llm)
+            selected_names, logprobs_relevant_tables = (
+                Retriever._select_relevant_tables(state, schema, llm)
+            )
             schema_context = schema.get_full_schema_str(table_names=selected_names)
         else:
             selected_names = [table.name for table in schema.tables]
@@ -256,56 +250,62 @@ name used by any candidate. Prefer lowercase_with_underscores.
             schema_context = schema.get_full_schema_str()
 
         # --- Generate and execute SQL ---
-        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(state, schema_context, llm)
+        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(
+            state, schema_context, llm
+        )
         try:
             result_df: pd.DataFrame = con.execute(sql_query).df()
             result_str = result_df.to_csv(index=False)
 
             answer: Answer = Answer(
                 agent_id=self.type,
-                message=f"The data has been retrieved ({len(result_df)} {"entries" if len(result_df)>1 else "entry"} with columns : {", ".join(result_df.columns.to_list())})",
+                message=f"The data has been retrieved ({len(result_df)} {'entries' if len(result_df) > 1 else 'entry'} with columns : {', '.join(result_df.columns.to_list())})",
                 agent_output={
                     "data_str": result_str,
                     "data_df": result_df,
                     "sql_query": sql_query,
                 },
                 agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql if logprobs_relevant_tables is not None and logprobs_gen_sql is not None else None
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql
+                if logprobs_relevant_tables is not None and logprobs_gen_sql is not None
+                else None,
             )
 
             return state.add_answer(answer)
 
         except Exception as e:
-
             answer: Answer = Answer(
                 agent_id=self.type,
                 message="Couldn't access data. Check error message for specific details",
                 error=f"Error accessing data: {e!s}",
-                agent_config=deepcopy(state.get_agent_config(self.type))
+                agent_config=deepcopy(state.get_agent_config(self.type)),
             )
 
             return state.add_answer(answer)
 
     @staticmethod
     def apply_standardization(
-            results: list[State],
-            llm: BaseChatModel,
-            original_schema: DatabaseSchema) -> list[State]:
+        results: list[State], llm: BaseChatModel, original_schema: DatabaseSchema
+    ) -> list[State]:
 
         # Collect candidate info
         candidates = []
         for i, result in enumerate(results):
-            last_retriever_answer: Answer | None = result.get_last_answer(AgentType.RETRIEVER)
+            last_retriever_answer: Answer | None = result.get_last_answer(
+                AgentType.RETRIEVER
+            )
             if last_retriever_answer is None:
                 continue
-            if last_retriever_answer.agent_output['data_df'] is None:
+            if last_retriever_answer.agent_output["data_df"] is None:
                 continue
-            df = last_retriever_answer.agent_output['data_df']
-            sql = last_retriever_answer.agent_output['sql_query']
+            df = last_retriever_answer.agent_output["data_df"]
+            sql = last_retriever_answer.agent_output["sql_query"]
             if df is None or sql is None:
                 continue
             cols = list(df.columns)
-            candidates.append({"idx": i, "df": df, "sql": sql, "cols": cols, "state": result})
+            candidates.append(
+                {"idx": i, "df": df, "sql": sql, "cols": cols, "state": result}
+            )
 
         if len(candidates) == 0 or len(candidates) == 1:
             return results
@@ -354,7 +354,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # Call LLM
         response = llm.invoke(prompt)
-        raw: str = str(response.content) if hasattr(response, "content") else str(response)
+        raw: str = (
+            str(response.content) if hasattr(response, "content") else str(response)
+        )
 
         # Parse JSON — strip Markdown fences if present
         raw = raw.strip()
@@ -377,11 +379,15 @@ name used by any candidate. Prefer lowercase_with_underscores.
             state_it: State = results[idx]
             ans_to_check = state_it.get_last_answer(AgentType.RETRIEVER)
             if ans_to_check is None:
-                raise AgentException(f"Cannot standardize states with missing {AgentType.RETRIEVER.value} answers")
+                raise AgentException(
+                    f"Cannot standardize states with missing {AgentType.RETRIEVER.value} answers"
+                )
             ret_ans: Answer = ans_to_check
-            if ret_ans.agent_output['data_df'] is None:
-                raise AgentException(f"Cannot standardize states with missing {AgentType.RETRIEVER.value} DataFrame")
-            df: pd.DataFrame = ret_ans.agent_output['data_df']
+            if ret_ans.agent_output["data_df"] is None:
+                raise AgentException(
+                    f"Cannot standardize states with missing {AgentType.RETRIEVER.value} DataFrame"
+                )
+            df: pd.DataFrame = ret_ans.agent_output["data_df"]
 
             # Rename
             rename_map = {old: new for old, new in col_map.items() if old in df.columns}
@@ -396,12 +402,13 @@ name used by any candidate. Prefer lowercase_with_underscores.
             result_df = normalize_dataframe_values(df)
 
             # Update result
-            ret_ans.agent_output['data_df'] = result_df
-            ret_ans.agent_output['data_str'] = result_df.to_csv(index=False)
+            ret_ans.agent_output["data_df"] = result_df
+            ret_ans.agent_output["data_str"] = result_df.to_csv(index=False)
         return results
 
-    def post_generation_hooks(self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig) -> list[
-        State]:
+    def post_generation_hooks(
+        self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
+    ) -> list[State]:
         """Use an LLM to standardize column names across best-of-n candidates.
 
         After best-of-n generates N SQL results, their DataFrames may have different
@@ -418,9 +425,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
             model=config.model,
         )
 
-        return Retriever.apply_standardization(results,
-                                               standardize_llm,
-                                               original_schema=self.schema)
+        return Retriever.apply_standardization(
+            results, standardize_llm, original_schema=self.schema
+        )
 
     @staticmethod
     def get_evaluator() -> Evaluator:

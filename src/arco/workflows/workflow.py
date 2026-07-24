@@ -19,15 +19,16 @@ class Workflow(ABC):
             return  # don't register intermediate abstract subclasses
         id = getattr(cls, "workflow_id", cls.__name__)
         if id in Workflow._registry and Workflow._registry[id] is not cls:
-            raise TypeError(f"Workflow id {id!r} already registered to {Workflow._registry[id]!r}")
+            raise TypeError(
+                f"Workflow id {id!r} already registered to {Workflow._registry[id]!r}"
+            )
         Workflow._registry[id] = cls
 
     def __init__(self, config: Config):
         self.graph: CompiledStateGraph = self._initialize(config)
 
     @abstractmethod
-    def _initialize(self, config: Config) -> CompiledStateGraph:
-        ...
+    def _initialize(self, config: Config) -> CompiledStateGraph: ...
 
     @classmethod
     def get(cls, name: str) -> type[Workflow]:
@@ -46,7 +47,10 @@ class Workflow(ABC):
         return self._agent_list[agent_type]
 
     def get_evaluators(self) -> dict[AgentType, Evaluator]:
-        return {agent_type: agent.get_evaluator() for agent_type, agent in self._agent_list.items()}
+        return {
+            agent_type: agent.get_evaluator()
+            for agent_type, agent in self._agent_list.items()
+        }
 
     def __str__(self) -> str:
         return self.graph.get_graph().draw_ascii()

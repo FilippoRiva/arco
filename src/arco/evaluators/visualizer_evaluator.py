@@ -81,16 +81,29 @@ class VisualizerEvaluator(Evaluator):
             end = content.rfind("}")
 
             if start != -1 and end != -1:
-                parsed = json.loads(content[start:end + 1])
-                for criterion in ["data_suitability", "axis_mapping", "code_quality", "goal_alignment"]:
+                parsed = json.loads(content[start : end + 1])
+                for criterion in [
+                    "data_suitability",
+                    "axis_mapping",
+                    "code_quality",
+                    "goal_alignment",
+                ]:
                     if criterion not in parsed:
                         parsed[criterion] = {"score": 1, "reasoning": "Missing"}
                 return parsed
         except Exception as _:
             return {
                 "data_suitability": {"score": 1, "reasoning": "Parse failed"},
-                "axis_mapping": {"score": 1, "reasoning": "Parse failed", "columns_exist": False},
-                "code_quality": {"score": 1, "reasoning": "Parse failed", "would_render": False},
+                "axis_mapping": {
+                    "score": 1,
+                    "reasoning": "Parse failed",
+                    "columns_exist": False,
+                },
+                "code_quality": {
+                    "score": 1,
+                    "reasoning": "Parse failed",
+                    "would_render": False,
+                },
                 "goal_alignment": {"score": 1, "reasoning": "Parse failed"},
             }
 
@@ -116,30 +129,34 @@ class VisualizerEvaluator(Evaluator):
 
         last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
         last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
-        data_df = last_retriever_answer.agent_output['data_df']
+        data_df = last_retriever_answer.agent_output["data_df"]
 
-        if data_df is not None and hasattr(data_df, 'columns'):
+        if data_df is not None and hasattr(data_df, "columns"):
             data_columns = list(data_df.columns)
             data_sample = data_df.head(5).to_string(index=False)
         else:
-            data_text = last_retriever_answer.agent_output['data_str']
+            data_text = last_retriever_answer.agent_output["data_str"]
             data_columns = []
             data_sample = data_text[:500] if data_text else ""
 
         max_code_len = 2000
-        code: str = last_visualizer_answer.agent_output['code']
+        code: str = last_visualizer_answer.agent_output["code"]
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
 
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_NO_GT_PROMPT.format(
             visualization_goal=state.prompt,
             data_columns=", ".join(data_columns),
             data_sample=data_sample[:1500],
-            gen_config=json.dumps(last_visualizer_answer.agent_output['chart_config'], indent=2),
+            gen_config=json.dumps(
+                last_visualizer_answer.agent_output["chart_config"], indent=2
+            ),
             gen_code=gen_code_truncated,
         )
 
         response = llm.invoke(formatted_prompt)
-        raw_content = response.content if hasattr(response, "content") else str(response)
+        raw_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
 
         evaluation = VisualizerEvaluator._parse_vis_no_gt_judge_json(raw_content)
         overall_score = VisualizerEvaluator._compute_vis_no_gt_score(evaluation)
@@ -227,20 +244,46 @@ class VisualizerEvaluator(Evaluator):
             end = content.rfind("}")
 
             if start != -1 and end != -1:
-                parsed = json.loads(content[start:end + 1])
+                parsed = json.loads(content[start : end + 1])
 
                 # Ensure all criteria exist
-                for criterion in ["axis_correctness", "chart_type", "functional_equivalence", "explicit_requirements"]:
+                for criterion in [
+                    "axis_correctness",
+                    "chart_type",
+                    "functional_equivalence",
+                    "explicit_requirements",
+                ]:
                     if criterion not in parsed:
-                        parsed[criterion] = {"score": 1, "reasoning": "Missing", "violations": []}
+                        parsed[criterion] = {
+                            "score": 1,
+                            "reasoning": "Missing",
+                            "violations": [],
+                        }
 
                 return parsed
         except Exception:
             return {
-                "axis_correctness": {"score": 1, "reasoning": "Parse failed", "x_match": False, "y_match": False},
-                "chart_type": {"score": 1, "reasoning": "Parse failed", "type_match": False},
-                "functional_equivalence": {"score": 1, "reasoning": "Parse failed", "would_render": False},
-                "explicit_requirements": {"score": 5, "reasoning": "Parse failed - default N/A", "violations": []}
+                "axis_correctness": {
+                    "score": 1,
+                    "reasoning": "Parse failed",
+                    "x_match": False,
+                    "y_match": False,
+                },
+                "chart_type": {
+                    "score": 1,
+                    "reasoning": "Parse failed",
+                    "type_match": False,
+                },
+                "functional_equivalence": {
+                    "score": 1,
+                    "reasoning": "Parse failed",
+                    "would_render": False,
+                },
+                "explicit_requirements": {
+                    "score": 5,
+                    "reasoning": "Parse failed - default N/A",
+                    "violations": [],
+                },
             }
 
     @staticmethod
@@ -254,7 +297,7 @@ class VisualizerEvaluator(Evaluator):
             "axis_correctness": 0.40,
             "chart_type": 0.30,
             "functional_equivalence": 0.20,
-            "explicit_requirements": 0.10
+            "explicit_requirements": 0.10,
         }
 
         total_score = 0.0
@@ -267,8 +310,13 @@ class VisualizerEvaluator(Evaluator):
         return round(total_score, 6)
 
     @staticmethod
-    def judge_from_ground_truth(answer: Answer, llm: BaseChatModel, gt_config: str = None,
-                                gt_code: str = None, gt_visual_requirements: dict = None) -> State:
+    def judge_from_ground_truth(
+        answer: Answer,
+        llm: BaseChatModel,
+        gt_config: str = None,
+        gt_code: str = None,
+        gt_visual_requirements: dict = None,
+    ) -> State:
         """
         Evaluate visualization quality using LLM-as-a-Judge.
 
@@ -282,16 +330,21 @@ class VisualizerEvaluator(Evaluator):
 
         # Format explicit requirements for display
         if gt_visual_requirements:
-            req_display = "\n".join([
-                f"- {k}: {v}" if v is not None else f"- {k}: (not specified - ignore)"
-                for k, v in gt_visual_requirements.items()
-            ])
+            req_display = "\n".join(
+                [
+                    f"- {k}: {v}"
+                    if v is not None
+                    else f"- {k}: (not specified - ignore)"
+                    for k, v in gt_visual_requirements.items()
+                ]
+            )
         else:
             req_display = "None specified - ignore all styling requirements"
 
-        if not gt_code: raise Exception("gt_code cannot be None")
+        if not gt_code:
+            raise Exception("gt_code cannot be None")
 
-        code: str = answer.agent_output['code']
+        code: str = answer.agent_output["code"]
         if code is None:
             answer.gt_evaluation = Evaluation(score=0)
             return
@@ -299,26 +352,32 @@ class VisualizerEvaluator(Evaluator):
         # Truncate code if too long
         max_code_len = 2000
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
-        gt_code_truncated = gt_code[:max_code_len] if len(gt_code) > max_code_len else gt_code
+        gt_code_truncated = (
+            gt_code[:max_code_len] if len(gt_code) > max_code_len else gt_code
+        )
 
         # Format the judge prompt
         formatted_prompt = VisualizerEvaluator.VIS_JUDGE_PROMPT_GT.format(
             gt_config=json.dumps(gt_config, indent=2),
             gt_code=gt_code_truncated,
-            gen_config=json.dumps(answer.agent_output['chart_config'], indent=2),
+            gen_config=json.dumps(answer.agent_output["chart_config"], indent=2),
             gen_code=gen_code_truncated,
-            explicit_requirements=req_display
+            explicit_requirements=req_display,
         )
 
         # Get judgment
         response = llm.invoke(formatted_prompt)
-        raw_content = response.content if hasattr(response, "content") else str(response)
+        raw_content = (
+            response.content if hasattr(response, "content") else str(response)
+        )
 
         # Parse JSON response
         evaluation_dict = VisualizerEvaluator._parse_vis_judge_json(raw_content)
 
         # Compute overall score
-        overall_score = VisualizerEvaluator._compute_visualization_score(evaluation_dict)
+        overall_score = VisualizerEvaluator._compute_visualization_score(
+            evaluation_dict
+        )
         answer.gt_evaluation = Evaluation(score=overall_score)
         return
 
@@ -327,7 +386,7 @@ class VisualizerEvaluator(Evaluator):
         VisualizerEvaluator.judge_from_ground_truth(
             answer,
             llm=llm,
-            gt_config=gt_data['chart_config'],
-            gt_code=gt_data['chart_code'],
-            gt_visual_requirements=gt_data['visual_requirements'],
+            gt_config=gt_data["chart_config"],
+            gt_code=gt_data["chart_code"],
+            gt_visual_requirements=gt_data["visual_requirements"],
         )

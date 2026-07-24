@@ -17,12 +17,14 @@ class Evaluation:
     @classmethod
     def from_dict(cls, dictionary: dict):
         return Evaluation(
-            score=float(dictionary['score']),
-            success=bool(dictionary['success']))
+            score=float(dictionary["score"]), success=bool(dictionary["success"])
+        )
 
 
 class Evaluator:
-    def evaluate_and_select(self, results: list[State], config: AgentConfig) -> tuple[list[State], State]:
+    def evaluate_and_select(
+        self, results: list[State], config: AgentConfig
+    ) -> tuple[list[State], State]:
         if len(results) == 1:
             return results, results[0]
 
@@ -30,7 +32,11 @@ class Evaluator:
         batch_eval_success = self._batch_eval(results)
         if not batch_eval_success:
             for result in results:
-                self._eval(result, judge_provider=config.provider_judge, judge_model=config.model_judge)
+                self._eval(
+                    result,
+                    judge_provider=config.provider_judge,
+                    judge_model=config.model_judge,
+                )
 
         # finally selects the best result
         return results, self._selection(results)
@@ -43,7 +49,9 @@ class Evaluator:
         la.evaluation = Evaluation(score=0.0, success=False)
 
     def _batch_eval(self, states: list[State]) -> bool:
-        answers_with_none: list[Answer | None] = [state.get_last_answer() for state in states]
+        answers_with_none: list[Answer | None] = [
+            state.get_last_answer() for state in states
+        ]
         answers = [ans for ans in answers_with_none if ans is not None]
         for answer in answers:
             answer.gt_evaluation = Evaluation(score=0.0, success=False)
@@ -51,7 +59,9 @@ class Evaluator:
 
     # noinspection PyMethodMayBeStatic
     def _selection(self, states: list[State]) -> State:
-        answers_with_none: list[Answer | None] = [state.get_last_answer() for state in states]
+        answers_with_none: list[Answer | None] = [
+            state.get_last_answer() for state in states
+        ]
         answers = [ans for ans in answers_with_none if ans is not None]
         if any(answer.evaluation is None for answer in answers):
             return states[0]
@@ -60,19 +70,35 @@ class Evaluator:
         best_state = max(states, key=lambda r: r.get_last_answer().evaluation.score)
         discarded_states = [*states]
         discarded_states.remove(best_state)
-        best_state.get_last_answer().discarded_bon_answers = [state.get_last_answer() for state in discarded_states]
+        best_state.get_last_answer().discarded_bon_answers = [
+            state.get_last_answer() for state in discarded_states
+        ]
         return best_state
 
-    def evaluate_ground_truth(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+    def evaluate_ground_truth(
+        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
+    ):
         """Run ground-truth evaluation for tracking/logging only."""
-        self._gt_eval(answer=answer, gt_data=gt_data, judge_provider=judge_provider, judge_model=judge_model)
+        self._gt_eval(
+            answer=answer,
+            gt_data=gt_data,
+            judge_provider=judge_provider,
+            judge_model=judge_model,
+        )
 
-    def _gt_eval(self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str):
+    def _gt_eval(
+        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
+    ):
         answer.gt_evaluation = Evaluation(score=0.0, success=False)
 
 
-def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentType, Evaluator], judge_provider: str,
-                   judge_model: str) -> BenchmarkSummary:
+def evaluate_state(
+    state: State,
+    entry: BenchmarkEntry,
+    evaluators: dict[AgentType, Evaluator],
+    judge_provider: str,
+    judge_model: str,
+) -> BenchmarkSummary:
     correct_path = 0
     ppls: list[float] = []
     scores: list[float] = []
@@ -85,8 +111,12 @@ def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentTy
         else:
             break
 
-        evaluators[answer.agent_id].evaluate_ground_truth(answer=answer, gt_data=correct_trace.data,
-                                                          judge_provider=judge_provider, judge_model=judge_model)
+        evaluators[answer.agent_id].evaluate_ground_truth(
+            answer=answer,
+            gt_data=correct_trace.data,
+            judge_provider=judge_provider,
+            judge_model=judge_model,
+        )
         evaluation = answer.gt_evaluation
         ppls.append(answer.perplexity)
         scores.append(evaluation.score)
@@ -94,10 +124,11 @@ def evaluate_state(state: State, entry: BenchmarkEntry, evaluators: dict[AgentTy
         profiling_datas.append(answer.profiling_data)
     completion_percentage = correct_path / len(entry.trace)
     from arco.data import BenchmarkSummary
+
     return BenchmarkSummary(
         completion_percentage=completion_percentage,
         ppls=ppls,
         scores=scores,
         agents=agents,
-        profiling_datas=profiling_datas
+        profiling_datas=profiling_datas,
     )

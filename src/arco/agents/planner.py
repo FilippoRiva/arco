@@ -84,13 +84,17 @@ No explanations. No markdown. Just the JSON array.
         start = raw.find("[")
         end = raw.rfind("]")
         if start != -1 and end != -1 and end > start:
-            raw = raw[start:end + 1]
+            raw = raw[start : end + 1]
         try:
             plan = json.loads(raw)
             if not isinstance(plan, list):
                 return []
-            return [a.lower() for a in plan if isinstance(a, str) and a.lower() in _VALID_AGENTS]
-        except (json.JSONDecodeError, TypeError):
+            return [
+                a.lower()
+                for a in plan
+                if isinstance(a, str) and a.lower() in _VALID_AGENTS
+            ]
+        except json.JSONDecodeError, TypeError:
             return []
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
@@ -170,4 +174,5 @@ No explanations. No markdown. Just the JSON array.
     @staticmethod
     def get_evaluator() -> Evaluator:
         from arco.evaluators import PlannerEvaluator
+
         return PlannerEvaluator()

@@ -50,7 +50,9 @@ class CoTRefiner:
     You MUST fix this error. Output only the corrected response with no meta-commentary.
     """
 
-    def __init__(self, base_llm, previous_response: str, execution_error: str | None = None) -> None:
+    def __init__(
+        self, base_llm, previous_response: str, execution_error: str | None = None
+    ) -> None:
         self._llm = base_llm
         self._previous_response = previous_response
         self._execution_error = execution_error
@@ -71,7 +73,9 @@ class CoTRefiner:
         return getattr(self._llm, name)
 
 
-def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> BaseChatModel:
+def get_llm_from_config(
+    agent_config: AgentConfig, llm_acc: LLMCallAccumulator
+) -> BaseChatModel:
     temp, top_p, top_k = agent_config.get_candidate_params()[0]
 
     if agent_config.provider is None or agent_config.model is None:
@@ -91,17 +95,17 @@ def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) 
 
 
 def get_llm(
-        provider: str = 'openai',
-        model: str = 'gpt-4o-mini',
-        streaming=True,
-        max_tokens: int = 2000,
-        temperature: float | None = None,
-        top_p: float | None = None,
-        top_k: int | None = None,
-        num_beams: int | None = None,
-        no_repeat_ngram_size: int | None = None,
-        llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
-        openrouter_url: str = "https://openrouter.ai/api/v1"
+    provider: str = "openai",
+    model: str = "gpt-4o-mini",
+    streaming=True,
+    max_tokens: int = 2000,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    top_k: int | None = None,
+    num_beams: int | None = None,
+    no_repeat_ngram_size: int | None = None,
+    llm_accumulator: LLMCallAccumulator = LLMCallAccumulator("None"),
+    openrouter_url: str = "https://openrouter.ai/api/v1",
 ) -> BaseChatModel:
     """Factory method to create LLM instances with specific parameters.
 
@@ -132,7 +136,7 @@ def get_llm(
             streaming=streaming,
             callbacks=[llm_accumulator],
             top_p=top_p,
-            logprobs=True
+            logprobs=True,
         )
     elif provider.lower() == "openrouter":
         api_key = os.environ.get("OPENROUTER_API_KEY")
@@ -155,7 +159,7 @@ def get_llm(
                 "provider": {
                     "require_parameters": True  # use only providers that allow all the parameters from the request
                 }
-            }
+            },
         )
     else:
         kwargs = dict(
@@ -166,7 +170,7 @@ def get_llm(
             top_p=top_p,
             client_kwargs={"timeout": OLLAMA_REQUEST_TIMEOUT},
             callbacks=[llm_accumulator],
-            logprobs=True
+            logprobs=True,
         )
         if top_k is not None:
             kwargs["top_k"] = top_k
@@ -186,11 +190,12 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
         if isinstance(logprobs_data, dict) and "content" in logprobs_data:
             content_logprobs = logprobs_data.get("content") or []
             token_logprob_tuple_list = [
-                (token_info.get("token"), token_info.get("logprob")) for token_info in content_logprobs if
-                "logprob" in token_info
+                (token_info.get("token"), token_info.get("logprob"))
+                for token_info in content_logprobs
+                if "logprob" in token_info
             ]
 
-            if "deepseek" in metadata['model_name']:
+            if "deepseek" in metadata["model_name"]:
                 think_end = "</think>"
                 end_token = "<｜end▁of▁sentence｜>"  # Cleaned spacing
                 tokens = [item[0] for item in token_logprob_tuple_list]
@@ -205,18 +210,19 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
             return token_logprob_tuple_list
         # OLLAMA
         elif isinstance(logprobs_data, list) and len(logprobs_data) > 0:
-            if "gemma4" in metadata['model']:
+            if "gemma4" in metadata["model"]:
                 # manually excluding thinking tokens
                 end_token = "<channel|>"
-                tokens = [logprobs_data[i]['token'] for i in range(len(logprobs_data))]
+                tokens = [logprobs_data[i]["token"] for i in range(len(logprobs_data))]
                 end_of_thinking_token_index = tokens.index(end_token)
                 return [
-                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"]) for i in
-                    range(end_of_thinking_token_index + 1, len(logprobs_data))
+                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"])
+                    for i in range(end_of_thinking_token_index + 1, len(logprobs_data))
                 ]
 
             return [
-                (logprobs_data[i]['token'], logprobs_data[i]['logprob']) for i in range(len(logprobs_data))
+                (logprobs_data[i]["token"], logprobs_data[i]["logprob"])
+                for i in range(len(logprobs_data))
             ]
 
     return None

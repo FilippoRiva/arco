@@ -16,16 +16,21 @@ def _format_answer_subtitle(answer: Answer) -> str:
     if conf.n > 1:
         idx = {"temperature": 0, "top_p": 1, "top_k": 2}[conf.bon_parameter]
         varying_vals = [p[idx] for p in conf.get_candidate_params()]
-        subtitle_elements.append(f"Best-of-{conf.n} on {conf.bon_parameter}({varying_vals})")
+        subtitle_elements.append(
+            f"Best-of-{conf.n} on {conf.bon_parameter}({varying_vals})"
+        )
         if answer.evaluation and answer.evaluation.success:
             subtitle_elements.append(f"Eval : {round(answer.evaluation.score, 3)}")
         else:
             subtitle_elements.append("Eval : none")
     else:
-        subtitle_elements.append(f"Temp: {round(answer.agent_config.get_candidate_params()[0][0], 3)}")
+        subtitle_elements.append(
+            f"Temp: {round(answer.agent_config.get_candidate_params()[0][0], 3)}"
+        )
     if answer.gt_evaluation and answer.gt_evaluation.success:
         subtitle_elements.append(f"GT-Eval : {round(answer.gt_evaluation.score, 3)}")
-    if conf.cot_n > 1: subtitle_elements.append(f"CoT : {conf.cot_n}")
+    if conf.cot_n > 1:
+        subtitle_elements.append(f"CoT : {conf.cot_n}")
     return "[dim]" + ", ".join(subtitle_elements) + "[/dim]"
 
 
@@ -50,10 +55,28 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         table.add_column(style="cyan")
         table.add_column(justify="right")
         rows = [
-            ("Ground-Truth eval", f"{answer.gt_evaluation.score:.2f}" if answer.gt_evaluation is not None else "-"),
-            ("Best-of-N eval", f"{answer.evaluation.score:.2f}" if answer.evaluation is not None else "-"),
-            ("Perplexity", f"{answer.perplexity:.4f}" if answer.perplexity is not None else "-"),
-            ("BC choice", f"{answer.budget_controller_choice}" if answer.perplexity is not None else "-")
+            (
+                "Ground-Truth eval",
+                f"{answer.gt_evaluation.score:.2f}"
+                if answer.gt_evaluation is not None
+                else "-",
+            ),
+            (
+                "Best-of-N eval",
+                f"{answer.evaluation.score:.2f}"
+                if answer.evaluation is not None
+                else "-",
+            ),
+            (
+                "Perplexity",
+                f"{answer.perplexity:.4f}" if answer.perplexity is not None else "-",
+            ),
+            (
+                "BC choice",
+                f"{answer.budget_controller_choice}"
+                if answer.perplexity is not None
+                else "-",
+            ),
         ]
         for k, v in rows:
             table.add_row(k, v)
@@ -62,7 +85,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             title="[dim]Generation and Evaluation Info[/dim]",
             title_align="left",
             border_style="dim",
-            expand=False
+            expand=False,
         )
 
         # profiling_data
@@ -71,13 +94,35 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         table.add_column(style="cyan")
         table.add_column(justify="right")
         rows = [
-            ("Total time", f"{p.total_time:.2f} s" if p.total_time is not None else "-"),
+            (
+                "Total time",
+                f"{p.total_time:.2f} s" if p.total_time is not None else "-",
+            ),
             ("LLM time", f"{p.llm_time:.2f} s" if p.llm_time is not None else "-"),
-            ("Energy", f"{p.energy_consumed_kwh:.6f} kWh" if p.energy_consumed_kwh is not None else "-"),
-            ("CPU", f"{p.cpu_energy_kwh:.6f} kWh" if p.cpu_energy_kwh is not None else "-"),
-            ("GPU", f"{p.gpu_energy_kwh:.6f} kWh" if p.gpu_energy_kwh is not None else "-"),
-            ("RAM", f"{p.ram_energy_kwh:.6f} kWh" if p.ram_energy_kwh is not None else "-"),
-            ("CO₂", f"{p.emissions_kg_co2:.6f} kg" if p.emissions_kg_co2 is not None else "-"),
+            (
+                "Energy",
+                f"{p.energy_consumed_kwh:.6f} kWh"
+                if p.energy_consumed_kwh is not None
+                else "-",
+            ),
+            (
+                "CPU",
+                f"{p.cpu_energy_kwh:.6f} kWh" if p.cpu_energy_kwh is not None else "-",
+            ),
+            (
+                "GPU",
+                f"{p.gpu_energy_kwh:.6f} kWh" if p.gpu_energy_kwh is not None else "-",
+            ),
+            (
+                "RAM",
+                f"{p.ram_energy_kwh:.6f} kWh" if p.ram_energy_kwh is not None else "-",
+            ),
+            (
+                "CO₂",
+                f"{p.emissions_kg_co2:.6f} kg"
+                if p.emissions_kg_co2 is not None
+                else "-",
+            ),
         ]
         for k, v in rows:
             table.add_row(k, v)
@@ -86,7 +131,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             title="[dim]Profiling[/dim]",
             title_align="left",
             border_style="dim",
-            expand=False
+            expand=False,
         )
 
         # perplexity
@@ -97,7 +142,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
                 try:
                     token_ppl = math.exp(-logprob)
                 except OverflowError:
-                    token_ppl = float('inf')
+                    token_ppl = float("inf")
                 if token_ppl < 1.2:
                     style = "bold green"
                 elif token_ppl < 5.0:
@@ -115,7 +160,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             subtitle="[bold green]■ <1.2 (High)[/bold green] [yellow]■ <5.0 (Mid)[/yellow] [bold red]■ ≥5.0 (Low Confidence)[/bold red]",
             subtitle_align="right",
             border_style="dim",
-            expand=False
+            expand=False,
         )
 
         # config panel
@@ -124,7 +169,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             title="[dim]Agent Output[/dim]",
             title_align="left",
             border_style="dim",
-            expand=False
+            expand=False,
         )
 
         # config panel
@@ -133,7 +178,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
             title="[dim]Config[/dim]",
             title_align="left",
             border_style="dim",
-            expand=False
+            expand=False,
         )
 
         group_elements += [
@@ -152,20 +197,30 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
                 title="[red]Error Message[/red]",
                 title_align="left",
                 border_style="red",
-                expand=False
+                expand=False,
             )
             group_elements += [error_subpanel]
 
         # Create a subpanel for discarded answers
         if answer.agent_config.n > 1:
-            group_elements.append(Panel(
-                Group(*[_render_discarded_answer_panel(discarded_answer)
-                      for discarded_answer in (answer.discarded_bon_answers if answer.discarded_bon_answers else [])]),
-                title="[dim]Discarded Answer[/dim]",
-                title_align="left",
-                border_style="dim",
-                expand=False
-            ))
+            group_elements.append(
+                Panel(
+                    Group(
+                        *[
+                            _render_discarded_answer_panel(discarded_answer)
+                            for discarded_answer in (
+                                answer.discarded_bon_answers
+                                if answer.discarded_bon_answers
+                                else []
+                            )
+                        ]
+                    ),
+                    title="[dim]Discarded Answer[/dim]",
+                    title_align="left",
+                    border_style="dim",
+                    expand=False,
+                )
+            )
 
         content = Group(*group_elements)
 
@@ -174,7 +229,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
 
     return Group(
         Rule(title=f"[bold cyan]{answer.agent_id.value}[/bold cyan]", style="cyan"),
-        content
+        content,
     )
 
 
@@ -182,21 +237,13 @@ def render_answer_compact(answer: Answer) -> Panel:
     metrics = []
 
     if answer.evaluation and answer.evaluation.success:
-        metrics.append(
-            f"[cyan]Eval[/cyan] {answer.evaluation.score:.3f}"
-        )
+        metrics.append(f"[cyan]Eval[/cyan] {answer.evaluation.score:.3f}")
     if answer.gt_evaluation and answer.gt_evaluation.success:
-        metrics.append(
-            f"[green]GT[/green] {answer.gt_evaluation.score:.3f}"
-        )
+        metrics.append(f"[green]GT[/green] {answer.gt_evaluation.score:.3f}")
     if getattr(answer, "perplexity", None) is not None:
-        metrics.append(
-            f"[yellow]PPL[/yellow] {answer.perplexity:.2f}"
-        )
+        metrics.append(f"[yellow]PPL[/yellow] {answer.perplexity:.2f}")
     if answer.agent_config.cot_n > 1:
-        metrics.append(
-            f"[magenta]CoT[/magenta] {answer.agent_config.cot_n}"
-        )
+        metrics.append(f"[magenta]CoT[/magenta] {answer.agent_config.cot_n}")
     content = " • ".join(metrics)
     if not content:
         content = "[dim]Completed[/dim]"
@@ -242,9 +289,10 @@ def render_energy_impact_panel(energy_dict: dict[str, Any]) -> Panel:
     grid.add_row("💾 RAM Overhead:", f"Pooled  ({ram_energy:.6f} kWh)")
 
     # Render unified layout
-    return Panel(grid,
-                 title="[bold green]📊 Codecarbon Report Summary[/bold green]",
-                 border_style="green",
-                 padding=(1, 2),
-                 expand=False
-                 )
+    return Panel(
+        grid,
+        title="[bold green]📊 Codecarbon Report Summary[/bold green]",
+        border_style="green",
+        padding=(1, 2),
+        expand=False,
+    )

@@ -3,6 +3,7 @@
 This module provides type-safe, serializable configuration objects for
 controlling agent execution at the step level.
 """
+
 import dataclasses
 import random
 from dataclasses import dataclass, field, fields, replace
@@ -19,16 +20,54 @@ if TYPE_CHECKING:
 
 def generate_readable_id():
     prefixes = [
-        "querying", "fetching", "ingesting", "indexing", "relational",
-        "metered", "gauged", "streaming", "loaded", "thrifty",
-        "augmented", "expanded", "parallel", "optimized", "pruned",
-        "branched", "ranked", "scoring", "scored", "weighted", "top-k",
-        "plotting", "rendering", "mapping", "vivid", "vectorized"
+        "querying",
+        "fetching",
+        "ingesting",
+        "indexing",
+        "relational",
+        "metered",
+        "gauged",
+        "streaming",
+        "loaded",
+        "thrifty",
+        "augmented",
+        "expanded",
+        "parallel",
+        "optimized",
+        "pruned",
+        "branched",
+        "ranked",
+        "scoring",
+        "scored",
+        "weighted",
+        "top-k",
+        "plotting",
+        "rendering",
+        "mapping",
+        "vivid",
+        "vectorized",
     ]
     nouns = [
-        "schema", "pipeline", "dataset", "ledger", "buffer", "warehouse",
-        "beam", "frontier", "trajectory", "node", "nexus", "pivot", "cascade",
-        "canvas", "matrix", "tensor", "figure", "chart", "graph", "palette"
+        "schema",
+        "pipeline",
+        "dataset",
+        "ledger",
+        "buffer",
+        "warehouse",
+        "beam",
+        "frontier",
+        "trajectory",
+        "node",
+        "nexus",
+        "pivot",
+        "cascade",
+        "canvas",
+        "matrix",
+        "tensor",
+        "figure",
+        "chart",
+        "graph",
+        "palette",
     ]
     number = random.randint(100, 999)
     return f"{random.choice(prefixes)}-{random.choice(nouns)}-{number}"
@@ -37,6 +76,7 @@ def generate_readable_id():
 @dataclass(frozen=True)
 class Config:
     """Complete agent configuration with per-agent settings."""
+
     # #
     # GLOBAL CONFIGURATION
     # #
@@ -46,9 +86,12 @@ class Config:
     # optional
     prompt: str = ""
     run_id: str = field(
-        default_factory=lambda: generate_readable_id())  # the identifier for this run, generated if not provided
+        default_factory=lambda: generate_readable_id()
+    )  # the identifier for this run, generated if not provided
     enable_budget_controller: bool = True  # whether if the budget controller is active
-    default_provider: Literal["openai", "ollama", "openrouter"] = "openai"  # global model provider
+    default_provider: Literal["openai", "ollama", "openrouter"] = (
+        "openai"  # global model provider
+    )
     default_model: str = "gpt-4o-mini"  # the model string
     default_provider_judge: Literal["openai", "ollama", "openrouter"] = "openai"
     default_model_judge: str = "gpt-4o-mini"
@@ -75,7 +118,9 @@ class Config:
         """Get configuration for a specific agent by type"""
         res = self.agent_configs.get(agent_type)
         if not res:
-            raise ConfigException(f"The requested agent_config is missing. Requested Agent: {agent_type.value}")
+            raise ConfigException(
+                f"The requested agent_config is missing. Requested Agent: {agent_type.value}"
+            )
         return res
 
     def set_agent_config(self, agent_type: AgentType, config: AgentConfig) -> None:
@@ -85,17 +130,21 @@ class Config:
     def copy(self) -> Config:
         """Create a deep copy of this configuration."""
         from copy import deepcopy
+
         return deepcopy(self)
 
     def set_gt(self, gt_data: dict[str, Any]):
-        for (agent_type, agent_config) in self.agent_configs.items():
+        for agent_type, agent_config in self.agent_configs.items():
             agent_config.set_gt(gt_data, agent_type)
 
     def hydrate_agent_configs(self, yaml_path: str):
         """Populate the agent_configs when the agent types are known"""
         from arco.core.state import AgentType
+
         for agent_type in AgentType.all():
-            agent_cfg = AgentConfig.from_yaml(yaml_path, agent_type.value, inherit_globals_from=self)
+            agent_cfg = AgentConfig.from_yaml(
+                yaml_path, agent_type.value, inherit_globals_from=self
+            )
             self.agent_configs[agent_type] = agent_cfg
 
     @classmethod
@@ -114,10 +163,10 @@ class Config:
             run_params includes keys: prompt,run_id, save_dir, save_results,
             reuse_from and enable_codecarbon.
         """
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 
-        global_section = raw.get('global', {})
+        global_section = raw.get("global", {})
 
         # Set particular configs from the yaml (that needs to be instantiated or cannot be derived from the file)
         global_params = {
@@ -127,7 +176,9 @@ class Config:
         # Load all the global configs that are overridden in the YAML file
         for field_meta in fields(Config):
             if field_meta.name in global_section:
-                if field_meta.name not in global_params:  # avoids redefining schema or other specific params
+                if (
+                    field_meta.name not in global_params
+                ):  # avoids redefining schema or other specific params
                     global_params[field_meta.name] = global_section[field_meta.name]
 
         return cls(**global_params)
@@ -135,7 +186,7 @@ class Config:
     def generate_benchmark_configs(self, yaml_path: str) -> list[dict[str, Any]]:
         """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of
         configurations, used by the benchmark script"""
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 
         runs = raw.get("runs")
@@ -150,6 +201,7 @@ class Config:
             # set the changes for this specific run configuration
             for agent in changes:
                 from arco.core import AgentType
+
                 agent_type = AgentType(agent)
                 run_config.agent_configs[agent_type].update(changes.get(agent))
 

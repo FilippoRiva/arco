@@ -59,14 +59,13 @@ class OrchestratedSales(Workflow):
 
         def route_to_agent(state: State) -> str:
             answer = state.get_last_answer(orchestrator.type)
-            valid_choices = [
-                retriever.name,
-                analyzer.name,
-                visualizer.name
-            ]
-            if answer and 'agent_choice' in answer.agent_output and answer.agent_output[
-                'agent_choice'] in valid_choices:
-                return answer.agent_output['agent_choice']
+            valid_choices = [retriever.name, analyzer.name, visualizer.name]
+            if (
+                answer
+                and "agent_choice" in answer.agent_output
+                and answer.agent_output["agent_choice"] in valid_choices
+            ):
+                return answer.agent_output["agent_choice"]
             return "end"
 
         # Routing logic
@@ -114,9 +113,11 @@ class PlannedSales(Workflow):
                 analyzer.name,
                 visualizer.name,
             ]
-            if answer and "agent_choice" in answer.agent_output and answer.agent_output[
-                "agent_choice"
-            ] in valid_choices:
+            if (
+                answer
+                and "agent_choice" in answer.agent_output
+                and answer.agent_output["agent_choice"] in valid_choices
+            ):
                 return answer.agent_output["agent_choice"]
             return "end"
 

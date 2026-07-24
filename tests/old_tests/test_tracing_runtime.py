@@ -77,7 +77,9 @@ def make_agent(tracer=None):
     agent.tracer = tracer
     agent.tracing_enabled = tracer is not None
     agent.current_run_step_results = {}
-    agent.parameter_provider = types.SimpleNamespace(get_step_config=lambda step_name, config, state: config)
+    agent.parameter_provider = types.SimpleNamespace(
+        get_step_config=lambda step_name, config, state: config
+    )
     agent.default_provider = "openai"
     agent.default_model = "test-model"
     agent.streaming = False
@@ -86,13 +88,17 @@ def make_agent(tracer=None):
     agent.schema = None
     agent.model_is_reachable = True
     agent.llm = FakeLLM()
-    agent._get_llm = lambda **kwargs: FakeLLM(temperature=kwargs.get("temperature", 0.1))
+    agent._get_llm = lambda **kwargs: FakeLLM(
+        temperature=kwargs.get("temperature", 0.1)
+    )
     agent.cache = types.SimpleNamespace(save_run=lambda **kwargs: None)
     agent.agent_config = types.SimpleNamespace(
         get_step_config=lambda name: AgentConfig(agent_name=name, use_cache=False),
         to_dict=dict,
     )
-    agent.graph = types.SimpleNamespace(invoke=lambda state: {**state, "answer": ["graph-answer"]})
+    agent.graph = types.SimpleNamespace(
+        invoke=lambda state: {**state, "answer": ["graph-answer"]}
+    )
     return agent
 
 
@@ -111,7 +117,9 @@ def test_execute_step_without_tracing_keeps_behavior():
             "chart_config": {"meta": CustomThing()},
         }
 
-    result = agent._execute_step_with_config("analyzing_data", {"prompt": "hello", "answer": []}, core_fn, config)
+    result = agent._execute_step_with_config(
+        "analyzing_data", {"prompt": "hello", "answer": []}, core_fn, config
+    )
 
     assert result["answer"] == ["analysis"]
     assert agent.trace_helper.enabled is False
@@ -130,7 +138,9 @@ def test_step_tracing_emits_business_and_candidate_spans():
             "sql_query": "SELECT 1",
         }
 
-    result = agent._execute_step_with_config("lookup_sales_data", {"prompt": "hello", "answer": []}, core_fn, config)
+    result = agent._execute_step_with_config(
+        "lookup_sales_data", {"prompt": "hello", "answer": []}, core_fn, config
+    )
 
     span_names = [span.name for span in tracer.spans]
     assert "sql_query_exec" in span_names
@@ -162,7 +172,9 @@ def test_best_of_n_and_cot_are_traced():
             "answer": [f"analysis-{call_counter['count']}"],
         }
 
-    result = agent._execute_step_with_config("analyzing_data", {"prompt": "hello", "answer": []}, core_fn, config)
+    result = agent._execute_step_with_config(
+        "analyzing_data", {"prompt": "hello", "answer": []}, core_fn, config
+    )
 
     span_names = [span.name for span in tracer.spans]
     assert span_names.count("step_candidate") == 2
@@ -224,7 +236,10 @@ class ScriptedLLM:
 
     def invoke(self, prompt):
         if "workflow orchestrator managing a data analysis pipeline" in prompt:
-            if "Answers generated so far: ['" in prompt or 'Answers generated so far: ["' in prompt:
+            if (
+                "Answers generated so far: ['" in prompt
+                or 'Answers generated so far: ["' in prompt
+            ):
                 if "Last tool used: analyzing_data" in prompt:
                     return types.SimpleNamespace(content="create_visualization")
                 if "Last tool used: create_visualization" in prompt:
@@ -285,8 +300,14 @@ def test_end_to_end_graph_run_with_tracing(tmp_path):
                 description="Daily sales facts",
                 file_path=str(parquet_path),
                 columns=[
-                    ColumnSchema(name="Sold_Date", description="Sales date", data_type="DATE"),
-                    ColumnSchema(name="Total_Sale_Value", description="Revenue", data_type="FLOAT"),
+                    ColumnSchema(
+                        name="Sold_Date", description="Sales date", data_type="DATE"
+                    ),
+                    ColumnSchema(
+                        name="Total_Sale_Value",
+                        description="Revenue",
+                        data_type="FLOAT",
+                    ),
                 ],
             )
         ]
@@ -302,15 +323,24 @@ def test_end_to_end_graph_run_with_tracing(tmp_path):
     agent.tracer = tracer
     agent.tracing_enabled = True
     agent.trace_helper = TracingHelper(tracer)
-    agent.parameter_provider = types.SimpleNamespace(get_step_config=lambda step_name, config, state: config)
+    agent.parameter_provider = types.SimpleNamespace(
+        get_step_config=lambda step_name, config, state: config
+    )
     agent.cache = types.SimpleNamespace(save_run=lambda **kwargs: None)
     agent.current_run_step_results = {}
     agent.model_is_reachable = True
     agent.llm = ScriptedLLM()
-    agent._get_llm = lambda **kwargs: ScriptedLLM(temperature=kwargs.get("temperature", 0.1))
+    agent._get_llm = lambda **kwargs: ScriptedLLM(
+        temperature=kwargs.get("temperature", 0.1)
+    )
 
     agent.agent_config = ArcoConfig(model="scripted-model", provider="ollama")
-    for step_name in ["decide_tool", "lookup_sales_data", "analyzing_data", "create_visualization"]:
+    for step_name in [
+        "decide_tool",
+        "lookup_sales_data",
+        "analyzing_data",
+        "create_visualization",
+    ]:
         cfg = agent.agent_config.get_agent_config(step_name)
         cfg.use_cache = False
         cfg.n = 1
@@ -416,7 +446,10 @@ def test_execute_step_uses_step_specific_llm_override():
     result = agent._execute_step_with_config(
         "decide_tool",
         {"prompt": "hello", "answer": []},
-        lambda state, llm, trace_helper=None: {**state, "tool_choice": "lookup_sales_data"},
+        lambda state, llm, trace_helper=None: {
+            **state,
+            "tool_choice": "lookup_sales_data",
+        },
         config,
     )
 
@@ -481,13 +514,20 @@ def test_execute_step_supports_mixed_provider_runs():
     agent._execute_step_with_config(
         "decide_tool",
         {"prompt": "hello", "answer": []},
-        lambda state, llm, trace_helper=None: {**state, "tool_choice": "lookup_sales_data"},
+        lambda state, llm, trace_helper=None: {
+            **state,
+            "tool_choice": "lookup_sales_data",
+        },
         decide_config,
     )
     agent._execute_step_with_config(
         "lookup_sales_data",
         {"prompt": "hello", "answer": []},
-        lambda state, llm, trace_helper=None: {**state, "data": "a\n1\n", "sql_query": "SELECT 1"},
+        lambda state, llm, trace_helper=None: {
+            **state,
+            "data": "a\n1\n",
+            "sql_query": "SELECT 1",
+        },
         lookup_config,
     )
 

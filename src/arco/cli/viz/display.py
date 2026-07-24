@@ -64,6 +64,7 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
                 if last_answer.agent_id.value.lower() == "visualizer":
                     status.stop()
                     from arco.core import AgentType
+
                     retriever_answer = last_state.get_last_answer(AgentType.RETRIEVER)
                     if retriever_answer:
                         df = retriever_answer.agent_output.get("data_df")
@@ -78,12 +79,19 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
                 energy_dict = update["energy_dict"]
             elif event_type == "completed":
                 status.stop()
-                live.console.print(Panel(
-                    f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time:.2f}s[/dim]",
-                    border_style="blue"))
+                live.console.print(
+                    Panel(
+                        f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {update['state'].global_profiling_data.total_time:.2f}s[/dim]",
+                        border_style="blue",
+                    )
+                )
             elif event_type == "error":
-                live.console.print(Panel(f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
-                                         border_style="red"))
+                live.console.print(
+                    Panel(
+                        f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
+                        border_style="red",
+                    )
+                )
 
     if energy_dict:
         console.print(render_energy_impact_panel(energy_dict))
@@ -91,9 +99,12 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
     # Fallback when model fails completely
     if not last_state:
         status.stop()
-        live.console.print(Panel(
-            "[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
-            border_style="red"))
+        live.console.print(
+            Panel(
+                "[bold red]Agent Run Completed[/bold red]\n[dim]No output has been produced[/dim]",
+                border_style="red",
+            )
+        )
         return None
 
     return last_state
