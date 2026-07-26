@@ -13,19 +13,21 @@ class AgentType(str):
 
     _registry: ClassVar[dict[str, AgentType]] = {}
 
-    def __new__(cls, value: str) -> Self:
+    @classmethod
+    def register(cls, value: str):
         # Records into the registry of AgentTypes
         if value in cls._registry:
-            return cls._registry[value]
+            return
         instance = super().__new__(cls, value)
         cls._registry[value] = instance
 
-        # Adds the property in capslock for the agent (AgentType("Retriever") adds AgentType.RETRIEVER)
+        # Adds the property in capslock for the agent (AgentType.register("Retriever") adds AgentType.RETRIEVER)
         attr_name = re.sub(r"\W+", "_", value).strip("_").upper()
         if attr_name and not hasattr(cls, attr_name):
             setattr(cls, attr_name, instance)
 
-        return instance
+    def __new__(cls, value: str) -> Self:
+        return cls._registry[value]
 
     @property
     def value(self) -> str:

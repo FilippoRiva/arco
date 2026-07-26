@@ -1,16 +1,18 @@
 import json
-from copy import deepcopy
+import logging
 from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, Answer, Evaluator, llm_tools
+from arco.core import Agent, Evaluator
 
 if TYPE_CHECKING:
     from arco.core import State
     from arco.core.llm_tools import CoTRefiner
 
 _VALID_AGENTS = {"retriever", "analyzer", "visualizer"}
+
+logger = logging.getLogger(__name__)
 
 
 class Planner(Agent):
@@ -103,25 +105,22 @@ No explanations. No markdown. Just the JSON array.
         if last_planner is None:
             # --- FIRST INVOCATION: generate full plan from LLM ---
             formatted = self._PLANNER_PROMPT.format(prompt=state.prompt)
-            response = llm.invoke(formatted)
-            raw = response.content if hasattr(response, "content") else str(response)
-            logprobs = llm_tools.extract_logprobs(response)
+            response = self.invoke_llm(llm, formatted)
 
-            plan = self._parse_plan(raw)
+            plan = self._parse_plan(response.text)
             if not plan:
                 plan = ["retriever", "analyzer"]
 
             choice = plan[0].capitalize()
             remaining = plan[1:]
+            logger.debug(f"Choice: '{choice}' | Plan : {remaining}")
 
-            answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message=f"Plan: {', '.join(a.capitalize() for a in plan)}",
-                agent_output={"agent_choice": choice, "plan": remaining},
-                agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs=logprobs,
+                output={"agent_choice": choice, "plan": remaining},
+                logprobs=response.logprobs,
             )
-            return state.add_answer(answer)
 
         # --- SUBSEQUENT INVOCATIONS: consume from plan ---
         remaining = list(last_planner.agent_output.get("plan", []))
@@ -144,32 +143,25 @@ No explanations. No markdown. Just the JSON array.
                 remaining=json.dumps(remaining),
             )
             response = llm.invoke(formatted)
-            raw = response.content if hasattr(response, "content") else str(response)
-            logprobs = llm_tools.extract_logprobs(response)
-
-            new_plan = self._parse_plan(raw)
+            new_plan = self._parse_plan(response.text)
             remaining = new_plan if new_plan else []
 
         if len(state.answers) > 10:
             remaining = []
 
         if not remaining:
-            answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="Workflow complete",
-                agent_output={"agent_choice": "end", "plan": []},
-                agent_config=deepcopy(state.get_agent_config(self.type)),
+                output={"agent_choice": "end", "plan": []},
             )
-            return state.add_answer(answer)
 
         choice = remaining[0].capitalize()
-        answer = Answer(
-            agent_id=self.type,
+        return self.answer(
+            state,
             message=f"Next: {choice}",
-            agent_output={"agent_choice": choice, "plan": remaining[1:]},
-            agent_config=deepcopy(state.get_agent_config(self.type)),
+            output={"agent_choice": choice, "plan": remaining[1:]},
         )
-        return state.add_answer(answer)
 
     @staticmethod
     def get_evaluator() -> Evaluator:

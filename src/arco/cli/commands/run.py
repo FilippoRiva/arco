@@ -41,9 +41,6 @@ _GLOBAL_PARAMS = [
 
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
-    from arco.cli.viz import display, printer
-    from arco.logs import initialize as init_logging
-    from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
     status.start()
@@ -53,7 +50,10 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     console.print("[green]✓[/green] Built-in modules loaded")
     console.print("[green]✓[/green] Visualization tools loaded")
-    from arco.workflows.workflow_executor import WorkflowExecutor
+    from arco.cli.viz import display, printer
+    from arco.core import Config
+    from arco.logs import initialize as init_logging
+    from arco.workflows.workflow import WorkflowFactory
 
     console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
@@ -68,18 +68,13 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         sys.exit(1)
 
     console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
-    workflow, config = WorkflowFactory.get_from_config(args.config)
+    config = Config.from_yaml(args.config)
+    workflow = WorkflowFactory.get(config=config)
 
     init_logging(config.run_id, log_dir=Path(config.save_dir) / "logs", level=args.log)
 
     printer.print_config_table(config, verbose=args.verbose)
     printer.print_workflow_graph(workflow)
 
-    ## Get the agent
-    executor = WorkflowExecutor(
-        config=config,
-        workflow=workflow,
-    )
-
     # runs the agent with a visualization logic in rich
-    display.display_workflow(executor.stream(), verbose=args.verbose)
+    display.display_workflow(workflow.stream(), verbose=args.verbose)

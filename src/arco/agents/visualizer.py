@@ -1,11 +1,10 @@
 import json
-from copy import deepcopy
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, AgentType, Answer, llm_tools
+from arco.core import Agent, AgentType, Answer
 from arco.core.agent import AgentException
 from arco.evaluators import VisualizerEvaluator
 
@@ -248,9 +247,8 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 "title": "Chart",
             }
 
-    @staticmethod
     def _extract_chart_config(
-        state: State, llm: BaseChatModel | CoTRefiner
+        self, state: State, llm: BaseChatModel | CoTRefiner
     ) -> tuple[dict[str, str], list[float | int] | None]:
         """Infer a compact chart configuration from the looked-up data.
 
@@ -277,17 +275,12 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
             data=data_text, visualization_goal=visualization_goal
         )
-        response = llm.invoke(formatted_prompt)
-        logprobs = llm_tools.extract_logprobs(response)
-        raw: str = (
-            str(response.content) if hasattr(response, "content") else str(response)
-        )
-        chart_config = Visualizer._parse_chart_config(raw)
-        return chart_config, logprobs
+        response = self.invoke_llm(llm, formatted_prompt)
+        chart_config = Visualizer._parse_chart_config(response.text)
+        return chart_config, response.logprobs
 
-    @staticmethod
     def _create_chart(
-        chart_config: dict, llm: BaseChatModel | CoTRefiner
+        self, chart_config: dict, llm: BaseChatModel | CoTRefiner
     ) -> tuple[str, list[float | int] | None]:
         """Ask the LLM to emit matplotlib code for the given chart configuration.
 
@@ -299,13 +292,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             renders the chart using matplotlib.
         """
         formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
-        response = llm.invoke(formatted_prompt)
-        logprobs = llm_tools.extract_logprobs(response)
-        code: str = (
-            str(response.content) if hasattr(response, "content") else str(response)
-        )
-        cleaned_code = code.replace("```python", "").replace("```", "").strip()
-        return cleaned_code, logprobs
+        response = self.invoke_llm(llm, formatted_prompt)
+        cleaned_code = response.text.replace("```python", "").replace("```", "").strip()
+        return cleaned_code, response.logprobs
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """Core visualization logic - chart config extraction and code generation.
@@ -326,20 +315,12 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         last_retriever_answer: Answer = ans_to_check
 
         data_df = last_retriever_answer.agent_output["data_df"]
-        # if data_df is not None:
-        #    print(f"Using DataFrame with shape: {data_df.shape}, columns: {list(data_df.columns)}")
-        # else:
-        #    print("Warning: No DataFrame available in state")
 
         # Extract chart configuration
-        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(
-            state, llm
-        )
+        chart_config, logprobs_chart_config = self._extract_chart_config(state, llm)
 
         # Generate chart code
-        code, logprobs_code = Visualizer._create_chart(
-            chart_config=chart_config, llm=llm
-        )
+        code, logprobs_code = self._create_chart(chart_config=chart_config, llm=llm)
 
         # --- Validate by executing in a headless namespace (no display) ---
         # Switch to Agg (non-interactive) backend to avoid tkinter threading
@@ -356,25 +337,20 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             exec_error = f"{type(e).__name__}: {e}"
 
         if exec_error:
-            answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="The generated code couldn't be executed",
-                agent_output={"code": code, "chart_config": chart_config},
-                agent_config=deepcopy(state.get_agent_config(self.type)),
+                output={"code": code, "chart_config": chart_config},
+                logprobs=logprobs_code + logprobs_chart_config,
                 error=exec_error,
             )
         else:
-            answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="Visualization generated",
-                agent_output={"code": code, "chart_config": chart_config},
-                agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs=logprobs_code + logprobs_chart_config
-                if logprobs_code is not None and logprobs_chart_config is not None
-                else None,
+                output={"code": code, "chart_config": chart_config},
+                logprobs=logprobs_code + logprobs_chart_config,
             )
-
-        return state.add_answer(answer)
 
     @staticmethod
     def get_evaluator() -> Evaluator:

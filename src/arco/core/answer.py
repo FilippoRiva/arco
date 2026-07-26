@@ -1,4 +1,3 @@
-from collections import defaultdict
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
@@ -16,7 +15,7 @@ class Answer:
     message: str  # for visualization purposes
     agent_config: AgentConfig
     agent_output: dict = field(
-        default_factory=defaultdict(lambda: None)
+        default_factory=dict
     )  # whatever the agent outputs is put here for other agents to access
 
     # Evaluation

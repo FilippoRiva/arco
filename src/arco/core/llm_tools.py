@@ -1,6 +1,7 @@
 import os
 from typing import TYPE_CHECKING
 
+import requests
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
@@ -16,6 +17,11 @@ DEFAULT_LLM_ACC = LLMCallAccumulator("None")
 
 if TYPE_CHECKING:
     from arco.core import AgentConfig
+
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CoTRefiner:
@@ -226,3 +232,73 @@ def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None
             ]
 
     return None
+
+
+def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
+    """Check if the configured LLM provider is reachable and the asked model is available."""
+    if provider in ("openai", "openrouter"):
+        import openai
+
+        try:
+            api_key = os.environ.get(
+                "OPENROUTER_API_KEY" if provider == "openrouter" else "OPENAI_API_KEY"
+            )
+            if not api_key:
+                error_message = f"Missing API key for {provider}. Set the {'OPENROUTER_API_KEY' if provider == 'openrouter' else 'OPENAI_API_KEY'} environment variable."
+                logger.error(error_message)
+                return False, error_message
+
+            models = []
+            if provider == "openai":
+                models = openai.OpenAI(api_key=api_key, timeout=5.0).models.list()
+            elif provider == "openrouter":
+                models = openai.OpenAI(
+                    api_key=api_key,
+                    timeout=5.0,
+                    base_url="https://openrouter.ai/api/v1",
+                ).models.list()
+
+            models = [provider_model.id for provider_model in models]
+            if model not in models:
+                raise ValueError(
+                    f"The requested model is not available: '{model}'. Available models are {models}"
+                )
+            return True, f"Connection to {provider} succeeded."
+        except openai.OpenAIError as e:
+            error_message = f"{provider} connection failed: {e}"
+            logger.error(error_message)
+            return False, error_message
+        except ValueError as e:
+            error_message = f"{provider} connection failed: {e}"
+            logger.error(error_message)
+            return False, error_message
+
+    # Ollama
+    try:
+        base = OLLAMA_URL.rstrip("/")
+        resp = requests.get(f"{base}/api/tags", timeout=5.0)
+        resp.raise_for_status()
+        models = [model.get("model").split(":")[0] for model in resp.json()["models"]]
+        if model.split(":")[0] not in models:
+            raise ValueError(
+                f"The requested model is not available: '{model}'. Available models are {models}"
+            )
+        return True, f"Connection to {provider} succeeded."
+    except requests.RequestException as e:
+        error_message = f"{provider} connection failed: {e}"
+        logger.error(error_message)
+        return False, error_message
+    except ValueError as e:
+        error_message = f"{provider} connection failed: {e}"
+        logger.error(error_message)
+        return False, error_message
+
+
+class LLMResult:
+    """Pre-extracted LLM response — no manual content/logprobs wrangling."""
+
+    def __init__(self, response):
+        self.text = (
+            str(response.content) if hasattr(response, "content") else str(response)
+        )
+        self.logprobs = extract_logprobs(response)

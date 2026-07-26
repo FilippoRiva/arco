@@ -1,20 +1,17 @@
 from typing import override
 
-from langgraph.graph import END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
-
 from arco.agents import Analyzer, Orchestrator, Planner, Retriever, Visualizer
-from arco.core import Config, State
-from arco.workflows.workflow import Workflow
+from arco.core import Agent, Config, State
+
+from .graph import END, Graph
+from .workflow import Workflow
 
 
 class StrictSales(Workflow):
     workflow_id = "sales"
 
     @override
-    def _initialize(self, config: Config) -> CompiledStateGraph:
-        graph = StateGraph(State)
-
+    def initialize(self, config: Config, graph: Graph):
         # Get Agents
         retriever = Retriever()
         analyzer = Analyzer()
@@ -22,118 +19,69 @@ class StrictSales(Workflow):
 
         # Add nodes
         for agent in [retriever, analyzer, visualizer]:
-            graph.add_node(agent.name, agent)
-            self._agent_list.update({agent.type: agent})
+            graph.add_node(agent)
 
         # Add entry point
-        graph.set_entry_point(retriever.name)
+        graph.set_entry_point(retriever)
 
         # Add edges
-        graph.add_edge(retriever.name, analyzer.name)
-        graph.add_edge(analyzer.name, visualizer.name)
-        graph.add_edge(visualizer.name, END)
+        graph.add_edge(retriever, analyzer)
+        graph.add_edge(analyzer, visualizer)
+        graph.add_edge(visualizer, END)
 
-        return graph.compile()
+
+def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
+    retriever = Retriever()
+    analyzer = Analyzer()
+    visualizer = Visualizer()
+
+    # Add nodes
+    for agent in [orchestrating_agent, retriever, analyzer, visualizer]:
+        graph.add_node(agent)
+
+    # Entry point
+    graph.set_entry_point(orchestrating_agent)
+
+    def route_to_agent(state: State) -> str:
+        answer = state.get_last_answer(orchestrating_agent.type)
+        if answer and "agent_choice" in answer.agent_output:
+            return answer.agent_output["agent_choice"]
+        return "end"
+
+    # Routing logic
+    graph.add_conditional_edges(
+        orchestrating_agent,
+        route_to_agent,
+        {
+            retriever: retriever,
+            analyzer: analyzer,
+            visualizer: visualizer,
+            "end": END,
+        },
+    )
+
+    # Edges returning to orchestrator
+    graph.add_edge(retriever, orchestrating_agent)
+    graph.add_edge(analyzer, orchestrating_agent)
+    graph.add_edge(visualizer, orchestrating_agent)
 
 
 class OrchestratedSales(Workflow):
     workflow_id = "orchestrated_sales"
 
     @override
-    def _initialize(self, config: Config) -> CompiledStateGraph:
-        graph = StateGraph(State)
-
-        # Get agents
+    def initialize(self, config: Config, graph: Graph):
         orchestrator = Orchestrator()
-        retriever = Retriever()
-        analyzer = Analyzer()
-        visualizer = Visualizer()
-
-        # Add nodes
-        for agent in [orchestrator, retriever, analyzer, visualizer]:
-            graph.add_node(agent.name, agent)
-            self._agent_list.update({agent.type: agent})
-
-        # Entry point
-        graph.set_entry_point(orchestrator.name)
-
-        def route_to_agent(state: State) -> str:
-            answer = state.get_last_answer(orchestrator.type)
-            valid_choices = [retriever.name, analyzer.name, visualizer.name]
-            if (
-                answer
-                and "agent_choice" in answer.agent_output
-                and answer.agent_output["agent_choice"] in valid_choices
-            ):
-                return answer.agent_output["agent_choice"]
-            return "end"
-
-        # Routing logic
-        graph.add_conditional_edges(
-            orchestrator.name,
-            route_to_agent,
-            {
-                retriever.name: retriever.name,
-                analyzer.name: analyzer.name,
-                visualizer.name: visualizer.name,
-                "end": END,
-            },
-        )
-
-        # Edges returning to orchestrator
-        graph.add_edge(retriever.name, orchestrator.name)
-        graph.add_edge(analyzer.name, orchestrator.name)
-        graph.add_edge(visualizer.name, orchestrator.name)
-
-        return graph.compile()
+        _instrument_orchestrated_graph(graph=graph, orchestrating_agent=orchestrator)
 
 
 class PlannedSales(Workflow):
     workflow_id = "planned_sales"
 
     @override
-    def _initialize(self, config: Config) -> CompiledStateGraph:
-        graph = StateGraph(State)
-
+    def initialize(self, config: Config, graph: Graph):
         planner = Planner()
-        retriever = Retriever()
-        analyzer = Analyzer()
-        visualizer = Visualizer()
+        _instrument_orchestrated_graph(graph=graph, orchestrating_agent=planner)
 
-        for agent in [planner, retriever, analyzer, visualizer]:
-            graph.add_node(agent.name, agent)
-            self._agent_list.update({agent.type: agent})
 
-        graph.set_entry_point(planner.name)
-
-        def route_from_plan(state: State) -> str:
-            answer = state.get_last_answer(planner.type)
-            valid_choices = [
-                retriever.name,
-                analyzer.name,
-                visualizer.name,
-            ]
-            if (
-                answer
-                and "agent_choice" in answer.agent_output
-                and answer.agent_output["agent_choice"] in valid_choices
-            ):
-                return answer.agent_output["agent_choice"]
-            return "end"
-
-        graph.add_conditional_edges(
-            planner.name,
-            route_from_plan,
-            {
-                retriever.name: retriever.name,
-                analyzer.name: analyzer.name,
-                visualizer.name: visualizer.name,
-                "end": END,
-            },
-        )
-
-        graph.add_edge(retriever.name, planner.name)
-        graph.add_edge(analyzer.name, planner.name)
-        graph.add_edge(visualizer.name, planner.name)
-
-        return graph.compile()
+__all__ = ["OrchestratedSales", "PlannedSales", "StrictSales"]

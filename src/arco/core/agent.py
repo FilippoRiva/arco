@@ -1,4 +1,5 @@
 import difflib
+import inspect
 import math
 import sys
 import time
@@ -11,6 +12,7 @@ from . import llm_tools
 from .agent_type import AgentType
 from .evaluator import Evaluator
 from .exceptions import AgentException
+from .llm_tools import LLMResult
 from .profiling_data import ProfilingData
 from .state import State
 
@@ -24,12 +26,47 @@ if TYPE_CHECKING:
 class Agent(ABC):
     _COT_SIMILARITY_THRESHOLD = 0.95
 
+    def __init_subclass__(cls, **kwargs):
+        """When a subclass inherits this ABC, the agent_type of that subclass is stored and the AgentType "dynamic ENUM".
+        This provides compatibility with any kind of dynamically defined Agent"""
+        super().__init_subclass__(**kwargs)
+        if inspect.isabstract(cls):
+            return  # don't register intermediate abstract subclasses
+        AgentType.register(cls.__name__)
+
     def __init__(self):
         self.type = AgentType(self.__class__.__name__)
 
     @property
     def name(self) -> str:
         return self.type.value
+
+    def invoke_llm(self, llm, prompt: str) -> LLMResult:
+        """Invoke the LLM and return a pre-extracted result with ``.text`` and ``.logprobs``."""
+        return LLMResult(llm.invoke(prompt))
+
+    def answer(
+        self,
+        state: State,
+        *,
+        message: str = "",
+        output: dict | None = None,
+        error: str | None = None,
+        logprobs=None,
+    ) -> State:
+        """Build an :class:`Answer` with implicit *agent_id* and *agent_config*, and append it to *state*."""
+        from arco.core.answer import Answer
+
+        return state.add_answer(
+            Answer(
+                agent_id=self.type,
+                agent_config=state.get_agent_config(self.type),
+                message=message,
+                agent_output=output or {},
+                error=error,
+                logprobs=logprobs,
+            )
+        )
 
     @abstractmethod
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
@@ -169,7 +206,7 @@ class Agent(ABC):
         if not answer:
             return state
 
-        max_perplexity = self._AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
+        max_perplexity = _AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
 
         if answer.perplexity is not None and answer.perplexity > max_perplexity:
             answer.budget_controller_choice = "rollback"

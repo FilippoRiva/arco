@@ -49,9 +49,6 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 # ---------------------------------------------------------------------------
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
-    from arco.data.benchmark_dataset import BenchmarkDataset
-    from arco.logs import initialize as init_logging
-    from arco.workflows.workflow import WorkflowFactory
 
     status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
     status.start()
@@ -62,35 +59,43 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     import pandas as pd
 
-    console.print("[green]✓[/green] Pre-benchmark dependencies loaded")
+    console.print("[green]✓[/green] Builtins loaded")
+    from arco.core import Config
+    from arco.data.benchmark_dataset import BenchmarkDataset
+    from arco.logs import initialize as init_logging
+    from arco.workflows.workflow import WorkflowFactory
+
+    console.print("[green]✓[/green] ARCO dependencies loaded")
     status.stop()
 
     start_time = time.time()
-    workflow, default_config = WorkflowFactory.get_from_config(args.config)
+    default_config = Config.from_yaml(args.config)
+    workflow = WorkflowFactory.get(config=default_config)
     benchmark_dataset = BenchmarkDataset.from_json(args.dataset)
 
     benchmark_id = args.id or Path(args.config).stem
     benchmark_save_folder = Path(args.save_dir) / benchmark_id
+    runs_folder = benchmark_save_folder / "runs"
     os.makedirs(benchmark_save_folder, exist_ok=True)
 
     init_logging(benchmark_id, log_dir=benchmark_save_folder / "logs", level=args.log)
 
-    run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
+    # Load run configurations
     with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
         list_of_run_configs = default_config.generate_benchmark_configs(args.config)
         console.print("[green]✓[/green] Run configurations loaded")
 
-    runs_folder = benchmark_save_folder / "runs"
-
+    # Run each run configuration
+    run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
     for run_config_dict in list_of_run_configs:
         run_name = run_config_dict["name"].replace(" ", "_")
         run_csv_name = run_name + ".csv"
-        if (runs_folder / run_name / run_csv_name).exists():
+        if (runs_folder / run_name / run_csv_name).exists():  # loads it if available
             console.print(
                 f"[yellow]Benchmark already exists: {runs_folder / run_name / run_csv_name}. Skipping.[/yellow]"
             )
             result_df = pd.read_csv(runs_folder / run_name / run_csv_name)
-        else:
+        else:  # executes and save it otherwise
             result_df, resulting_states = run_benchmark(
                 **run_config_dict,
                 benchmark_dataset=benchmark_dataset,
@@ -98,7 +103,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 benchmark_id=benchmark_id,
                 verbose=args.verbose,
             )
-            # Save results
             os.makedirs(runs_folder / run_name, exist_ok=True)
             result_df.to_csv(runs_folder / run_name / run_csv_name, index=False)
             for result in resulting_states:
@@ -197,7 +201,6 @@ def run_benchmark(
     from arco.cli.viz import display, printer
     from arco.core import evaluator
     from arco.data import BenchmarkSummary
-    from arco.workflows.workflow_executor import WorkflowExecutor
 
     if benchmark_id is None:
         benchmark_id = generate_benchmark_id()
@@ -208,9 +211,7 @@ def run_benchmark(
     resulting_states: list[State] = []
 
     if verbose:
-        visualization_logic = partial(
-            display.display_workflow, verbose=True, show_plot=False
-        )
+        visualization_logic = partial(display.display_workflow, verbose=True)
     else:
         visualization_logic = display.display_workflow_compact
 
@@ -220,8 +221,7 @@ def run_benchmark(
             Rule(f"[bold blue]Test Case {entry.id + 1}/{len(benchmark_dataset)}")
         )
         config = config.update_prompt(entry.prompt)
-        executor = WorkflowExecutor(workflow=workflow, config=config)
-        resulting_state: State = visualization_logic(executor.stream())
+        resulting_state: State = visualization_logic(workflow.stream(config=config))
         with console.status("[bold cyan]Evaluating the run[/bold cyan]"):
             evaluation_summary: BenchmarkSummary = evaluator.evaluate_state(
                 resulting_state,

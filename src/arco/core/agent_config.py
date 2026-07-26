@@ -102,6 +102,12 @@ class AgentConfig:
             self.enable_budget_controller = global_config.enable_budget_controller
 
     @classmethod
+    def from_config(cls, config: Config):
+        result = cls()
+        result._inherit_from_config(global_config=config)
+        return result
+
+    @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
         """Create StepConfig from dict (for deserialization)."""
         # Filter out unknown keys and non-serializable fields

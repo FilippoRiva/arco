@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal
 import yaml
 
 from .agent_config import AgentConfig
-from .exceptions import ConfigException
 
 if TYPE_CHECKING:
     from . import AgentType
@@ -80,10 +79,7 @@ class Config:
     # #
     # GLOBAL CONFIGURATION
     # #
-    # mandatory
-    workflow: str
-
-    # optional
+    workflow: str = ""
     prompt: str = ""
     run_id: str = field(
         default_factory=lambda: generate_readable_id()
@@ -114,38 +110,29 @@ class Config:
         temp = self._shuffle_id()
         return dataclasses.replace(temp, prompt=prompt)
 
-    def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
-        """Get configuration for a specific agent by type"""
-        res = self.agent_configs.get(agent_type)
-        if not res:
-            raise ConfigException(
-                f"The requested agent_config is missing. Requested Agent: {agent_type.value}"
-            )
-        return res
-
-    def set_agent_config(self, agent_type: AgentType, config: AgentConfig) -> None:
-        """Set configuration for a specific step."""
-        self.agent_configs[agent_type] = config
-
     def copy(self) -> Config:
         """Create a deep copy of this configuration."""
         from copy import deepcopy
 
         return deepcopy(self)
 
-    def set_gt(self, gt_data: dict[str, Any]):
-        for agent_type, agent_config in self.agent_configs.items():
-            agent_config.set_gt(gt_data, agent_type)
-
-    def hydrate_agent_configs(self, yaml_path: str):
+    def hydrate_agent_configs(self, agent_list: list[AgentType] | None = None):
         """Populate the agent_configs when the agent types are known"""
         from arco.core.state import AgentType
 
-        for agent_type in AgentType.all():
-            agent_cfg = AgentConfig.from_yaml(
-                yaml_path, agent_type.value, inherit_globals_from=self
-            )
+        self.agent_configs.clear()
+
+        for agent_type in agent_list if agent_list else AgentType.all():
+            if self.config_path:
+                agent_cfg = AgentConfig.from_yaml(
+                    self.config_path, agent_type.value, inherit_globals_from=self
+                )
+            else:
+                agent_cfg = AgentConfig.from_config(self)
             self.agent_configs[agent_type] = agent_cfg
+
+    def set(self, **kwargs):
+        return replace(self, **kwargs)
 
     @classmethod
     def from_yaml(cls, yaml_path: str) -> Config:
@@ -181,7 +168,8 @@ class Config:
             ):
                 global_params[field_meta.name] = global_section[field_meta.name]
 
-        return cls(**global_params)
+        instance = cls(**global_params)
+        return instance
 
     def generate_benchmark_configs(self, yaml_path: str) -> list[dict[str, Any]]:
         """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of

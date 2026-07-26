@@ -1,5 +1,4 @@
 import json
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import duckdb
@@ -141,9 +140,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
         super().__init__()
         self.schema: DatabaseSchema = DatabaseSchema.from_data_dir(data_dir or "./data")
 
-    @staticmethod
     def _select_relevant_tables(
-        state: State, schema: DatabaseSchema, llm
+        self, state: State, schema: DatabaseSchema, llm
     ) -> tuple[list[str], list[float | int] | None]:
         """Use the LLM to select relevant tables from a large schema.
 
@@ -166,10 +164,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
             compact_schema=compact_schema,
             prompt=state.prompt,
         )
-        response = llm.invoke(formatted_prompt)
-        raw = response.content if hasattr(response, "content") else str(response)
-        logprobs = llm_tools.extract_logprobs(response)
-        raw = raw.strip()
+        response = self.invoke_llm(llm, formatted_prompt)
+        raw = response.text.strip()
 
         name_map = {t.name.lower(): t.name for t in schema.tables}
         selected = []
@@ -180,11 +176,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         if not selected:
             selected = [t.name for t in schema.tables]
-        return selected, logprobs
+        return selected, response.logprobs
 
-    @staticmethod
     def _generate_sql_query(
-        state: State, schema_context: str, llm
+        self, state: State, schema_context: str, llm
     ) -> tuple[str, list[float | int] | None]:
         """Generate a DuckDB SQL query from the user prompt and schema context.
 
@@ -202,11 +197,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             prompt=state.prompt,
             schema_context=schema_context,
         )
-        response = llm.invoke(formatted_prompt)
-        logprobs = llm_tools.extract_logprobs(response)
-        sql_query = response.content if hasattr(response, "content") else str(response)
+        response = self.invoke_llm(llm, formatted_prompt)
+        sql_query = response.text
         cleaned_sql = sql_query.strip().replace("```sql", "").replace("```", "")
-        return cleaned_sql, logprobs
+        return cleaned_sql, response.logprobs
 
     def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
         """Core lookup logic - SQL generation and data retrieval.
@@ -239,62 +233,55 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # --- Build schema context (two-step when many tables) ---
         if schema.should_use_table_selection():
-            selected_names, logprobs_relevant_tables = (
-                Retriever._select_relevant_tables(state, schema, llm)
+            selected_names, logprobs_relevant_tables = self._select_relevant_tables(
+                state, schema, llm
             )
             schema_context = schema.get_full_schema_str(table_names=selected_names)
         else:
-            selected_names = [table.name for table in schema.tables]
             logprobs_relevant_tables = []
             schema_context = schema.get_full_schema_str()
 
         # --- Generate and execute SQL ---
-        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(
+        sql_query, logprobs_gen_sql = self._generate_sql_query(
             state, schema_context, llm
         )
+
+        # Execute the query and answer
         try:
             result_df: pd.DataFrame = con.execute(sql_query).df()
             result_str = result_df.to_csv(index=False)
 
-            answer: Answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message=f"The data has been retrieved ({len(result_df)} {'entries' if len(result_df) > 1 else 'entry'} with columns : {', '.join(result_df.columns.to_list())})",
-                agent_output={
+                output={
                     "data_str": result_str,
                     "data_df": result_df,
                     "sql_query": sql_query,
                 },
-                agent_config=deepcopy(state.get_agent_config(self.type)),
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql
-                if logprobs_relevant_tables is not None and logprobs_gen_sql is not None
-                else None,
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
-
-            return state.add_answer(answer)
-
         except duckdb.ParserException as e:
-            answer: Answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="Couldn't retrieve the data.",
                 error=f"SQL query parsing erro: {e!s}",
-                agent_config=deepcopy(state.get_agent_config(self.type)),
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
         except duckdb.CatalogException as e:
-            answer: Answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="Couldn't retrieve the data.",
                 error=f"SQL query is selecting missing tables: {e!s}",
-                agent_config=deepcopy(state.get_agent_config(self.type)),
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
         except duckdb.BinderException as e:
-            answer: Answer = Answer(
-                agent_id=self.type,
+            return self.answer(
+                state,
                 message="Couldn't retrieve the data.",
                 error=f"SQL query references do not resolve : {e!s}",
-                agent_config=deepcopy(state.get_agent_config(self.type)),
+                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
-
-        return state.add_answer(answer)
 
     @staticmethod
     def apply_standardization(

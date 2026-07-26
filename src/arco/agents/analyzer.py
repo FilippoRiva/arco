@@ -1,10 +1,9 @@
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import pandas as pd
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, AgentType, Answer, llm_tools
+from arco.core import Agent, AgentType, Answer
 from arco.core.agent import AgentException
 from arco.evaluators import AnalyzerEvaluator
 
@@ -108,23 +107,13 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             prompt=state.prompt,
             sql_query=last_retriever_answer.agent_output["sql_query"],
         )
-        analysis_result = llm.invoke(formatted_prompt)
-        analysis_text = (
-            str(analysis_result.content)
-            if hasattr(analysis_result, "content")
-            else str(analysis_result)
+        result = self.invoke_llm(llm, formatted_prompt)
+        return self.answer(
+            state,
+            message=f"{result.text}",
+            output={"analysis": result.text},
+            logprobs=result.logprobs,
         )
-        logprobs = llm_tools.extract_logprobs(analysis_result)
-        analyzer_config = deepcopy(state.get_agent_config(self.type))
-        answer: Answer = Answer(
-            agent_id=self.type,
-            message=f"{analysis_text}",
-            agent_output={"analysis": analysis_text},
-            agent_config=analyzer_config,
-            logprobs=logprobs,
-        )
-
-        return state.add_answer(answer)
 
     @staticmethod
     def get_evaluator() -> Evaluator:

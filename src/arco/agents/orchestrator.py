@@ -1,10 +1,9 @@
 import difflib
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, AgentType, Answer, Evaluator, llm_tools
+from arco.core import Agent, AgentType, Answer, Evaluator
 from arco.evaluators.orchestrator_evaluator import OrchestratorEvaluator
 
 if TYPE_CHECKING:
@@ -135,10 +134,9 @@ No explanations. Just the agent's name."""
         )
 
         # try:
-        orchestrator_response = llm.invoke(decision_prompt)
+        orchestrator_response = self.invoke_llm(llm, decision_prompt)
 
-        response_content: str = str(orchestrator_response.content)
-        tool_choice = response_content.strip().lower()
+        tool_choice = orchestrator_response.text.strip().lower()
         valid_tools = ["retriever", "analyzer", "visualizer", "end"]
         closest_match = difflib.get_close_matches(
             tool_choice, valid_tools, n=1, cutoff=0.6
@@ -165,16 +163,12 @@ No explanations. Just the agent's name."""
 
         matched_agent = matched_agent.capitalize()
 
-        logprobs = llm_tools.extract_logprobs(orchestrator_response)
-
-        answer = Answer(
-            agent_id=self.type,
+        return self.answer(
+            state,
             message=f"The chosen agent is {matched_agent}",
-            agent_output={"agent_choice": matched_agent},
-            agent_config=deepcopy(state.get_agent_config(self.type)),
-            logprobs=logprobs,
+            output={"agent_choice": matched_agent},
+            logprobs=orchestrator_response.logprobs,
         )
-        return state.add_answer(answer)
 
     def get_evaluator(self) -> Evaluator:
         return OrchestratorEvaluator()
