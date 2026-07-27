@@ -2,13 +2,11 @@ import json
 import logging
 from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
-
-from arco.core import Agent, Evaluator
+from arco.core import Agent
+from arco.evaluators import PlannerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import State
-    from arco.core.llm_tools import CoTRefiner
+    from arco.core import LLM, Evaluator, State
 
 _VALID_AGENTS = {"retriever", "analyzer", "visualizer"}
 
@@ -75,6 +73,10 @@ No explanations. No markdown. Just the JSON array.
     def __init__(self):
         super().__init__()
 
+    @property
+    def evaluator(self) -> Evaluator:
+        return PlannerEvaluator()
+
     @staticmethod
     def _parse_plan(raw: str) -> list[str]:
         raw = raw.strip()
@@ -99,13 +101,13 @@ No explanations. No markdown. Just the JSON array.
         except json.JSONDecodeError, TypeError:
             return []
 
-    def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
+    def core(self, state: State, llm: LLM) -> State:
         last_planner = state.get_last_answer(self.type)
 
         if last_planner is None:
             # --- FIRST INVOCATION: generate full plan from LLM ---
             formatted = self._PLANNER_PROMPT.format(prompt=state.prompt)
-            response = self.invoke_llm(llm, formatted)
+            response = llm.invoke(formatted)
 
             plan = self._parse_plan(response.text)
             if not plan:
@@ -163,8 +165,5 @@ No explanations. No markdown. Just the JSON array.
             output={"agent_choice": choice, "plan": remaining[1:]},
         )
 
-    @staticmethod
-    def get_evaluator() -> Evaluator:
-        from arco.evaluators import PlannerEvaluator
 
-        return PlannerEvaluator()
+__all__ = ["Planner"]

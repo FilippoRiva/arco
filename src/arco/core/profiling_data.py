@@ -24,7 +24,7 @@ class ProfilingData:
         gpu_energy_kwh: float | None = None,
         ram_energy_kwh: float | None = None,
         emissions_kg_co2: float | None = None,
-    ):
+    ) -> ProfilingData:
         return replace(
             self,
             total_time=(self.total_time or 0) + (total_time or 0),
@@ -37,5 +37,8 @@ class ProfilingData:
             emissions_kg_co2=(self.emissions_kg_co2 or 0) + (emissions_kg_co2 or 0),
         )
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
         return asdict(self)
+
+
+__all__ = ["ProfilingData"]

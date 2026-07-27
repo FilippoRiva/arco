@@ -1,4 +1,9 @@
-from arco.core import Answer, Evaluation, Evaluator
+from typing import TYPE_CHECKING
+
+from arco.core import Evaluation, Evaluator
+
+if TYPE_CHECKING:
+    from arco.core import Answer
 
 
 class PlannerEvaluator(Evaluator):
@@ -11,3 +16,6 @@ class PlannerEvaluator(Evaluator):
             answer.gt_evaluation = Evaluation(score=1)
         else:
             answer.gt_evaluation = Evaluation(score=0)
+
+
+__all__ = ["PlannerEvaluator"]

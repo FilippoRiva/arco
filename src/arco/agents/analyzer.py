@@ -1,15 +1,12 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, AgentType, Answer
-from arco.core.agent import AgentException
+from arco.core import Agent, AgentException, AgentType
 from arco.evaluators import AnalyzerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import Evaluator, State
-    from arco.core.llm_tools import CoTRefiner
+    from arco.core import LLM, Answer, Evaluator, State
 
 
 class Analyzer(Agent):
@@ -56,6 +53,10 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
     def __init__(self):
         super().__init__()
 
+    @property
+    def evaluator(self) -> Evaluator:
+        return AnalyzerEvaluator()
+
     @staticmethod
     def _enrich_data_with_stats(data_csv: str | None) -> str:
         """Append pre-computed numeric statistics to the CSV data string.
@@ -84,7 +85,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             )
         return data_csv + "\n".join(lines)
 
-    def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
+    def core(self, state: State, llm: LLM) -> State:
         """Core analysis logic - LLM-based data analysis.
 
         Args:
@@ -107,7 +108,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             prompt=state.prompt,
             sql_query=last_retriever_answer.agent_output["sql_query"],
         )
-        result = self.invoke_llm(llm, formatted_prompt)
+        result = llm.invoke(formatted_prompt)
         return self.answer(
             state,
             message=f"{result.text}",
@@ -115,6 +116,5 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             logprobs=result.logprobs,
         )
 
-    @staticmethod
-    def get_evaluator() -> Evaluator:
-        return AnalyzerEvaluator()
+
+__all__ = ["Analyzer"]

@@ -85,3 +85,6 @@ class Trace:
 class TraceElement:
     agent_type: AgentType
     data: dict[str, str | int | float | dict]
+
+
+__all__ = ["BenchmarkDataset", "BenchmarkEntry", "BenchmarkSummary", "Trace"]

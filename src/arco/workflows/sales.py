@@ -1,10 +1,8 @@
 from typing import override
 
 from arco.agents import Analyzer, Orchestrator, Planner, Retriever, Visualizer
-from arco.core import Agent, Config, State
-
-from .graph import END, Graph
-from .workflow import Workflow
+from arco.core import Agent, Config, Graph, State, Workflow
+from arco.core.graph import END
 
 
 class StrictSales(Workflow):

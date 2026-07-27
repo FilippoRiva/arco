@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from . import AgentType
 
 
-def generate_readable_id():
+def _generate_readable_id():
     prefixes = [
         "querying",
         "fetching",
@@ -82,7 +82,7 @@ class Config:
     workflow: str = ""
     prompt: str = ""
     run_id: str = field(
-        default_factory=lambda: generate_readable_id()
+        default_factory=lambda: _generate_readable_id()
     )  # the identifier for this run, generated if not provided
     enable_budget_controller: bool = True  # whether if the budget controller is active
     default_provider: Literal["openai", "ollama", "openrouter"] = (
@@ -106,7 +106,7 @@ class Config:
     # #
     config_path: str | None = None  # The path to this config YAML file
 
-    def update_prompt(self, prompt: str):
+    def update_prompt(self, prompt: str) -> Config:
         temp = self._shuffle_id()
         return dataclasses.replace(temp, prompt=prompt)
 
@@ -118,7 +118,7 @@ class Config:
 
     def hydrate_agent_configs(self, agent_list: list[AgentType] | None = None):
         """Populate the agent_configs when the agent types are known"""
-        from arco.core.state import AgentType
+        from .agent_type import AgentType
 
         self.agent_configs.clear()
 
@@ -188,7 +188,7 @@ class Config:
 
             # set the changes for this specific run configuration
             for agent in changes:
-                from arco.core import AgentType
+                from .agent_type import AgentType
 
                 agent_type = AgentType(agent)
                 run_config.agent_configs[agent_type].update(changes.get(agent))
@@ -204,4 +204,7 @@ class Config:
         return full_benchmark_config_list
 
     def _shuffle_id(self) -> Config:
-        return replace(self, run_id=generate_readable_id())
+        return replace(self, run_id=_generate_readable_id())
+
+
+__all__ = ["Config"]

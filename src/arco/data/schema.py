@@ -227,3 +227,6 @@ class DatabaseSchema:
             return schema
         else:
             raise SchemaParsingException("The schema was not parsable")
+
+
+__all__ = ["DatabaseSchema"]

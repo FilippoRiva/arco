@@ -1,10 +1,11 @@
 import json
 from json import JSONDecodeError
+from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
+from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
 
-from arco.core import AgentType, Answer, Evaluation, Evaluator, State
-from arco.core.llm_tools import get_llm
+if TYPE_CHECKING:
+    from arco.core import LLM
 
 
 class AnalyzerEvaluator(Evaluator):
@@ -109,7 +110,7 @@ class AnalyzerEvaluator(Evaluator):
             }
 
     @staticmethod
-    def judge(state: State, llm: BaseChatModel):
+    def judge(state: State, llm: LLM):
         """Evaluate data analysis quality using LLM-as-a-Judge."""
         prompt = state.prompt
         last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
@@ -145,7 +146,7 @@ class AnalyzerEvaluator(Evaluator):
 
     @staticmethod
     def judge_from_ground_truth(
-        answer: Answer, llm: BaseChatModel, gt_analysis: str | None = None
+        answer: Answer, llm: LLM, gt_analysis: str | None = None
     ) -> Evaluation:
         """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
 
@@ -156,7 +157,7 @@ class AnalyzerEvaluator(Evaluator):
             generated_analysis=generated_analysis,
         )
         response = llm.invoke(formatted_prompt)
-        raw = response.content if hasattr(response, "content") else str(response)
+        raw = response.text
 
         # Parse JSON response
         import re as _re
@@ -200,3 +201,6 @@ class AnalyzerEvaluator(Evaluator):
 
         answer.gt_evaluation = evaluation
         return
+
+
+__all__ = ["AnalyzerEvaluator"]

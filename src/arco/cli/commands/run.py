@@ -44,22 +44,14 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
     status.start()
+
     import os
     import sys
-    from pathlib import Path
 
-    console.print("[green]✓[/green] Built-in modules loaded")
-    console.print("[green]✓[/green] Visualization tools loaded")
-    from arco.cli.viz import display, printer
-    from arco.core import Config
-    from arco.logs import initialize as init_logging
-    from arco.workflows.workflow import WorkflowFactory
+    from arco.tools import run_from_config
 
-    console.print("[green]✓[/green] ARCO dependencies loaded")
-    status.stop()
+    from ..viz import display, printer
 
-    ## Initialization
-    # Load config from YAML
     if not os.path.isfile(args.config):
         console.print(
             f"[bold red]Error[/bold red]: config file not found at [bold cyan]{args.config}[/bold cyan]"
@@ -67,14 +59,14 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         parser.print_help()
         sys.exit(1)
 
-    console.print(f"Loading configuration from: [bold cyan]{args.config}[/bold cyan]")
-    config = Config.from_yaml(args.config)
-    workflow = WorkflowFactory.get(config=config)
-
-    init_logging(config.run_id, log_dir=Path(config.save_dir) / "logs", level=args.log)
+    generator = run_from_config(yaml_path=args.config)
+    config = next(generator)
+    workflow = next(generator)
 
     printer.print_config_table(config, verbose=args.verbose)
     printer.print_workflow_graph(workflow)
 
+    status.stop()
+
     # runs the agent with a visualization logic in rich
-    display.display_workflow(workflow.stream(), verbose=args.verbose)
+    display.display_workflow(generator, verbose=args.verbose)

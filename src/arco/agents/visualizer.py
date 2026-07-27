@@ -2,15 +2,11 @@ import json
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
-
-from arco.core import Agent, AgentType, Answer
-from arco.core.agent import AgentException
+from arco.core import Agent, AgentException, AgentType
 from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import Evaluator, State
-    from arco.core.llm_tools import CoTRefiner
+    from arco.core import LLM, Answer, Evaluator, State
 
 
 class Visualizer(Agent):
@@ -210,6 +206,10 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
     def __init__(self):
         super().__init__()
 
+    @property
+    def evaluator(self) -> Evaluator:
+        return VisualizerEvaluator()
+
     @staticmethod
     def _parse_chart_config(raw_text: str) -> dict[str, str]:
         """Parse a chart configuration JSON from a raw LLM response.
@@ -247,8 +247,9 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 "title": "Chart",
             }
 
+    @staticmethod
     def _extract_chart_config(
-        self, state: State, llm: BaseChatModel | CoTRefiner
+        state: State, llm: LLM
     ) -> tuple[dict[str, str], list[float | int] | None]:
         """Infer a compact chart configuration from the looked-up data.
 
@@ -275,12 +276,13 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
             data=data_text, visualization_goal=visualization_goal
         )
-        response = self.invoke_llm(llm, formatted_prompt)
+        response = llm.invoke(formatted_prompt)
         chart_config = Visualizer._parse_chart_config(response.text)
         return chart_config, response.logprobs
 
+    @staticmethod
     def _create_chart(
-        self, chart_config: dict, llm: BaseChatModel | CoTRefiner
+        chart_config: dict, llm: LLM
     ) -> tuple[str, list[float | int] | None]:
         """Ask the LLM to emit matplotlib code for the given chart configuration.
 
@@ -292,11 +294,11 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             renders the chart using matplotlib.
         """
         formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
-        response = self.invoke_llm(llm, formatted_prompt)
+        response = llm.invoke(formatted_prompt)
         cleaned_code = response.text.replace("```python", "").replace("```", "").strip()
         return cleaned_code, response.logprobs
 
-    def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
+    def core(self, state: State, llm: LLM) -> State:
         """Core visualization logic - chart config extraction and code generation.
 
         Args:
@@ -317,10 +319,14 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         data_df = last_retriever_answer.agent_output["data_df"]
 
         # Extract chart configuration
-        chart_config, logprobs_chart_config = self._extract_chart_config(state, llm)
+        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(
+            state, llm
+        )
 
         # Generate chart code
-        code, logprobs_code = self._create_chart(chart_config=chart_config, llm=llm)
+        code, logprobs_code = Visualizer._create_chart(
+            chart_config=chart_config, llm=llm
+        )
 
         # --- Validate by executing in a headless namespace (no display) ---
         # Switch to Agg (non-interactive) backend to avoid tkinter threading
@@ -352,6 +358,5 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 logprobs=logprobs_code + logprobs_chart_config,
             )
 
-    @staticmethod
-    def get_evaluator() -> Evaluator:
-        return VisualizerEvaluator()
+
+__all__ = ["Visualizer"]

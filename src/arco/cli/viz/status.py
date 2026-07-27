@@ -31,7 +31,7 @@ class RunStatusPanel:
             elapsed = time.time() - self.node_start_time
             text += f" [dim]Node time : {elapsed:.1f}s[/dim] "
 
-        text += f"[dim]Total time : {time.time() - self.init_time:.1f}s[/dim]"
+        text += f" [dim]Total time : {time.time() - self.init_time:.1f}s[/dim]"
 
         self.spinner.update(text=text)
         return self.spinner

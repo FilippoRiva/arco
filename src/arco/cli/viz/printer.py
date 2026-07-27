@@ -11,8 +11,8 @@ from arco.cli.console import console
 from arco.core import Config
 
 if TYPE_CHECKING:
+    from arco.core import Workflow
     from arco.data import BenchmarkSummary
-    from arco.workflows import Workflow
 
 
 def print_benchmark_header(

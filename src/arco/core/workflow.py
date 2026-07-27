@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from langgraph.graph.state import CompiledStateGraph
 
 from arco.core import Agent, AgentType, Config, State, llm_tools, tracking
-
-from .graph import Graph
+from arco.core.graph import Graph
 
 if TYPE_CHECKING:
     from arco.core import Evaluator
@@ -51,9 +50,6 @@ class Workflow(ABC):
 
         # codecarbon Emission Tracking
         tracking.initialize_tracking(self.config)
-
-        # Global Tracking start
-        tracking.start_tracking()
 
         # Initialize state
         input_state: State = State(
@@ -129,9 +125,6 @@ class Workflow(ABC):
         if final_result is not None and self.config.enable_storage:
             final_result.save(Path(self.config.save_dir) / "storage")
 
-        # Global tracking stop
-        tracking.stop_tracking()
-
         yield {"event": "completed", "state": final_result}
         return final_result
 
@@ -154,7 +147,7 @@ class Workflow(ABC):
 
     def get_evaluators(self) -> dict[AgentType, Evaluator]:
         return {
-            agent_type: agent.get_evaluator()
+            agent_type: agent.evaluator
             for agent_type, agent in self._agent_list.items()
         }
 
@@ -192,3 +185,6 @@ class WorkflowFactory:
             raise ValueError(
                 f"Unknown workflow {workflow_id!r}. Available: {sorted(cls._workflow_registry)}"
             )
+
+
+__all__ = ["Workflow", "WorkflowFactory"]

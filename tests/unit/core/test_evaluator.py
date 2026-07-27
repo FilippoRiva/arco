@@ -82,7 +82,7 @@ def test_evaluator(config):
         ),
     ]
 
-    (states, selected_state) = evaluator.evaluate_and_select(states)
+    (states, selected_state) = evaluator.evaluate_best_of_n(states)
 
     assert selected_state is not None
     assert selected_state.get_last_answer().evaluation is not None

@@ -38,3 +38,6 @@ class AgentType(str):
     def all(cls) -> list[AgentType]:
         """All agent types registered so far."""
         return list(cls._registry.values())
+
+
+__all__ = ["AgentType"]

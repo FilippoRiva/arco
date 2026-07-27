@@ -1,14 +1,11 @@
 import difflib
 from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
-
-from arco.core import Agent, AgentType, Answer, Evaluator
-from arco.evaluators.orchestrator_evaluator import OrchestratorEvaluator
+from arco.core import Agent, AgentType
+from arco.evaluators import OrchestratorEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import State
-    from arco.core.llm_tools import CoTRefiner
+    from arco.core import LLM, Answer, Evaluator, State
 
 
 class Orchestrator(Agent):
@@ -99,7 +96,11 @@ No explanations. Just the agent's name."""
     def __init__(self):
         super().__init__()
 
-    def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
+    @property
+    def evaluator(self) -> Evaluator:
+        return OrchestratorEvaluator()
+
+    def core(self, state: State, llm: LLM) -> State:
         """Core tool decision logic - LLM-based routing.
 
         Args:
@@ -134,7 +135,7 @@ No explanations. Just the agent's name."""
         )
 
         # try:
-        orchestrator_response = self.invoke_llm(llm, decision_prompt)
+        orchestrator_response = llm.invoke(decision_prompt)
 
         tool_choice = orchestrator_response.text.strip().lower()
         valid_tools = ["retriever", "analyzer", "visualizer", "end"]
@@ -170,5 +171,5 @@ No explanations. Just the agent's name."""
             logprobs=orchestrator_response.logprobs,
         )
 
-    def get_evaluator(self) -> Evaluator:
-        return OrchestratorEvaluator()
+
+__all__ = ["Orchestrator"]

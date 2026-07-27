@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
-from arco.core.tracking import LLMCallAccumulator
+from .tracking import LLMCallAccumulator
 
 # Global parameters
 OLLAMA_REQUEST_TIMEOUT: int = 600
@@ -16,7 +16,7 @@ OLLAMA_URL: str = "http://localhost:11434"
 DEFAULT_LLM_ACC = LLMCallAccumulator("None")
 
 if TYPE_CHECKING:
-    from arco.core import AgentConfig
+    from .agent_config import AgentConfig
 
 
 import logging
@@ -24,15 +24,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class CoTRefiner:
-    """Transparent LLM wrapper that appends the previous iteration's response for iterative CoT refinement.
+class LLMAnswer:
+    """Pre-extracted LLM response — no manual content/logprobs wrangling."""
 
-    Every call to invoke() receives the original prompt augmented with a
-    refinement block containing the previous iteration's output.  The wrapper
-    delegates all other attribute accesses to the underlying LLM so that the
-    core step functions need no changes.
-    """
+    def __init__(self, response):
+        self.text: str = (
+            str(response.content) if hasattr(response, "content") else str(response)
+        )
+        self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
 
+
+class LLM:
     _REFINEMENT_SUFFIX = """
     ## ITERATIVE REFINEMENT
     Your previous attempt produced the following response:
@@ -58,32 +60,34 @@ class CoTRefiner:
     You MUST fix this error. Output only the corrected response with no meta-commentary.
     """
 
-    def __init__(
-        self, base_llm, previous_response: str, execution_error: str | None = None
-    ) -> None:
-        self._llm = base_llm
-        self._previous_response = previous_response
-        self._execution_error = execution_error
+    def __init__(self, base_chat_model: BaseChatModel):
+        self._chat_model: BaseChatModel = base_chat_model
+        self.cot_enabled: bool = False
+        self.last_answer: LLMAnswer | None = None
+        self.execution_error: str | None = None
 
-    def invoke(self, prompt):
-        if self._execution_error:
+    def invoke(self, prompt: str) -> LLMAnswer:
+        if self.cot_enabled:
+            answer = self._cot_invoke(prompt, self.execution_error)
+        else:
+            answer = LLMAnswer(self._chat_model.invoke(prompt))
+        self.last_answer = answer
+        return answer
+
+    def _cot_invoke(self, prompt: str, execution_error: str | None) -> LLMAnswer:
+        if execution_error:
             suffix = self._ERROR_SUFFIX.format(
-                previous_response=self._previous_response,
-                execution_error=self._execution_error,
+                previous_response=self.last_answer.text,
+                execution_error=execution_error,
             )
         else:
             suffix = self._REFINEMENT_SUFFIX.format(
                 previous_response=self._previous_response,
             )
-        return self._llm.invoke(prompt + suffix)
-
-    def __getattr__(self, name):
-        return getattr(self._llm, name)
+        return LLMAnswer(self._chat_model.invoke(prompt + suffix))
 
 
-def get_llm_from_config(
-    agent_config: AgentConfig, llm_acc: LLMCallAccumulator
-) -> BaseChatModel:
+def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> LLM:
     temp, top_p, top_k = agent_config.get_candidate_params()[0]
 
     return get_llm(
@@ -111,7 +115,7 @@ def get_llm(
     no_repeat_ngram_size: int | None = None,
     llm_accumulator: LLMCallAccumulator = DEFAULT_LLM_ACC,
     openrouter_url: str = "https://openrouter.ai/api/v1",
-) -> BaseChatModel:
+) -> LLM:
     """Factory method to create LLM instances with specific parameters.
 
     Creates a new LLM instance instead of mutating the global self.llm,
@@ -134,7 +138,7 @@ def get_llm(
         BaseChatModel: A configured instance of a LangChain-compatible chat model.
     """
     if provider.lower() == "openai":
-        return ChatOpenAI(
+        chat_model = ChatOpenAI(
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -150,7 +154,7 @@ def get_llm(
                 "OpenRouter requires an API key: pass openrouter_api_key or "
                 "set the OPENROUTER_API_KEY environment variable."
             )
-        return ChatOpenAI(
+        chat_model = ChatOpenAI(
             model=model,
             api_key=api_key,
             base_url=openrouter_url,
@@ -184,10 +188,11 @@ def get_llm(
             kwargs["num_beams"] = num_beams
         if no_repeat_ngram_size is not None:
             kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
-        return ChatOllama(**kwargs)
+        chat_model = ChatOllama(**kwargs)
+    return LLM(base_chat_model=chat_model)
 
 
-def extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
+def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
     metadata = message.response_metadata
     if "logprobs" in metadata and metadata["logprobs"] is not None:
         logprobs_data = metadata["logprobs"]
@@ -294,11 +299,10 @@ def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
         return False, error_message
 
 
-class LLMResult:
-    """Pre-extracted LLM response — no manual content/logprobs wrangling."""
-
-    def __init__(self, response):
-        self.text = (
-            str(response.content) if hasattr(response, "content") else str(response)
-        )
-        self.logprobs = extract_logprobs(response)
+__all__ = [
+    "LLM",
+    "LLMAnswer",
+    "check_model_availability",
+    "get_llm",
+    "get_llm_from_config",
+]

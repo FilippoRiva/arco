@@ -3,17 +3,13 @@ from typing import TYPE_CHECKING
 
 import duckdb
 import pandas as pd
-from langchain_core.language_models import BaseChatModel
 
-from arco.core import Agent, AgentType, Answer, llm_tools
-from arco.core.agent import AgentException
+from arco.core import Agent, AgentException, AgentType, get_llm
 from arco.data import DatabaseSchema, normalize_dataframe_values
 from arco.evaluators import RetrieverEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import AgentConfig, Evaluator, State
-    from arco.core.llm_tools import CoTRefiner
-    from arco.core.tracking import LLMCallAccumulator
+    from arco.core import LLM, AgentConfig, Answer, Evaluator, LLMCallAccumulator, State
 
 
 class Retriever(Agent):
@@ -140,69 +136,11 @@ name used by any candidate. Prefer lowercase_with_underscores.
         super().__init__()
         self.schema: DatabaseSchema = DatabaseSchema.from_data_dir(data_dir or "./data")
 
-    def _select_relevant_tables(
-        self, state: State, schema: DatabaseSchema, llm
-    ) -> tuple[list[str], list[float | int] | None]:
-        """Use the LLM to select relevant tables from a large schema.
+    @property
+    def evaluator(self) -> Evaluator:
+        return RetrieverEvaluator()
 
-        Called when schema.should_use_table_selection() is True (more tables than
-        compact_threshold). Passes only table names and descriptions to the LLM,
-        then returns the selected table names so full column details for only those
-        tables are included in the SQL generation prompt.
-
-        Args:
-            state: Conversation state containing the user prompt.
-            schema: DatabaseSchema with all available tables.
-            llm: LLM instance for table selection.
-
-        Returns:
-            List of selected table names. Falls back to all table names if the LLM
-            output cannot be parsed (safe degradation).
-        """
-        compact_schema = schema.get_compact_summary()
-        formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
-            compact_schema=compact_schema,
-            prompt=state.prompt,
-        )
-        response = self.invoke_llm(llm, formatted_prompt)
-        raw = response.text.strip()
-
-        name_map = {t.name.lower(): t.name for t in schema.tables}
-        selected = []
-        for token in raw.split(","):
-            normalized = token.strip().lower()
-            if normalized in name_map:
-                selected.append(name_map[normalized])
-
-        if not selected:
-            selected = [t.name for t in schema.tables]
-        return selected, response.logprobs
-
-    def _generate_sql_query(
-        self, state: State, schema_context: str, llm
-    ) -> tuple[str, list[float | int] | None]:
-        """Generate a DuckDB SQL query from the user prompt and schema context.
-
-        Args:
-            state: Conversation state containing the user prompt.
-            schema_context: Full schema string produced by DatabaseSchema.get_full_schema_str().
-                            Includes table names, descriptions, and column details for all
-                            relevant tables.
-            llm: LLM instance used to generate the SQL.
-
-        Returns:
-            A plain SQL string suitable for DuckDB. Any Markdown fences are stripped.
-        """
-        formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
-            prompt=state.prompt,
-            schema_context=schema_context,
-        )
-        response = self.invoke_llm(llm, formatted_prompt)
-        sql_query = response.text
-        cleaned_sql = sql_query.strip().replace("```sql", "").replace("```", "")
-        return cleaned_sql, response.logprobs
-
-    def core(self, state: State, llm: BaseChatModel | CoTRefiner) -> State:
+    def core(self, state: State, llm: LLM) -> State:
         """Core lookup logic - SQL generation and data retrieval.
 
         Supports both single-table (legacy) and multi-table (new) modes.
@@ -233,8 +171,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # --- Build schema context (two-step when many tables) ---
         if schema.should_use_table_selection():
-            selected_names, logprobs_relevant_tables = self._select_relevant_tables(
-                state, schema, llm
+            selected_names, logprobs_relevant_tables = (
+                Retriever._select_relevant_tables(state, schema, llm)
             )
             schema_context = schema.get_full_schema_str(table_names=selected_names)
         else:
@@ -242,7 +180,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             schema_context = schema.get_full_schema_str()
 
         # --- Generate and execute SQL ---
-        sql_query, logprobs_gen_sql = self._generate_sql_query(
+        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(
             state, schema_context, llm
         )
 
@@ -265,7 +203,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             return self.answer(
                 state,
                 message="Couldn't retrieve the data.",
-                error=f"SQL query parsing erro: {e!s}",
+                error=f"SQL query parsing error: {e!s}",
                 logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
         except duckdb.CatalogException as e:
@@ -283,9 +221,96 @@ name used by any candidate. Prefer lowercase_with_underscores.
                 logprobs=logprobs_relevant_tables + logprobs_gen_sql,
             )
 
+    def post_generation_hooks(
+        self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
+    ) -> list[State]:
+        """Use an LLM to standardize column names across best-of-n candidates.
+
+        After best-of-n generates N SQL results, their DataFrames may have different
+        column names and orders. This function asks the LLM to determine canonical
+        column names and reorders/renames each candidate's DataFrame to match.
+
+        Also applies normalize_dataframe_values to each DataFrame."""
+
+        standardize_llm = get_llm(
+            temperature=0.0,
+            max_tokens=1000,
+            llm_accumulator=llm_acc,
+            provider=config.provider,
+            model=config.model,
+        )
+
+        return Retriever._apply_standardization(
+            results, standardize_llm, original_schema=self.schema
+        )
+
     @staticmethod
-    def apply_standardization(
-        results: list[State], llm: BaseChatModel, original_schema: DatabaseSchema
+    def _select_relevant_tables(
+        state: State, schema: DatabaseSchema, llm
+    ) -> tuple[list[str], list[float | int] | None]:
+        """Use the LLM to select relevant tables from a large schema.
+
+        Called when schema.should_use_table_selection() is True (more tables than
+        compact_threshold). Passes only table names and descriptions to the LLM,
+        then returns the selected table names so full column details for only those
+        tables are included in the SQL generation prompt.
+
+        Args:
+            state: Conversation state containing the user prompt.
+            schema: DatabaseSchema with all available tables.
+            llm: LLM instance for table selection.
+
+        Returns:
+            List of selected table names. Falls back to all table names if the LLM
+            output cannot be parsed (safe degradation).
+        """
+        compact_schema = schema.get_compact_summary()
+        formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
+            compact_schema=compact_schema,
+            prompt=state.prompt,
+        )
+        response = llm.invoke(formatted_prompt)
+        raw = response.text.strip()
+
+        name_map = {t.name.lower(): t.name for t in schema.tables}
+        selected = []
+        for token in raw.split(","):
+            normalized = token.strip().lower()
+            if normalized in name_map:
+                selected.append(name_map[normalized])
+
+        if not selected:
+            selected = [t.name for t in schema.tables]
+        return selected, response.logprobs
+
+    @staticmethod
+    def _generate_sql_query(
+        state: State, schema_context: str, llm: LLM
+    ) -> tuple[str, list[float | int] | None]:
+        """Generate a DuckDB SQL query from the user prompt and schema context.
+
+        Args:
+            state: Conversation state containing the user prompt.
+            schema_context: Full schema string produced by DatabaseSchema.get_full_schema_str().
+                            Includes table names, descriptions, and column details for all
+                            relevant tables.
+            llm: LLM instance used to generate the SQL.
+
+        Returns:
+            A plain SQL string suitable for DuckDB. Any Markdown fences are stripped.
+        """
+        formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
+            prompt=state.prompt,
+            schema_context=schema_context,
+        )
+        response = llm.invoke(formatted_prompt)
+        sql_query = response.text
+        cleaned_sql = sql_query.strip().replace("```sql", "").replace("```", "")
+        return cleaned_sql, response.logprobs
+
+    @staticmethod
+    def _apply_standardization(
+        results: list[State], llm: LLM, original_schema: DatabaseSchema
     ) -> list[State]:
 
         # Collect candidate info
@@ -406,29 +431,5 @@ name used by any candidate. Prefer lowercase_with_underscores.
             ret_ans.agent_output["data_str"] = result_df.to_csv(index=False)
         return results
 
-    def post_generation_hooks(
-        self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
-    ) -> list[State]:
-        """Use an LLM to standardize column names across best-of-n candidates.
 
-        After best-of-n generates N SQL results, their DataFrames may have different
-        column names and orders. This function asks the LLM to determine canonical
-        column names and reorders/renames each candidate's DataFrame to match.
-
-        Also applies normalize_dataframe_values to each DataFrame."""
-
-        standardize_llm = llm_tools.get_llm(
-            temperature=0.0,
-            max_tokens=1000,
-            llm_accumulator=llm_acc,
-            provider=config.provider,
-            model=config.model,
-        )
-
-        return Retriever.apply_standardization(
-            results, standardize_llm, original_schema=self.schema
-        )
-
-    @staticmethod
-    def get_evaluator() -> Evaluator:
-        return RetrieverEvaluator()
+__all__ = ["Retriever"]

@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 
-def initialize(run_id: str, log_dir: str | Path = "./logs", level: str = "INFO"):
+def initialize(run_id: str, log_dir: str | Path = "./logs", level: str | None = None):
     """Configure logging for a single workflow execution.
 
     Sets up a file handler that captures DEBUG+ for ``arco.*`` loggers
@@ -18,6 +18,8 @@ def initialize(run_id: str, log_dir: str | Path = "./logs", level: str = "INFO")
             One of ``"DEBUG"``, ``"INFO"``, ``"WARNING"``, ``"ERROR"``.
             Third-party libraries always stay at ``WARNING`` or higher.
     """
+    if level is None:
+        level = "INFO"
     log_dir = Path(log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"{run_id}.log"

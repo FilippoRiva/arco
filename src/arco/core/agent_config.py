@@ -62,6 +62,52 @@ class AgentConfig:
     # ARCO parameters
     enable_budget_controller: bool | None = None
 
+    @classmethod
+    def from_yaml(
+        cls, yaml_path: str, agent_name: str, inherit_globals_from: Config | None = None
+    ) -> AgentConfig:
+        with open(yaml_path, "r") as f:
+            raw = yaml.safe_load(f)
+
+        agents_section = raw.get("agents", {})  # for run configs
+        if agents_section == {}:  # for benchmark configs
+            agents_section = raw.get("defaults", {})
+
+        if agent_name in agents_section:
+            agent_dict = dict(agents_section[agent_name])
+        else:
+            agent_dict = {}
+
+        config = AgentConfig.from_dict(agent_dict)
+
+        if inherit_globals_from:
+            config._inherit_from_config(inherit_globals_from)
+
+        config._normalize_ranges()
+        return config
+
+    @classmethod
+    def from_config(cls, config: Config) -> AgentConfig:
+        result = cls()
+        result._inherit_from_config(config=config)
+        return result
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
+        """Create StepConfig from dict (for deserialization)."""
+        # Filter out unknown keys and non-serializable fields
+        valid_keys = [f.name for f in dataclasses.fields(AgentConfig)]
+        filtered = {k: v for k, v in data.items() if k in valid_keys}
+        return cls(**filtered)
+
+    def update(self, update_dict: dict[str, Any]):
+        """Update fields on this AgentConfig from a dict, ignoring unspecified/unknown keys."""
+        valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
+        for key, value in update_dict.items():
+            if key in valid_keys:
+                setattr(self, key, value)
+        self._normalize_ranges()
+
     def get_candidate_params(self) -> list[tuple[float, float | None, int | None]]:
         """Generate (temperature, top_p, top_k) tuples for each best-of-n candidate.
 
@@ -89,63 +135,17 @@ class AgentConfig:
         temps = np.linspace(self.temp_min, self.temp_max, self.n).tolist()
         return [(t, self.top_p_min, self.top_k_min) for t in temps]
 
-    def _inherit_from_config(self, global_config: Config):
+    def _inherit_from_config(self, config: Config):
         if self.provider == self._DUMMY_STR:
-            self.provider = global_config.default_provider
+            self.provider = config.default_provider
         if self.model == self._DUMMY_STR:
-            self.model = global_config.default_model
+            self.model = config.default_model
         if self.provider_judge == self._DUMMY_STR:
-            self.provider_judge = global_config.default_provider_judge
+            self.provider_judge = config.default_provider_judge
         if self.model_judge == self._DUMMY_STR:
-            self.model_judge = global_config.default_model_judge
+            self.model_judge = config.default_model_judge
         if self.enable_budget_controller is None:
-            self.enable_budget_controller = global_config.enable_budget_controller
-
-    @classmethod
-    def from_config(cls, config: Config):
-        result = cls()
-        result._inherit_from_config(global_config=config)
-        return result
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
-        """Create StepConfig from dict (for deserialization)."""
-        # Filter out unknown keys and non-serializable fields
-        valid_keys = [f.name for f in dataclasses.fields(AgentConfig)]
-        filtered = {k: v for k, v in data.items() if k in valid_keys}
-        return cls(**filtered)
-
-    @classmethod
-    def from_yaml(
-        cls, yaml_path: str, agent_name, inherit_globals_from: Config | None = None
-    ) -> AgentConfig:
-        with open(yaml_path, "r") as f:
-            raw = yaml.safe_load(f)
-
-        agents_section = raw.get("agents", {})  # for run configs
-        if agents_section == {}:  # for benchmark configs
-            agents_section = raw.get("defaults", {})
-
-        if agent_name in agents_section:
-            agent_dict = dict(agents_section[agent_name])
-        else:
-            agent_dict = {}
-
-        config = AgentConfig.from_dict(agent_dict)
-
-        if inherit_globals_from:
-            config._inherit_from_config(inherit_globals_from)
-
-        config._normalize_ranges()
-        return config
-
-    def update(self, update_dict: dict[str, Any]):
-        """Update fields on this AgentConfig from a dict, ignoring unspecified/unknown keys."""
-        valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
-        for key, value in update_dict.items():
-            if key in valid_keys:
-                setattr(self, key, value)
-        self._normalize_ranges()
+            self.enable_budget_controller = config.enable_budget_controller
 
     def _normalize_ranges(self):
         if self.n == 1:
@@ -164,3 +164,6 @@ class AgentConfig:
         for key, value in asdict(self).items():
             if value is not None:
                 yield key, value
+
+
+__all__ = ["AgentConfig"]

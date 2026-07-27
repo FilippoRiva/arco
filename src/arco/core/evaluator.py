@@ -21,7 +21,7 @@ class Evaluation:
 
 
 class Evaluator:
-    def evaluate_and_select(
+    def evaluate_best_of_n(
         self, results: list[State], config: AgentConfig
     ) -> tuple[list[State], State]:
         if len(results) == 1:
@@ -39,6 +39,17 @@ class Evaluator:
 
         # finally selects the best result
         return results, self._selection(results)
+
+    def evaluate_ground_truth(
+        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
+    ):
+        """Run ground-truth evaluation for tracking/logging only."""
+        self._gt_eval(
+            answer=answer,
+            gt_data=gt_data,
+            judge_provider=judge_provider,
+            judge_model=judge_model,
+        )
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         la = state.get_last_answer()
@@ -74,24 +85,13 @@ class Evaluator:
         ]
         return best_state
 
-    def evaluate_ground_truth(
-        self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
-        """Run ground-truth evaluation for tracking/logging only."""
-        self._gt_eval(
-            answer=answer,
-            gt_data=gt_data,
-            judge_provider=judge_provider,
-            judge_model=judge_model,
-        )
-
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
     ):
         answer.gt_evaluation = Evaluation(score=0.0, success=False)
 
 
-def evaluate_state(
+def evaluate_state_with_benchmark_entry(
     state: State,
     entry: BenchmarkEntry,
     evaluators: dict[AgentType, Evaluator],
@@ -131,3 +131,6 @@ def evaluate_state(
         agents=agents,
         profiling_datas=profiling_datas,
     )
+
+
+__all__ = ["Evaluation", "Evaluator", "evaluate_state_with_benchmark_entry"]

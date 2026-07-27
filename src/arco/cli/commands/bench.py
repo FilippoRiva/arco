@@ -3,12 +3,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
 
-    import pandas as pd
-
-    from arco.core import Config, State
-    from arco.data import BenchmarkDataset
-    from arco.workflows import Workflow
-
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
@@ -50,274 +44,58 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
 
-    status = console.status("[bold cyan]Loading pre-benchmark dependencies[/bold cyan]")
+    status = console.status("[bold cyan]Loading benchmark[/bold cyan]")
     status.start()
-    import json
-    import os
-    import time
-    from pathlib import Path
-
-    import pandas as pd
-
-    console.print("[green]✓[/green] Builtins loaded")
-    from arco.core import Config
-    from arco.data.benchmark_dataset import BenchmarkDataset
-    from arco.logs import initialize as init_logging
-    from arco.workflows.workflow import WorkflowFactory
-
-    console.print("[green]✓[/green] ARCO dependencies loaded")
-    status.stop()
-
-    start_time = time.time()
-    default_config = Config.from_yaml(args.config)
-    workflow = WorkflowFactory.get(config=default_config)
-    benchmark_dataset = BenchmarkDataset.from_json(args.dataset)
-
-    benchmark_id = args.id or Path(args.config).stem
-    benchmark_save_folder = Path(args.save_dir) / benchmark_id
-    runs_folder = benchmark_save_folder / "runs"
-    os.makedirs(benchmark_save_folder, exist_ok=True)
-
-    init_logging(benchmark_id, log_dir=benchmark_save_folder / "logs", level=args.log)
-
-    # Load run configurations
-    with console.status("[bold cyan]Processing run configurations[/bold cyan]"):
-        list_of_run_configs = default_config.generate_benchmark_configs(args.config)
-        console.print("[green]✓[/green] Run configurations loaded")
-
-    # Run each run configuration
-    run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
-    for run_config_dict in list_of_run_configs:
-        run_name = run_config_dict["name"].replace(" ", "_")
-        run_csv_name = run_name + ".csv"
-        if (runs_folder / run_name / run_csv_name).exists():  # loads it if available
-            console.print(
-                f"[yellow]Benchmark already exists: {runs_folder / run_name / run_csv_name}. Skipping.[/yellow]"
-            )
-            result_df = pd.read_csv(runs_folder / run_name / run_csv_name)
-        else:  # executes and save it otherwise
-            result_df, resulting_states = run_benchmark(
-                **run_config_dict,
-                benchmark_dataset=benchmark_dataset,
-                workflow=workflow,
-                benchmark_id=benchmark_id,
-                verbose=args.verbose,
-            )
-            os.makedirs(runs_folder / run_name, exist_ok=True)
-            result_df.to_csv(runs_folder / run_name / run_csv_name, index=False)
-            for result in resulting_states:
-                result.save(runs_folder / run_name)
-            console.print(
-                f"\nResults saved to [cyan]{runs_folder / run_name / run_csv_name}[/cyan]"
-            )
-
-        run_config_to_result_list.append((run_config_dict, result_df))
-
-    aggregated_df = aggregate_results(run_config_to_result_list)
-    aggregated_df.to_csv(benchmark_save_folder / "summary.csv", index=False)
-    bench_metadata = {
-        "benchmark_run": args.config,
-        "total_runtime": time.time() - start_time,
-    }
-    with open(benchmark_save_folder / "bench_metadata.json", "w") as f:
-        json.dump(bench_metadata, f)
-
-
-def generate_benchmark_id():
-    import random
-
-    prefixes = [
-        "measured",
-        "scored",
-        "ranked",
-        "evaluated",
-        "tested",
-        "validated",
-        "benchmarked",
-        "profiled",
-        "timed",
-        "calibrated",
-        "optimized",
-        "compared",
-        "sampled",
-        "analyzed",
-        "monitored",
-        "stress",
-        "load",
-        "latency",
-        "throughput",
-        "accuracy",
-    ]
-
-    nouns = [
-        "benchmark",
-        "suite",
-        "trial",
-        "run",
-        "dataset",
-        "metric",
-        "baseline",
-        "profile",
-        "report",
-        "score",
-        "evaluation",
-        "assessment",
-        "experiment",
-        "scenario",
-        "workload",
-        "sample",
-        "result",
-        "measurement",
-        "test",
-        "index",
-    ]
-
-    number = random.randint(100, 999)
-    return f"{random.choice(prefixes)}-{random.choice(nouns)}-{number}"
-
-
-def _set_prefix_keys(d, prefix):
-    return {f"{prefix}_{k}": v for k, v in d.items()}
-
-
-def run_benchmark(
-    workflow: Workflow,
-    name: str,
-    description: str,
-    config: Config,
-    changes: dict[str, str | float | int],
-    benchmark_dataset: BenchmarkDataset,
-    *,
-    benchmark_id: str | None = None,
-    verbose: bool = False,
-) -> tuple[pd.DataFrame, list[State]]:
-    import json
     from functools import partial
 
-    import pandas as pd
     from rich.rule import Rule
 
-    from arco.cli.console import console
     from arco.cli.viz import display, printer
-    from arco.core import evaluator
-    from arco.data import BenchmarkSummary
+    from arco.tools import benchmark_from_config
 
-    if benchmark_id is None:
-        benchmark_id = generate_benchmark_id()
+    console.print("[green]✓[/green] Benchmark loaded")
+    status.stop()
 
-    printer.print_benchmark_header(name, description, changes)
-
-    df_rows: list[dict] = []
-    resulting_states: list[State] = []
-
-    if verbose:
+    if args.verbose:
         visualization_logic = partial(display.display_workflow, verbose=True)
     else:
         visualization_logic = display.display_workflow_compact
 
-    for entry in benchmark_dataset:
-        # Run agent
-        console.print(
-            Rule(f"[bold blue]Test Case {entry.id + 1}/{len(benchmark_dataset)}")
-        )
-        config = config.update_prompt(entry.prompt)
-        resulting_state: State = visualization_logic(workflow.stream(config=config))
-        with console.status("[bold cyan]Evaluating the run[/bold cyan]"):
-            evaluation_summary: BenchmarkSummary = evaluator.evaluate_state(
-                resulting_state,
-                entry,
-                workflow.get_evaluators(),
-                config.default_provider_judge,
-                config.default_model_judge,
+    generator = benchmark_from_config(
+        config_path=args.config,
+        dataset_path=args.dataset,
+        id=args.id,
+        save_dir=args.save_dir,
+        run_visualization_logic=visualization_logic,
+        logging_level=args.log,
+    )
+
+    for _event in generator:
+        event = _event["event"]
+        if event == "run_configs_loaded":
+            console.print("[green]✓[/green] Run configurations loaded")
+        elif event == "benchmark_already_exists":
+            console.print(
+                f"[yellow]![/yellow] Benchmark already exists, skipping execution. Path: '{_event['path']}'"
             )
-        printer.print_benchmark_summary(evaluation_summary)
-
-        # Answer Level Profiling
-        execution_trace = {"answers": []}
-        for answer in resulting_state.answers:
-            answer_energy_dict = answer.profiling_data.as_dict()
-            answer_dict = {
-                "agent_type": answer.agent_id.value,
-                "message": answer.message,
-                "evaluation_gt": answer.gt_evaluation.score
-                if answer.gt_evaluation
-                else None,
-                "perplexity": answer.perplexity if answer.perplexity else None,
-                **answer_energy_dict,
-            }
-            execution_trace["answers"].append(answer_dict)
-
-        # Store results into a df row
-        row = {
-            "entry_id": entry.id,
-            "run_id": resulting_state.run_id,
-            "execution_trace": json.dumps(execution_trace),
-        }
-
-        df_rows.append(row)
-        resulting_states.append(resulting_state)
-
-    # Build results DataFrame
-    df = pd.DataFrame(df_rows)
-
-    return df, resulting_states
-
-
-def aggregate_results(
-    run_config_to_result_list: list[tuple[dict, pd.DataFrame]],
-) -> pd.DataFrame:
-    import collections
-    import json
-
-    import pandas as pd
-
-    to_aggregate = [
-        "evaluation_gt",
-        "perplexity",
-        "total_time",
-        "llm_time",
-        "cpu_energy_kwh",
-        "ram_energy_kwh",
-        "emissions_kg_co2",
-    ]
-
-    run_summaries = []
-
-    for run_config, result_df in run_config_to_result_list:
-        name = run_config["name"]
-        description = run_config["description"]
-        changes = run_config["changes"]
-
-        traces = result_df["execution_trace"].apply(json.loads)
-
-        # agent -> metric -> list of values
-        agents_summary_stats = collections.defaultdict(
-            lambda: collections.defaultdict(list)
-        )
-
-        for trace in traces:
-            for answer in trace["answers"]:
-                agent = answer["agent_type"]
-
-                for metric in to_aggregate:
-                    value = answer.get(metric)
-
-                    # Ignore missing values
-                    if value is not None:
-                        agents_summary_stats[agent][metric].append(value)
-
-        # Compute averages
-        for agent, metrics in agents_summary_stats.items():
-            for metric, values in metrics.items():
-                metrics[metric] = sum(values) / len(values)
-
-        run_summaries.append(
-            {
-                "name": name,
-                "description": description,
-                "changes": changes,
-                "metrics_by_agent": json.dumps(agents_summary_stats),
-            }
-        )
-
-    return pd.DataFrame(run_summaries)
+        elif event == "benchmark_start":
+            printer.print_benchmark_header(
+                name=_event["name"],
+                description=_event["description"],
+                changes=_event["changes"],
+            )
+        elif event == "benchmark_run_save":
+            console.print(f"[green]✓[/green] Benchmark saved. Path: '{_event['path']}'")
+        elif event == "test_case_start":
+            console.print(
+                Rule(
+                    f"[bold blue]Test Case {_event['iteration']}/{_event['max_iteration']}[/bold blue]"
+                )
+            )
+        elif event == "test_case_stop":
+            printer.print_benchmark_summary(_event["evaluation_summary"])
+        elif event == "test_case_evaluation_start":
+            status = console.status("Evaluating result")
+            status.start()
+        elif event == "test_case_evaluation_stop":
+            status.stop()

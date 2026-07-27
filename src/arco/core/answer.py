@@ -38,7 +38,7 @@ class Answer:
     # ARCO info
     budget_controller_choice: Literal["rollback", "end"] = "end"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
@@ -62,3 +62,6 @@ class Answer:
 
     def copy(self) -> Answer:
         return deepcopy(self)
+
+
+__all__ = ["Answer"]

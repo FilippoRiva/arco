@@ -2,12 +2,10 @@ import json
 from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
-
-from arco.core import AgentType, Answer, Evaluation, Evaluator, llm_tools
+from arco.core import AgentType, Evaluation, Evaluator, LLMAnswer, llm_tools
 
 if TYPE_CHECKING:
-    from arco.core import State
+    from arco.core import LLM, Answer, State
 
 
 class VisualizerEvaluator(Evaluator):
@@ -125,7 +123,7 @@ class VisualizerEvaluator(Evaluator):
         return total
 
     @staticmethod
-    def judge(state: State, llm: BaseChatModel):
+    def judge(state: State, llm: LLM):
         """Evaluate visualization quality without ground truth using LLM-as-a-Judge."""
 
         last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
@@ -234,10 +232,12 @@ class VisualizerEvaluator(Evaluator):
     }}"""
 
     @staticmethod
-    def _parse_vis_judge_json(raw_text: str) -> dict:
+    def _parse_vis_judge_json(answer: LLMAnswer) -> dict:
         """Parse visualization judge JSON response with robust error handling."""
         try:
-            content = raw_text.strip().replace("```json", "").replace("```", "").strip()
+            content = (
+                answer.text.strip().replace("```json", "").replace("```", "").strip()
+            )
             if content.lower().startswith("json"):
                 content = content[4:].strip()
 
@@ -313,7 +313,7 @@ class VisualizerEvaluator(Evaluator):
     @staticmethod
     def judge_from_ground_truth(
         answer: Answer,
-        llm: BaseChatModel,
+        llm: LLM,
         gt_config: str,
         gt_code: str,
         gt_visual_requirements: dict,
@@ -323,7 +323,7 @@ class VisualizerEvaluator(Evaluator):
 
         Args:
             answer: The state to be evaluated.
-            llm: the BaseChatModel used for LLM-as-a-Judge inference.
+            llm: the LLM used for LLM-as-a-Judge inference.
             gt_config: Expected chart configuration dict.
             gt_code: Expected chart code string.
             gt_visual_requirements: Optional dict of explicit styling requirements.
@@ -364,13 +364,10 @@ class VisualizerEvaluator(Evaluator):
         )
 
         # Get judgment
-        response = llm.invoke(formatted_prompt)
-        raw_content = (
-            response.content if hasattr(response, "content") else str(response)
-        )
+        response: LLMAnswer = llm.invoke(formatted_prompt)
 
         # Parse JSON response
-        evaluation_dict = VisualizerEvaluator._parse_vis_judge_json(raw_content)
+        evaluation_dict = VisualizerEvaluator._parse_vis_judge_json(response)
 
         # Compute overall score
         overall_score = VisualizerEvaluator._compute_visualization_score(
@@ -388,3 +385,6 @@ class VisualizerEvaluator(Evaluator):
             gt_code=gt_data["chart_code"],
             gt_visual_requirements=gt_data["visual_requirements"],
         )
+
+
+__all__ = ["VisualizerEvaluator"]

@@ -156,13 +156,10 @@ def display_workflow_notebook(
         if event_type == "check_connection":
             models = update.get("models", [])
             progress.append(f"⏳ Checking {len(models)} model(s)…")
-
         elif event_type == "started":
             progress.append(f"🚀 Run `{update.get('run_id', '')}`")
-
         elif event_type == "node_started":
             progress.append(f"▶ **{update['node']}**")
-
         elif event_type == "node_finished":
             last_state = update["state"]
             answer: Answer = last_state.get_last_answer()
@@ -177,12 +174,10 @@ def display_workflow_notebook(
                 last_retriever_answer = answer
             elif agent.lower() == "visualizer":
                 last_visualizer_answer = answer
-
         elif event_type == "completed":
             t = update["state"].global_profiling_data.total_time
             ts = f"{t:.2f}s" if t is not None else "?"
             progress.append(f"✅ Completed — total time {ts}")
-
         elif event_type == "error":
             progress.append(f"❌ {update.get('message', '?')}")
 

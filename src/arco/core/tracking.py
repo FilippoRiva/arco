@@ -3,7 +3,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from arco.core import Config
+    from .core import Config
 
 import logging
 from collections import defaultdict
@@ -13,63 +13,14 @@ from langchain_core.callbacks import BaseCallbackHandler
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
 
-tracker: EmissionsTracker | None = None
-
 
 def initialize_tracking(config: Config):
     if not config.enable_codecarbon:
         return
-
-    global tracker
-    if tracker is not None:
-        return
-
     codecarbon_dir = os.path.join(config.save_dir or "./output", "codecarbon")
     os.makedirs(codecarbon_dir, exist_ok=True)
-    tracker = EmissionsTracker(
-        project_name="SalesDataAgent",
-        output_dir=codecarbon_dir,
-        save_to_file=True,
-        measure_power_secs=1,
-        log_level="error",
-        allow_multiple_runs=True,
-        experiment_id=config.run_id,
-    )
     # LLM Emission Tracking
     LLMCallAccumulator.enable(codecarbon_dir)
-
-
-def start_tracking():
-    if tracker is None:
-        return
-    tracker.start()
-
-
-def stop_tracking():
-    if tracker is None:
-        return
-    tracker.stop()
-
-
-def is_enabled():
-    return tracker is not None
-
-
-def get_energy_dict() -> dict:
-    if tracker is None:
-        return {}
-    ed = tracker.final_emissions_data
-    energy_dict = {
-        "energy_consumed_kwh": ed.energy_consumed,
-        "cpu_energy_kwh": ed.cpu_energy,
-        "gpu_energy_kwh": ed.gpu_energy,
-        "ram_energy_kwh": ed.ram_energy,
-        "emissions_kg_co2": ed.emissions,
-        "cpu_power_w": ed.cpu_power,
-        "gpu_power_w": ed.gpu_power,
-        "duration_sec": ed.duration,
-    }
-    return energy_dict
 
 
 class LLMCallAccumulator(BaseCallbackHandler):
@@ -90,7 +41,7 @@ class LLMCallAccumulator(BaseCallbackHandler):
     _save_dir: str | None = None
     _enabled: bool = False
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str):
         super().__init__()
         self._starts: dict[str, float | int] = {}
         self._cc_trackers: dict[str, Any] = {}
@@ -133,16 +84,22 @@ class LLMCallAccumulator(BaseCallbackHandler):
         emission_tracker.stop()
         # tracker.stop() returns a float (CO2 kg), not EmissionsData.
         # The full breakdown is in final_emissions_data, same as the original code.
-        _ed = getattr(emission_tracker, "final_emissions_data", None)
-        if _ed is not None:
+        emission_data = getattr(emission_tracker, "final_emissions_data", None)
+        if emission_data is not None:
             self.energy_dict["energy_consumed_kwh"] += (
-                getattr(_ed, "energy_consumed", 0.0) or 0.0
+                getattr(emission_data, "energy_consumed", 0.0) or 0.0
             )
-            self.energy_dict["cpu_energy_kwh"] += getattr(_ed, "cpu_energy", 0.0) or 0.0
-            self.energy_dict["gpu_energy_kwh"] += getattr(_ed, "gpu_energy", 0.0) or 0.0
-            self.energy_dict["ram_energy_kwh"] += getattr(_ed, "ram_energy", 0.0) or 0.0
+            self.energy_dict["cpu_energy_kwh"] += (
+                getattr(emission_data, "cpu_energy", 0.0) or 0.0
+            )
+            self.energy_dict["gpu_energy_kwh"] += (
+                getattr(emission_data, "gpu_energy", 0.0) or 0.0
+            )
+            self.energy_dict["ram_energy_kwh"] += (
+                getattr(emission_data, "ram_energy", 0.0) or 0.0
+            )
             self.energy_dict["emissions_kg_co2"] += (
-                getattr(_ed, "emissions", 0.0) or 0.0
+                getattr(emission_data, "emissions", 0.0) or 0.0
             )
 
     def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
@@ -162,3 +119,6 @@ class LLMCallAccumulator(BaseCallbackHandler):
         if key in self._starts:
             self.total_time += time.perf_counter() - self._starts.pop(key)
         self._stop_cc_tracker(key)
+
+
+__all__ = ["LLMCallAccumulator", "initialize_tracking"]

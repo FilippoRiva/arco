@@ -88,28 +88,6 @@ class State:
             if answer.agent_id is not AgentType.ORCHESTRATOR
         ]
 
-    def get_last_execution_outputs(self) -> tuple[Answer | None, AgentConfig | None]:
-        return self.get_last_answer(), self.get_last_agent_config()
-
-    def stringify_answers(self, max_message_length=100):
-        """
-        Converts the list of answer dictionaries into a single formatted string.
-
-        Each entry is formatted as '(agent_id: message)', with entries separated
-        by commas. This is typically used for logging or feeding the
-        conversation history back into an LLM prompt.
-
-        Returns:
-            A comma-delimited string of all agent responses.
-        """
-        answers = self.answers
-        return ",".join(
-            [
-                f"({a.agent_id.value}: {a.message[: (max_message_length - 3)] + '...' if len(a.message) > max_message_length else a.message})"
-                for a in answers
-            ]
-        )
-
     def set_profiling_data(
         self, profiling_data: ProfilingData, agent_type: AgentType
     ) -> State:
@@ -163,3 +141,6 @@ class State:
         save_file = save_dir / f"{self.run_id}.json"
         with open(save_file, "w") as f:
             json.dump(self.to_dict(), f, indent=2, default=str)
+
+
+__all__ = ["State"]
