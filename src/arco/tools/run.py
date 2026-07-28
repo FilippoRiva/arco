@@ -8,12 +8,12 @@ if TYPE_CHECKING:
     from arco.core import Workflow
 
 
-def run_from_config(yaml_path: str):
+def run_from_config(yaml_path: str, log_level: str | None = None):
     config = Config.from_yaml(yaml_path)
     workflow = WorkflowFactory.get(config=config)
     yield config
     yield workflow
-    yield from run(config=config, workflow=workflow)
+    yield from run(config=config, workflow=workflow, log_level=log_level)
 
 
 def run(config: Config, workflow: Workflow, log_level: str | None = None):

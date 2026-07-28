@@ -1,15 +1,60 @@
 import json
-from json import JSONDecodeError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from arco.core import AgentType, Evaluation, Evaluator, LLMAnswer, llm_tools
+from arco.core.llm_tools import (
+    compute_weighted_score,
+    extract_json_from_llm_text,
+    fill_json_schema,
+)
 
 if TYPE_CHECKING:
-    from arco.core import LLM, Answer, State
+    from arco.core import Answer, State
+
+_NO_GT_SCHEMA: dict[str, dict[str, Any]] = {
+    "data_suitability": {"score": 1, "reasoning": "Missing"},
+    "axis_mapping": {"score": 1, "reasoning": "Missing", "columns_exist": False},
+    "code_quality": {"score": 1, "reasoning": "Missing", "would_render": False},
+    "goal_alignment": {"score": 1, "reasoning": "Missing"},
+}
+
+_GT_SCHEMA: dict[str, dict[str, Any]] = {
+    "axis_correctness": {
+        "score": 1,
+        "reasoning": "Missing",
+        "x_match": False,
+        "y_match": False,
+    },
+    "chart_type": {"score": 1, "reasoning": "Missing", "type_match": False},
+    "functional_equivalence": {
+        "score": 1,
+        "reasoning": "Missing",
+        "would_render": False,
+    },
+    "explicit_requirements": {
+        "score": 5,
+        "reasoning": "Missing - default N/A",
+        "violations": [],
+    },
+}
+
+_NO_GT_WEIGHTS: dict[str, float] = {
+    "data_suitability": 0.30,
+    "axis_mapping": 0.30,
+    "code_quality": 0.20,
+    "goal_alignment": 0.20,
+}
+
+_GT_WEIGHTS: dict[str, float] = {
+    "axis_correctness": 0.40,
+    "chart_type": 0.30,
+    "functional_equivalence": 0.20,
+    "explicit_requirements": 0.10,
+}
 
 
 class VisualizerEvaluator(Evaluator):
-    VIS_JUDGE_NO_GT_PROMPT = """You are an expert data visualization evaluator. Assess the quality of a generated visualization based on the data and the user's goal. There is NO reference visualization — evaluate standalone quality.
+    JUDGE_PROMPT = """You are an expert data visualization evaluator. Assess the quality of a generated visualization based on the data and the user's goal. There is NO reference visualization — evaluate standalone quality.
 
     ## VISUALIZATION GOAL
     {visualization_goal}
@@ -68,109 +113,8 @@ class VisualizerEvaluator(Evaluator):
       "goal_alignment": {{"score": <1-5>, "reasoning": "<brief>"}}
     }}"""
 
-    @staticmethod
-    def _parse_vis_no_gt_judge_json(raw_text: str) -> dict:
-        """Parse no-GT visualization judge JSON response."""
-        try:
-            content = raw_text.strip().replace("```json", "").replace("```", "").strip()
-            if content.lower().startswith("json"):
-                content = content[4:].strip()
+    GT_JUDGE_PROMPT = """You are an expert data visualization evaluator. Your task is to assess whether a generated visualization achieves the same analytical purpose as a reference visualization.
 
-            start = content.find("{")
-            end = content.rfind("}")
-
-            if start != -1 and end != -1:
-                parsed = json.loads(content[start : end + 1])
-                for criterion in [
-                    "data_suitability",
-                    "axis_mapping",
-                    "code_quality",
-                    "goal_alignment",
-                ]:
-                    if criterion not in parsed:
-                        parsed[criterion] = {"score": 1, "reasoning": "Missing"}
-                return parsed
-        except JSONDecodeError:
-            return {
-                "data_suitability": {"score": 1, "reasoning": "Parse failed"},
-                "axis_mapping": {
-                    "score": 1,
-                    "reasoning": "Parse failed",
-                    "columns_exist": False,
-                },
-                "code_quality": {
-                    "score": 1,
-                    "reasoning": "Parse failed",
-                    "would_render": False,
-                },
-                "goal_alignment": {"score": 1, "reasoning": "Parse failed"},
-            }
-
-    @staticmethod
-    def _compute_vis_no_gt_score(evaluation: dict) -> float:
-        """Compute weighted normalized score from no-GT vis judge evaluation."""
-        weights = {
-            "data_suitability": 0.30,
-            "axis_mapping": 0.30,
-            "code_quality": 0.20,
-            "goal_alignment": 0.20,
-        }
-        total = 0.0
-        for criterion, weight in weights.items():
-            raw_score = evaluation.get(criterion, {}).get("score", 1)
-            normalized = (raw_score - 1) / 4.0
-            total += normalized * weight
-        return total
-
-    @staticmethod
-    def judge(state: State, llm: LLM):
-        """Evaluate visualization quality without ground truth using LLM-as-a-Judge."""
-
-        last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
-        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
-        data_df = last_retriever_answer.agent_output["data_df"]
-
-        if data_df is not None and hasattr(data_df, "columns"):
-            data_columns = list(data_df.columns)
-            data_sample = data_df.head(5).to_string(index=False)
-        else:
-            data_text = last_retriever_answer.agent_output["data_str"]
-            data_columns = []
-            data_sample = data_text[:500] if data_text else ""
-
-        max_code_len = 2000
-        code: str = last_visualizer_answer.agent_output["code"]
-        gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
-
-        formatted_prompt = VisualizerEvaluator.VIS_JUDGE_NO_GT_PROMPT.format(
-            visualization_goal=state.prompt,
-            data_columns=", ".join(data_columns),
-            data_sample=data_sample[:1500],
-            gen_config=json.dumps(
-                last_visualizer_answer.agent_output["chart_config"], indent=2
-            ),
-            gen_code=gen_code_truncated,
-        )
-
-        response = llm.invoke(formatted_prompt)
-        raw_content = (
-            response.content if hasattr(response, "content") else str(response)
-        )
-
-        evaluation = VisualizerEvaluator._parse_vis_no_gt_judge_json(raw_content)
-        overall_score = VisualizerEvaluator._compute_vis_no_gt_score(evaluation)
-        last_visualizer_answer.evaluation = Evaluation(score=overall_score)
-
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
-        """
-        Uses an LLM judge to score chart quality based on data suitability,
-        axis mapping, code quality, and goal alignment.
-        """
-        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
-        VisualizerEvaluator.judge(state, llm)
-
-    VIS_JUDGE_PROMPT_GT = """You are an expert data visualization evaluator. Your task is to assess whether a generated visualization achieves the same analytical purpose as a reference visualization.
-    
     ## REFERENCE (GROUND TRUTH)
     Chart Configuration:
     {gt_config}
@@ -231,93 +175,51 @@ class VisualizerEvaluator(Evaluator):
       "explicit_requirements": {{"score": <1-5>, "reasoning": "<brief>", "violations": []}}
     }}"""
 
-    @staticmethod
-    def _parse_vis_judge_json(answer: LLMAnswer) -> dict:
-        """Parse visualization judge JSON response with robust error handling."""
-        try:
-            content = (
-                answer.text.strip().replace("```json", "").replace("```", "").strip()
-            )
-            if content.lower().startswith("json"):
-                content = content[4:].strip()
-
-            start = content.find("{")
-            end = content.rfind("}")
-
-            if start != -1 and end != -1:
-                parsed = json.loads(content[start : end + 1])
-
-                # Ensure all criteria exist
-                for criterion in [
-                    "axis_correctness",
-                    "chart_type",
-                    "functional_equivalence",
-                    "explicit_requirements",
-                ]:
-                    if criterion not in parsed:
-                        parsed[criterion] = {
-                            "score": 1,
-                            "reasoning": "Missing",
-                            "violations": [],
-                        }
-
-                return parsed
-        except JSONDecodeError:
-            return {
-                "axis_correctness": {
-                    "score": 1,
-                    "reasoning": "Parse failed",
-                    "x_match": False,
-                    "y_match": False,
-                },
-                "chart_type": {
-                    "score": 1,
-                    "reasoning": "Parse failed",
-                    "type_match": False,
-                },
-                "functional_equivalence": {
-                    "score": 1,
-                    "reasoning": "Parse failed",
-                    "would_render": False,
-                },
-                "explicit_requirements": {
-                    "score": 5,
-                    "reasoning": "Parse failed - default N/A",
-                    "violations": [],
-                },
-            }
-
-    @staticmethod
-    def _compute_visualization_score(evaluation: dict) -> float:
-        """Compute weighted normalized score from judge evaluation.
-
-        Returns:
-            Score between 0.0 and 1.0
+    def _eval(self, state: State, judge_provider: str, judge_model: str):
         """
-        weights = {
-            "axis_correctness": 0.40,
-            "chart_type": 0.30,
-            "functional_equivalence": 0.20,
-            "explicit_requirements": 0.10,
-        }
+        Uses an LLM judge to score chart quality based on data suitability,
+        axis mapping, code quality, and goal alignment.
+        """
+        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
 
-        total_score = 0.0
-        for criterion, weight in weights.items():
-            raw_score = evaluation.get(criterion, {}).get("score", 1)
-            # Normalize from 1-5 scale to 0-1
-            normalized = (raw_score - 1) / 4.0
-            total_score += normalized * weight
+        last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
+        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
+        data_df = last_retriever_answer.agent_output["data_df"]
 
-        return round(total_score, 6)
+        if data_df is not None and hasattr(data_df, "columns"):
+            data_columns = list(data_df.columns)
+            data_sample = data_df.head(5).to_string(index=False)
+        else:
+            data_text = last_retriever_answer.agent_output["data_str"]
+            data_columns = []
+            data_sample = data_text[:500] if data_text else ""
 
-    @staticmethod
-    def judge_from_ground_truth(
-        answer: Answer,
-        llm: LLM,
-        gt_config: str,
-        gt_code: str,
-        gt_visual_requirements: dict,
-    ) -> State:
+        max_code_len = 2000
+        code: str = last_visualizer_answer.agent_output["code"]
+        gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
+
+        formatted_prompt = VisualizerEvaluator.JUDGE_PROMPT.format(
+            visualization_goal=state.prompt,
+            data_columns=", ".join(data_columns),
+            data_sample=data_sample[:1500],
+            gen_config=json.dumps(
+                last_visualizer_answer.agent_output["chart_config"], indent=2
+            ),
+            gen_code=gen_code_truncated,
+        )
+
+        response = llm.invoke(formatted_prompt)
+
+        evaluation_dict = fill_json_schema(
+            extract_json_from_llm_text(response.text), _NO_GT_SCHEMA
+        )
+        overall_score = compute_weighted_score(evaluation_dict, _NO_GT_WEIGHTS)
+        last_visualizer_answer.evaluation = Evaluation(score=overall_score)
+
+    def _batch_eval(self, states: list[State]) -> bool:
+        return False
+
+    def _gt_eval(self, answer: Answer, gt_data, judge_provider: str, judge_model: str):
         """
         Evaluate visualization quality using LLM-as-a-Judge.
 
@@ -328,8 +230,10 @@ class VisualizerEvaluator(Evaluator):
             gt_code: Expected chart code string.
             gt_visual_requirements: Optional dict of explicit styling requirements.
         """
-
-        # Format explicit requirements for display
+        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
+        gt_config = gt_data["chart_config"]
+        gt_code = gt_data["chart_code"]
+        gt_visual_requirements = gt_data["visual_requirements"]
         if gt_visual_requirements:
             req_display = "\n".join(
                 [
@@ -355,7 +259,7 @@ class VisualizerEvaluator(Evaluator):
         )
 
         # Format the judge prompt
-        formatted_prompt = VisualizerEvaluator.VIS_JUDGE_PROMPT_GT.format(
+        formatted_prompt = VisualizerEvaluator.GT_JUDGE_PROMPT.format(
             gt_config=json.dumps(gt_config, indent=2),
             gt_code=gt_code_truncated,
             gen_config=json.dumps(answer.agent_output["chart_config"], indent=2),
@@ -367,24 +271,14 @@ class VisualizerEvaluator(Evaluator):
         response: LLMAnswer = llm.invoke(formatted_prompt)
 
         # Parse JSON response
-        evaluation_dict = VisualizerEvaluator._parse_vis_judge_json(response)
+        evaluation_dict = fill_json_schema(
+            extract_json_from_llm_text(response.text), _GT_SCHEMA
+        )
 
         # Compute overall score
-        overall_score = VisualizerEvaluator._compute_visualization_score(
-            evaluation_dict
-        )
+        overall_score = compute_weighted_score(evaluation_dict, _GT_WEIGHTS)
         answer.gt_evaluation = Evaluation(score=overall_score)
         return
-
-    def _gt_eval(self, answer: Answer, gt_data, judge_provider: str, judge_model: str):
-        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
-        VisualizerEvaluator.judge_from_ground_truth(
-            answer,
-            llm=llm,
-            gt_config=gt_data["chart_config"],
-            gt_code=gt_data["chart_code"],
-            gt_visual_requirements=gt_data["visual_requirements"],
-        )
 
 
 __all__ = ["VisualizerEvaluator"]

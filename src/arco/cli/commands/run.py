@@ -59,7 +59,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         parser.print_help()
         sys.exit(1)
 
-    generator = run_from_config(yaml_path=args.config)
+    generator = run_from_config(yaml_path=args.config, log_level=args.log)
     config = next(generator)
     workflow = next(generator)
 

@@ -1,5 +1,7 @@
+import json
 import os
-from typing import TYPE_CHECKING
+import re
+from typing import TYPE_CHECKING, Any
 
 import requests
 from langchain_core.language_models import BaseChatModel
@@ -299,10 +301,89 @@ def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
         return False, error_message
 
 
+_JSON_FENCE_RE = re.compile(
+    r"^[ \t]*(?:```+)??[ \t]*(?:json|JSON)[ \t]*\n?(.*?)\n?[ \t]*```+[ \t]*$",
+    re.DOTALL,
+)
+
+
+def extract_json_from_llm_text(text: str) -> dict[str, Any] | None:
+    """Extract the first JSON object from LLM response text.
+
+    Strips Markdown code fences (````json````, ```JSON```, etc.),
+    leading ``json`` prefixes, and surrounding whitespace before parsing.
+    Returns ``None`` when no valid JSON object is found.
+    """
+    raw = text.strip()
+
+    match = _JSON_FENCE_RE.match(raw)
+    if match:
+        body = match.group(1).strip()
+    else:
+        body = raw
+
+    if body.lower().startswith("json"):
+        body = body[4:].strip()
+
+    start = body.find("{")
+    end = body.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+
+    try:
+        return json.loads(body[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+
+
+def fill_json_schema(
+    parsed: dict[str, Any] | None,
+    schema: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Fill a parsed JSON dict against a criterion schema.
+
+    For each criterion in *schema*:
+    - If missing from *parsed* or not a dict → use the full *defaults*.
+    - Otherwise → merge *defaults* under the parsed entry and clamp
+      *score* to **[1, 5]**, falling back to the default if the score
+      is non-numeric.
+
+    Returns a new dict guaranteed to contain every criterion from the schema.
+    """
+    result: dict[str, Any] = {}
+    for criterion, defaults in schema.items():
+        entry = (parsed or {}).get(criterion)
+        if not isinstance(entry, dict):
+            result[criterion] = dict(defaults)
+        else:
+            merged = {**defaults, **entry}
+            raw_score = merged.get("score", defaults["score"])
+            if not isinstance(raw_score, (int, float)):
+                raw_score = defaults["score"]
+            merged["score"] = max(1, min(5, round(raw_score)))
+            result[criterion] = merged
+    return result
+
+
+def compute_weighted_score(
+    evaluation: dict[str, Any], weights: dict[str, float]
+) -> float:
+    """Normalise 1-5 criterion scores to a [0, 1] weighted average."""
+    total = 0.0
+    for criterion, weight in weights.items():
+        raw = evaluation.get(criterion, {}).get("score", 1)
+        normalized = (raw - 1) / 4.0
+        total += normalized * weight
+    return round(total, 6)
+
+
 __all__ = [
     "LLM",
     "LLMAnswer",
     "check_model_availability",
+    "compute_weighted_score",
+    "extract_json_from_llm_text",
+    "fill_json_schema",
     "get_llm",
     "get_llm_from_config",
 ]

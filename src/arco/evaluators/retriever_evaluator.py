@@ -6,7 +6,7 @@ from arco.core import AgentException, AgentType, Answer, Evaluation, Evaluator, 
 from arco.data import normalize_dataframe_values
 
 
-def compare_dataframes_iou(
+def _compare_dataframes_iou(
     df1: pd.DataFrame, df2: pd.DataFrame, atol: float = 1e-2
 ) -> float:
     """Compute row-level IoU between two DataFrames.
@@ -77,7 +77,45 @@ def compare_dataframes_iou(
     return matched / total if total > 0 else 0.0
 
 
+def _apply_gt_alignment(answer: Answer, canonic_cols: list):
+    """Rename and reorder df columns to match canonical_cols without LLM."""
+    if answer is None:
+        raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
+    if answer.agent_output["data_df"] is None:
+        raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
+    df_to_align: pd.DataFrame = answer.agent_output["data_df"]
+    current_cols = list(df_to_align.columns)
+    if len(current_cols) == len(canonic_cols):
+        # Case-insensitive rename
+        ci_map = {c.lower(): c for c in current_cols}
+        fixed = {
+            ci_map[canon.lower()]: canon
+            for canon in canonic_cols
+            if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon
+        }
+        if fixed:
+            df_to_align = df_to_align.rename(columns=fixed)
+        # Positional rename as last resort
+        if list(df_to_align.columns) != canonic_cols and len(
+            df_to_align.columns
+        ) == len(canonic_cols):
+            df_to_align.columns = canonic_cols
+    # Reorder to canonical order if all columns present
+    if set(canonic_cols).issubset(set(df_to_align.columns)):
+        # pyrefly: ignore [bad-assignment]
+        df_to_align = df_to_align[canonic_cols]
+
+    # Normalize
+    normalized_df: pd.DataFrame = normalize_dataframe_values(df_to_align)
+    # Assign normalized and aligned dataframe
+    answer.agent_output["data_df"] = normalized_df
+    answer.agent_output["data_str"] = normalized_df.to_csv(index=False)
+
+
 class RetrieverEvaluator(Evaluator):
+    def _eval(self, state: State, judge_provider: str, judge_model: str):
+        pass
+
     def _batch_eval(self, states: list[State]):
         """
         Each result's score is its average pairwise row-IoU to all other results.
@@ -108,48 +146,13 @@ class RetrieverEvaluator(Evaluator):
             for j in range(len(dfs)):
                 if i == j or dfs[j] is None:
                     continue
-                total += compare_dataframes_iou(dfs[i], dfs[j])  # pyrefly: ignore [bad-argument-type]
+                total += _compare_dataframes_iou(dfs[i], dfs[j])  # pyrefly: ignore [bad-argument-type]
                 count += 1
             answers[i].evaluation = Evaluation(
                 score=total / count if count > 0 else 0.0
             )
 
         return True  # if success
-
-    @staticmethod
-    def _apply_gt_alignment(answer: Answer, canonic_cols: list):
-        """Rename and reorder df columns to match canonical_cols without LLM."""
-        if answer is None:
-            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        if answer.agent_output["data_df"] is None:
-            raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        df_to_align: pd.DataFrame = answer.agent_output["data_df"]
-        current_cols = list(df_to_align.columns)
-        if len(current_cols) == len(canonic_cols):
-            # Case-insensitive rename
-            ci_map = {c.lower(): c for c in current_cols}
-            fixed = {
-                ci_map[canon.lower()]: canon
-                for canon in canonic_cols
-                if ci_map.get(canon.lower()) and ci_map[canon.lower()] != canon
-            }
-            if fixed:
-                df_to_align = df_to_align.rename(columns=fixed)
-            # Positional rename as last resort
-            if list(df_to_align.columns) != canonic_cols and len(
-                df_to_align.columns
-            ) == len(canonic_cols):
-                df_to_align.columns = canonic_cols
-        # Reorder to canonical order if all columns present
-        if set(canonic_cols).issubset(set(df_to_align.columns)):
-            # pyrefly: ignore [bad-assignment]
-            df_to_align = df_to_align[canonic_cols]
-
-        # Normalize
-        normalized_df: pd.DataFrame = normalize_dataframe_values(df_to_align)
-        # Assign normalized and aligned dataframe
-        answer.agent_output["data_df"] = normalized_df
-        answer.agent_output["data_str"] = normalized_df.to_csv(index=False)
 
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
@@ -171,12 +174,12 @@ class RetrieverEvaluator(Evaluator):
         gt_df_cmp = pd.read_csv(StringIO(gt_data["data_str"]))
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
 
-        RetrieverEvaluator._apply_gt_alignment(answer, list(gt_df_cmp.columns))
+        _apply_gt_alignment(answer, list(gt_df_cmp.columns))
 
         result_df = answer.agent_output["data_df"].copy()
         result_df.columns = [c.lower() for c in result_df.columns]
 
-        score = compare_dataframes_iou(result_df, gt_df_cmp)
+        score = _compare_dataframes_iou(result_df, gt_df_cmp)
         if score < 1.0:
             n_gt = len(gt_df_cmp)
             n_model = len(result_df)

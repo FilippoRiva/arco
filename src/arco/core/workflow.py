@@ -1,4 +1,5 @@
 import inspect
+import logging
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Generator
@@ -12,6 +13,8 @@ from arco.core.graph import Graph
 
 if TYPE_CHECKING:
     from arco.core import Evaluator
+
+logger = logging.getLogger(__name__)
 
 
 class Workflow(ABC):
@@ -97,8 +100,9 @@ class Workflow(ABC):
             stream_mode=["tasks", "updates", "messages"],
         ):
             stream_type, data = chunk
-            if stream_type == "tasks":
+            if stream_type == "tasks" and "input" in data:
                 yield {"event": "node_started", "node": data["name"]}
+                logger.debug("node_started_event: " + str(data))
             elif stream_type == "updates":
                 node_name = next(iter(data.keys()))
                 current_state = State(**data[node_name])

@@ -1,11 +1,52 @@
-import json
-from json import JSONDecodeError
-from typing import TYPE_CHECKING
+from typing import Any
 
 from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
+from arco.core.llm_tools import (
+    compute_weighted_score,
+    extract_json_from_llm_text,
+    fill_json_schema,
+)
 
-if TYPE_CHECKING:
-    from arco.core import LLM
+_NO_GT_SCHEMA: dict[str, dict[str, Any]] = {
+    "correctness": {"score": 0, "reasoning": "Missing", "issues": []},
+    "completeness": {"score": 0, "reasoning": "Missing", "missing": []},
+    "faithfulness": {"score": 0, "reasoning": "Missing", "hallucinations": []},
+}
+
+_GT_SCHEMA: dict[str, dict[str, Any]] = {
+    "factual_accuracy": {"score": 1, "reasoning": "Missing"},
+    "coverage": {"score": 1, "reasoning": "Missing"},
+}
+
+_NO_GT_WEIGHTS: dict[str, float] = {
+    "correctness": 1 / 3,
+    "completeness": 1 / 3,
+    "faithfulness": 1 / 3,
+}
+
+_GT_WEIGHTS: dict[str, float] = {
+    "factual_accuracy": 0.5,
+    "coverage": 0.5,
+}
+
+
+def _normalize_flat_judgement(parsed: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalise the GT judge's flat ``{"factual_accuracy": 5}`` to the nested
+    ``{"factual_accuracy": {"score": 5}}`` format expected by *fill_json_schema*."""
+    result: dict[str, Any] = {}
+    if parsed is None:
+        return result
+    for key in ("factual_accuracy", "coverage"):
+        value = parsed.get(key)
+        if isinstance(value, dict):
+            result[key] = value
+        elif isinstance(value, (int, float)):
+            result[key] = {"score": value, "reasoning": parsed.get("reasoning", "")}
+    if "reasoning" in parsed:
+        for key, value in result.items:
+            if "reasoning" not in value:
+                value["reasoning"] = parsed["reasoning"]
+    return result
 
 
 class AnalyzerEvaluator(Evaluator):
@@ -69,111 +110,8 @@ class AnalyzerEvaluator(Evaluator):
       "faithfulness": {{"score": <1-5>, "reasoning": "<brief>", "hallucinations": []}}
     }}"""
 
-    @staticmethod
-    def _parse_judge_json(raw_text: str) -> dict:
-        """Parse judge JSON response with robust error handling."""
-        try:
-            # Clean Markdown and find JSON
-            content = raw_text.strip().replace("``````", "").strip()
-            if content.lower().startswith("json"):
-                content = content[4:].strip()
-
-            start = content.find("{")
-            end = content.rfind("}")
-
-            if start != -1 and end != -1:
-                parsed = json.loads(content[start : end + 1])
-
-                # Ensure all criteria exist
-                for criterion in ["correctness", "completeness", "faithfulness"]:
-                    if criterion not in parsed:
-                        parsed[criterion] = {
-                            "score": 0,
-                            "reasoning": "Missing",
-                            "issues": [],
-                        }
-
-                return parsed
-        except JSONDecodeError:
-            return {
-                "correctness": {"score": 0, "reasoning": "Parse failed", "issues": []},
-                "completeness": {
-                    "score": 0,
-                    "reasoning": "Parse failed",
-                    "missing": [],
-                },
-                "faithfulness": {
-                    "score": 0,
-                    "reasoning": "Parse failed",
-                    "hallucinations": [],
-                },
-            }
-
-    @staticmethod
-    def judge(state: State, llm: LLM):
-        """Evaluate data analysis quality using LLM-as-a-Judge."""
-        prompt = state.prompt
-        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
-        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
-        sql_query: str = last_retriever_answer.agent_output["sql_query"]
-        data: str = last_retriever_answer.agent_output["data_str"]
-        analysis: str = last_analyzer_answer.agent_output["analysis"]
-
-        # Truncate data if too long
-        truncated_data = data[:2000] if len(data) > 2000 else data
-
-        # Get judgment
-        formatted_prompt = AnalyzerEvaluator.ANALYSIS_JUDGE_PROMPT_NO_GT.format(
-            prompt=prompt, sql_query=sql_query, data=truncated_data, analysis=analysis
-        )
-
-        response = llm.invoke(formatted_prompt)
-        raw_content = (
-            response.content if hasattr(response, "content") else str(response)
-        )
-
-        # Parse JSON
-        evaluation = AnalyzerEvaluator._parse_judge_json(raw_content)
-
-        # Compute overall score (average of 3 criteria)
-        scores = [
-            evaluation.get("correctness", {}).get("score", 0),
-            evaluation.get("completeness", {}).get("score", 0),
-            evaluation.get("faithfulness", {}).get("score", 0),
-        ]
-        score = sum(scores) / 3.0
-        last_analyzer_answer.evaluation = Evaluation(score=(score - 1) / 4.0)
-
-    @staticmethod
-    def judge_from_ground_truth(
-        answer: Answer, llm: LLM, gt_analysis: str | None = None
-    ) -> Evaluation:
-        """Evaluate generated analysis against a ground truth reference using LLM-as-judge."""
-
-        generated_analysis = answer.agent_output["analysis"]
-
-        formatted_prompt = AnalyzerEvaluator.ANALYZE_JUDGE_PROMPT_GT.format(
-            gt_analysis=gt_analysis,
-            generated_analysis=generated_analysis,
-        )
-        response = llm.invoke(formatted_prompt)
-        raw = response.text
-
-        # Parse JSON response
-        import re as _re
-
-        json_match = _re.search(r"\{.*}", raw, _re.DOTALL)
-        if not json_match:
-            raise ValueError(f"No JSON found in judge response: {raw[:200]}")
-        try:
-            evaluation = json.loads(json_match.group())
-        except JSONDecodeError:
-            return Evaluation(score=1)
-
-        factual = float(evaluation.get("factual_accuracy", 1))
-        coverage = float(evaluation.get("coverage", 1))
-        score = ((factual + coverage) / 2 - 1) / 4  # normalize [1,5] → [0,1]
-        return Evaluation(score=round(score, 4))
+    def _batch_eval(self, states: list[State]) -> bool:
+        return False
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
@@ -184,7 +122,27 @@ class AnalyzerEvaluator(Evaluator):
             )
 
         llm = get_llm(provider=judge_provider, model=judge_model)
-        AnalyzerEvaluator.judge(state, llm)
+
+        prompt = state.prompt
+        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
+        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
+        sql_query: str = last_retriever_answer.agent_output["sql_query"]
+        data: str = last_retriever_answer.agent_output["data_str"]
+        analysis: str = last_analyzer_answer.agent_output["analysis"]
+
+        truncated_data = data[:2000] if len(data) > 2000 else data
+
+        formatted_prompt = AnalyzerEvaluator.ANALYSIS_JUDGE_PROMPT_NO_GT.format(
+            prompt=prompt, sql_query=sql_query, data=truncated_data, analysis=analysis
+        )
+
+        response = llm.invoke(formatted_prompt)
+
+        evaluation = fill_json_schema(
+            extract_json_from_llm_text(response.text), _NO_GT_SCHEMA
+        )
+        score = compute_weighted_score(evaluation, _NO_GT_WEIGHTS)
+        last_analyzer_answer.evaluation = Evaluation(score=score)
 
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
@@ -195,12 +153,21 @@ class AnalyzerEvaluator(Evaluator):
             return
 
         llm = get_llm(provider=judge_provider, model=judge_model)
-        evaluation = AnalyzerEvaluator.judge_from_ground_truth(
-            answer=answer, llm=llm, gt_analysis=gt_data["analysis"]
-        )
+        gt_analysis = gt_data["analysis"]
+        generated_analysis = answer.agent_output["analysis"]
 
-        answer.gt_evaluation = evaluation
-        return
+        formatted_prompt = AnalyzerEvaluator.ANALYZE_JUDGE_PROMPT_GT.format(
+            gt_analysis=gt_analysis,
+            generated_analysis=generated_analysis,
+        )
+        response = llm.invoke(formatted_prompt)
+
+        evaluation = fill_json_schema(
+            _normalize_flat_judgement(extract_json_from_llm_text(response.text)),
+            _GT_SCHEMA,
+        )
+        score = compute_weighted_score(evaluation, _GT_WEIGHTS)
+        answer.gt_evaluation = Evaluation(score=score)
 
 
 __all__ = ["AnalyzerEvaluator"]

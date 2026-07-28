@@ -37,8 +37,14 @@ class Agent(ABC):
         return self.type.value
 
     @property
-    def evaluator(self) -> Evaluator:
-        return Evaluator()
+    def evaluator(self) -> Evaluator | None:
+        return None
+
+    @evaluator.setter
+    def evaluator(self, evaluator: Evaluator):
+        if isinstance(evaluator, Evaluator):
+            return evaluator
+        return self.evaluator
 
     @abstractmethod
     def core(self, state: State, llm: LLM) -> State:
@@ -124,9 +130,12 @@ class Agent(ABC):
         ###
         # Evaluation
         ###
-        results, best_result = self.evaluator.evaluate_best_of_n(
-            results=results, config=agent_config
-        )
+        if self.evaluator:
+            results, best_result = self.evaluator.evaluate_best_of_n(
+                results=results, config=agent_config
+            )
+        else:
+            best_result = results[0]
 
         ###
         # Profiling
