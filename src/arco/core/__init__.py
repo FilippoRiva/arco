@@ -1,5 +1,4 @@
 # Exports only __all__ defined fields
-from ..workflows import sales
 from .agent import *
 from .agent_config import *
 from .agent_type import *
@@ -39,5 +38,4 @@ __all__ = [
     "get_llm",
     "get_llm_from_config",
     "initialize_tracking",
-    "sales",
 ]

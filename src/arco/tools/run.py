@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from arco import workflows
 from arco.core import Config, WorkflowFactory
 from arco.logs import initialize as init_logging
 
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
 
 
 def run_from_config(yaml_path: str, log_level: str | None = None):
+    workflows.load_library_workflows()
     config = Config.from_yaml(yaml_path)
     workflow = WorkflowFactory.get(config=config)
     yield config

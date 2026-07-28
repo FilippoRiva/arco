@@ -77,45 +77,25 @@ No explanations. No markdown. Just the JSON array.
     def evaluator(self) -> Evaluator:
         return PlannerEvaluator()
 
-    @staticmethod
-    def _parse_plan(raw: str) -> list[str]:
-        raw = raw.strip()
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[-1] if "\n" in raw else raw[3:]
-        if raw.endswith("```"):
-            raw = raw.rsplit("```", 1)[0]
-        raw = raw.strip()
-        start = raw.find("[")
-        end = raw.rfind("]")
-        if start != -1 and end != -1 and end > start:
-            raw = raw[start : end + 1]
-        try:
-            plan = json.loads(raw)
-            if not isinstance(plan, list):
-                return []
-            return [
-                a.lower()
-                for a in plan
-                if isinstance(a, str) and a.lower() in _VALID_AGENTS
-            ]
-        except json.JSONDecodeError, TypeError:
-            return []
-
     def core(self, state: State, llm: LLM) -> State:
         last_planner = state.get_last_answer(self.type)
 
         if last_planner is None:
             # --- FIRST INVOCATION: generate full plan from LLM ---
             formatted = self._PLANNER_PROMPT.format(prompt=state.prompt)
+            logger.debug(f"Invoking with prompt: {formatted}")
             response = llm.invoke(formatted)
-
-            plan = self._parse_plan(response.text)
+            logger.debug(f"LLM answer : {response.text}")
+            plan = response.extract_json_list()
             if not plan:
                 plan = ["retriever", "analyzer"]
+            else:
+                plan = [choice.lower() for choice in plan]
 
             choice = plan[0].capitalize()
             remaining = plan[1:]
-            logger.debug(f"Choice: '{choice}' | Plan : {remaining}")
+
+            logger.debug(f"Choice: {choice}")
 
             return self.answer(
                 state,
@@ -145,7 +125,7 @@ No explanations. No markdown. Just the JSON array.
                 remaining=json.dumps(remaining),
             )
             response = llm.invoke(formatted)
-            new_plan = self._parse_plan(response.text)
+            new_plan = response.extract_json_list()
             remaining = new_plan if new_plan else []
 
         if len(state.answers) > 10:
@@ -159,6 +139,7 @@ No explanations. No markdown. Just the JSON array.
             )
 
         choice = remaining[0].capitalize()
+        logger.debug(f"Choice from previous plan: {choice}")
         return self.answer(
             state,
             message=f"Next: {choice}",

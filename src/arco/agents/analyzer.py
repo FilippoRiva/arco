@@ -8,6 +8,10 @@ from arco.evaluators import AnalyzerEvaluator
 if TYPE_CHECKING:
     from arco.core import LLM, Answer, Evaluator, State
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Analyzer(Agent):
     _ANALYSE_DATA_PROMPT = """You are a professional data analyst providing insights from query results.
@@ -19,7 +23,8 @@ Answer the user's question based ONLY on the provided data.
 {prompt}
 
 ## AVAILABLE DATA
-This data was retrieved using the SQL query: {sql_query}
+This data was retrieved using the SQL query: 
+{sql_query}
 
 Data:
 {data}
@@ -57,50 +62,20 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
     def evaluator(self) -> Evaluator:
         return AnalyzerEvaluator()
 
-    @staticmethod
-    def _enrich_data_with_stats(data_csv: str | None) -> str:
-        """Append pre-computed numeric statistics to the CSV data string.
-
-        LLMs are unreliable at mental arithmetic over many rows.  Pre-computing
-        sum / min / max / count for every numeric column and appending them as a
-        summary block lets the LLM read the answer directly instead of deriving it.
-        """
-        if not data_csv or not data_csv.strip():
-            return data_csv if data_csv else ""
-        import io
-
-        df: pd.DataFrame = pd.read_csv(filepath_or_buffer=io.StringIO(data_csv))  # type: ignore
-        num_cols = df.select_dtypes(include="number").columns.tolist()
-        if not num_cols:
-            return data_csv
-        lines = [
-            "\n--- Pre-computed Statistics (use these exact values) ---",
-            f"Total rows: {len(df)}",
-        ]
-        for col in num_cols:
-            s = df[col]
-            lines.append(
-                f"{col}: sum={round(s.sum(), 2)}, min={round(s.min(), 2)}, "
-                f"max={round(s.max(), 2)}, mean={round(s.mean(), 2)}"
-            )
-        return data_csv + "\n".join(lines)
-
     def core(self, state: State, llm: LLM) -> State:
-        """Core analysis logic - LLM-based data analysis.
-
-        Args:
-            state: Conversation state; should include 'data' and 'prompt'.
-            llm: LLM instance for analysis.
-
-        Returns:
-            Updated state with analysis appended to 'answer'.
-        """
         last_retriever_answer: Answer | None = state.get_last_answer(
             AgentType.RETRIEVER
         )
-        if last_retriever_answer is None:
-            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        enriched_data = Analyzer._enrich_data_with_stats(
+        if (
+            last_retriever_answer is None
+            or "data_str" not in last_retriever_answer.agent_output
+            or "sql_query" not in last_retriever_answer.agent_output
+        ):
+            logger.error(
+                f"Missing dependencies for analysis from retriever output: last_ret_answer:{last_retriever_answer}, last_retriever_output:{last_retriever_answer.agent_output}"
+            )
+            raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
+        enriched_data = _enrich_data_with_stats(
             last_retriever_answer.agent_output["data_str"]
         )
         formatted_prompt = Analyzer._ANALYSE_DATA_PROMPT.format(
@@ -108,13 +83,47 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             prompt=state.prompt,
             sql_query=last_retriever_answer.agent_output["sql_query"],
         )
+        logger.debug(f"invoking llm with prompt : {formatted_prompt}")
         result = llm.invoke(formatted_prompt)
+        logger.debug(
+            f"Analysis result (logprobs : {len(result.logprobs) > 0}): {result.text}"
+        )
         return self.answer(
             state,
             message=f"{result.text}",
             output={"analysis": result.text},
             logprobs=result.logprobs,
         )
+
+
+def _enrich_data_with_stats(data_csv: str | None) -> str:
+    """Append pre-computed numeric statistics to the CSV data string.
+
+    LLMs are unreliable at mental arithmetic over many rows.  Pre-computing
+    sum / min / max / count for every numeric column and appending them as a
+    summary block lets the LLM read the answer directly instead of deriving it.
+    """
+    if not data_csv or not data_csv.strip():
+        return data_csv if data_csv else ""
+    import io
+
+    df: pd.DataFrame = pd.read_csv(filepath_or_buffer=io.StringIO(data_csv))  # type: ignore
+    num_cols = df.select_dtypes(include="number").columns.tolist()
+    if not num_cols:
+        logger.debug("No numeric columns found. Skipping data enrichment.")
+        return data_csv
+    lines = [
+        "\n--- Pre-computed Statistics (use these exact values) ---",
+        f"Total rows: {len(df)}",
+    ]
+    for col in num_cols:
+        s = df[col]
+        lines.append(
+            f"{col}: sum={round(s.sum(), 2)}, min={round(s.min(), 2)}, "
+            f"max={round(s.max(), 2)}, mean={round(s.mean(), 2)}"
+        )
+    logger.debug(f"Adding enrichment statistics : {' | '.join(lines)}")
+    return data_csv + "\n".join(lines)
 
 
 __all__ = ["Analyzer"]

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from arco import workflows
 from arco.core import (
     Config,
     State,
@@ -26,6 +27,7 @@ def benchmark_from_config(
     logging_level: str | None,
     run_visualization_logic: Callable,
 ):
+    workflows.load_library_workflows()
     start_time = time.time()
     default_config = Config.from_yaml(config_path)
     workflow = WorkflowFactory.get(config=default_config)

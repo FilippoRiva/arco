@@ -9,19 +9,14 @@ class AgentException(Exception):
 
     def __init__(
         self,
-        message: str = "",
-        missing_answer_from_type: AgentType | None = None,
-        missing_dataframe_from_type: AgentType | None = None,
+        message: str | None = None,
+        missing_dependencies_from: AgentType | None = None,
         *args: object,
     ) -> None:
-        if missing_dataframe_from_type and missing_answer_from_type:
-            pass  # ignores the options if both are passed
-        elif missing_answer_from_type:
-            message = f"Missing a needed answer from {missing_answer_from_type.value}"
-        elif missing_dataframe_from_type:
-            message = (
-                f"Missing dataframe from {missing_dataframe_from_type.value}'s result"
-            )
+        if missing_dependencies_from:
+            message = f"Missing a dependency from {missing_dependencies_from.value}"
+        elif message is None:
+            message = "Agent generated a fatal exception"
         super().__init__(message, args)
 
 

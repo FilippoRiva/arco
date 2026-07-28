@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any
 
 import requests
@@ -34,6 +35,40 @@ class LLMAnswer:
             str(response.content) if hasattr(response, "content") else str(response)
         )
         self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
+
+    def extract_fenced_content(self):
+        """
+        Extracts content from a fenced block.
+        If no fence exists, uses the raw text.
+        """
+        fence_re = re.compile(r"```[^\n]*\n?(.*?)\n?```", re.DOTALL)
+
+        match = fence_re.search(self.text)
+        content = match.group(1).strip() if match else self.text.strip()
+        return content
+
+    def extract_json(self):
+        content = self.extract_fenced_content()
+        try:
+            return json.loads(content)
+        except JSONDecodeError:
+            return {}
+
+    def extract_json_list(self):
+        content = self.extract_fenced_content()
+        try:
+            json_list = json.loads(content)
+            if not isinstance(json_list, list):
+                raise TypeError("Parsed json didn't produce a list")
+            return json_list
+        except JSONDecodeError, TypeError:
+            return []
+
+    def extract_python(self):
+        return self.extract_fenced_content()
+
+    def extract_sql(self):
+        return self.extract_fenced_content()
 
 
 class LLM:
@@ -301,41 +336,6 @@ def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
         return False, error_message
 
 
-_JSON_FENCE_RE = re.compile(
-    r"^[ \t]*(?:```+)??[ \t]*(?:json|JSON)[ \t]*\n?(.*?)\n?[ \t]*```+[ \t]*$",
-    re.DOTALL,
-)
-
-
-def extract_json_from_llm_text(text: str) -> dict[str, Any] | None:
-    """Extract the first JSON object from LLM response text.
-
-    Strips Markdown code fences (````json````, ```JSON```, etc.),
-    leading ``json`` prefixes, and surrounding whitespace before parsing.
-    Returns ``None`` when no valid JSON object is found.
-    """
-    raw = text.strip()
-
-    match = _JSON_FENCE_RE.match(raw)
-    if match:
-        body = match.group(1).strip()
-    else:
-        body = raw
-
-    if body.lower().startswith("json"):
-        body = body[4:].strip()
-
-    start = body.find("{")
-    end = body.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        return None
-
-    try:
-        return json.loads(body[start : end + 1])
-    except json.JSONDecodeError:
-        return None
-
-
 def fill_json_schema(
     parsed: dict[str, Any] | None,
     schema: dict[str, dict[str, Any]],
@@ -382,7 +382,6 @@ __all__ = [
     "LLMAnswer",
     "check_model_availability",
     "compute_weighted_score",
-    "extract_json_from_llm_text",
     "fill_json_schema",
     "get_llm",
     "get_llm_from_config",

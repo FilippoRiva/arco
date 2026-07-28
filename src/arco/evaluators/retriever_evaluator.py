@@ -79,10 +79,8 @@ def _compare_dataframes_iou(
 
 def _apply_gt_alignment(answer: Answer, canonic_cols: list):
     """Rename and reorder df columns to match canonical_cols without LLM."""
-    if answer is None:
-        raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-    if answer.agent_output["data_df"] is None:
-        raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
+    if answer is None or "data_df" not in answer.agent_output:
+        raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
     df_to_align: pd.DataFrame = answer.agent_output["data_df"]
     current_cols = list(df_to_align.columns)
     if len(current_cols) == len(canonic_cols):

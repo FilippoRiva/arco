@@ -3,7 +3,6 @@ from typing import Any
 from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
 from arco.core.llm_tools import (
     compute_weighted_score,
-    extract_json_from_llm_text,
     fill_json_schema,
 )
 
@@ -138,9 +137,7 @@ class AnalyzerEvaluator(Evaluator):
 
         response = llm.invoke(formatted_prompt)
 
-        evaluation = fill_json_schema(
-            extract_json_from_llm_text(response.text), _NO_GT_SCHEMA
-        )
+        evaluation = fill_json_schema(response.extract_json(), _NO_GT_SCHEMA)
         score = compute_weighted_score(evaluation, _NO_GT_WEIGHTS)
         last_analyzer_answer.evaluation = Evaluation(score=score)
 
@@ -163,7 +160,7 @@ class AnalyzerEvaluator(Evaluator):
         response = llm.invoke(formatted_prompt)
 
         evaluation = fill_json_schema(
-            _normalize_flat_judgement(extract_json_from_llm_text(response.text)),
+            _normalize_flat_judgement(response.extract_json()),
             _GT_SCHEMA,
         )
         score = compute_weighted_score(evaluation, _GT_WEIGHTS)

@@ -7,6 +7,10 @@ from arco.evaluators import OrchestratorEvaluator
 if TYPE_CHECKING:
     from arco.core import LLM, Answer, Evaluator, State
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Orchestrator(Agent):
     _ORCHESTRATOR_PROMPT = """You are a workflow orchestrator managing a data analysis pipeline.
@@ -101,16 +105,6 @@ No explanations. Just the agent's name."""
         return OrchestratorEvaluator()
 
     def core(self, state: State, llm: LLM) -> State:
-        """Core tool decision logic - LLM-based routing.
-
-        Args:
-            state: Conversation state.
-            llm: LLM instance for decision.
-
-        Returns:
-            Updated state with 'tool_choice'.
-        """
-
         last_orchestrator_answer: Answer | None = state.get_last_answer(
             AgentType.ORCHESTRATOR
         )
@@ -133,6 +127,7 @@ No explanations. Just the agent's name."""
             agents_used=state.get_agents_used(),
             error_is_present=error_is_present,
         )
+        logger.debug(f"invoking the llm with prompt : {decision_prompt}")
 
         # try:
         orchestrator_response = llm.invoke(decision_prompt)
@@ -164,6 +159,9 @@ No explanations. Just the agent's name."""
 
         matched_agent = matched_agent.capitalize()
 
+        logger.debug(
+            f"llm_answer : {orchestrator_response.text} | resulting_agent_choice : {matched_agent}"
+        )
         return self.answer(
             state,
             message=f"The chosen agent is {matched_agent}",

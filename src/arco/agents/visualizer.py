@@ -1,22 +1,24 @@
-import json
-from json import JSONDecodeError
 from typing import TYPE_CHECKING
 
 from arco.core import Agent, AgentException, AgentType
 from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import LLM, Answer, Evaluator, State
+    from arco.core import LLM, Evaluator, State
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Visualizer(Agent):
     _CHART_CONFIGURATION_PROMPT = """You are a data visualization expert designing chart configurations.
 
 ## TASK
-Create a JSON configuration object for visualizing the provided data.
+Create a JSON configuration object for visualizing the provided data according to the data analysis and visualization request from the user prompt.
 
-## VISUALIZATION GOAL
-{visualization_goal}
+## USER PROMPT
+{prompt}
 
 ## DATA TO VISUALIZE
 {data}
@@ -210,136 +212,58 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
     def evaluator(self) -> Evaluator:
         return VisualizerEvaluator()
 
-    @staticmethod
-    def _parse_chart_config(raw_text: str) -> dict[str, str]:
-        """Parse a chart configuration JSON from a raw LLM response.
-
-        The function attempts to tolerate code fences and extra prose, extracting the
-        first JSON object it can find. On failure, a minimal default schema is
-        returned.
-
-        Args:
-            raw_text: Raw text from the LLM expected to contain a JSON object.
-
-        Returns:
-            A dictionary with keys: 'chart_type', 'x_axis', 'y_axis', 'title'.
-        """
-        text = raw_text.strip().strip("`")
-        # Attempt to extract JSON from possible code fences or prose
-        try:
-            # If there's a fenced block like ```json ... ``` remove it
-            if text.lower().startswith("json"):  # e.g., "json\n{...}"
-                text = text[4:].strip()
-            if text.startswith("{") and text.endswith("}"):
-                return json.loads(text)
-            # Try to find first JSON object in text
-            start = text.find("{")
-            end = text.rfind("}")
-            if start != -1 and end != -1 and end > start:
-                return json.loads(text[start : end + 1])
-            raise JSONDecodeError  # Falls to default
-        except (JSONDecodeError, AttributeError) as _:
-            # fallback config
-            return {
-                "chart_type": "line",
-                "x_axis": "date",
-                "y_axis": "value",
-                "title": "Chart",
-            }
-
-    @staticmethod
-    def _extract_chart_config(
-        state: State, llm: LLM
-    ) -> tuple[dict[str, str], list[float | int] | None]:
-        """Infer a compact chart configuration from the looked-up data.
-
-        Prompts the LLM to return a minified JSON config and parses it into a
-        Python dict. Data is NOT included in the config (it's passed separately as DataFrame).
-
-        Args:
-            state: Conversation state; should include 'data'.
-            llm: ChatOllama instance used to infer the chart configuration.
-
-        Returns:
-            A proposal chart_configuration
-        """
-        ans_to_check = state.get_last_answer(AgentType.RETRIEVER)
-        if ans_to_check is None:
-            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        last_retriever_answer: Answer = ans_to_check
-        if last_retriever_answer.agent_output["data_str"] is None:
-            raise AgentException(missing_dataframe_from_type=AgentType.RETRIEVER)
-        data_text = last_retriever_answer.agent_output["data_str"]
-
-        visualization_goal = state.prompt
-
-        formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
-            data=data_text, visualization_goal=visualization_goal
-        )
-        response = llm.invoke(formatted_prompt)
-        chart_config = Visualizer._parse_chart_config(response.text)
-        return chart_config, response.logprobs
-
-    @staticmethod
-    def _create_chart(
-        chart_config: dict, llm: LLM
-    ) -> tuple[str, list[float | int] | None]:
-        """Ask the LLM to emit matplotlib code for the given chart configuration.
-
-        Args:
-            llm: ChatOllama instance used to generate the plotting code.
-
-        Returns:
-            A Python code string (without Markdown fences) that, when executed,
-            renders the chart using matplotlib.
-        """
-        formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
-        response = llm.invoke(formatted_prompt)
-        cleaned_code = response.text.replace("```python", "").replace("```", "").strip()
-        return cleaned_code, response.logprobs
-
     def core(self, state: State, llm: LLM) -> State:
-        """Core visualization logic - chart config extraction and code generation.
-
-        Args:
-            state: Conversation state; should include 'data_df' (DataFrame).
-            llm: LLM instance for config extraction and code generation.
-
-        Returns:
-            Updated state with 'chart_config' and code appended to 'answer'.
-            If the generated code raises an exception when executed, the result
-            also contains an 'error' key so the CoT refinement loop can feed the
-            error message back to the LLM on the next iteration.
-        """
-        ans_to_check = state.get_last_answer(AgentType.RETRIEVER)
-        if ans_to_check is None:
+        last_retriever_answer = state.get_last_answer(AgentType.RETRIEVER)
+        if (
+            last_retriever_answer is None
+            or "data_df" not in last_retriever_answer.agent_output
+            or "data_str" not in last_retriever_answer.agent_output
+        ):
+            logger.error(
+                f"Missing dependencies for visualization from retriever output: last_ret_answer:{last_retriever_answer}, last_retriever_output:{last_retriever_answer.agent_output}"
+            )
             raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
-        last_retriever_answer: Answer = ans_to_check
 
         data_df = last_retriever_answer.agent_output["data_df"]
+        data_text = last_retriever_answer.agent_output["data_str"]
 
         # Extract chart configuration
-        chart_config, logprobs_chart_config = Visualizer._extract_chart_config(
-            state, llm
+        formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
+            prompt=state.prompt, data=data_text
         )
+        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
+        response = llm.invoke(formatted_prompt)
+
+        _FALLBACK_CHART_CONFIG = {
+            "chart_type": "line",
+            "x_axis": "date",
+            "y_axis": "value",
+            "title": "Chart",
+        }
+        chart_config = response.extract_json() or _FALLBACK_CHART_CONFIG
+        logger.debug(f"Chart config : {chart_config}")
+        logprobs_chart_config = response.logprobs
 
         # Generate chart code
-        code, logprobs_code = Visualizer._create_chart(
-            chart_config=chart_config, llm=llm
-        )
+        formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
+        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
+        response = llm.invoke(formatted_prompt)
+        logger.debug(f"LLM response : {response.text}")
+        code = response.extract_python()
+        logger.debug(f"Code : {code}")
+        logprobs_code = response.logprobs
 
         # --- Validate by executing in a headless namespace (no display) ---
-        # Switch to Agg (non-interactive) backend to avoid tkinter threading
-        # issues when running best-of-n from a non-main thread on Windows.
         exec_code = (
             "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
             + code.replace("plt.show()", "plt.close('all')")
         )
         namespace: dict = {"data_df": data_df, "config": chart_config}
         try:
-            exec(exec_code, namespace)  # noqa: S102 - trust me, at most it's just a bad plot
+            exec(exec_code, namespace)  # noqa: S102
             exec_error = ""
         except Exception as e:  # noqa: BLE001 - exec() can raise arbitrary user exceptions
+            logger.warning(f"Failed code execution : {type(e).__name__} : {e}")
             exec_error = f"{type(e).__name__}: {e}"
 
         if exec_error:

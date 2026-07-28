@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any
 from arco.core import AgentType, Evaluation, Evaluator, LLMAnswer, llm_tools
 from arco.core.llm_tools import (
     compute_weighted_score,
-    extract_json_from_llm_text,
     fill_json_schema,
 )
 
@@ -210,9 +209,7 @@ class VisualizerEvaluator(Evaluator):
 
         response = llm.invoke(formatted_prompt)
 
-        evaluation_dict = fill_json_schema(
-            extract_json_from_llm_text(response.text), _NO_GT_SCHEMA
-        )
+        evaluation_dict = fill_json_schema(response.extract_json(), _NO_GT_SCHEMA)
         overall_score = compute_weighted_score(evaluation_dict, _NO_GT_WEIGHTS)
         last_visualizer_answer.evaluation = Evaluation(score=overall_score)
 
@@ -271,9 +268,7 @@ class VisualizerEvaluator(Evaluator):
         response: LLMAnswer = llm.invoke(formatted_prompt)
 
         # Parse JSON response
-        evaluation_dict = fill_json_schema(
-            extract_json_from_llm_text(response.text), _GT_SCHEMA
-        )
+        evaluation_dict = fill_json_schema(response.extract_json, _GT_SCHEMA)
 
         # Compute overall score
         overall_score = compute_weighted_score(evaluation_dict, _GT_WEIGHTS)

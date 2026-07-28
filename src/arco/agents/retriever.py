@@ -1,4 +1,3 @@
-import json
 from typing import TYPE_CHECKING
 
 import duckdb
@@ -10,6 +9,10 @@ from arco.evaluators import RetrieverEvaluator
 
 if TYPE_CHECKING:
     from arco.core import LLM, AgentConfig, Answer, Evaluator, LLMCallAccumulator, State
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Retriever(Agent):
@@ -141,85 +144,83 @@ name used by any candidate. Prefer lowercase_with_underscores.
         return RetrieverEvaluator()
 
     def core(self, state: State, llm: LLM) -> State:
-        """Core lookup logic - SQL generation and data retrieval.
-
-        Supports both single-table (legacy) and multi-table (new) modes.
-
-        When schema is None, falls back to the legacy behavior of loading DEFAULT_DATA_PATH
-        as a single "sales" table, auto-building a minimal DatabaseSchema from it.
-
-        When schema has more tables than compact_threshold, a two-step approach is used:
-        first the LLM selects which tables are relevant, then full column details for only
-        those tables are passed to SQL generation. This keeps prompts manageable for 10+
-        table schemas.
-
-        Args:
-            state: Conversation state; must include 'prompt'.
-            llm: LLM instance for SQL generation (and optional table selection).
-
-        Returns:
-            Updated state containing 'data', 'data_df', 'sql_query' or 'error'.
-        """
-        schema: DatabaseSchema = self.schema
-
         # --- Register all tables in a fresh per-call DuckDB connection ---
         con = duckdb.connect()
-        for table in schema.tables:
+        for table in self.schema.tables:
             df_t = pd.read_parquet(table.file_path)
             con.register(f"_df_{table.name}", df_t)
             con.execute(f"CREATE TABLE {table.name} AS SELECT * FROM _df_{table.name}")
 
         # --- Build schema context (two-step when many tables) ---
-        if schema.should_use_table_selection():
-            selected_names, logprobs_relevant_tables = (
-                Retriever._select_relevant_tables(state, schema, llm)
+        if self.schema.should_use_table_selection():
+            compact_schema = self.schema.get_compact_summary()
+            formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
+                compact_schema=compact_schema,
+                prompt=state.prompt,
             )
-            schema_context = schema.get_full_schema_str(table_names=selected_names)
+            response = llm.invoke(formatted_prompt)
+            logprobs_relevant_tables = response.logprobs
+
+            name_map = {table.name.lower(): table.name for table in self.schema.tables}
+            selected = []
+            for token in response.text.strip().split(","):
+                normalized = token.strip().lower()
+                if normalized in name_map:
+                    selected.append(name_map[normalized])
+
+            if not selected:
+                selected = [t.name for t in self.schema.tables]
+            schema_context = self.schema.get_full_schema_str(table_names=selected)
+            logger.debug(f"table selection has run. Selected tables are {selected}")
         else:
             logprobs_relevant_tables = []
-            schema_context = schema.get_full_schema_str()
+            schema_context = self.schema.get_full_schema_str()
+            logger.debug("No need for table selection.")
 
         # --- Generate and execute SQL ---
-        sql_query, logprobs_gen_sql = Retriever._generate_sql_query(
-            state, schema_context, llm
+        formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
+            prompt=state.prompt,
+            schema_context=schema_context,
         )
+        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
+        response = llm.invoke(formatted_prompt)
+        logger.debug(f"Response : {response.text}")
+        sql_query = response.extract_sql()
+        logger.debug(f"Query : {sql_query}")
+        logprobs_gen_sql = response.logprobs
 
         # Execute the query and answer
+        output = None
+        error = None
         try:
             result_df: pd.DataFrame = con.execute(sql_query).df()
             result_str = result_df.to_csv(index=False)
 
-            return self.answer(
-                state,
-                message=f"The data has been retrieved ({len(result_df)} {'entries' if len(result_df) > 1 else 'entry'} with columns : {', '.join(result_df.columns.to_list())})",
-                output={
-                    "data_str": result_str,
-                    "data_df": result_df,
-                    "sql_query": sql_query,
-                },
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
-            )
+            message = f"The data has been retrieved ({len(result_df)} {'entries' if len(result_df) > 1 else 'entry'} with columns : {', '.join(result_df.columns.to_list())})"
+            output = {
+                "data_str": result_str,
+                "data_df": result_df,
+                "sql_query": sql_query,
+            }
         except duckdb.ParserException as e:
-            return self.answer(
-                state,
-                message="Couldn't retrieve the data.",
-                error=f"SQL query parsing error: {e!s}",
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
-            )
+            message = "Couldn't retrieve the data."
+            error = f"SQL query parsing error: {e!s}"
+            logger.warning("Failed parsing the SQL query.")
         except duckdb.CatalogException as e:
-            return self.answer(
-                state,
-                message="Couldn't retrieve the data.",
-                error=f"SQL query is selecting missing tables: {e!s}",
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
-            )
+            message = "Couldn't retrieve the data."
+            error = f"SQL query is selecting missing tables: {e!s}"
+            logger.warning("Failed : selecting missing tables.")
         except duckdb.BinderException as e:
-            return self.answer(
-                state,
-                message="Couldn't retrieve the data.",
-                error=f"SQL query references do not resolve : {e!s}",
-                logprobs=logprobs_relevant_tables + logprobs_gen_sql,
-            )
+            message = "Couldn't retrieve the data."
+            error = f"SQL query references do not resolve : {e!s}"
+            logger.warning("Failed : SQL query references do not resolve .")
+        return self.answer(
+            state,
+            message=message,
+            error=error,
+            output=output,
+            logprobs=logprobs_relevant_tables + logprobs_gen_sql,
+        )
 
     def post_generation_hooks(
         self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
@@ -232,7 +233,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         Also applies normalize_dataframe_values to each DataFrame."""
 
-        standardize_llm = get_llm(
+        llm = get_llm(
             temperature=0.0,
             max_tokens=1000,
             llm_accumulator=llm_acc,
@@ -240,93 +241,21 @@ name used by any candidate. Prefer lowercase_with_underscores.
             model=config.model,
         )
 
-        return Retriever._apply_standardization(
-            results, standardize_llm, original_schema=self.schema
-        )
-
-    @staticmethod
-    def _select_relevant_tables(
-        state: State, schema: DatabaseSchema, llm
-    ) -> tuple[list[str], list[float | int] | None]:
-        """Use the LLM to select relevant tables from a large schema.
-
-        Called when schema.should_use_table_selection() is True (more tables than
-        compact_threshold). Passes only table names and descriptions to the LLM,
-        then returns the selected table names so full column details for only those
-        tables are included in the SQL generation prompt.
-
-        Args:
-            state: Conversation state containing the user prompt.
-            schema: DatabaseSchema with all available tables.
-            llm: LLM instance for table selection.
-
-        Returns:
-            List of selected table names. Falls back to all table names if the LLM
-            output cannot be parsed (safe degradation).
-        """
-        compact_schema = schema.get_compact_summary()
-        formatted_prompt = Retriever._TABLE_SELECTION_PROMPT.format(
-            compact_schema=compact_schema,
-            prompt=state.prompt,
-        )
-        response = llm.invoke(formatted_prompt)
-        raw = response.text.strip()
-
-        name_map = {t.name.lower(): t.name for t in schema.tables}
-        selected = []
-        for token in raw.split(","):
-            normalized = token.strip().lower()
-            if normalized in name_map:
-                selected.append(name_map[normalized])
-
-        if not selected:
-            selected = [t.name for t in schema.tables]
-        return selected, response.logprobs
-
-    @staticmethod
-    def _generate_sql_query(
-        state: State, schema_context: str, llm: LLM
-    ) -> tuple[str, list[float | int] | None]:
-        """Generate a DuckDB SQL query from the user prompt and schema context.
-
-        Args:
-            state: Conversation state containing the user prompt.
-            schema_context: Full schema string produced by DatabaseSchema.get_full_schema_str().
-                            Includes table names, descriptions, and column details for all
-                            relevant tables.
-            llm: LLM instance used to generate the SQL.
-
-        Returns:
-            A plain SQL string suitable for DuckDB. Any Markdown fences are stripped.
-        """
-        formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
-            prompt=state.prompt,
-            schema_context=schema_context,
-        )
-        response = llm.invoke(formatted_prompt)
-        sql_query = response.text
-        cleaned_sql = sql_query.strip().replace("```sql", "").replace("```", "")
-        return cleaned_sql, response.logprobs
-
-    @staticmethod
-    def _apply_standardization(
-        results: list[State], llm: LLM, original_schema: DatabaseSchema
-    ) -> list[State]:
-
-        # Collect candidate info
         candidates = []
         for i, result in enumerate(results):
             last_retriever_answer: Answer | None = result.get_last_answer(
                 AgentType.RETRIEVER
             )
-            if last_retriever_answer is None:
-                continue
-            if last_retriever_answer.agent_output["data_df"] is None:
+            output = last_retriever_answer.agent_output
+            if (
+                last_retriever_answer is None
+                or output is None
+                or "data_df" not in output
+                or "sql_query" not in output
+            ):
                 continue
             df = last_retriever_answer.agent_output["data_df"]
             sql = last_retriever_answer.agent_output["sql_query"]
-            if df is None or sql is None:
-                continue
             cols = list(df.columns)
             candidates.append(
                 {"idx": i, "df": df, "sql": sql, "cols": cols, "state": result}
@@ -335,42 +264,19 @@ name used by any candidate. Prefer lowercase_with_underscores.
         if len(candidates) == 0 or len(candidates) == 1:
             return results
 
-        # When all candidates share the same columns AND gt_columns is provided but
-        # column names don't already match GT → apply GT alignment directly to all
-        # candidates without calling the LLM (no inter-candidate disagreement to resolve).
+        # if columns all columns are already equal we return
         col_lists = [tuple(candidate["cols"]) for candidate in candidates]
-        if len(set(col_lists)) == 1:  # all lists are equal
+        if len(set(col_lists)) == 1:
             return results
-            # column_names_lowered = [c.lower() for c in candidates[0]["cols"]]
-            # if column_names_lowered == [c.lower() for c in gt_columns]:
-            #     return results
-            # # All candidates agree but names don't match GT → rename all without LLM
-            # canonical_cols = list(gt_columns)
-            # for candidate in candidates:
-            #     Retriever._apply_gt_alignment(candidate['df'], canonical_cols)
-            # return results
 
         # Build Prompt
-        schema_context = original_schema.get_full_schema_str()
+        schema_context = self.schema.get_full_schema_str()
         candidates_lines = []
         for candidate in candidates:
             candidates_lines.append(
-                f"Candidate {candidate['idx'] + 1}: SQL: {candidate['sql']} | Columns: {candidate['cols']}"
+                f"Candidate {candidate['idx'] + 1}:\nSQL: {candidate['sql']}\n\nColumns: {candidate['cols']}"
             )
         candidates_section = "\n".join(candidates_lines)
-
-        # if gt_columns:
-        #     gt_hint = (
-        #         f"\n## Required Output Column Names (Ground Truth)\n"
-        #         f"The canonical_columns in your output MUST be exactly: {gt_columns} (in this order).\n"
-        #         f"Rename each candidate column to its semantically matching entry in this list.\n"
-        #         f"Do NOT use schema column names or candidate names — use only these GT names."
-        #     )
-        #     prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
-        #         schema_context=schema_context,
-        #         candidates_section=candidates_section,
-        #     ) + gt_hint
-        # else:
 
         prompt = Retriever._COLUMN_STANDARDIZATION_PROMPT.format(
             schema_context=schema_context,
@@ -379,19 +285,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         # Call LLM
         response = llm.invoke(prompt)
-        raw: str = (
-            str(response.content) if hasattr(response, "content") else str(response)
-        )
 
-        # Parse JSON — strip Markdown fences if present
-        raw = raw.strip()
-        if raw.startswith("```"):
-            raw = raw.split("\n", 1)[-1]
-        if raw.endswith("```"):
-            raw = raw.rsplit("```", 1)[0]
-        raw = raw.strip()
-
-        mapping_data = json.loads(raw)
+        mapping_data = response.extract_json()
         canonical_cols = mapping_data["canonical_columns"]
         mappings = mapping_data["mappings"]
 
@@ -402,16 +297,12 @@ name used by any candidate. Prefer lowercase_with_underscores.
         for candidate, col_map in zip(candidates, mappings):
             idx = candidate["idx"]
             state_it: State = results[idx]
-            ans_to_check = state_it.get_last_answer(AgentType.RETRIEVER)
-            if ans_to_check is None:
-                raise AgentException(
-                    f"Cannot standardize states with missing {AgentType.RETRIEVER.value} answers"
+            ret_ans = state_it.get_last_answer(AgentType.RETRIEVER)
+            if ret_ans is None or "data_df" not in ret_ans.agent_output:
+                logger.error(
+                    f"Missing dependencies for standardization of retriever output: found_answer:{ret_ans}, output:{ret_ans.agent_output}"
                 )
-            ret_ans: Answer = ans_to_check
-            if ret_ans.agent_output["data_df"] is None:
-                raise AgentException(
-                    f"Cannot standardize states with missing {AgentType.RETRIEVER.value} DataFrame"
-                )
+                raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
             df: pd.DataFrame = ret_ans.agent_output["data_df"]
 
             # Rename
