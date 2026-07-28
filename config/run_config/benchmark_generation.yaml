@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# BENCHMARK GENERATION CONFIG
+# =============================================================================
+# The configuration used for benchmarks generation
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+global:
+  workflow: "planned_sales"
+  default_provider: "openai"
+  default_model: "gpt-5.4-nano"

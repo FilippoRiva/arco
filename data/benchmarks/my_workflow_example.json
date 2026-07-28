@@ -1,0 +1,40 @@
+[
+  {
+    "prompt": "Write a Python function to compute the nth Fibonacci number",
+    "trace": [
+      {
+        "agent_type": "CodingAgent",
+        "data": {
+          "expected_code": "def fib(n): return n if n <= 1 else fib(n-1) + fib(n-2)"
+        }
+      },
+      {
+        "agent_type": "ScoringAgent",
+        "data": {
+          "expected_score": 5
+        }
+      }
+    ],
+    "id": 0,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Write a Python function that checks if a string is a palindrome",
+    "trace": [
+      {
+        "agent_type": "CodingAgent",
+        "data": {
+          "expected_code": "def is_palindrome(s): return s == s[::-1]"
+        }
+      },
+      {
+        "agent_type": "ScoringAgent",
+        "data": {
+          "expected_score": 5
+        }
+      }
+    ],
+    "id": 1,
+    "difficulty": 1
+  }
+]

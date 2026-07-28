@@ -39,8 +39,11 @@ Return ONLY a valid JSON object. No markdown. No code fences. No backticks. No e
 
     @staticmethod
     def _format_chart_spec(config: dict) -> str:
-        lines = [f"- Chart type: {config.get('chart_type', 'bar')}"]
-        lines.append(f'- X-axis column: "{config.get("x_axis", "")}"')
+        lines = [
+            f"- Chart type: {config.get('chart_type', 'bar')}",
+            f'- X-axis column: "{config.get("x_axis", "")}"',
+            f"- Dataframe columns : {config.get('df_columns', '')}",
+        ]
         if "y_axes" in config:
             cols = "[" + ", ".join(f'"{c}"' for c in config["y_axes"]) + "]"
             lines.append(
@@ -79,6 +82,7 @@ Generate Python code to create a chart according to the specification below.
 1. Use the correct chart type (bar, line, scatter, or area)
 2. Add axis labels, title, legend (when multiple series), and grid
 3. Call plt.tight_layout() and plt.show()
+4. Make sure that, when accessing the Dataframe, the columns used are specified in the specification of dataframe columns. They may not match exactly the names provided by X-axis, Y-axis, Y-axes or group_by
 
 ## EXAMPLE
 Specification:
@@ -86,6 +90,7 @@ Specification:
 - X-axis column: "Product"
 - Y-axis column: "Sales"
 - Title: "Sales by Product"
+- Dataframe columns : ["Product", "Sales"]
 
 Code:
 import matplotlib.pyplot as plt
@@ -143,6 +148,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             "title": "Chart",
         }
         chart_config = response.extract_json() or _FALLBACK_CHART_CONFIG
+        chart_config.update({"df_columns": data_columns})
         logger.info(f"Chart config : {chart_config}")
         logprobs_chart_config = response.logprobs
 
@@ -156,7 +162,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
 
         # --- Validate by executing in a headless namespace (no display) ---
         exec_code = (
-            "import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
+            "import pandas as pd; import matplotlib.pyplot as plt; plt.switch_backend('Agg')\n"
             + code.replace("plt.show()", "plt.close('all')")
         )
         namespace: dict = {"data_df": data_df}

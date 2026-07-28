@@ -50,14 +50,7 @@
             "y_axis": "Total_Sales_Value",
             "title": "Sales Trend for November 2021"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Sold_Date\"]\ny_data = data_df[\"Total_Sales_Value\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"Sold_Date\")\nplt.ylabel(\"Total_Sales_Value\")\nplt.title(\"Sales Trend for November 2021\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Sold_Date\"]\ny_data = data_df[\"Total_Sales_Value\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"Sold_Date\")\nplt.ylabel(\"Total_Sales_Value\")\nplt.title(\"Sales Trend for November 2021\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -122,14 +115,7 @@
             "y_axis": "total_revenue",
             "title": "Monthly Revenue 2023"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue 2023\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue 2023\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {

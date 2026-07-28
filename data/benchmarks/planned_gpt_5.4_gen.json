@@ -1,0 +1,1180 @@
+[
+  {
+    "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Sold_Date AS date,\n  SUM(s.Total_Sale_Value) AS sales_value\nFROM sales s\nWHERE s.Sold_Date >= DATE '2021-11-01'\n  AND s.Sold_Date < DATE '2021-12-01'\nGROUP BY s.Sold_Date\nORDER BY s.Sold_Date;",
+          "data_str": "date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In Nov 2021, sales (sales_value) ranged from **11,030.39** (min, on 2021-11-03) to **52,004.60** (max, on 2021-11-25), totaling **499,984.43** across the available **29** daily records. The sales trend by date (x = date, y = sales_value) is:  \n2021-11-01 **12,189.59**; 2021-11-02 **12,946.21**; 2021-11-03 **11,030.39**; 2021-11-04 **15,082.07**; 2021-11-05 **22,844.58**; 2021-11-06 **17,849.04**; 2021-11-07 **13,095.02**; 2021-11-08 **12,484.55**; 2021-11-09 **11,814.85**; 2021-11-10 **13,338.80**; 2021-11-11 **18,651.92**; 2021-11-12 **20,851.53**; 2021-11-13 **18,360.20**; 2021-11-14 **13,220.84**; 2021-11-15 **12,458.49**; 2021-11-16 **12,231.53**; 2021-11-17 **13,483.63**; 2021-11-18 **15,048.10**; 2021-11-19 **21,971.93**; 2021-11-20 **18,252.07**; 2021-11-21 **13,697.58**; 2021-11-22 **12,316.97**; 2021-11-23 **16,716.98**; 2021-11-25 **52,004.60**; 2021-11-26 **28,608.55**; 2021-11-27 **21,168.69**; 2021-11-28 **15,602.53**; 2021-11-29 **14,708.54**; 2021-11-30 **17,954.65**."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "date",
+            "y_axis": "sales_value",
+            "title": "Sales Trend for November 2021 (Date vs Sales Value)"
+          },
+          "chart_code": "x_data = data_df[\"date\"]\ny_data = data_df[\"sales_value\"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, label=\"Sales Value\")\n\nplt.xlabel(\"date\")\nplt.ylabel(\"sales_value\")\nplt.title(\"Sales Trend for November 2021 (Date vs Sales Value)\")\nplt.grid(True, alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 0,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd,\n    SUM(s.Qty_Sold) AS total_units_sold\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n)\nSELECT\n  m.month,\n  m.total_revenue_usd,\n  m.total_units_sold\nFROM monthly m\nORDER BY m.month;",
+          "data_str": "month,total_revenue_usd,total_units_sold\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For 2023, total revenue and total units sold by month were: Jan $434,172.81 (33,653 units), Feb $411,762.72 (31,545), Mar $423,070.84 (32,460), Apr $384,479.68 (30,199), May $381,326.43 (31,154), Jun $364,806.74 (29,082), Jul $353,284.21 (27,932), Aug $401,061.54 (31,903), Sep $422,554.97 (31,847), Oct $454,231.06 (38,208), Nov $511,104.29 (41,043), Dec $874,263.67 (60,941). Monthly revenue generally declines through July, then rises from August onward, peaking in December ($874,263.67)."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "month",
+            "y_axis": "total_revenue_usd",
+            "title": "Monthly Revenue Trend for 2023 (Total Revenue and Units Sold)"
+          },
+          "chart_code": "x_data = data_df[\"month\"]\ny_data = data_df[\"total_revenue_usd\"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker=\"o\", linewidth=2, label=\"Total Revenue (USD)\")\n\nplt.xlabel(\"month\")\nplt.ylabel(\"total_revenue_usd\")\nplt.title(\"Monthly Revenue Trend for 2023 (Total Revenue and Units Sold)\")\nplt.legend()\nplt.grid(True, axis=\"both\", alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 1,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Return the top 5 stores by total revenue, identified by store number",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Store_Number,\n  SUM(s.Total_Sale_Value) AS total_revenue\nFROM sales s\nGROUP BY s.Store_Number\nORDER BY total_revenue DESC\nLIMIT 5;",
+          "data_str": "Store_Number,total_revenue\n2970,836341.3271910138\n3300,619660.1670180857\n1320,592832.0675794836\n1650,580443.0079528484\n1210,508393.76778540947\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "The top 5 stores by total revenue are: Store 2970 ($836,341.33), Store 3300 ($619,660.17), Store 1320 ($592,832.07), Store 1650 ($580,443.01), and Store 1210 ($508,393.77). These values are the summed `total_revenue` figures from the query result, ordered descending."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 2,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart. Then visualize a Bar chart showing total revenue per brand ordered from highest to lowest",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  p.brand AS brand,\n  SUM(s.Total_Sale_Value) AS total_revenue_usd\nFROM sales s\nJOIN products p\n  ON s.SKU_Coded = p.SKU_Coded\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY\n  p.brand\nORDER BY\n  total_revenue_usd DESC;",
+          "data_str": "brand,total_revenue_usd\nGoldenCrust,1237536.463893827\nCreamyFarm,1116963.5994906519\nCleanHome,985063.3195742369\nCoolSip,942234.7927734628\nGlowUp,682053.4300944787\nCrunchTime,452267.3291044235\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, total revenue by product brand (USD) was: GoldenCrust **1,237,536.46**, CreamyFarm **1,116,963.60**, CoolSip **942,234.79**, CleanHome **985,063.32**, GlowUp **682,053.43**, and CrunchTime **452,267.33**. Ordered from highest to lowest, the ranking is GoldenCrust \u2192 CreamyFarm \u2192 CleanHome \u2192 CoolSip \u2192 GlowUp \u2192 CrunchTime."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "brand",
+            "y_axis": "total_revenue_usd",
+            "title": "Total Revenue by Product Brand (2023) \u2014 Ordered High to Low"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"brand\"]\ny_data = data_df[\"total_revenue_usd\"]\n\nplot_df = data_df.sort_values(by=\"total_revenue_usd\", ascending=False)\n\nplt.figure(figsize=(12, 6))\nplt.bar(plot_df[\"brand\"], plot_df[\"total_revenue_usd\"])\nplt.xlabel(\"brand\")\nplt.ylabel(\"total_revenue_usd\")\nplt.title(\"Total Revenue by Product Brand (2023) \u2014 Ordered High to Low\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 3,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Compare average monthly revenue between store regions for 2022 and 2023. Then show a grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly_revenue AS (\n    SELECT\n        st.region AS region,\n        EXTRACT(YEAR FROM s.Sold_Date) AS year,\n        DATE_TRUNC('month', s.Sold_Date) AS month,\n        SUM(s.Total_Sale_Value) AS monthly_revenue\n    FROM sales s\n    JOIN stores st\n        ON s.Store_Number = st.Store_Number\n    WHERE EXTRACT(YEAR FROM s.Sold_Date) IN (2022, 2023)\n    GROUP BY\n        st.region,\n        year,\n        month\n),\navg_monthly AS (\n    SELECT\n        mr.region,\n        mr.year,\n        AVG(mr.monthly_revenue) AS avg_monthly_revenue\n    FROM monthly_revenue mr\n    GROUP BY\n        mr.region,\n        mr.year\n)\nSELECT\n    a.region,\n    a.year,\n    ROUND(a.avg_monthly_revenue, 2) AS avg_monthly_revenue\nFROM avg_monthly a\nORDER BY\n    a.region,\n    a.year;",
+          "data_str": "region,year,avg_monthly_revenue\nMidwest,2022,63132.53\nMidwest,2023,64928.65\nNortheast,2022,57536.45\nNortheast,2023,59880.43\nSouth,2022,149253.88\nSouth,2023,156721.11\nWest,2022,171382.24\nWest,2023,169813.07\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For 2022 vs 2023, average monthly revenue increased in all regions: Midwest $63,132.53 \u2192 $64,928.65, Northeast $57,536.45 \u2192 $59,880.43, South $149,253.88 \u2192 $156,721.11, and West $171,382.24 \u2192 $169,813.07 (a slight decrease in West). Overall, the highest average monthly revenue is in the West for both 2022 ($171,382.24) and 2023 ($169,813.07), while the lowest is the Northeast for both years ($57,536.45 and $59,880.43)."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "region",
+            "y_axis": "avg_monthly_revenue",
+            "group_by": "year",
+            "title": "Average Monthly Revenue by Store Region (2022 vs 2023)",
+            "df_columns": "region, year, avg_monthly_revenue"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_col = \"region\"\ny_col = \"avg_monthly_revenue\"\ngroup_col = \"year\"\n\nyears = sorted(data_df[group_col].dropna().unique())\n\nplt.figure(figsize=(12, 7))\n\nfor i, yr in enumerate(years):\n    df_year = data_df[data_df[group_col] == yr]\n    x_vals = df_year[x_col].astype(str).values\n    y_vals = df_year[y_col].values\n\n    plt.bar(x_vals, y_vals, label=str(yr), alpha=0.8)\n\nplt.xlabel(\"region\")\nplt.ylabel(\"avg_monthly_revenue\")\nplt.title(\"Average Monthly Revenue by Store Region (2022 vs 2023)\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.legend(title=group_col)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 4,
+    "difficulty": 4
+  },
+  {
+    "prompt": "Show promo vs non-promo revenue in 2023 as a bar chart. Then show a Bar chart comparing total revenue for promo and non-promo sales in 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH revenue_by_promo AS (\n  SELECT\n    CASE WHEN s.On_Promo = 1 THEN 'Promo' ELSE 'Non-Promo' END AS promo_status,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n)\nSELECT\n  r.promo_status,\n  r.total_revenue_usd\nFROM revenue_by_promo r\nORDER BY r.total_revenue_usd DESC;",
+          "data_str": "promo_status,total_revenue_usd\nNon-Promo,5316412.0739844255\nPromo,99706.86094665527\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, total revenue was **$5,316,412.07** for **Non-Promo** sales and **$99,706.86** for **Promo** sales. A bar comparison would show Non-Promo far higher than Promo, and together they sum to **$5,416,118.93** in total revenue for 2023."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "promo_status",
+            "y_axis": "total_revenue_usd",
+            "title": "Promo vs Non-Promo Revenue in 2023"
+          },
+          "chart_code": "x_data = data_df[\"promo_status\"]\ny_data = data_df[\"total_revenue_usd\"]\n\nplt.figure(figsize=(10, 6))\nplt.bar(x_data.astype(str), y_data)\nplt.xlabel(\"promo_status\")\nplt.ylabel(\"total_revenue_usd\")\nplt.title(\"Promo vs Non-Promo Revenue in 2023\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 5,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Return the top 10 product class codes by total units sold in 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Product_Class_Code AS product_class_code,\n  SUM(s.Qty_Sold) AS total_units_sold\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY s.Product_Class_Code\nORDER BY total_units_sold DESC\nLIMIT 10;",
+          "data_str": "product_class_code,total_units_sold\n22850,89229.0\n22975,60425.0\n22800,57485.0\n22875,52055.0\n24400,46218.0\n24425,38045.0\n22950,26689.0\n22925,17320.0\n22825,13646.0\n24375,11358.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, the top product class codes by total units sold were: 22850 (89,229), 22975 (60,425), 22800 (57,485), 22875 (52,055), 24400 (46,218), 24425 (38,045), 22950 (26,689), 22925 (17,320), 22825 (13,646), and 24375 (11,358). Together, these top 10 product class codes accounted for 412,470 total units sold in 2023."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 6,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Show the top 8 stores by total units sold in 2022 as a bar chart, identifying each store by its store number. The bar chart should show the top 8 stores ranked by total units sold",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Store_Number AS store_number,\n  SUM(sale.Qty_Sold) AS total_units_sold\nFROM sales sale\nJOIN stores s\n  ON sale.Store_Number = s.Store_Number\nWHERE EXTRACT(YEAR FROM sale.Sold_Date) = 2022\nGROUP BY s.Store_Number\nORDER BY total_units_sold DESC\nLIMIT 8;",
+          "data_str": "store_number,total_units_sold\n2970,23580.0\n3300,19158.0\n1650,17778.0\n1210,17158.0\n1320,17013.0\n3080,16717.0\n1100,15968.0\n1540,14517.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2022, the top 8 stores by total units sold (ranked highest to lowest) were store **2970 (23,580)**, **3300 (19,158)**, **1650 (17,778)**, **1210 (17,158)**, **1320 (17,013)**, **3080 (16,717)**, **1100 (15,968)**, and **1540 (14,517)** units. Together, these 8 stores sold **141,889** total units in 2022."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "store_number",
+            "y_axis": "total_units_sold",
+            "title": "Top 8 Stores by Total Units Sold in 2022"
+          },
+          "chart_code": "# Filter to top 8 stores by total units sold in 2022\ntop_8 = data_df.sort_values(by=\"total_units_sold\", ascending=False).head(8)\n\nx = top_8[\"store_number\"]\ny = top_8[\"total_units_sold\"]\n\nplt.figure(figsize=(10, 6))\nplt.bar(x.astype(str), y)\nplt.xlabel(\"store_number\")\nplt.ylabel(\"total_units_sold\")\nplt.title(\"Top 8 Stores by Total Units Sold in 2022\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 7,
+    "difficulty": 1
+  },
+  {
+    "prompt": "Return the top 10 sales days in 2023 with total revenue and total units sold",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Sold_Date AS sales_day,\n  SUM(s.Total_Sale_Value) AS total_revenue_usd,\n  SUM(s.Qty_Sold) AS total_units_sold\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY s.Sold_Date\nORDER BY total_revenue_usd DESC, total_units_sold DESC\nLIMIT 10;",
+          "data_str": "sales_day,total_revenue_usd,total_units_sold\n2023-12-22,62640.700010597706,4059.0\n2023-11-23,57397.28990983963,4014.0\n2023-12-23,52036.11998930387,3385.0\n2023-12-21,48561.5999789238,3275.0\n2023-12-15,47585.77996832132,3287.0\n2023-12-24,43304.69009174779,2782.0\n2023-12-20,37140.170005619526,2483.0\n2023-12-14,35778.05995428562,2406.0\n2023-12-08,35681.40986329317,2684.0\n2023-12-16,34630.769983291626,2435.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "The top 10 sales days in 2023 by total revenue (USD) and their total units sold are: 2023-12-22 ($62,640.70; 4,059 units), 2023-11-23 ($57,397.29; 4,014 units), 2023-12-23 ($52,036.12; 3,385 units), 2023-12-21 ($48,561.60; 3,275 units), and 2023-12-15 ($47,585.78; 3,287 units), followed by 2023-12-24 ($43,304.69; 2,782), 2023-12-20 ($37,140.17; 2,483), 2023-12-14 ($35,778.06; 2,406), 2023-12-08 ($35,681.41; 2,684), and 2023-12-16 ($34,630.77; 2,435). Across these 10 days, total revenue is $454,756.59 and total units sold is 30,810."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 8,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show store cities where total revenue in 2022 exceeded 200,000 as a bar chart. The visualization should be a Bar chart showing with total revenue for store cities that exceeded 200,000 in total revenue in 2022, ordered from highest to lowest",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  st.city AS store_city,\n  SUM(s.Total_Sale_Value) AS total_revenue_2022\nFROM sales s\nJOIN stores st\n  ON s.Store_Number = st.Store_Number\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2022\nGROUP BY st.city\nHAVING SUM(s.Total_Sale_Value) > 200000\nORDER BY total_revenue_2022 DESC;",
+          "data_str": "store_city,total_revenue_2022\nWashington,342948.6789786611\nMemphis,255559.7386263609\nAustin,244685.17897826433\nDallas,223011.8388030026\nLas Vegas,220189.7494387813\nSan Diego,218250.60913718678\nSan Antonio,202010.2791568637\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2022, the store cities with total revenue exceeding $200,000 (ordered highest to lowest) were Washington ($342,948.68), Memphis ($255,559.74), Austin ($244,685.18), Dallas ($223,011.84), Las Vegas ($220,189.75), San Diego ($218,250.61), and San Antonio ($202,010.28). These 7 cities are the only ones that meet the threshold in the provided results."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "store_city",
+            "y_axis": "total_revenue_2022",
+            "title": "Store Cities with Total Revenue in 2022 Exceeding 200,000 (Highest to Lowest)"
+          },
+          "chart_code": "x_data = data_df[\"store_city\"]\ny_data = data_df[\"total_revenue_2022\"]\n\nplot_df = data_df.loc[data_df[\"total_revenue_2022\"] > 200000].copy()\nplot_df = plot_df.sort_values(by=\"total_revenue_2022\", ascending=False)\n\nplt.figure(figsize=(12, 6))\nplt.bar(plot_df[\"store_city\"], plot_df[\"total_revenue_2022\"])\n\nplt.xlabel(\"store_city\")\nplt.ylabel(\"total_revenue_2022\")\nplt.title(\"Store Cities with Total Revenue in 2022 Exceeding 200,000 (Highest to Lowest)\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 9,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Show monthly revenue for product class code 22975 in 2022 as a line chart. The visualize a Line chart showing monthly revenue for product class code 22975 in 2022",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month,\n    SUM(s.Total_Sale_Value) AS monthly_revenue\n  FROM sales s\n  WHERE s.Product_Class_Code = 22975\n    AND EXTRACT(YEAR FROM s.Sold_Date) = 2022\n  GROUP BY 1\n)\nSELECT\n  m.month,\n  m.monthly_revenue\nFROM monthly m\nORDER BY m.month;",
+          "data_str": "month,monthly_revenue\n2022-01-01,109375.06021308899\n2022-02-01,104525.61982417107\n2022-03-01,107997.16974806786\n2022-04-01,93714.21990847588\n2022-05-01,82721.24996852875\n2022-06-01,74547.64975500107\n2022-07-01,73802.55976688862\n2022-08-01,89880.79973638058\n2022-09-01,100250.8295814991\n2022-10-01,91346.60965120792\n2022-11-01,85311.63969576359\n2022-12-01,122319.23971545696\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For product class code **22975** in **2022**, monthly revenue ranges from **$73,802.56** (July) to **$122,319.24** (December), with a total across the year of **$1,135,792.65** (mean **$94,649.39**). The monthly revenue values (for plotting as a line chart) are: **Jan 109,375.06; Feb 104,525.62; Mar 107,997.17; Apr 93,714.22; May 82,721.25; Jun 74,547.65; Jul 73,802.56; Aug 89,880.80; Sep 100,250.83; Oct 91,346.61; Nov 85,311.64; Dec 122,319.24**."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "month",
+            "y_axis": "monthly_revenue",
+            "title": "Monthly Revenue for Product Class Code 22975 in 2022"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\n\nx_data = data_df[\"month\"]\ny_data = data_df[\"monthly_revenue\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, y_data, marker=\"o\", linewidth=2, label=\"Monthly Revenue\")\n\nplt.xlabel(\"month\")\nplt.ylabel(\"monthly_revenue\")\nplt.title(\"Monthly Revenue for Product Class Code 22975 in 2022\")\nplt.grid(True, axis=\"both\", alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 10,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart. The grouped bar chart should show, for each month, 2 bars representing promo and non-promo sales",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    s.On_Promo AS on_promo_flag,\n    SUM(s.Total_Sale_Value) AS revenue_usd\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1, 2\n)\nSELECT\n  m.month_start,\n  COALESCE(MAX(CASE WHEN m.on_promo_flag = 1 THEN m.revenue_usd END), 0) AS revenue_on_promo_usd,\n  COALESCE(MAX(CASE WHEN m.on_promo_flag = 0 THEN m.revenue_usd END), 0) AS revenue_non_promo_usd\nFROM monthly m\nGROUP BY m.month_start\nORDER BY m.month_start;",
+          "data_str": "month_start,revenue_on_promo_usd,revenue_non_promo_usd\n2023-01-01,69.9800033569336,434102.82829636894\n2023-02-01,0.0,411762.7182441354\n2023-03-01,0.0,423070.8383087404\n2023-04-01,6153.199997186661,378326.478314111\n2023-05-01,1465.8899841308594,379860.53803884983\n2023-06-01,0.0,364806.73785564303\n2023-07-01,0.0,353284.2078382373\n2023-08-01,2469.08998298645,398592.4477458\n2023-09-01,7428.110008239746,415126.85746080615\n2023-10-01,8046.250034570694,446184.807069039\n2023-11-01,35099.910192489624,476004.3772254456\n2023-12-01,38974.430743694305,835289.2375872489\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For 2023, monthly revenue split by promo flag is: Promo vs Non\u2011promo ($): Jan 69.98 / 434,102.83; Feb 0.00 / 411,762.72; Mar 0.00 / 423,070.84; Apr 6,153.20 / 378,326.48; May 1,465.89 / 379,860.54; Jun 0.00 / 364,806.74; Jul 0.00 / 353,284.21; Aug 2,469.09 / 398,592.45; Sep 7,428.11 / 415,126.86; Oct 8,046.25 / 446,184.81; Nov 35,099.91 / 476,004.38; Dec 38,974.43 / 835,289.24. Total across 2023 is $99,706.86 promo and $5,316,412.07 non\u2011promo revenue."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "month_start",
+            "y_axes": [
+              "revenue_on_promo_usd",
+              "revenue_non_promo_usd"
+            ],
+            "title": "Monthly Revenue Split by Promo Flag (2023)",
+            "df_columns": "month_start, revenue_on_promo_usd, revenue_non_promo_usd"
+          },
+          "chart_code": "plt.figure(figsize=(12, 6))\n\nx = data_df[\"month_start\"]\ny_columns = [\"revenue_on_promo_usd\", \"revenue_non_promo_usd\"]\n\nbar_width = 0.38\nx_positions = range(len(x))\n\nfor i, col in enumerate(y_columns):\n    offset = (i - (len(y_columns) - 1) / 2) * bar_width\n    plt.bar([p + offset for p in x_positions], data_df[col].values, width=bar_width, label=col)\n\nplt.xlabel(\"month_start\")\nplt.ylabel(\"Revenue (USD)\")\nplt.title(\"Monthly Revenue Split by Promo Flag (2023)\")\n\nplt.xticks(list(x_positions), [str(v) for v in x], rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.legend()\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 11,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show total revenue by store type for 2023 as a bar chart. Then visualize a Bar chart showing total 2023 revenue by store type",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  st.store_type AS store_type,\n  SUM(s.Total_Sale_Value) AS total_revenue_2023\nFROM sales s\nJOIN stores st\n  ON s.Store_Number = st.Store_Number\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY st.store_type\nORDER BY total_revenue_2023 DESC;",
+          "data_str": "store_type,total_revenue_2023\nSupermarket,1938262.7008072566\nDiscount,1574739.1426759008\nHypermarket,1188793.4943964444\nConvenience,714323.5970514789\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, total revenue by store type is: Supermarket = **1,938,262.70**, Discount = **1,574,739.14**, Hypermarket = **1,188,793.49**, and Convenience = **714,323.60**. These values sum to **5,416,118.93** total revenue across all store types for 2023."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "store_type",
+            "y_axis": "total_revenue_2023",
+            "title": "Total Revenue by Store Type for 2023"
+          },
+          "chart_code": "x = data_df[\"store_type\"]\ny = data_df[\"total_revenue_2023\"]\n\nplt.figure(figsize=(10, 6))\nplt.bar(x, y)\nplt.xlabel(\"store_type\")\nplt.ylabel(\"total_revenue_2023\")\nplt.title(\"Total Revenue by Store Type for 2023\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 12,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Show total units sold by product category for 2023 as a bar chart. Then visualize a Bar chart showing total units sold by product category in 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  p.category AS product_category,\n  SUM(s.Qty_Sold) AS total_units_sold_2023\nFROM sales s\nJOIN products p\n  ON s.SKU_Coded = p.SKU_Coded\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY\n  p.category\nORDER BY\n  total_units_sold_2023 DESC, product_category ASC;",
+          "data_str": "product_category,total_units_sold_2023\nDairy,141284.0\nBakery,87114.0\nBeverages,71131.0\nHousehold,57576.0\nPersonal Care,38045.0\nSnacks,24817.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, total units sold by product category were: Dairy 141,284; Bakery 87,114; Beverages 71,131; Household 57,576; Personal Care 38,045; Snacks 24,817 units. The bar chart for 2023 would show these categories on the x-axis and their corresponding total units sold on the y-axis, ordered highest to lowest (Dairy to Snacks)."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "product_category",
+            "y_axis": "total_units_sold_2023",
+            "title": "Total Units Sold by Product Category in 2023"
+          },
+          "chart_code": "plt.figure(figsize=(10, 6))\nx_data = data_df[\"product_category\"]\ny_data = data_df[\"total_units_sold_2023\"]\n\nplt.bar(x_data, y_data)\nplt.xlabel(\"product_category\")\nplt.ylabel(\"total_units_sold_2023\")\nplt.title(\"Total Units Sold by Product Category in 2023\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 13,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Return the top 3 brands by realized average selling price in 2023, where average price is computed as total revenue divided by total units sold, along with total units sold per brand",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  p.brand AS brand,\n  SUM(s.Qty_Sold) AS total_units_sold,\n  SUM(s.Total_Sale_Value) / NULLIF(SUM(s.Qty_Sold), 0) AS realized_avg_selling_price_usd\nFROM sales s\nJOIN products p\n  ON s.SKU_Coded = p.SKU_Coded\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY p.brand\nORDER BY realized_avg_selling_price_usd DESC, total_units_sold DESC\nLIMIT 3;",
+          "data_str": "brand,total_units_sold,realized_avg_selling_price_usd\nCrunchTime,24817.0,18.224093528807813\nGlowUp,38045.0,17.927544489275295\nCleanHome,57576.0,17.10892246030007\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, the top 3 brands by realized average selling price (revenue \u00f7 units) were **CrunchTime** ($18.22, **24,817** units), **GlowUp** ($17.93, **38,045** units), and **CleanHome** ($17.11, **57,576** units). These are the highest realized average selling prices among the brands in the provided 2023 results."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 14,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Return the top 8 cities by total revenue in 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  st.city AS city,\n  SUM(s.Total_Sale_Value) AS total_revenue_2023\nFROM sales s\nJOIN stores st\n  ON s.Store_Number = st.Store_Number\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\nGROUP BY st.city\nORDER BY total_revenue_2023 DESC\nLIMIT 8;",
+          "data_str": "city,total_revenue_2023\nWashington,331128.8287643194\nDallas,258377.2091181241\nMemphis,249908.46882790327\nAustin,224162.18910957314\nSan Antonio,204549.9592150133\nSan Diego,191375.94902092218\nLas Vegas,188026.53955305554\nSeattle,181115.32874732092\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, the top 8 cities by total revenue were: Washington ($331,128.83), Dallas ($258,377.21), Memphis ($249,908.47), Austin ($224,162.19), San Antonio ($204,549.96), San Diego ($191,375.95), Las Vegas ($188,026.54), and Seattle ($181,115.33). These totals sum to $1,828,644.47 across the listed cities."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 15,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Show 2023 revenue by region comparing Organic and Non-Organic products as a grouped bar chart. Then visualize a Grouped bar chart comparing 2023 revenue by region for organic and non-organic products",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH sales_2023 AS (\n  SELECT\n    st.region AS region,\n    p.is_organic AS is_organic,\n    SUM(s.Total_Sale_Value) AS revenue_2023\n  FROM sales s\n  JOIN stores st\n    ON s.Store_Number = st.Store_Number\n  JOIN products p\n    ON s.SKU_Coded = p.SKU_Coded\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY\n    st.region,\n    p.is_organic\n),\npivoted AS (\n  SELECT\n    region,\n    COALESCE(SUM(CASE WHEN is_organic THEN revenue_2023 ELSE 0 END), 0) AS organic_revenue_2023,\n    COALESCE(SUM(CASE WHEN NOT is_organic THEN revenue_2023 ELSE 0 END), 0) AS non_organic_revenue_2023\n  FROM sales_2023\n  GROUP BY region\n)\nSELECT\n  p.region,\n  p.organic_revenue_2023,\n  p.non_organic_revenue_2023\nFROM pivoted p\nORDER BY (p.organic_revenue_2023 + p.non_organic_revenue_2023) DESC;",
+          "data_str": "region,organic_revenue_2023,non_organic_revenue_2023\nWest,335963.53695297986,1701793.2538632676\nSouth,320121.8269880414,1560531.4344839286\nMidwest,125498.87883657217,653644.8770294469\nNortheast,113685.45909050107,604879.6676863432\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, revenue by region for **Organic** vs **Non-Organic** products was: **West** ($335,963.54 vs $1,701,793.25), **South** ($320,121.83 vs $1,560,531.43), **Midwest** ($125,498.88 vs $653,644.88), and **Northeast** ($113,685.46 vs $604,879.67). Overall, Organic totalled **$895,269.70** and Non-Organic totalled **$4,520,849.23** across all regions."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "region",
+            "y_axes": [
+              "organic_revenue_2023",
+              "non_organic_revenue_2023"
+            ],
+            "title": "2023 Revenue by Region: Organic vs Non-Organic (Grouped Bar Chart)"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_col = \"region\"\ny_cols = [\"organic_revenue_2023\", \"non_organic_revenue_2023\"]\n\nregions = data_df[x_col].astype(str)\nx = range(len(regions))\n\nbar_width = 0.38\noffsets = [-bar_width / 2, bar_width / 2]\n\nplt.figure(figsize=(12, 6))\n\nfor i, y_col in enumerate(y_cols):\n    plt.bar([xi + offsets[i] for xi in x], data_df[y_col], width=bar_width, label=y_col.replace(\"_\", \" \").replace(\" 2023\", \" (2023)\"))\n\nplt.xlabel(\"region\")\nplt.ylabel(\"Revenue\")\nplt.title(\"2023 Revenue by Region: Organic vs Non-Organic (Grouped Bar Chart)\")\nplt.xticks(list(x), regions, rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.legend(title=\"Revenue Type\")\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 16,
+    "difficulty": 3
+  },
+  {
+    "prompt": "Compare average monthly revenue between store types for 2022 and 2023. Then visualize a Grouped bar chart comparing average monthly revenue by store type between 2022 and 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly_revenue_by_store_type AS (\n  SELECT\n    st.store_type AS store_type,\n    EXTRACT(YEAR FROM s.Sold_Date) AS year,\n    DATE_TRUNC('month', s.Sold_Date) AS month,\n    SUM(s.Total_Sale_Value) AS monthly_revenue\n  FROM sales s\n  JOIN stores st\n    ON s.Store_Number = st.Store_Number\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) IN (2022, 2023)\n  GROUP BY\n    st.store_type,\n    year,\n    month\n),\navg_monthly_revenue AS (\n  SELECT\n    store_type,\n    year,\n    AVG(monthly_revenue) AS avg_monthly_revenue\n  FROM monthly_revenue_by_store_type\n  GROUP BY store_type, year\n)\nSELECT\n  a.store_type,\n  a.year,\n  ROUND(a.avg_monthly_revenue, 2) AS avg_monthly_revenue_usd\nFROM avg_monthly_revenue a\nORDER BY\n  a.store_type,\n  a.year;",
+          "data_str": "store_type,year,avg_monthly_revenue_usd\nConvenience,2022,63658.67\nConvenience,2023,59526.97\nDiscount,2022,132061.89\nDiscount,2023,131228.26\nHypermarket,2022,101257.1\nHypermarket,2023,99066.12\nSupermarket,2022,144327.44\nSupermarket,2023,161521.89\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "Average monthly revenue (USD) by store type was: Convenience $63,658.67 (2022) vs $59,526.97 (2023); Discount $132,061.89 vs $131,228.26; Hypermarket $101,257.10 vs $99,066.12; Supermarket $144,327.44 vs $161,521.89. Overall, only Supermarket increased from 2022 to 2023, while the other three store types slightly decreased."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "year",
+            "y_axis": "avg_monthly_revenue_usd",
+            "group_by": "store_type",
+            "title": "Average Monthly Revenue by Store Type (2022 vs 2023)"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_col = \"year\"\ny_col = \"avg_monthly_revenue_usd\"\ngroup_col = \"store_type\"\n\nunique_store_types = data_df[group_col].dropna().unique()\n\nyears_sorted = sorted(data_df[x_col].dropna().unique())\nx_indices = list(range(len(years_sorted)))\n\nseries_count = len(unique_store_types)\nif series_count == 0:\n    plt.figure(figsize=(10, 6))\n    plt.text(0.5, 0.5, \"No data available\", ha=\"center\", va=\"center\")\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\nelse:\n    width = 0.8 / series_count if series_count > 0 else 0.8\n\n    plt.figure(figsize=(12, 6))\n    for i, store_type in enumerate(unique_store_types):\n        df_sub = data_df[data_df[group_col] == store_type].copy()\n        df_sub = df_sub[[x_col, y_col]].dropna()\n\n        y_by_year = (\n            df_sub.groupby(x_col)[y_col]\n            .mean()\n            .reindex(years_sorted)\n        )\n\n        plt.bar(\n            [x + i * width for x in x_indices],\n            y_by_year.values,\n            width=width,\n            label=str(store_type),\n            align=\"edge\"\n        )\n\n    plt.xlabel(\"year\")\n    plt.ylabel(\"avg_monthly_revenue_usd\")\n    plt.title(\"Average Monthly Revenue by Store Type (2022 vs 2023)\")\n    plt.xticks([x + (series_count - 1) * width / 2 for x in x_indices], years_sorted, rotation=0)\n    plt.grid(True, axis=\"y\", alpha=0.3)\n    plt.legend(title=group_col)\n    plt.tight_layout()\n    plt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 17,
+    "difficulty": 4
+  },
+  {
+    "prompt": "Show promo revenue share by product category for 2023 as a bar chart, expressing the share as a percentage of total revenue. Then show a Bar chart showing the share of revenue generated under promotion for each product category in 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH cat_totals AS (\n  SELECT\n    p.category AS product_category,\n    SUM(CASE WHEN s.On_Promo = 1 THEN s.Total_Sale_Value ELSE 0 END) AS promo_revenue,\n    SUM(s.Total_Sale_Value) AS total_revenue\n  FROM sales s\n  JOIN products p\n    ON s.SKU_Coded = p.SKU_Coded\n   AND s.Product_Class_Code = p.Product_Class_Code\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY p.category\n),\ngrand_total AS (\n  SELECT SUM(total_revenue) AS grand_total_revenue\n  FROM cat_totals\n)\nSELECT\n  ct.product_category,\n  ct.total_revenue,\n  ct.promo_revenue,\n  CASE\n    WHEN gt.grand_total_revenue = 0 THEN NULL\n    ELSE 100.0 * ct.total_revenue / gt.grand_total_revenue\n  END AS total_revenue_share_pct,\n  CASE\n    WHEN ct.total_revenue = 0 THEN NULL\n    ELSE 100.0 * ct.promo_revenue / ct.total_revenue\n  END AS promo_revenue_share_pct_of_category\nFROM cat_totals ct\nCROSS JOIN grand_total gt\nORDER BY ct.total_revenue DESC;",
+          "data_str": "product_category,total_revenue,promo_revenue,total_revenue_share_pct,promo_revenue_share_pct_of_category\nBakery,1237536.463893827,2595.569984436035,22.849137523778815,0.20973684898699832\nDairy,1116963.5994906519,55877.10012817383,20.622951838941937,5.002589176017412\nHousehold,985063.3195742369,0.0,18.187623488492903,0.0\nBeverages,942234.7927734628,0.0,17.396863032245296,0.0\nPersonal Care,682053.4300944787,12944.479936599731,12.593029035895013,1.8978689007995533\nSnacks,452267.3291044235,28289.71089744568,8.350395080646038,6.25508611322086\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For 2023, the total revenue share by product category is highest for **Bakery (22.85%)**, followed by **Dairy (20.62%)**, then **Household (18.19%)** and **Beverages (17.40%)**, with **Personal Care (12.59%)** and **Snacks (8.35%)** as the remaining categories. Promo revenue share (promo revenue as a % of each category\u2019s total revenue) is **highest in Snacks (6.26%)**, then **Dairy (5.00%)**, followed by **Personal Care (1.90%)** and **Bakery (0.21%)**, while **Household and Beverages have 0.00%** promo revenue share in 2023."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "product_category",
+            "y_axis": "promo_revenue_share_pct_of_category",
+            "title": "2023 Promo Revenue Share by Product Category ( % of Category Total Revenue )"
+          },
+          "chart_code": "x = data_df[\"product_category\"]\ny = data_df[\"promo_revenue_share_pct_of_category\"]\n\nplt.figure(figsize=(12, 6))\nplt.bar(x, y, color=\"#4C78A8\")\n\nplt.xlabel(\"product_category\")\nplt.ylabel(\"promo_revenue_share_pct_of_category\")\nplt.title(\"2023 Promo Revenue Share by Product Category ( % of Category Total Revenue )\")\nplt.xticks(rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 18,
+    "difficulty": 4
+  },
+  {
+    "prompt": "Return the top 10 region-category combinations by year-over-year revenue growth from 2022 to 2023, showing revenue for both years and the growth expressed as a percentage rounded to 2 decimal places",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH revenue_by_year AS (\n  SELECT\n    st.region AS region,\n    p.category AS category,\n    EXTRACT(YEAR FROM s.Sold_Date) AS year,\n    SUM(s.Total_Sale_Value) AS revenue_usd\n  FROM sales s\n  JOIN stores st\n    ON s.Store_Number = st.Store_Number\n  JOIN products p\n    ON s.SKU_Coded = p.SKU_Coded\n   AND s.Product_Class_Code = p.Product_Class_Code\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) IN (2022, 2023)\n  GROUP BY\n    st.region,\n    p.category,\n    year\n),\npivoted AS (\n  SELECT\n    rby.region,\n    rby.category,\n    MAX(CASE WHEN rby.year = 2022 THEN rby.revenue_usd END) AS revenue_2022_usd,\n    MAX(CASE WHEN rby.year = 2023 THEN rby.revenue_usd END) AS revenue_2023_usd\n  FROM revenue_by_year rby\n  GROUP BY\n    rby.region,\n    rby.category\n),\nranked AS (\n  SELECT\n    pv.region,\n    pv.category,\n    pv.revenue_2022_usd,\n    pv.revenue_2023_usd,\n    CASE\n      WHEN pv.revenue_2022_usd IS NULL OR pv.revenue_2022_usd = 0 THEN NULL\n      ELSE ((pv.revenue_2023_usd - pv.revenue_2022_usd) / pv.revenue_2022_usd) * 100\n    END AS yoy_growth_pct\n  FROM pivoted pv\n)\nSELECT\n  rk.region,\n  rk.category,\n  rk.revenue_2022_usd AS revenue_2022_usd,\n  rk.revenue_2023_usd AS revenue_2023_usd,\n  ROUND(rk.yoy_growth_pct, 2) AS yoy_growth_pct\nFROM ranked rk\nWHERE rk.yoy_growth_pct IS NOT NULL\nORDER BY rk.yoy_growth_pct DESC\nLIMIT 10;",
+          "data_str": "region,category,revenue_2022_usd,revenue_2023_usd,yoy_growth_pct\nMidwest,Dairy,109924.96851456165,177962.0884681344,61.89\nNortheast,Dairy,97567.3987686038,148380.8685001433,52.08\nWest,Dairy,302663.60630849004,418924.0961240232,38.41\nSouth,Dairy,270941.96667703986,371696.54639835097,37.19\nNortheast,Beverages,113136.88873195648,132240.00911843777,16.88\nSouth,Personal Care,240317.9595961515,264557.94004348293,10.09\nSouth,Beverages,314634.1066733599,322570.30745875835,2.52\nNortheast,Bakery,165082.50957989693,167660.3093265295,1.56\nWest,Beverages,365936.71627283096,368724.48724291474,0.76\nMidwest,Personal Care,97222.04984799959,97802.38999117352,0.6\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "The top 10 region\u2013category combinations by 2022\u21922023 YoY revenue growth (growth rounded to 2 decimals) are: Midwest\u2013Dairy (109,924.97\u2192177,962.09, **+61.89%**), Northeast\u2013Dairy (97,567.40\u2192148,380.87, **+52.08%**), West\u2013Dairy (302,663.61\u2192418,924.10, **+38.41%**), South\u2013Dairy (270,941.97\u2192371,696.55, **+37.19%**), Northeast\u2013Beverages (113,136.89\u2192132,240.01, **+16.88%**), South\u2013Personal Care (240,317.96\u2192264,557.94, **+10.09%**), South\u2013Beverages (314,634.11\u2192322,570.31, **+2.52%**), Northeast\u2013Bakery (165,082.51\u2192167,660.31, **+1.56%**), West\u2013Beverages (365,936.72\u2192368,724.49, **+0.76%**), and Midwest\u2013Personal Care (97,222.05\u219297,802.39, **+0.60%**)."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 19,
+    "difficulty": 4
+  }
+]

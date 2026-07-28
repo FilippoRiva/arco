@@ -1,11 +1,6 @@
-from typing import TYPE_CHECKING
-
-from arco.core import Evaluation, Evaluator, State
-
-if TYPE_CHECKING:
-    from arco.core import Answer
-
 import logging
+
+from arco.core import Answer, Evaluation, Evaluator, State
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +24,11 @@ class PlannerEvaluator(Evaluator):
 
         answer.gt_evaluation = Evaluation(score=score)
         logger.debug(f"Evaluation successful : score={score}")
+
+    def extract_gt_from_answer(self, answer: Answer) -> dict:
+        choice = answer.agent_output.get("agent_choice", "")
+        plan = answer.agent_output.get("plan", [])
+        return {"choice": choice.lower(), "plan": plan}
 
 
 __all__ = ["PlannerEvaluator"]

@@ -170,5 +170,10 @@ class AnalyzerEvaluator(Evaluator):
         answer.gt_evaluation = Evaluation(score=score)
         logger.debug(f"Evaluation successful : score={score}")
 
+    def extract_gt_from_answer(self, answer: Answer) -> dict:
+        if "analysis" in answer.agent_output:
+            return {"analysis": answer.agent_output["analysis"]}
+        return {}
+
 
 __all__ = ["AnalyzerEvaluator"]
