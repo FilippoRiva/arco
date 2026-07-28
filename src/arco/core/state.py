@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import logging
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,8 @@ from .agent_type import AgentType
 from .answer import Answer
 from .config import AgentConfig
 from .profiling_data import ProfilingData
+
+logger = logging.getLogger(__name__)
 
 
 # Immutable dataclass representing the state
@@ -137,6 +140,7 @@ class State:
         return State(**dictionary)
 
     def save(self, save_dir: Path):
+        logger.info(f"Saving state to {save_dir}")
         save_dir.mkdir(parents=True, exist_ok=True)
         save_file = save_dir / f"{self.run_id}.json"
         with open(save_file, "w") as f:

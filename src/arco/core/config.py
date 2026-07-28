@@ -5,6 +5,7 @@ controlling agent execution at the step level.
 """
 
 import dataclasses
+import logging
 import random
 from dataclasses import dataclass, field, fields, replace
 from typing import TYPE_CHECKING, Any, Literal
@@ -15,6 +16,8 @@ from .agent_config import AgentConfig
 
 if TYPE_CHECKING:
     from . import AgentType
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_readable_id():
@@ -118,6 +121,7 @@ class Config:
 
     def hydrate_agent_configs(self, agent_list: list[AgentType] | None = None):
         """Populate the agent_configs when the agent types are known"""
+        logger.info(f"Hydrating config for : {[agent.value for agent in agent_list]!s}")
         from .agent_type import AgentType
 
         self.agent_configs.clear()
@@ -150,6 +154,7 @@ class Config:
             run_params includes keys: prompt,run_id, save_dir, save_results,
             reuse_from and enable_codecarbon.
         """
+        logger.info(f"Loading configs from {yaml_path}")
         with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 

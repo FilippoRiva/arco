@@ -121,6 +121,7 @@ class Workflow(ABC):
 
         final_result = current_state
         if not final_result:
+            logger.error("No final result has been retrieved from the graph stream.")
             yield {
                 "event": "error",
                 "message": "The Graph was not able to produce a result",
@@ -130,6 +131,7 @@ class Workflow(ABC):
             final_result.save(Path(self.config.save_dir) / "storage")
 
         yield {"event": "completed", "state": final_result}
+        logger.info("Workflow completed successfully")
         return final_result
 
     @abstractmethod

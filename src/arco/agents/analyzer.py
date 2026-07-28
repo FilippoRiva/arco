@@ -83,9 +83,8 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             prompt=state.prompt,
             sql_query=last_retriever_answer.agent_output["sql_query"],
         )
-        logger.debug(f"invoking llm with prompt : {formatted_prompt}")
         result = llm.invoke(formatted_prompt)
-        logger.debug(
+        logger.info(
             f"Analysis result (logprobs : {len(result.logprobs) > 0}): {result.text}"
         )
         return self.answer(

@@ -1,9 +1,12 @@
+import logging
 from io import StringIO
 
 import pandas as pd
 
 from arco.core import AgentException, AgentType, Answer, Evaluation, Evaluator, State
 from arco.data import normalize_dataframe_values
+
+logger = logging.getLogger(__name__)
 
 
 def _compare_dataframes_iou(
@@ -193,6 +196,7 @@ class RetrieverEvaluator(Evaluator):
                     parts.append(f"Extra cols: {extra}.")
 
         answer.gt_evaluation = Evaluation(score=score)
+        logger.debug(f"Evaluation successful : score={score}")
         return
 
 

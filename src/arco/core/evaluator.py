@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -7,6 +8,8 @@ from .profiling_data import ProfilingData
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from . import AgentConfig, AgentType, Answer, State
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,8 @@ class Evaluator(ABC):
         if len(results) == 1:
             return results, results[0]
 
+        logger.debug("Evaluating best n results")
+
         # executes _batch_eval, if that fails it runs _eval
         batch_eval_success = self._batch_eval(results)
         if not batch_eval_success:
@@ -44,6 +49,9 @@ class Evaluator(ABC):
     def evaluate_ground_truth(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
     ):
+        logger.info(
+            f"Evaluating ground truth data for {answer.agent_id} with this data : {gt_data}"
+        )
         """Run ground-truth evaluation for tracking/logging only."""
         self._gt_eval(
             answer=answer,

@@ -10,6 +10,10 @@ from arco.core.llm_tools import (
 if TYPE_CHECKING:
     from arco.core import Answer, State
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 _NO_GT_SCHEMA: dict[str, dict[str, Any]] = {
     "data_suitability": {"score": 1, "reasoning": "Missing"},
     "axis_mapping": {"score": 1, "reasoning": "Missing", "columns_exist": False},
@@ -268,11 +272,12 @@ class VisualizerEvaluator(Evaluator):
         response: LLMAnswer = llm.invoke(formatted_prompt)
 
         # Parse JSON response
-        evaluation_dict = fill_json_schema(response.extract_json, _GT_SCHEMA)
+        evaluation_dict = fill_json_schema(response.extract_json(), _GT_SCHEMA)
 
         # Compute overall score
         overall_score = compute_weighted_score(evaluation_dict, _GT_WEIGHTS)
         answer.gt_evaluation = Evaluation(score=overall_score)
+        logger.debug(f"Evaluation successful : score={overall_score}")
         return
 
 

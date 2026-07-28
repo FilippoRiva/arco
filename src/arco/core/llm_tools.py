@@ -107,7 +107,9 @@ class LLM:
         if self.cot_enabled:
             answer = self._cot_invoke(prompt, self.execution_error)
         else:
+            logger.debug(f"Invoking LLM with prompt : {prompt}")
             answer = LLMAnswer(self._chat_model.invoke(prompt))
+        logger.debug(f"Answer text : {answer.text}")
         self.last_answer = answer
         return answer
 
@@ -121,7 +123,9 @@ class LLM:
             suffix = self._REFINEMENT_SUFFIX.format(
                 previous_response=self._previous_response,
             )
-        return LLMAnswer(self._chat_model.invoke(prompt + suffix))
+        prompt = prompt + suffix
+        logger.debug(f"Invoking CoT-LLM with prompt : {prompt}")
+        return LLMAnswer(self._chat_model.invoke(prompt))
 
 
 def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> LLM:

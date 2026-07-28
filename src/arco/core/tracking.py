@@ -12,6 +12,7 @@ from codecarbon import EmissionsTracker
 from langchain_core.callbacks import BaseCallbackHandler
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
+logger = logging.getLogger(__name__)
 
 
 def initialize_tracking(config: Config):
@@ -21,6 +22,7 @@ def initialize_tracking(config: Config):
     os.makedirs(codecarbon_dir, exist_ok=True)
     # LLM Emission Tracking
     LLMCallAccumulator.enable(codecarbon_dir)
+    logger.info("Initialized codecarbon tracking")
 
 
 class LLMCallAccumulator(BaseCallbackHandler):

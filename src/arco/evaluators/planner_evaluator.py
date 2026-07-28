@@ -5,6 +5,10 @@ from arco.core import Evaluation, Evaluator, State
 if TYPE_CHECKING:
     from arco.core import Answer
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class PlannerEvaluator(Evaluator):
     def _batch_eval(self, states: list[State]) -> bool:
@@ -19,9 +23,12 @@ class PlannerEvaluator(Evaluator):
         gen_choice = answer.agent_output.get("agent_choice", "").lower()
         expected_choice = gt_data.get("choice", "").lower()
         if gen_choice == expected_choice:
-            answer.gt_evaluation = Evaluation(score=1)
+            score = 1
         else:
-            answer.gt_evaluation = Evaluation(score=0)
+            score = 0
+
+        answer.gt_evaluation = Evaluation(score=score)
+        logger.debug(f"Evaluation successful : score={score}")
 
 
 __all__ = ["PlannerEvaluator"]

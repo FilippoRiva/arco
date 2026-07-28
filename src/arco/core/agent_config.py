@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -9,6 +10,8 @@ from .exceptions import ConfigException
 
 if TYPE_CHECKING:
     from .config import Config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -66,6 +69,7 @@ class AgentConfig:
     def from_yaml(
         cls, yaml_path: str, agent_name: str, inherit_globals_from: Config | None = None
     ) -> AgentConfig:
+        logger.debug(f"Loading config for {agent_name} from {yaml_path}")
         with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 

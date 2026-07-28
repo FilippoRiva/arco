@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
@@ -5,6 +6,8 @@ from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
 )
+
+logger = logging.getLogger(__name__)
 
 _NO_GT_SCHEMA: dict[str, dict[str, Any]] = {
     "correctness": {"score": 0, "reasoning": "Missing", "issues": []},
@@ -42,7 +45,7 @@ def _normalize_flat_judgement(parsed: dict[str, Any] | None) -> dict[str, Any]:
         elif isinstance(value, (int, float)):
             result[key] = {"score": value, "reasoning": parsed.get("reasoning", "")}
     if "reasoning" in parsed:
-        for key, value in result.items:
+        for key, value in result.items():
             if "reasoning" not in value:
                 value["reasoning"] = parsed["reasoning"]
     return result
@@ -165,6 +168,7 @@ class AnalyzerEvaluator(Evaluator):
         )
         score = compute_weighted_score(evaluation, _GT_WEIGHTS)
         answer.gt_evaluation = Evaluation(score=score)
+        logger.debug(f"Evaluation successful : score={score}")
 
 
 __all__ = ["AnalyzerEvaluator"]

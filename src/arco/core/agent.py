@@ -1,5 +1,6 @@
 import difflib
 import inspect
+import logging
 import math
 import sys
 import time
@@ -18,6 +19,8 @@ if TYPE_CHECKING:
     from .config import AgentConfig
     from .llm_tools import LLM
     from .tracking import LLMCallAccumulator
+
+logger = logging.getLogger(__name__)
 
 
 class Agent(ABC):
@@ -199,6 +202,7 @@ class Agent(ABC):
         self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator
     ) -> list[State]:
         # Instantiate LLM
+        logger.debug("Starting greedy execution")
         llm = llm_tools.get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
         # Run inference
@@ -213,6 +217,7 @@ class Agent(ABC):
         self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator
     ) -> list[State]:
         # Initialize results and their scores
+        logger.debug("Starting best-of-n execution")
         results = []
 
         if config.provider is None or config.model is None:
@@ -238,6 +243,8 @@ class Agent(ABC):
             if config.cot_n > 1:
                 result: State = self._apply_cot_iteration(state, llm, result, config)
             results.append(result)
+
+        logger.debug(f"Best-of-n execution completed with {len(results)} candidates")
         return results
 
     def _apply_cot_iteration(self, state: State, llm: LLM, max_iter: int) -> State:

@@ -83,9 +83,7 @@ No explanations. No markdown. Just the JSON array.
         if last_planner is None:
             # --- FIRST INVOCATION: generate full plan from LLM ---
             formatted = self._PLANNER_PROMPT.format(prompt=state.prompt)
-            logger.debug(f"Invoking with prompt: {formatted}")
             response = llm.invoke(formatted)
-            logger.debug(f"LLM answer : {response.text}")
             plan = response.extract_json_list()
             if not plan:
                 plan = ["retriever", "analyzer"]
@@ -95,7 +93,7 @@ No explanations. No markdown. Just the JSON array.
             choice = plan[0].capitalize()
             remaining = plan[1:]
 
-            logger.debug(f"Choice: {choice}")
+            logger.info(f"Choice: {choice}")
 
             return self.answer(
                 state,
@@ -132,6 +130,7 @@ No explanations. No markdown. Just the JSON array.
             remaining = []
 
         if not remaining:
+            logger.info("Workflow complete")
             return self.answer(
                 state,
                 message="Workflow complete",
@@ -139,7 +138,7 @@ No explanations. No markdown. Just the JSON array.
             )
 
         choice = remaining[0].capitalize()
-        logger.debug(f"Choice from previous plan: {choice}")
+        logger.info(f"Choice from previous plan: {choice}")
         return self.answer(
             state,
             message=f"Next: {choice}",

@@ -127,7 +127,6 @@ No explanations. Just the agent's name."""
             agents_used=state.get_agents_used(),
             error_is_present=error_is_present,
         )
-        logger.debug(f"invoking the llm with prompt : {decision_prompt}")
 
         # try:
         orchestrator_response = llm.invoke(decision_prompt)
@@ -159,9 +158,7 @@ No explanations. Just the agent's name."""
 
         matched_agent = matched_agent.capitalize()
 
-        logger.debug(
-            f"llm_answer : {orchestrator_response.text} | resulting_agent_choice : {matched_agent}"
-        )
+        logger.info(f"Agent choice : {matched_agent}")
         return self.answer(
             state,
             message=f"The chosen agent is {matched_agent}",

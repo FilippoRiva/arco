@@ -1,9 +1,12 @@
 import json
+import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
 
 from arco.core import AgentType
 from arco.core.profiling_data import ProfilingData
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -21,12 +24,14 @@ class BenchmarkDataset:
 
     @classmethod
     def from_json(cls, json_path) -> BenchmarkDataset:
+        logger.info(f"Loading benchmark dataset from {json_path}")
         with open(json_path) as f:
             json_data = json.load(f)
 
         entries = []
         for entry in json_data:
             entries.append(BenchmarkEntry.from_dict(entry_dict=entry))
+        logger.info(f"Loaded {len(entries)} benchmark entries")
 
         return cls(entries=entries)
 

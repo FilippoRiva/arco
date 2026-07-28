@@ -19,13 +19,14 @@ Usage example:
     ])
 """
 
-from __future__ import annotations
-
+import logging
 import os
 from dataclasses import dataclass, field
 from typing import Any
 
 from arco.data.exceptions import SchemaParsingException
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -188,9 +189,11 @@ class DatabaseSchema:
 
         import yaml
 
+        logger.debug(f"Logging DatabaseSchema from {data_dir_path}")
         data_dir = os.path.abspath(data_dir_path)
 
         schema_files = sorted(glob(os.path.join(data_dir, "*_schema.yaml")))
+        logger.debug(f"Schema files found: {schema_files}")
         tables = []
         for table_path in schema_files:
             with open(table_path, "r") as tf:
@@ -222,6 +225,7 @@ class DatabaseSchema:
                 )
             )
 
+        logger.debug(f"Tables loaded : {len(tables)}")
         if tables:
             schema = cls(tables=tables, compact_threshold=5)
             return schema

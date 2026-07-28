@@ -182,11 +182,9 @@ name used by any candidate. Prefer lowercase_with_underscores.
             prompt=state.prompt,
             schema_context=schema_context,
         )
-        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
         response = llm.invoke(formatted_prompt)
-        logger.debug(f"Response : {response.text}")
         sql_query = response.extract_sql()
-        logger.debug(f"Query : {sql_query}")
+        logger.info(f"Query : {sql_query}")
         logprobs_gen_sql = response.logprobs
 
         # Execute the query and answer

@@ -231,7 +231,6 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(
             prompt=state.prompt, data=data_text
         )
-        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
         response = llm.invoke(formatted_prompt)
 
         _FALLBACK_CHART_CONFIG = {
@@ -241,16 +240,14 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             "title": "Chart",
         }
         chart_config = response.extract_json() or _FALLBACK_CHART_CONFIG
-        logger.debug(f"Chart config : {chart_config}")
+        logger.info(f"Chart config : {chart_config}")
         logprobs_chart_config = response.logprobs
 
         # Generate chart code
         formatted_prompt = Visualizer._CREATE_CHART_PROMPT.format(config=chart_config)
-        logger.debug(f"Invoking LLM with prompt : {formatted_prompt}")
         response = llm.invoke(formatted_prompt)
-        logger.debug(f"LLM response : {response.text}")
         code = response.extract_python()
-        logger.debug(f"Code : {code}")
+        logger.info(f"Code : {code}")
         logprobs_code = response.logprobs
 
         # --- Validate by executing in a headless namespace (no display) ---

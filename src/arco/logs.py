@@ -9,7 +9,7 @@ def initialize(run_id: str, log_dir: str | Path = "./logs", level: str | None = 
 
     Sets up a file handler that captures DEBUG+ for ``arco.*`` loggers
     and WARNING+ for all third-party libraries, keeping log files focused
-    on your application's output.
+    on the application output.
 
     Args:
         run_id: Unique identifier for this run (used as the log filename).
@@ -38,7 +38,7 @@ def initialize(run_id: str, log_dir: str | Path = "./logs", level: str | None = 
     handler.setLevel(logging.DEBUG)
     logging.getLogger().addHandler(handler)
 
-    # --- Your code: use the user-requested level ---
+    # --- Use the user-requested level ---
     level_value = getattr(logging, level.upper(), logging.INFO)
     logging.getLogger("arco").setLevel(level_value)
 
