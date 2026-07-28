@@ -61,3 +61,7 @@ dev = [
     "scipy",
     "pre-commit>=4.6.1",
 ]
+analysis = [
+    "plotly>=6.0.1",
+    "kaleido",
+]

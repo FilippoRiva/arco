@@ -83,6 +83,7 @@ def benchmark_from_config(
     aggregated_df.to_csv(benchmark_save_folder / "summary.csv", index=False)
     bench_metadata = {
         "benchmark_run": config_path,
+        "dataset_path": dataset_path,
         "total_runtime": time.time() - start_time,
     }
     with open(benchmark_save_folder / "bench_metadata.json", "w") as f:

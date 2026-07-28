@@ -124,7 +124,7 @@ class State:
         # Convert dicts back to AgentConfigs, Answers and Dict[AgentType,Answer]
         agent_configs = {}
         answers = []
-        for agent_type in AgentType:
+        for agent_type in AgentType.all():
             if agent_type.value in state.agent_configs:
                 agent_configs[agent_type] = AgentConfig.from_dict(
                     dictionary["agent_configs"][agent_type.value]

@@ -15,7 +15,7 @@ warnings.filterwarnings("ignore", category=LangChainPendingDeprecationWarning)
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    from arco.cli.commands import bench, generate_benchmark, run
+    from arco.cli.commands import analyze_benchmark, bench, generate_benchmark, run
     from arco.cli.console import console
 
     ## Parsing with argparse
@@ -29,12 +29,14 @@ def main():
         "run": run.register(subparsers),
         "benchmark": bench.register(subparsers),
         "generate-benchmark": generate_benchmark.register(subparsers),
+        "analyze-benchmark": analyze_benchmark.register(subparsers),
     }
 
     handlers = {
         "run": run.handle,
         "benchmark": bench.handle,
         "generate-benchmark": generate_benchmark.handle,
+        "analyze-benchmark": analyze_benchmark.handle,
     }
 
     # Parse
