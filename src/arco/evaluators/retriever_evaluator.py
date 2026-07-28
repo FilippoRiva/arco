@@ -168,7 +168,7 @@ class RetrieverEvaluator(Evaluator):
                 f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}"
             )
 
-        if answer.agent_output["data_df"] is None:
+        if "data_df" not in answer.agent_output:
             answer.gt_evaluation = Evaluation(score=0.0)
             return
 

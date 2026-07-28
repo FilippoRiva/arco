@@ -8,7 +8,15 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from langgraph.graph.state import CompiledStateGraph
 
-from arco.core import Agent, AgentType, Config, State, llm_tools, tracking
+from arco.core import (
+    Agent,
+    AgentException,
+    AgentType,
+    Config,
+    State,
+    llm_tools,
+    tracking,
+)
 from arco.core.graph import Graph
 
 if TYPE_CHECKING:
@@ -94,30 +102,33 @@ class Workflow(ABC):
 
         current_state = None
 
-        for chunk in self.graph.stream(
-            input_state,
-            config=graph_config,
-            stream_mode=["tasks", "updates", "messages"],
-        ):
-            stream_type, data = chunk
-            if stream_type == "tasks" and "input" in data:
-                yield {"event": "node_started", "node": data["name"]}
-                logger.debug("node_started_event: " + str(data))
-            elif stream_type == "updates":
-                node_name = next(iter(data.keys()))
-                current_state = State(**data[node_name])
-                yield {
-                    "event": "node_finished",
-                    "node": node_name,
-                    "state": current_state,
-                }
-            elif stream_type == "messages":
-                message_chunk, metadata = data
-                yield {
-                    "event": "token",
-                    "node": metadata.get("langgraph_node"),
-                    "content": message_chunk.content,
-                }
+        try:
+            for chunk in self.graph.stream(
+                input_state,
+                config=graph_config,
+                stream_mode=["tasks", "updates", "messages"],
+            ):
+                stream_type, data = chunk
+                if stream_type == "tasks" and "input" in data:
+                    yield {"event": "node_started", "node": data["name"]}
+                    logger.debug("node_started_event: " + str(data))
+                elif stream_type == "updates":
+                    node_name = next(iter(data.keys()))
+                    current_state = State(**data[node_name])
+                    yield {
+                        "event": "node_finished",
+                        "node": node_name,
+                        "state": current_state,
+                    }
+                elif stream_type == "messages":
+                    message_chunk, metadata = data
+                    yield {
+                        "event": "token",
+                        "node": metadata.get("langgraph_node"),
+                        "content": message_chunk.content,
+                    }
+        except AgentException as e:
+            yield {"event": "error", "message": str(e)}
 
         final_result = current_state
         if not final_result:

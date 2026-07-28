@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=./schema.json
+global:
+  workflow: "my_workflow"
+  enable_budget_controller: false
+  default_provider: openai
+  default_model: gpt-4o-mini
+  default_provider_judge: openai
+  default_model_judge: gpt-4o-mini
+  enable_codecarbon: false
+
+defaults:
+  CodingAgent:
+    n: 1
+    max_tokens: 1000
+  ScoringAgent:
+    n: 1
+    max_tokens: 1000
+
+runs:
+  - name: Baseline
+    description: Single run with default parameters

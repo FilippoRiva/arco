@@ -49,9 +49,9 @@ _NO_GT_WEIGHTS: dict[str, float] = {
 }
 
 _GT_WEIGHTS: dict[str, float] = {
-    "axis_correctness": 0.40,
-    "chart_type": 0.30,
-    "functional_equivalence": 0.20,
+    "axis_correctness": 0.20,
+    "chart_type": 0.15,
+    "functional_equivalence": 0.55,
     "explicit_requirements": 0.10,
 }
 
@@ -59,124 +59,123 @@ _GT_WEIGHTS: dict[str, float] = {
 class VisualizerEvaluator(Evaluator):
     JUDGE_PROMPT = """You are an expert data visualization evaluator. Assess the quality of a generated visualization based on the data and the user's goal. There is NO reference visualization — evaluate standalone quality.
 
-    ## VISUALIZATION GOAL
-    {visualization_goal}
+## USER PROMPT
+{prompt}
 
-    ## AVAILABLE DATA
-    Columns: {data_columns}
-    Sample rows:
-    {data_sample}
+## AVAILABLE DATA
+Columns: {data_columns}
+Sample rows:
+{data_sample}
 
-    ## GENERATED OUTPUT
-    Chart Configuration:
-    {gen_config}
+## GENERATED OUTPUT
+Chart Configuration:
+{gen_config}
 
-    Chart Code:
-    ```python
-    {gen_code}
-    ```
+Chart Code:
+```python
+{gen_code}
+```
 
-    ## EVALUATION CRITERIA
+## EVALUATION CRITERIA
 
-    Rate each criterion on a scale of 1-5:
+Rate each criterion on a scale of 1-5:
 
-    ### 1. DATA SUITABILITY
-    Is the chart type appropriate for the data structure?
-    - Bar/column for categorical comparisons, line for time-series trends, scatter for correlations, area for cumulative values
-    - Does the data have enough points/categories for this chart type?
-    [1=Wrong chart type for data, 3=Acceptable, 5=Ideal choice]
+### 1. DATA SUITABILITY
+Is the chart type appropriate for the data structure?
+- Consider the data: categorical → bar/column, time-series → line, correlation → scatter, cumulative → area
+- A chart type that *works* for the data should score well even if it's not the absolute textbook choice
+[1=Wrong chart type for data, 3=Acceptable/works fine, 5=Excellent choice]
 
-    ### 2. AXIS MAPPING
-    Are the X and Y axes using appropriate columns from the data?
-    - The config may have 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series where series are filtered by a discriminator column). All are valid.
-    - Do the column names in the config actually exist in the data? For 'y_axes', each listed column must exist. For 'y_axis'+'group_by', both y_axis and group_by must exist as actual data columns.
-    - Are the axes semantically correct (e.g., time on X, measure on Y)?
-    - For comparison goals (A vs B for different years/categories): a single y_axis with group_by pointing to the discriminator column is correct; y_axes with columns that DON'T exist in data should score low.
-    [1=Wrong/missing columns, 3=Acceptable mapping or missing one series, 5=Perfect mapping with all required series]
+### 2. AXIS MAPPING
+Are the X and Y axes using appropriate columns from the data?
+- The config may have 'y_axis' (single column), 'y_axes' (list), or 'y_axis'+'group_by' — all are valid approaches
+- Accept reasonable column-name variations (e.g., 'date' vs 'sold_date', 'val' vs 'total_value') — exact string match is not required
+- Are the axes semantically correct (e.g., time on X, measure on Y)?
+[1=Wrong/missing columns, 3=Acceptable mapping with minor name differences or missing a series, 5=Perfect mapping with all required series]
 
-    ### 3. CODE QUALITY
-    Will the matplotlib code execute correctly and produce a readable chart?
-    - Syntactically correct Python/matplotlib
-    - Proper data references, labels, and formatting
-    - Would plt.show() produce a clean output?
-    [1=Would fail/unreadable, 3=Minor issues, 5=Clean and correct]
+### 3. CODE QUALITY
+Will the matplotlib code execute correctly and produce a readable chart?
+- Syntactically correct Python/matplotlib
+- Proper data references, labels, and formatting
+- Would plt.show() produce a clean output?
+[1=Would fail/unreadable, 3=Minor issues, 5=Clean and correct]
 
-    ### 4. GOAL ALIGNMENT
-    Does the visualization effectively address the user's goal?
-    - Does it show the right information to answer the user's question?
-    - Is the title/labeling informative?
-    [1=Misses the goal, 3=Partially addresses it, 5=Fully addresses the goal]
+### 4. GOAL ALIGNMENT
+Does the visualization effectively address the user's goal?
+- Does it show the right information to answer the user's question?
+- Is the title/labeling informative?
+[1=Misses the goal, 3=Partially addresses it, 5=Fully addresses the goal]
 
-    ## OUTPUT FORMAT
-    Return ONLY valid JSON:
-    {{
-      "data_suitability": {{"score": <1-5>, "reasoning": "<brief>"}},
-      "axis_mapping": {{"score": <1-5>, "reasoning": "<brief>", "columns_exist": <true/false>}},
-      "code_quality": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
-      "goal_alignment": {{"score": <1-5>, "reasoning": "<brief>"}}
-    }}"""
+## OUTPUT FORMAT
+Return ONLY valid JSON:
+{{
+  "data_suitability": {{"score": <1-5>, "reasoning": "<brief>"}},
+  "axis_mapping": {{"score": <1-5>, "reasoning": "<brief>", "columns_exist": <true/false>}},
+  "code_quality": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
+  "goal_alignment": {{"score": <1-5>, "reasoning": "<brief>"}}
+}}"""
 
     GT_JUDGE_PROMPT = """You are an expert data visualization evaluator. Your task is to assess whether a generated visualization achieves the same analytical purpose as a reference visualization.
 
-    ## REFERENCE (GROUND TRUTH)
-    Chart Configuration:
-    {gt_config}
+## REFERENCE (GROUND TRUTH)
+Chart Configuration:
+{gt_config}
 
-    Chart Code:
-    ```python
-    {gt_code}
-    ```
+Chart Code:
+```python
+{gt_code}
+```
 
-    ## GENERATED OUTPUT
-    Chart Configuration:
-    {gen_config}
+## GENERATED OUTPUT
+Chart Configuration:
+{gen_config}
 
-    Chart Code:
-    ```python
-    {gen_code}
-    ```
+Chart Code:
+```python
+{gen_code}
+```
 
-    ## EXPLICIT USER REQUIREMENTS
-    {explicit_requirements}
+## EXPLICIT USER REQUIREMENTS
+{explicit_requirements}
 
-    ## EVALUATION CRITERIA
+## EVALUATION CRITERIA
 
-    Rate each criterion on a scale of 1-5:
+Rate each criterion on a scale of 1-5:
 
-    ### 1. AXIS CORRECTNESS
-    Do X and Y axes use the SAME data columns as the reference?
-    - Column names must match exactly (case-insensitive)
-    - Axes cannot be swapped (x must be x, y must be y)
-    - Configs may use 'y_axis' (single column), 'y_axes' (list of columns for wide-format multi-series), or 'y_axis'+'group_by' (long-format multi-series). These are all valid multi-series approaches. If the reference uses 'group_by' and the generated uses 'y_axes' (or vice versa), focus on whether the SAME columns are ultimately visualized — not on the exact key name.
-    [1=Wrong columns, 3=Partial match, 5=Exact match]
+### 1. AXIS CORRECTNESS
+Do the X and Y axes convey the same information as the reference?
+- Column names need not match exactly — focus on whether the *same data columns* are being visualised (e.g., 'date' vs 'sold_date' is fine)
+- Swapped axes are acceptable if they produce a readable chart (e.g., horizontal bar intentionally swaps X and Y)
+- Configs may use 'y_axis', 'y_axes', or 'y_axis'+'group_by' — focus on which columns end up on each axis, not the exact key name
+[1=Completely different columns, 3=Mostly same columns with minor differences, 5=Same information conveyed]
 
-    ### 2. CHART TYPE CORRECTNESS
-    Is the chart type the same as the reference?
-    - line, bar, scatter, area must match exactly
-    - Variations within type are acceptable (e.g., grouped bar vs stacked bar)
-    [1=Wrong type, 3=Similar type, 5=Exact match]
+### 2. CHART TYPE CORRECTNESS
+Does the chart type serve the same visual purpose as the reference?
+- Exact type match is not required — a column chart and a bar chart are functionally the same
+- Consider whether the chosen type can display the same information effectively
+[1=Type cannot convey the same information, 3=Different but reasonable alternative, 5=Same or functionally identical type]
 
-    ### 3. FUNCTIONAL EQUIVALENCE
-    Would the generated code produce a visually equivalent chart?
-    - Ignore import statements and variable naming
-    - Ignore code style/formatting differences
-    - Focus on: Will plt.show() produce the same visual output?
-    [1=Would fail/wrong output, 3=Minor visual differences, 5=Equivalent output]
+### 3. FUNCTIONAL EQUIVALENCE
+Would the generated code produce a visually equivalent chart?
+- Ignore import statements, variable naming, and code style differences
+- Ignore cosmetic differences (colour, grid style, font size)
+- Focus on: Would a viewer draw the same conclusion from both charts?
+[1=Would produce a completely different visual, 3=Minor visual differences, 5=Visually equivalent]
 
-    ### 4. EXPLICIT REQUIREMENTS COMPLIANCE
-    ONLY evaluate requirements that are non-null in EXPLICIT USER REQUIREMENTS.
-    For each non-null requirement, check if the generated code complies.
-    If all explicit requirements are null, give score of 5 (not applicable).
-    [1=Major violations, 3=Partial compliance, 5=Full compliance or N/A]
+### 4. EXPLICIT REQUIREMENTS COMPLIANCE
+ONLY evaluate requirements that are non-null in EXPLICIT USER REQUIREMENTS.
+For each non-null requirement, check if the generated code complies.
+If all explicit requirements are null, give score of 5 (not applicable).
+[1=Major violations, 3=Partial compliance, 5=Full compliance or N/A]
 
-    ## OUTPUT FORMAT
-    Return ONLY valid JSON:
-    {{
-      "axis_correctness": {{"score": <1-5>, "reasoning": "<brief>", "x_match": <true/false>, "y_match": <true/false>}},
-      "chart_type": {{"score": <1-5>, "reasoning": "<brief>", "type_match": <true/false>}},
-      "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
-      "explicit_requirements": {{"score": <1-5>, "reasoning": "<brief>", "violations": []}}
-    }}"""
+## OUTPUT FORMAT
+Return ONLY valid JSON:
+{{
+  "axis_correctness": {{"score": <1-5>, "reasoning": "<brief>", "x_match": <true/false>, "y_match": <true/false>}},
+  "chart_type": {{"score": <1-5>, "reasoning": "<brief>", "type_match": <true/false>}},
+  "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
+  "explicit_requirements": {{"score": <1-5>, "reasoning": "<brief>", "violations": []}}
+}}"""
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         """
@@ -202,7 +201,7 @@ class VisualizerEvaluator(Evaluator):
         gen_code_truncated = code[:max_code_len] if len(code) > max_code_len else code
 
         formatted_prompt = VisualizerEvaluator.JUDGE_PROMPT.format(
-            visualization_goal=state.prompt,
+            prompt=state.prompt,
             data_columns=", ".join(data_columns),
             data_sample=data_sample[:1500],
             gen_config=json.dumps(
