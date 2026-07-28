@@ -7,6 +7,8 @@ __all__ = [
     "BenchmarkEntry",
     "BenchmarkSummary",
     "DatabaseSchema",
+    "Trace",
+    "TraceElement",
     "normalize_dataframe_values",
     "text_to_csv",
     "text_to_dataframe",

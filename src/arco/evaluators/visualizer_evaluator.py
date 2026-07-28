@@ -1,14 +1,14 @@
 import json
 from typing import TYPE_CHECKING, Any
 
-from arco.core import AgentType, Evaluation, Evaluator, LLMAnswer, llm_tools
+from arco.core import AgentType, Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
 )
 
 if TYPE_CHECKING:
-    from arco.core import Answer, State
+    from arco.core import State
 
 import logging
 
@@ -34,11 +34,6 @@ _GT_SCHEMA: dict[str, dict[str, Any]] = {
         "reasoning": "Missing",
         "would_render": False,
     },
-    "explicit_requirements": {
-        "score": 5,
-        "reasoning": "Missing - default N/A",
-        "violations": [],
-    },
 }
 
 _NO_GT_WEIGHTS: dict[str, float] = {
@@ -51,8 +46,7 @@ _NO_GT_WEIGHTS: dict[str, float] = {
 _GT_WEIGHTS: dict[str, float] = {
     "axis_correctness": 0.20,
     "chart_type": 0.15,
-    "functional_equivalence": 0.55,
-    "explicit_requirements": 0.10,
+    "functional_equivalence": 0.65,
 }
 
 
@@ -135,9 +129,6 @@ Chart Code:
 {gen_code}
 ```
 
-## EXPLICIT USER REQUIREMENTS
-{explicit_requirements}
-
 ## EVALUATION CRITERIA
 
 Rate each criterion on a scale of 1-5:
@@ -162,19 +153,12 @@ Would the generated code produce a visually equivalent chart?
 - Focus on: Would a viewer draw the same conclusion from both charts?
 [1=Would produce a completely different visual, 3=Minor visual differences, 5=Visually equivalent]
 
-### 4. EXPLICIT REQUIREMENTS COMPLIANCE
-ONLY evaluate requirements that are non-null in EXPLICIT USER REQUIREMENTS.
-For each non-null requirement, check if the generated code complies.
-If all explicit requirements are null, give score of 5 (not applicable).
-[1=Major violations, 3=Partial compliance, 5=Full compliance or N/A]
-
 ## OUTPUT FORMAT
 Return ONLY valid JSON:
 {{
   "axis_correctness": {{"score": <1-5>, "reasoning": "<brief>", "x_match": <true/false>, "y_match": <true/false>}},
   "chart_type": {{"score": <1-5>, "reasoning": "<brief>", "type_match": <true/false>}},
-  "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}},
-  "explicit_requirements": {{"score": <1-5>, "reasoning": "<brief>", "violations": []}}
+  "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}}
 }}"""
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
@@ -228,23 +212,10 @@ Return ONLY valid JSON:
             llm: the LLM used for LLM-as-a-Judge inference.
             gt_config: Expected chart configuration dict.
             gt_code: Expected chart code string.
-            gt_visual_requirements: Optional dict of explicit styling requirements.
         """
         llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
         gt_config = gt_data["chart_config"]
         gt_code = gt_data["chart_code"]
-        gt_visual_requirements = gt_data["visual_requirements"]
-        if gt_visual_requirements:
-            req_display = "\n".join(
-                [
-                    f"- {k}: {v}"
-                    if v is not None
-                    else f"- {k}: (not specified - ignore)"
-                    for k, v in gt_visual_requirements.items()
-                ]
-            )
-        else:
-            req_display = "None specified - ignore all styling requirements"
 
         code: str = answer.agent_output["code"]
         if code is None:
@@ -264,7 +235,6 @@ Return ONLY valid JSON:
             gt_code=gt_code_truncated,
             gen_config=json.dumps(answer.agent_output["chart_config"], indent=2),
             gen_code=gen_code_truncated,
-            explicit_requirements=req_display,
         )
 
         # Get judgment
@@ -278,6 +248,14 @@ Return ONLY valid JSON:
         answer.gt_evaluation = Evaluation(score=overall_score)
         logger.debug(f"Evaluation successful : score={overall_score}")
         return
+
+    def extract_gt_from_answer(self, answer: Answer) -> dict:
+        data = {}
+        if "chart_config" in answer.agent_output:
+            data["chart_config"] = answer.agent_output["chart_config"]
+        if "code" in answer.agent_output:
+            data["chart_code"] = answer.agent_output["code"]
+        return data
 
 
 __all__ = ["VisualizerEvaluator"]

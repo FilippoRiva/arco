@@ -1,0 +1,102 @@
+[
+  {
+    "id": 0,
+    "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+    "difficulty": 2
+  },
+  {
+    "id": 1,
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+    "difficulty": 2
+  },
+  {
+    "id": 2,
+    "prompt": "Return the top 5 stores by total revenue, identified by store number",
+    "difficulty": 1
+  },
+  {
+    "id": 3,
+    "prompt": "Show total revenue by product brand for 2023 as a bar chart. Then visualize a Bar chart showing total revenue per brand ordered from highest to lowest",
+    "difficulty": 3
+  },
+  {
+    "id": 4,
+    "prompt": "Compare average monthly revenue between store regions for 2022 and 2023. Then show a grouped bar chart comparing average monthly revenue per region between 2022 and 2023",
+    "difficulty": 4
+  },
+  {
+    "id": 5,
+    "prompt": "Show promo vs non-promo revenue in 2023 as a bar chart. Then show a Bar chart comparing total revenue for promo and non-promo sales in 2023",
+    "difficulty": 1
+  },
+  {
+    "id": 6,
+    "prompt": "Return the top 10 product class codes by total units sold in 2023",
+    "difficulty": 1
+  },
+  {
+    "id": 7,
+    "prompt": "Show the top 8 stores by total units sold in 2022 as a bar chart, identifying each store by its store number. The bar chart should show the top 8 stores ranked by total units sold",
+    "difficulty": 1
+  },
+  {
+    "id": 8,
+    "prompt": "Return the top 10 sales days in 2023 with total revenue and total units sold",
+    "difficulty": 2
+  },
+  {
+    "id": 9,
+    "prompt": "Show store cities where total revenue in 2022 exceeded 200,000 as a bar chart. The visualization should be a Bar chart showing with total revenue for store cities that exceeded 200,000 in total revenue in 2022, ordered from highest to lowest",
+    "difficulty": 3
+  },
+  {
+    "id": 10,
+    "prompt": "Show monthly revenue for product class code 22975 in 2022 as a line chart. The visualize a Line chart showing monthly revenue for product class code 22975 in 2022",
+    "difficulty": 2
+  },
+  {
+    "id": 11,
+    "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart. The grouped bar chart should show, for each month, 2 bars representing promo and non-promo sales",
+    "difficulty": 2
+  },
+  {
+    "id": 12,
+    "prompt": "Show total revenue by store type for 2023 as a bar chart. Then visualize a Bar chart showing total 2023 revenue by store type",
+    "difficulty": 3
+  },
+  {
+    "id": 13,
+    "prompt": "Show total units sold by product category for 2023 as a bar chart. Then visualize a Bar chart showing total units sold by product category in 2023",
+    "difficulty": 3
+  },
+  {
+    "id": 14,
+    "prompt": "Return the top 3 brands by realized average selling price in 2023, where average price is computed as total revenue divided by total units sold, along with total units sold per brand",
+    "difficulty": 3
+  },
+  {
+    "id": 15,
+    "prompt": "Return the top 8 cities by total revenue in 2023",
+    "difficulty": 3
+  },
+  {
+    "id": 16,
+    "prompt": "Show 2023 revenue by region comparing Organic and Non-Organic products as a grouped bar chart. Then visualize a Grouped bar chart comparing 2023 revenue by region for organic and non-organic products",
+    "difficulty": 3
+  },
+  {
+    "id": 17,
+    "prompt": "Compare average monthly revenue between store types for 2022 and 2023. Then visualize a Grouped bar chart comparing average monthly revenue by store type between 2022 and 2023",
+    "difficulty": 4
+  },
+  {
+    "id": 18,
+    "prompt": "Show promo revenue share by product category for 2023 as a bar chart, expressing the share as a percentage of total revenue. Then show a Bar chart showing the share of revenue generated under promotion for each product category in 2023",
+    "difficulty": 4
+  },
+  {
+    "id": 19,
+    "prompt": "Return the top 10 region-category combinations by year-over-year revenue growth from 2022 to 2023, showing revenue for both years and the growth expressed as a percentage rounded to 2 decimal places",
+    "difficulty": 4
+  }
+]

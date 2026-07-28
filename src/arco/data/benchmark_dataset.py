@@ -35,6 +35,11 @@ class BenchmarkDataset:
 
         return cls(entries=entries)
 
+    def save(self, path: str):
+        with open(path, "w") as f:
+            json.dump([entry.to_dict() for entry in self.entries], f, indent=2)
+        logger.info(f"Benchmark dataset saved to {path}")
+
     def __iter__(self) -> Iterator[BenchmarkEntry]:
         return iter(self.entries)
 
@@ -60,6 +65,14 @@ class BenchmarkEntry:
             trace=Trace.from_trace_data(entry_dict["trace"]),
         )
 
+    def to_dict(self) -> dict:
+        return {
+            "prompt": self.prompt,
+            "trace": self.trace.to_dict(),
+            "id": self.id,
+            "difficulty": self.difficulty,
+        }
+
 
 @dataclass(frozen=True)
 class Trace:
@@ -76,6 +89,9 @@ class Trace:
             trace_list.append(TraceElement(agent_type=agent_type, data=data))
         return cls(trace_list=trace_list)
 
+    def to_dict(self) -> list[dict]:
+        return [te.to_dict() for te in self.trace_list]
+
     def __getitem__(self, idx: int) -> TraceElement:
         return self.trace_list[idx]
 
@@ -91,5 +107,17 @@ class TraceElement:
     agent_type: AgentType
     data: dict[str, str | int | float | dict]
 
+    def to_dict(self) -> dict:
+        return {
+            "agent_type": self.agent_type.value,
+            "data": self.data,
+        }
 
-__all__ = ["BenchmarkDataset", "BenchmarkEntry", "BenchmarkSummary", "Trace"]
+
+__all__ = [
+    "BenchmarkDataset",
+    "BenchmarkEntry",
+    "BenchmarkSummary",
+    "Trace",
+    "TraceElement",
+]

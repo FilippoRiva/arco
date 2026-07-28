@@ -1,0 +1,71 @@
+[
+  {
+    "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart. The grouped bar chart should show, for each month, 2 bars representing promo and non-promo sales",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "retriever",
+          "plan": [
+            "analyzer",
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    s.On_Promo AS on_promo_flag,\n    SUM(s.Total_Sale_Value) AS revenue_usd\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1, 2\n)\nSELECT\n  m.month_start,\n  COALESCE(MAX(CASE WHEN m.on_promo_flag = 1 THEN m.revenue_usd END), 0) AS revenue_on_promo_usd,\n  COALESCE(MAX(CASE WHEN m.on_promo_flag = 0 THEN m.revenue_usd END), 0) AS revenue_non_promo_usd\nFROM monthly m\nGROUP BY m.month_start\nORDER BY m.month_start;",
+          "data_str": "month_start,revenue_on_promo_usd,revenue_non_promo_usd\n2023-01-01,69.9800033569336,434102.82829636894\n2023-02-01,0.0,411762.7182441354\n2023-03-01,0.0,423070.8383087404\n2023-04-01,6153.199997186661,378326.478314111\n2023-05-01,1465.8899841308594,379860.53803884983\n2023-06-01,0.0,364806.73785564303\n2023-07-01,0.0,353284.2078382373\n2023-08-01,2469.08998298645,398592.4477458\n2023-09-01,7428.110008239746,415126.85746080615\n2023-10-01,8046.250034570694,446184.807069039\n2023-11-01,35099.910192489624,476004.3772254456\n2023-12-01,38974.430743694305,835289.2375872489\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "analyzer",
+          "plan": [
+            "visualizer"
+          ]
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "For 2023, monthly revenue split by promo flag is: Promo vs Non\u2011promo ($): Jan 69.98 / 434,102.83; Feb 0.00 / 411,762.72; Mar 0.00 / 423,070.84; Apr 6,153.20 / 378,326.48; May 1,465.89 / 379,860.54; Jun 0.00 / 364,806.74; Jul 0.00 / 353,284.21; Aug 2,469.09 / 398,592.45; Sep 7,428.11 / 415,126.86; Oct 8,046.25 / 446,184.81; Nov 35,099.91 / 476,004.38; Dec 38,974.43 / 835,289.24. Total across 2023 is $99,706.86 promo and $5,316,412.07 non\u2011promo revenue."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "visualizer",
+          "plan": []
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "bar",
+            "x_axis": "month_start",
+            "y_axes": [
+              "revenue_on_promo_usd",
+              "revenue_non_promo_usd"
+            ],
+            "title": "Monthly Revenue Split by Promo Flag (2023)",
+            "df_columns": "month_start, revenue_on_promo_usd, revenue_non_promo_usd"
+          },
+          "chart_code": "plt.figure(figsize=(12, 6))\n\nx = data_df[\"month_start\"]\ny_columns = [\"revenue_on_promo_usd\", \"revenue_non_promo_usd\"]\n\nbar_width = 0.38\nx_positions = range(len(x))\n\nfor i, col in enumerate(y_columns):\n    offset = (i - (len(y_columns) - 1) / 2) * bar_width\n    plt.bar([p + offset for p in x_positions], data_df[col].values, width=bar_width, label=col)\n\nplt.xlabel(\"month_start\")\nplt.ylabel(\"Revenue (USD)\")\nplt.title(\"Monthly Revenue Split by Promo Flag (2023)\")\n\nplt.xticks(list(x_positions), [str(v) for v in x], rotation=45, ha=\"right\")\nplt.grid(True, axis=\"y\", alpha=0.3)\nplt.legend()\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "end",
+          "plan": []
+        }
+      }
+    ],
+    "id": 11,
+    "difficulty": 2
+  }
+]

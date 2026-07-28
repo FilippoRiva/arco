@@ -50,14 +50,7 @@
             "y_axis": "Total_Sales_Value",
             "title": "Sales Trend for November 2021"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Sold_Date\"]\ny_data = data_df[\"Total_Sales_Value\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"Sold_Date\")\nplt.ylabel(\"Total_Sales_Value\")\nplt.title(\"Sales Trend for November 2021\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Sold_Date\"]\ny_data = data_df[\"Total_Sales_Value\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"Sold_Date\")\nplt.ylabel(\"Total_Sales_Value\")\nplt.title(\"Sales Trend for November 2021\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -122,14 +115,7 @@
             "y_axis": "total_revenue",
             "title": "Monthly Revenue 2023"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue 2023\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue 2023\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -237,14 +223,7 @@
             "y_axis": "total_revenue",
             "title": "Total Revenue by Brand (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\ndata_df = data_df.sort_values(\"total_revenue\", ascending=False)\n\nx_data = data_df[\"brand\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"brand\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Total Revenue by Brand (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\ndata_df = data_df.sort_values(\"total_revenue\", ascending=False)\n\nx_data = data_df[\"brand\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"brand\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Total Revenue by Brand (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -310,14 +289,7 @@
             "group_by": "year",
             "title": "Avg Monthly Revenue by Region: 2022 vs 2023"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nregions = data_df['region'].unique()\nx = np.arange(len(regions))\nwidth = 0.35\n\ndf_2022 = data_df[data_df['year'] == 2022].set_index('region')\ndf_2023 = data_df[data_df['year'] == 2023].set_index('region')\n\nfig, ax = plt.subplots()\nax.bar(x - width/2, [df_2022.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2022', color='steelblue')\nax.bar(x + width/2, [df_2023.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2023', color='darkorange')\n\nax.set_xlabel('region')\nax.set_ylabel('avg_monthly_revenue')\nax.set_title(\"Avg Monthly Revenue by Region: 2022 vs 2023\")\nax.set_xticks(x)\nax.set_xticklabels(regions)\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nregions = data_df['region'].unique()\nx = np.arange(len(regions))\nwidth = 0.35\n\ndf_2022 = data_df[data_df['year'] == 2022].set_index('region')\ndf_2023 = data_df[data_df['year'] == 2023].set_index('region')\n\nfig, ax = plt.subplots()\nax.bar(x - width/2, [df_2022.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2022', color='steelblue')\nax.bar(x + width/2, [df_2023.loc[r, 'avg_monthly_revenue'] for r in regions], width, label='2023', color='darkorange')\n\nax.set_xlabel('region')\nax.set_ylabel('avg_monthly_revenue')\nax.set_title(\"Avg Monthly Revenue by Region: 2022 vs 2023\")\nax.set_xticks(x)\nax.set_xticklabels(regions)\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -382,14 +354,7 @@
             "y_axis": "total_revenue",
             "title": "Promo vs Non-Promo Revenue (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"promo_status\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"promo_status\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Promo vs Non-Promo Revenue (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"promo_status\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"promo_status\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Promo vs Non-Promo Revenue (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -497,14 +462,7 @@
             "y_axis": "total_units",
             "title": "Top 8 Stores by Units Sold (2022)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Store_Number\"]\ny_data = data_df[\"total_units\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"Store_Number\")\nplt.ylabel(\"total_units\")\nplt.title(\"Top 8 Stores by Units Sold (2022)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"Store_Number\"]\ny_data = data_df[\"total_units\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"Store_Number\")\nplt.ylabel(\"total_units\")\nplt.title(\"Top 8 Stores by Units Sold (2022)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -612,14 +570,7 @@
             "y_axis": "total_revenue",
             "title": "Store Cities with Revenue Above 200,000 (2022)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"city\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"city\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Store Cities with Revenue Above 200,000 (2022)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"city\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"city\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Store Cities with Revenue Above 200,000 (2022)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -684,14 +635,7 @@
             "y_axis": "total_revenue",
             "title": "Monthly Revenue for Product Class 22975 (2022)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue for Product Class 22975 (2022)\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.plot(x_data, y_data, marker='o')\nplt.xlabel(\"month_start\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue for Product Class 22975 (2022)\")\nplt.xticks(rotation=45, ha='right')\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -759,14 +703,7 @@
             ],
             "title": "Monthly Revenue by Promo Flag (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nx = np.arange(len(data_df))\ny_cols = [\"promo_revenue\", \"non_promo_revenue\"]\nwidth = 0.8 / len(y_cols)\n\nfig, ax = plt.subplots()\nfor i, col in enumerate(y_cols):\n    offset = (i - (len(y_cols) - 1) / 2) * width\n    ax.bar(x + offset, data_df[col], width, label=col.replace('_', ' ').title())\n\nax.set_xlabel(\"month_start\")\nax.set_ylabel('Revenue')\nax.set_title(\"Monthly Revenue by Promo Flag (2023)\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in data_df[\"month_start\"]], rotation=45, ha='right')\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\nx = np.arange(len(data_df))\ny_cols = [\"promo_revenue\", \"non_promo_revenue\"]\nwidth = 0.8 / len(y_cols)\n\nfig, ax = plt.subplots()\nfor i, col in enumerate(y_cols):\n    offset = (i - (len(y_cols) - 1) / 2) * width\n    ax.bar(x + offset, data_df[col], width, label=col.replace('_', ' ').title())\n\nax.set_xlabel(\"month_start\")\nax.set_ylabel('Revenue')\nax.set_title(\"Monthly Revenue by Promo Flag (2023)\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in data_df[\"month_start\"]], rotation=45, ha='right')\nax.legend()\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -831,14 +768,7 @@
             "y_axis": "total_revenue",
             "title": "Total Revenue by Store Type (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"store_type\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"store_type\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Total Revenue by Store Type (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"store_type\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"store_type\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Total Revenue by Store Type (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -903,14 +833,7 @@
             "y_axis": "total_units",
             "title": "Total Units Sold by Category (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"category\"]\ny_data = data_df[\"total_units\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"category\")\nplt.ylabel(\"total_units\")\nplt.title(\"Total Units Sold by Category (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"category\"]\ny_data = data_df[\"total_units\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"category\")\nplt.ylabel(\"total_units\")\nplt.title(\"Total Units Sold by Category (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -1063,14 +986,7 @@
             "group_by": "is_organic",
             "title": "Revenue by Region and Organic Flag (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=\"region\", columns=\"is_organic\", values=\"total_revenue\")\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(\"region\")\nax.set_ylabel(\"total_revenue\")\nax.set_title(\"Revenue by Region and Organic Flag (2023)\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(\"is_organic\"))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=\"region\", columns=\"is_organic\", values=\"total_revenue\")\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(\"region\")\nax.set_ylabel(\"total_revenue\")\nax.set_title(\"Revenue by Region and Organic Flag (2023)\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(\"is_organic\"))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -1136,14 +1052,7 @@
             "group_by": "year",
             "title": "Avg Monthly Revenue by Store Type: 2022 vs 2023"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=\"store_type\", columns=\"year\", values=\"avg_monthly_revenue\")\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(\"store_type\")\nax.set_ylabel(\"avg_monthly_revenue\")\nax.set_title(\"Avg Monthly Revenue by Store Type: 2022 vs 2023\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(\"year\"))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport numpy as np\nimport pandas as pd\n\npivot_df = data_df.pivot(index=\"store_type\", columns=\"year\", values=\"avg_monthly_revenue\")\nx = np.arange(len(pivot_df.index))\nwidth = 0.8 / max(len(pivot_df.columns), 1)\n\nfig, ax = plt.subplots()\nfor i, group in enumerate(pivot_df.columns):\n    offset = (i - (len(pivot_df.columns) - 1) / 2) * width\n    ax.bar(x + offset, pivot_df[group].values, width, label=str(group))\n\nax.set_xlabel(\"store_type\")\nax.set_ylabel(\"avg_monthly_revenue\")\nax.set_title(\"Avg Monthly Revenue by Store Type: 2022 vs 2023\")\nax.set_xticks(x)\nax.set_xticklabels([str(v) for v in pivot_df.index], rotation=45, ha='right')\nax.legend(title=str(\"year\"))\nax.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {
@@ -1208,14 +1117,7 @@
             "y_axis": "promo_revenue_share",
             "title": "Promo Revenue Share by Category (2023)"
           },
-          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"category\"]\ny_data = data_df[\"promo_revenue_share\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"category\")\nplt.ylabel(\"promo_revenue_share\")\nplt.title(\"Promo Revenue Share by Category (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()",
-          "visual_requirements": {
-            "color": null,
-            "title_format": null,
-            "label_format": null,
-            "grid": null,
-            "markers": null
-          }
+          "chart_code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"category\"]\ny_data = data_df[\"promo_revenue_share\"]\n\nplt.bar(x_data, y_data, color='steelblue')\nplt.xlabel(\"category\")\nplt.ylabel(\"promo_revenue_share\")\nplt.title(\"Promo Revenue Share by Category (2023)\")\nplt.xticks(rotation=30, ha='right')\nplt.grid(axis='y', alpha=0.3)\nplt.tight_layout()\nplt.show()"
         }
       },
       {

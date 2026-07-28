@@ -89,6 +89,14 @@ class Evaluator(ABC):
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
     ): ...
 
+    def extract_gt_from_answer(self, answer: Answer) -> dict:
+        """Extract ground-truth data from an Answer for benchmark generation.
+
+        Subclasses override this to return the dict that ``_gt_eval`` expects.
+        The default returns an empty dict.
+        """
+        return {}
+
 
 def evaluate_state_with_benchmark_entry(
     state: State,

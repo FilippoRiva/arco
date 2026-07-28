@@ -117,6 +117,14 @@ class RetrieverEvaluator(Evaluator):
     def _eval(self, state: State, judge_provider: str, judge_model: str):
         pass
 
+    def extract_gt_from_answer(self, answer: Answer) -> dict:
+        data = {}
+        if "sql_query" in answer.agent_output:
+            data["sql"] = answer.agent_output["sql_query"]
+        if "data_str" in answer.agent_output:
+            data["data_str"] = answer.agent_output["data_str"]
+        return data
+
     def _batch_eval(self, states: list[State]):
         """
         Each result's score is its average pairwise row-IoU to all other results.
