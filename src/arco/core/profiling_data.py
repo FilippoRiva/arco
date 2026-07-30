@@ -3,6 +3,17 @@ from dataclasses import asdict, dataclass, replace
 
 @dataclass(frozen=True)
 class ProfilingData:
+    """Profiling metrics for a single agent execution step.
+
+    :ivar total_time: Total wall-clock time in seconds.
+    :ivar llm_time: Time spent in LLM API calls in seconds.
+    :ivar energy_consumed_kwh: Total energy consumed in kWh.
+    :ivar cpu_energy_kwh: CPU energy in kWh.
+    :ivar gpu_energy_kwh: GPU energy in kWh.
+    :ivar ram_energy_kwh: RAM energy in kWh.
+    :ivar emissions_kg_co2: CO2 emissions in kg.
+    """
+
     total_time: float | None = None
     llm_time: float | None = None
     energy_consumed_kwh: float | None = None

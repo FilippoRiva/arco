@@ -18,18 +18,22 @@ logger = logging.getLogger(__name__)
 class AgentConfig:
     """Configuration for a single agent execution.
 
-    Attributes:
-        provider: model provider for this specific agent
-        model: The LLM model from the provider used for this agent
-        n: Number of best-of-n runs for this step (default 1)
-        temp_min: Minimum temperature for sampling (default 0.1)
-        temp_max: Maximum temperature for sampling (default 0.1)
-        max_tokens: Maximum tokens for LLM generation (default 2000)
-        top_p_min: Top-p sampling parameter, lower bound (default 1.0)
-        top_k_min: Top-k sampling parameter, lower bound (default None, skipped for OpenAI)
-        num_beams: Beam search width; 1 = greedy/disabled (default 1, skipped for OpenAI)
-        no_repeat_ngram_size: Prevent repeating n-grams of this size (default None, skipped for OpenAI)
-        schema: DatabaseSchema used by the retriever
+    :ivar provider: Model provider for this specific agent.
+    :ivar model: The LLM model used for this agent.
+          n Number of best-of-N runs (default 1).
+    :ivar bon_parameter: Which sampling parameter to vary (``"temperature"``,
+         ``"top_p"``, or ``"top_k"``).
+    :ivar temp_min: Minimum sampling temperature.
+    :ivar temp_max: Maximum sampling temperature.
+    :ivar top_p_min: Top-p sampling lower bound.
+    :ivar top_p_max: Top-p sampling upper bound.
+    :ivar top_k_min: Top-k sampling lower bound (skipped for OpenAI).
+    :ivar top_k_max: Top-k sampling upper bound (skipped for OpenAI).
+    :ivar max_tokens: Maximum tokens for LLM generation (default 2000).
+    :ivar num_beams: Beam search width (1 = greedy/disabled, skipped for OpenAI).
+    :ivar no_repeat_ngram_size: Prevent repeating n-grams (skipped for OpenAI).
+    :ivar cot_n: Number of chain-of-thought refinement iterations (default 1).
+    :ivar enable_budget_controller: Whether the ARCO budget controller is active.
     """
 
     # Optional per-step LLM overrides
@@ -69,6 +73,19 @@ class AgentConfig:
     def from_yaml(
         cls, yaml_path: str, agent_name: str, inherit_globals_from: Config | None = None
     ) -> AgentConfig:
+        """Load an agent's configuration from a YAML file.
+
+        Looks for the agent under either the ``agents`` key (run configs)
+        or the ``defaults`` key (benchmark configs).  Fields not set in
+        the YAML inherit from the global :class:`Config` if provided.
+
+        :param yaml_path: Path to the YAML configuration file.
+        :param agent_name: The agent type name (e.g. ``"Retriever"``).
+        :param inherit_globals_from: Optional global config to inherit
+            provider, model, etc. from.
+        :returns: A new :class:`AgentConfig` instance.
+        :raises ConfigException: If the YAML file cannot be read.
+        """
         logger.debug(f"Loading config for {agent_name} from {yaml_path}")
         with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
@@ -92,20 +109,33 @@ class AgentConfig:
 
     @classmethod
     def from_config(cls, config: Config) -> AgentConfig:
+        """Create an AgentConfig that inherits all fields from a global :class:`Config`.
+
+        :param config: The global config to inherit from.
+        :returns: A new :class:`AgentConfig` instance.
+        """
         result = cls()
         result._inherit_from_config(config=config)
         return result
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
-        """Create StepConfig from dict (for deserialization)."""
-        # Filter out unknown keys and non-serializable fields
+        """Create an AgentConfig from a dict (for deserialization).
+
+        Unknown keys are silently ignored.
+
+        :param data: Dictionary of field names to values.
+        :returns: A new :class:`AgentConfig` instance.
+        """
         valid_keys = [f.name for f in dataclasses.fields(AgentConfig)]
         filtered = {k: v for k, v in data.items() if k in valid_keys}
         return cls(**filtered)
 
     def update(self, update_dict: dict[str, Any]):
-        """Update fields on this AgentConfig from a dict, ignoring unspecified/unknown keys."""
+        """Update fields from a dict, ignoring unknown keys.
+
+        :param update_dict: Dictionary of field names to values.
+        """
         valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
         for key, value in update_dict.items():
             if key in valid_keys:
@@ -113,9 +143,14 @@ class AgentConfig:
         self._normalize_ranges()
 
     def get_candidate_params(self) -> list[tuple[float, float | None, int | None]]:
-        """Generate (temperature, top_p, top_k) tuples for each best-of-n candidate.
+        """Generate ``(temperature, top_p, top_k)`` tuples for each best-of-N candidate.
 
-        The parameter selected by bon_param is varied linearly; the others are fixed.
+        The parameter selected by :attr:`bon_parameter` is varied linearly
+        across *n* steps; the other two are fixed at their minimum values.
+
+        :returns: A list of parameter tuples, one per candidate.
+        :raises ConfigException: If ``bon_parameter`` is ``top_p`` or ``top_k``
+            but the corresponding min/max values are ``None``.
         """
         if self.n <= 1:
             return [(self.temp_min, self.top_p_min, self.top_k_min)]

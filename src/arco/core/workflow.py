@@ -26,13 +26,24 @@ logger = logging.getLogger(__name__)
 
 
 class Workflow(ABC):
+    """Abstract base class for defining a LangGraph-based agent workflow.
+
+    Subclasses must implement :meth:`initialize` to build the graph, and
+    should set a ``workflow_id`` class attribute for the factory lookup.
+
+    Every concrete subclass is automatically registered in
+    :class:`WorkflowFactory` via :meth:`__init_subclass__`.
+    """
+
     def __init_subclass__(cls, **kwargs):
-        """When a subclass inherits this ABC, the workflow_id of that subclass is stored and the WorkflowFactory can
-        retrieve a new instance of that Workflow from the workflow_id itself. This provides compatibility with
-        any kind of dynamically defined workflow whenever it inherits from this ABC"""
+        """Register concrete subclasses in the WorkflowFactory registry.
+
+        Uses ``cls.workflow_id`` if set, otherwise falls back to
+        ``cls.__name__.lower()``.
+        """
         super().__init_subclass__(**kwargs)
         if inspect.isabstract(cls):
-            return  # don't register intermediate abstract subclasses
+            return
         workflow_id = getattr(cls, "workflow_id", cls.__name__.lower())
         WorkflowFactory._workflow_registry[workflow_id] = cls
 
@@ -49,27 +60,27 @@ class Workflow(ABC):
         self.config.hydrate_agent_configs(self.list_agents())
 
     def stream(self, config: Config | None = None) -> Generator[dict[str, Any]]:
+        """Execute the workflow and yield streaming events.
 
+        Yields dicts with keys ``event``, ``state``, ``node``, etc.
+        Terminal event types: ``"completed"`` (with ``state``) or ``"error"``.
+        """
         yield {"event": "started", "run_id": self.config.run_id, "config": self.config}
 
         if config:
             self.config = config
             self.config.hydrate_agent_configs(self.list_agents())
 
-        # Updates global parameters from config
         llm_tools.OLLAMA_URL = self.config.ollama_url
 
-        # codecarbon Emission Tracking
         tracking.initialize_tracking(self.config)
 
-        # Initialize state
         input_state: State = State(
             prompt=self.config.prompt,
             run_id=self.config.run_id,
             agent_configs=self.config.agent_configs,
         )
 
-        # Check Model Reachability
         requested_models = [
             *[
                 (agent_config.provider, agent_config.model)
@@ -90,7 +101,6 @@ class Workflow(ABC):
                 yield {"event": "error", "message": message}
                 return None
 
-        # Start Inference and Generator Loop
         _run_t0 = time.perf_counter()
 
         graph_config = {
@@ -147,42 +157,67 @@ class Workflow(ABC):
 
     @abstractmethod
     def initialize(self, config: Config, graph: Graph):
-        """Given a Config and an empty Graph, builds the workflow graph, depending on implementation"""
+        """Build the workflow graph.
+
+        Subclasses add nodes and edges to *graph* using the provided
+        *config*.  This is called once during construction.
+        """
         ...
 
     def _initialize(self, config: Config) -> CompiledStateGraph:
+        """Build and compile the LangGraph from the subclass's :meth:`initialize`."""
         graph = Graph()
         self.initialize(config, graph)
         self._agent_list.update(graph.get_agents())
         return graph.compile()
 
     def list_agents(self) -> list[AgentType]:
+        """Return the agent types used in this workflow."""
         return list(self._agent_list.keys())
 
     def get_agent(self, agent_type: AgentType) -> Agent:
+        """Return the agent instance for a given type."""
         return self._agent_list[agent_type]
 
     def get_evaluators(self) -> dict[AgentType, Evaluator]:
+        """Return a dict mapping agent types to their evaluators."""
         return {
             agent_type: agent.evaluator
             for agent_type, agent in self._agent_list.items()
         }
 
     def __str__(self) -> str:
+        """Return an ASCII diagram of the workflow graph."""
         return self.graph.get_graph().draw_ascii()
 
 
 class WorkflowFactory:
+    """Registry and factory for :class:`Workflow` subclasses.
+
+    Workflows are auto-registered via :meth:`Workflow.__init_subclass__`
+    and can be retrieved by their ``workflow_id``.
+    """
+
     _workflow_registry: ClassVar[dict[str, type[Workflow]]] = {}
 
     @classmethod
     def all(cls) -> dict[str, type[Workflow]]:
+        """Return all registered workflow classes, keyed by workflow ID."""
         return dict(cls._workflow_registry)
 
     @classmethod
     def get(
         cls, config: Config | None = None, workflow_id: str | None = None
     ) -> Workflow:
+        """Retrieve a workflow instance.
+
+        Args:
+            config: A config whose ``workflow`` field identifies the workflow.
+            workflow_id: A workflow ID string (alternative to *config*).
+
+        Returns:
+            A new :class:`Workflow` instance.
+        """
         if config is not None:
             workflow_cls = cls._get_cls(config.workflow)
             return workflow_cls(config)

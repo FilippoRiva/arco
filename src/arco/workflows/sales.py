@@ -17,15 +17,15 @@ class StrictSales(Workflow):
 
         # Add nodes
         for agent in [retriever, analyzer, visualizer]:
-            graph.add_node(agent)
+            graph.add_agent(agent)
 
         # Add entry point
-        graph.set_entry_point(retriever)
+        graph.set_entry_agent(retriever)
 
         # Add edges
-        graph.add_edge(retriever, analyzer)
-        graph.add_edge(analyzer, visualizer)
-        graph.add_edge(visualizer, END)
+        graph.add_agent_edge(retriever, analyzer)
+        graph.add_agent_edge(analyzer, visualizer)
+        graph.add_agent_edge(visualizer, END)
 
 
 def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
@@ -35,16 +35,16 @@ def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
 
     # Add nodes
     for agent in [orchestrating_agent, retriever, analyzer, visualizer]:
-        graph.add_node(agent)
+        graph.add_agent(agent)
 
     # Entry point
-    graph.set_entry_point(orchestrating_agent)
+    graph.set_entry_agent(orchestrating_agent)
 
     def route_to_agent(state: State) -> str:
         answer = state.get_last_answer(orchestrating_agent.type)
         if answer and "agent_choice" in answer.agent_output:
             return answer.agent_output["agent_choice"]
-        return "end"
+        return "End"
 
     # Routing logic
     graph.add_conditional_edges(
@@ -54,14 +54,14 @@ def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
             retriever: retriever,
             analyzer: analyzer,
             visualizer: visualizer,
-            "end": END,
+            "End": END,
         },
     )
 
     # Edges returning to orchestrator
-    graph.add_edge(retriever, orchestrating_agent)
-    graph.add_edge(analyzer, orchestrating_agent)
-    graph.add_edge(visualizer, orchestrating_agent)
+    graph.add_agent_edge(retriever, orchestrating_agent)
+    graph.add_agent_edge(analyzer, orchestrating_agent)
+    graph.add_agent_edge(visualizer, orchestrating_agent)
 
 
 class OrchestratedSales(Workflow):

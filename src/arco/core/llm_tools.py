@@ -1,3 +1,11 @@
+"""LLM abstraction layer: wrappers, factories, and utilities.
+
+This module provides :class:`LLMAnswer` (pre-extracted response with
+logprobs), :class:`LLM` (thin wrapper with CoT refinement), factory
+functions for creating LLM instances, and utilities for JSON parsing
+and response extraction used across evaluators and agents.
+"""
+
 import json
 import os
 import re
@@ -28,7 +36,16 @@ logger = logging.getLogger(__name__)
 
 
 class LLMAnswer:
-    """Pre-extracted LLM response — no manual content/logprobs wrangling."""
+    """Pre-extracted LLM response — no manual content/logprobs wrangling.
+
+    Wraps a raw LangChain :class:`AIMessage` (or any object with
+    ``.content``) and provides convenience methods for extracting
+    fenced code blocks, JSON, Python code, and SQL.
+
+    :ivar text: The raw response text.
+    :ivar logprobs: Token-level log probabilities as ``(token, logprob)``
+        tuples, or ``None`` if not available.
+    """
 
     def __init__(self, response):
         self.text: str = (
@@ -36,10 +53,13 @@ class LLMAnswer:
         )
         self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
 
-    def extract_fenced_content(self):
-        """
-        Extracts content from a fenced block.
-        If no fence exists, uses the raw text.
+    def extract_fenced_content(self) -> str:
+        """Extract content from a Markdown fenced code block.
+
+        Searches for the first triple-backtick fence and returns its
+        contents.  If no fence is found, returns the raw text.
+
+        :returns: The fenced content with surrounding whitespace stripped.
         """
         fence_re = re.compile(r"```[^\n]*\n?(.*?)\n?```", re.DOTALL)
 
@@ -47,14 +67,22 @@ class LLMAnswer:
         content = match.group(1).strip() if match else self.text.strip()
         return content
 
-    def extract_json(self):
+    def extract_json(self) -> dict:
+        """Extract and parse the first JSON object from the response.
+
+        :returns: The parsed dict, or an empty dict on failure.
+        """
         content = self.extract_fenced_content()
         try:
             return json.loads(content)
         except JSONDecodeError:
             return {}
 
-    def extract_json_list(self):
+    def extract_json_list(self) -> list:
+        """Extract and parse the first JSON array from the response.
+
+        :returns: The parsed list, or an empty list on failure.
+        """
         content = self.extract_fenced_content()
         try:
             json_list = json.loads(content)
@@ -64,14 +92,34 @@ class LLMAnswer:
         except JSONDecodeError, TypeError:
             return []
 
-    def extract_python(self):
+    def extract_python(self) -> str:
+        """Extract Python code from a Markdown fenced block.
+
+        :returns: The fenced content (same as :meth:`extract_fenced_content`).
+        """
         return self.extract_fenced_content()
 
-    def extract_sql(self):
+    def extract_sql(self) -> str:
+        """Extract SQL code from a Markdown fenced block.
+
+        :returns: The fenced content (same as :meth:`extract_fenced_content`).
+        """
         return self.extract_fenced_content()
 
 
 class LLM:
+    """Thin wrapper around a LangChain chat model with CoT refinement support.
+
+    Wraps a :class:`BaseChatModel` and adds chain-of-thought refinement
+    via :meth:`_cot_invoke`.  The :attr:`cot_enabled` flag and
+    :attr:`execution_error` control whether refinement is applied.
+
+    :ivar cot_enabled: If ``True``, :meth:`invoke` applies CoT refinement.
+    :ivar last_answer: The most recent :class:`LLMAnswer` produced.
+    :ivar execution_error: Error string from the last execution, used
+        as context for the next CoT refinement.
+    """
+
     _REFINEMENT_SUFFIX = """
     ## ITERATIVE REFINEMENT
     Your previous attempt produced the following response:
@@ -104,6 +152,15 @@ class LLM:
         self.execution_error: str | None = None
 
     def invoke(self, prompt: str) -> LLMAnswer:
+        """Send a prompt to the LLM and return the response.
+
+        If :attr:`cot_enabled` is ``True``, the prompt is extended with
+        a refinement suffix based on the previous answer and any
+        execution error.
+
+        :param prompt: The prompt string.
+        :returns: An :class:`LLMAnswer` with the response text and logprobs.
+        """
         if self.cot_enabled:
             answer = self._cot_invoke(prompt, self.execution_error)
         else:
@@ -129,6 +186,12 @@ class LLM:
 
 
 def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> LLM:
+    """Create an :class:`LLM` from an :class:`AgentConfig`, using the first candidate parameters.
+
+    :param agent_config: The agent's configuration (used for provider, model, temperature, etc.).
+    :param llm_acc: The callback accumulator for timing and energy tracking.
+    :returns: A configured :class:`LLM` instance.
+    """
     temp, top_p, top_k = agent_config.get_candidate_params()[0]
 
     return get_llm(
@@ -157,26 +220,25 @@ def get_llm(
     llm_accumulator: LLMCallAccumulator = DEFAULT_LLM_ACC,
     openrouter_url: str = "https://openrouter.ai/api/v1",
 ) -> LLM:
-    """Factory method to create LLM instances with specific parameters.
+    """Factory to create an :class:`LLM` instance with specific parameters.
 
-    Creates a new LLM instance instead of mutating the global self.llm,
-    which allows per-step parameter customization.
+    Creates a new LLM instance instead of mutating a global instance,
+    which allows per-step parameter customisation.
 
-    Args:
-        temperature: Sampling temperature
-        max_tokens: Maximum tokens for generation
-        top_p: Top-p sampling parameter
-        top_k: Top-k sampling parameter (skipped for OpenAI)
-        num_beams: Beam search width, 1 = greedy/disabled (skipped for OpenAI)
-        no_repeat_ngram_size: Prevent repeating n-grams of this size (skipped for OpenAI)
-        streaming: Whether to stream the response tokens in real-time.
-        provider: The LLM provider to use (e.g., 'openai', 'ollama', 'anthropic').
-        model: The specific model ID/name to instantiate.
-        llm_accumulator: An instance to track or log LLM calls and usage.
-        openrouter_url: Base URL for the Openrouter API, if using openrouter provider.
-
-    Returns:
-        BaseChatModel: A configured instance of a LangChain-compatible chat model.
+    :param temperature: Sampling temperature.
+    :param max_tokens: Maximum tokens for generation.
+    :param top_p: Top-p (nucleus) sampling parameter.
+    :param top_k: Top-k sampling parameter (skipped for OpenAI).
+    :param num_beams: Beam search width, 1 = greedy/disabled (skipped for OpenAI).
+    :param no_repeat_ngram_size: Prevent repeating n-grams (skipped for OpenAI).
+    :param streaming: Whether to stream the response tokens.
+    :param provider: The LLM provider (``'openai'``, ``'openrouter'``, or ``'ollama'``).
+    :param model: The specific model ID to instantiate.
+    :param llm_accumulator: Callback accumulator for timing and energy tracking.
+    :param openrouter_url: Base URL for the OpenRouter API.
+    :returns: A configured :class:`LLM` instance.
+    :raises ValueError: If the provider is ``'openrouter'`` but the
+        ``OPENROUTER_API_KEY`` environment variable is not set.
     """
     if provider.lower() == "openai":
         chat_model = ChatOpenAI(
@@ -281,7 +343,16 @@ def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | Non
 
 
 def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
-    """Check if the configured LLM provider is reachable and the asked model is available."""
+    """Check whether the configured LLM provider is reachable and the model exists.
+
+    For OpenAI / OpenRouter, queries the models API.  For Ollama, queries
+    the local ``/api/tags`` endpoint.
+
+    :param provider: The provider name (``'openai'``, ``'openrouter'``, or ``'ollama'``).
+    :param model: The model ID to look up.
+    :returns: A tuple ``(available, message)`` where *available* is
+        ``True`` if the model was found and *message* describes the result.
+    """
     if provider in ("openai", "openrouter"):
         import openai
 
@@ -352,7 +423,9 @@ def fill_json_schema(
       *score* to **[1, 5]**, falling back to the default if the score
       is non-numeric.
 
-    Returns a new dict guaranteed to contain every criterion from the schema.
+    :param parsed: The parsed JSON dict (may be ``None``).
+    :param schema: A dict mapping criterion names to their default value dicts.
+    :returns: A new dict guaranteed to contain every criterion from the schema.
     """
     result: dict[str, Any] = {}
     for criterion, defaults in schema.items():
@@ -372,7 +445,13 @@ def fill_json_schema(
 def compute_weighted_score(
     evaluation: dict[str, Any], weights: dict[str, float]
 ) -> float:
-    """Normalise 1-5 criterion scores to a [0, 1] weighted average."""
+    """Normalize 1-5 criterion scores to a ``[0, 1]`` weighted average.
+
+    :param evaluation: A dict mapping criterion names to dicts with a
+        ``"score"`` key (value in ``1-5``).
+    :param weights: A dict mapping criterion names to their weight.
+    :returns: The weighted average, normalised to ``[0, 1]``.
+    """
     total = 0.0
     for criterion, weight in weights.items():
         raw = evaluation.get(criterion, {}).get("score", 1)

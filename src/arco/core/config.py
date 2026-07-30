@@ -1,9 +1,3 @@
-"""Configuration classes for per-step hyperparameter control.
-
-This module provides type-safe, serializable configuration objects for
-controlling agent execution at the step level.
-"""
-
 import dataclasses
 import logging
 import random
@@ -77,50 +71,67 @@ def _generate_readable_id():
 
 @dataclass(frozen=True)
 class Config:
-    """Complete agent configuration with per-agent settings."""
+    """Global and per-agent configuration for a workflow run.
 
-    # #
-    # GLOBAL CONFIGURATION
-    # #
+    :ivar workflow: The workflow identifier (e.g. ``"sales"``).
+    :ivar prompt: The user prompt for this run.
+    :ivar run_id: Unique identifier for this run (auto-generated if not set).
+    :ivar enable_budget_controller: Whether the ARCO budget controller is active.
+    :ivar default_provider: The default LLM provider (``"openai"``, ``"ollama"``,
+          or ``"openrouter"``).
+    :ivar default_model: The default model identifier.
+    :ivar default_provider_judge: The default provider for LLM-as-a-judge.
+    :ivar default_model_judge: The default model for LLM-as-a-judge.
+    :ivar ollama_url: Base URL for the Ollama server.
+    :ivar enable_storage: Whether to persist state artifacts to disk.
+    :ivar save_dir: Directory for output artifacts.
+    :ivar enable_codecarbon: Whether to enable CodeCarbon energy tracking.
+    :ivar agent_configs: Per-agent configuration dict, keyed by :class:`AgentType`.
+    :ivar config_path: Path to the YAML file this config was loaded from.
+    """
+
     workflow: str = ""
     prompt: str = ""
-    run_id: str = field(
-        default_factory=lambda: _generate_readable_id()
-    )  # the identifier for this run, generated if not provided
-    enable_budget_controller: bool = True  # whether if the budget controller is active
-    default_provider: Literal["openai", "ollama", "openrouter"] = (
-        "openai"  # global model provider
-    )
-    default_model: str = "gpt-4o-mini"  # the model string
+    run_id: str = field(default_factory=lambda: _generate_readable_id())
+    enable_budget_controller: bool = True
+    default_provider: Literal["openai", "ollama", "openrouter"] = "openai"
+    default_model: str = "gpt-4o-mini"
     default_provider_judge: Literal["openai", "ollama", "openrouter"] = "openai"
     default_model_judge: str = "gpt-4o-mini"
-    ollama_url: str = "http://localhost:11434"  # the url to the ollama server
-    enable_storage: bool = False  # toggle for state artifact creation
-    save_dir: str = "./output"  # save directory for artifacts
-    enable_codecarbon: bool = False  # toggle for codecarbon
-
-    # #
-    # AGENTS CONFIGURATION
-    # #
+    ollama_url: str = "http://localhost:11434"
+    enable_storage: bool = False
+    save_dir: str = "./output"
+    enable_codecarbon: bool = False
     agent_configs: dict[AgentType, AgentConfig] = field(default_factory=dict)
-
-    # #
-    # NOT CONFIGURABLE FROM YAML
-    # #
-    config_path: str | None = None  # The path to this config YAML file
+    config_path: str | None = None
 
     def update_prompt(self, prompt: str) -> Config:
+        """Return a new config with the prompt replaced and a fresh run ID.
+
+        :param prompt: The new prompt string.
+        :returns: A new :class:`Config` instance.
+        """
         temp = self._shuffle_id()
         return dataclasses.replace(temp, prompt=prompt)
 
     def copy(self) -> Config:
-        """Create a deep copy of this configuration."""
+        """Return a deep copy of this configuration.
+
+        :returns: A new :class:`Config` instance with all fields deeply copied.
+        """
         from copy import deepcopy
 
         return deepcopy(self)
 
     def hydrate_agent_configs(self, agent_list: list[AgentType] | None = None):
-        """Populate the agent_configs when the agent types are known"""
+        """Populate :attr:`agent_configs` from the registered agent types.
+
+        For each agent type, loads the per-agent config from the YAML file
+        (if available) or inherits from the global defaults.
+
+        :param agent_list: List of agent types to hydrate.  If ``None``,
+            all registered :class:`AgentType` values are used.
+        """
         logger.info(f"Hydrating config for : {[agent.value for agent in agent_list]!s}")
         from .agent_type import AgentType
 
@@ -135,24 +146,24 @@ class Config:
                 agent_cfg = AgentConfig.from_config(self)
             self.agent_configs[agent_type] = agent_cfg
 
-    def set(self, **kwargs):
+    def set(self, **kwargs) -> Config:
+        """Return a new config with the given fields replaced.
+
+        :param kwargs: Field names and their new values.
+        :returns: A new :class:`Config` instance.
+        """
         return replace(self, **kwargs)
 
     @classmethod
     def from_yaml(cls, yaml_path: str) -> Config:
         """Load configuration from a YAML file.
 
-        The YAML file should have sections: agent, steps, schema, run
-        Schema table definitions are stored in separate per-table YAML files,
-        referenced by path in schema.tables.
+        The YAML file should have a ``global`` section with any
+        :class:`Config` fields to override.  Per-agent settings are
+        loaded separately via :meth:`hydrate_agent_configs`.
 
-        Args:
-            yaml_path: Path to the YAML configuration file.
-
-        Returns:
-            Tuple of (AgentConfig, run_params dict, DatabaseSchema or None).
-            run_params includes keys: prompt,run_id, save_dir, save_results,
-            reuse_from and enable_codecarbon.
+        :param yaml_path: Path to the YAML configuration file.
+        :returns: A new :class:`Config` instance.
         """
         logger.info(f"Loading configs from {yaml_path}")
         with open(yaml_path, "r") as f:
@@ -160,12 +171,10 @@ class Config:
 
         global_section = raw.get("global", {})
 
-        # Set particular configs from the yaml (that needs to be instantiated or cannot be derived from the file)
-        global_params = {
+        global_params: dict[str, Any] = {
             "config_path": yaml_path,
         }
 
-        # Load all the global configs that are overridden in the YAML file
         for field_meta in fields(Config):
             if (
                 field_meta.name in global_section
@@ -177,8 +186,16 @@ class Config:
         return instance
 
     def generate_benchmark_configs(self, yaml_path: str) -> list[dict[str, Any]]:
-        """Given a Benchmark yaml configuration file (as specified in its schema.json) acts as a factory of
-        configurations, used by the benchmark script"""
+        """Generate a list of run configurations from a benchmark YAML file.
+
+        Reads the ``runs`` section of the benchmark config and creates a
+        deep copy of this config for each run, applying any per-run
+        ``changes``.
+
+        :param yaml_path: Path to a benchmark configuration YAML file.
+        :returns: A list of dicts, each with keys ``name``, ``description``,
+            ``config``, and ``changes``.
+        """
         with open(yaml_path, "r") as f:
             raw = yaml.safe_load(f)
 
@@ -186,12 +203,11 @@ class Config:
 
         full_benchmark_config_list = []
 
-        for i, run in enumerate(runs):
+        for run in runs:
             changes = run.get("changes", [])
 
             run_config = self.copy()
 
-            # set the changes for this specific run configuration
             for agent in changes:
                 from .agent_type import AgentType
 
@@ -209,6 +225,7 @@ class Config:
         return full_benchmark_config_list
 
     def _shuffle_id(self) -> Config:
+        """Return a new config with a fresh run ID."""
         return replace(self, run_id=_generate_readable_id())
 
 

@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 # Immutable dataclass representing the state
 @dataclass(frozen=True)
 class State:
+    """Immutable workflow state propagated through the LangGraph.
+
+    :ivar prompt: The original user prompt.
+    :ivar run_id: Unique identifier for this run.
+    :ivar agent_configs: Per-agent configuration dict.
+    :ivar answers: Ordered list of agent answers produced so far.
+    :ivar global_profiling_data: Cumulative profiling data across all steps.
+    :ivar agents_profiling_data: Per-agent cumulative profiling data.
+    """
+
     # Original prompt
     prompt: str
 
@@ -33,26 +43,25 @@ class State:
     agents_profiling_data: dict[AgentType, ProfilingData] = field(default_factory=dict)
 
     def add_answer(self, answer: Answer) -> State:
-        """
-        Returns a new State object with ad added answer to the answers attribute
-        :param answer: The answer to add to the answer's list
-        :return: A new state object containing a new answer
+        """Return a new state with *answer* appended to the answers list.
+
+        Args:
+            answer: The answer to append.
+
+        Returns:
+            A new state with the answer added.
         """
         return dataclasses.replace(self, answers=self.answers + [answer])
 
     def get_last_answer(self, agent_type: AgentType | None = None) -> Answer | None:
-        """
-        Retrieve the most recent answer entry for a specific agent type from the state.
-
-        This method filters the 'answers' list by the class name of the provided
-        agent type and returns the final occurrence.
+        """Retrieve the most recent answer for a specific agent type.
 
         Args:
-            agent_type: The class of the agent to search for (e.g., AgentType.VISUALIZER).
-                The function uses `agent_type.__name__` to match against `agent_id`.
+            agent_type: The agent type to filter by (e.g. ``AgentType.VISUALIZER``).
+                If ``None``, returns the last answer overall.
 
         Returns:
-            The last answer produced by the agent of type agent_type
+            The last matching answer, or ``None``.
         """
         answers = self.answers
         if agent_type:
@@ -63,6 +72,7 @@ class State:
         return answers[-1] if len(answers) > 0 else None
 
     def replace_last_answer(self, answer: Answer) -> State:
+        """Return a new state with the last answer replaced."""
         last_answer = self.get_last_answer()
         if not last_answer:
             return dataclasses.replace(self, answers=[answer])
@@ -74,6 +84,7 @@ class State:
     def get_last_agent_config(
         self, agent_type: AgentType | None = None
     ) -> AgentConfig | None:
+        """Return the config for the agent that produced the last answer."""
         if not agent_type:
             la = self.get_last_answer()
             if not la:
@@ -82,9 +93,11 @@ class State:
         return self.get_agent_config(agent_type)
 
     def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
+        """Return the config for a given agent type."""
         return self.agent_configs[agent_type]
 
     def get_agents_used(self) -> list[str]:
+        """Return the list of agent type names used so far, excluding orchestrator."""
         return [
             answer.agent_id.value.lower()
             for answer in self.answers
@@ -94,10 +107,13 @@ class State:
     def set_profiling_data(
         self, profiling_data: ProfilingData, agent_type: AgentType
     ) -> State:
-        # Global level profiling
+        """Attach profiling data and return a new state.
+
+        Accumulates into ``global_profiling_data``, per-agent
+        ``agents_profiling_data``, and the last answer's profiling data.
+        """
         global_profiling_data = self.global_profiling_data + profiling_data
 
-        # Agent level profiling
         agents_profiling_data = self.agents_profiling_data.copy()
         if agent_type in self.agents_profiling_data:
             agents_profiling_data[agent_type] = (
@@ -106,7 +122,6 @@ class State:
         else:
             agents_profiling_data[agent_type] = profiling_data
 
-        # Answer level profiling
         self.get_last_answer(agent_type).profiling_data = profiling_data
 
         return replace(
@@ -115,13 +130,14 @@ class State:
             agents_profiling_data=agents_profiling_data,
         )
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """Serialize the state to a JSON-compatible dict."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, dictionary: dict[str, Any]) -> State:
+        """Deserialize a state from a dict (inverse of :meth:`to_dict`)."""
         state = State(**dictionary)
-        # Convert dicts back to AgentConfigs, Answers and Dict[AgentType,Answer]
         agent_configs = {}
         answers = []
         for agent_type in AgentType.all():
@@ -140,6 +156,10 @@ class State:
         return State(**dictionary)
 
     def save(self, save_dir: Path):
+        """Save the serialized state to a JSON file.
+
+        The file is named ``<run_id>.json`` inside *save_dir*.
+        """
         logger.info(f"Saving state to {save_dir}")
         save_dir.mkdir(parents=True, exist_ok=True)
         save_file = save_dir / f"{self.run_id}.json"

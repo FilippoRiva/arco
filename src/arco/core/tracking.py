@@ -1,9 +1,17 @@
+"""Energy and timing tracking via LangChain callbacks and CodeCarbon.
+
+This module provides :class:`LLMCallAccumulator`, a LangChain callback
+handler that measures wall-clock time and (optionally) energy consumption
+for each LLM ``.invoke()`` call.  :func:`initialize_tracking` is called
+once per workflow run to enable CodeCarbon integration.
+"""
+
 import os
 import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .core import Config
+    from .config import Config
 
 import logging
 from collections import defaultdict
@@ -11,39 +19,55 @@ from collections import defaultdict
 from codecarbon import EmissionsTracker
 from langchain_core.callbacks import BaseCallbackHandler
 
-logging.getLogger("codecarbon").setLevel(logging.ERROR)  # Hide codecarbon warnings
+logging.getLogger("codecarbon").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
-def initialize_tracking(config: Config):
+def initialize_tracking(config: Config) -> None:
+    """Enable CodeCarbon energy tracking for a workflow run.
+
+    Does nothing if ``config.enable_codecarbon`` is ``False``.
+    Creates the CodeCarbon output directory and enables tracking on
+    all subsequently created :class:`LLMCallAccumulator` instances.
+
+    :param config: The workflow configuration.
+    """
     if not config.enable_codecarbon:
         return
     codecarbon_dir = os.path.join(config.save_dir or "./output", "codecarbon")
     os.makedirs(codecarbon_dir, exist_ok=True)
-    # LLM Emission Tracking
     LLMCallAccumulator.enable(codecarbon_dir)
     logger.info("Initialized codecarbon tracking")
 
 
 class LLMCallAccumulator(BaseCallbackHandler):
-    """Accumulates wall-clock time and energy of LLM .invoke() calls via LangChain callbacks.
+    """Accumulates wall-clock time and energy of LLM ``.invoke()`` calls.
 
-    Attach as a callback to a LangChain LLM object to record only the time and energy
-    spent inside actual LLM API calls, excluding non-LLM work (DB queries, parquet reads,
-    code execution, etc.) that may be present in the same step function.
+    Attach as a callback to a LangChain LLM to measure only the time
+    and energy spent inside actual LLM calls, excluding non-LLM
+    work (DB queries, parquet reads, code execution, etc.) that may
+    be present in the same step function.
 
-    When cc_enabled=True, a fresh CodeCarbon EmissionsTracker is started at the beginning
-    of each invoke() and stopped at the end. This avoids the pro-rating approximation that
-    would be incorrect when GPU power varies significantly during inference (e.g. local
-    Ollama on A40/L40S), since the tracker window covers only the actual inference window.
+    When CodeCarbon is enabled, a fresh :class:`EmissionsTracker` is
+    started at the beginning of each ``invoke()`` and stopped at the
+    end, collecting CPU, GPU, and RAM energy plus CO2 emissions.
 
     Thread-safe for sequential use (one step at a time).
+
+    :ivar total_time: Cumulative wall-clock seconds spent in LLM calls.
+    :ivar energy_dict: Cumulative energy metrics dict with keys
+        ``energy_consumed_kwh``, ``cpu_energy_kwh``, ``gpu_energy_kwh``,
+        ``ram_energy_kwh``, and ``emissions_kg_co2``.
     """
 
     _save_dir: str | None = None
     _enabled: bool = False
 
     def __init__(self, name: str):
+        """Create an accumulator for a named agent step.
+
+        :param name: The agent type name (used for the CodeCarbon subdirectory).
+        """
         super().__init__()
         self._starts: dict[str, float | int] = {}
         self._cc_trackers: dict[str, Any] = {}
@@ -54,14 +78,17 @@ class LLMCallAccumulator(BaseCallbackHandler):
             else None
         )
         self._enabled: bool = LLMCallAccumulator._enabled
-        # Accumulated energy across all invoke() calls for this step
         self.energy_dict: dict[str, float | int] = defaultdict(float)
 
         if self._cc_output_dir:
             os.makedirs(self._cc_output_dir, exist_ok=True)
 
     @staticmethod
-    def enable(save_dir: str):
+    def enable(save_dir: str) -> None:
+        """Globally enable CodeCarbon tracking for all new accumulators.
+
+        :param save_dir: Base directory for CodeCarbon output files.
+        """
         LLMCallAccumulator._save_dir = save_dir
         LLMCallAccumulator._enabled = True
 
@@ -84,8 +111,6 @@ class LLMCallAccumulator(BaseCallbackHandler):
         if emission_tracker is None:
             return
         emission_tracker.stop()
-        # tracker.stop() returns a float (CO2 kg), not EmissionsData.
-        # The full breakdown is in final_emissions_data, same as the original code.
         emission_data = getattr(emission_tracker, "final_emissions_data", None)
         if emission_data is not None:
             self.energy_dict["energy_consumed_kwh"] += (
@@ -105,22 +130,20 @@ class LLMCallAccumulator(BaseCallbackHandler):
             )
 
     def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
+        """LangChain callback: start timing and (optionally) CodeCarbon tracking."""
         key = str(run_id)
         self._starts[key] = time.perf_counter()
         self._start_cc_tracker(key)
 
     def on_llm_end(self, response, *, run_id, **kwargs) -> None:
+        """LangChain callback: stop timing and CodeCarbon tracking."""
         key = str(run_id)
         if key in self._starts:
             self.total_time += time.perf_counter() - self._starts.pop(key)
         self._stop_cc_tracker(key)
 
     def on_llm_error(self, error, *, run_id, **kwargs) -> None:
-        # Count errored calls too — the HTTP round-trip still happened.
-        key = str(run_id)
-        if key in self._starts:
-            self.total_time += time.perf_counter() - self._starts.pop(key)
-        self._stop_cc_tracker(key)
+        self.on_llm_end(response=error, run_id=run_id, **kwargs)
 
 
 __all__ = ["LLMCallAccumulator", "initialize_tracking"]

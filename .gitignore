@@ -6,6 +6,7 @@
 # Agentic Coding
 .claude/
 .codex/
+./opencode.json
 
 # Python libraries and build files
 .venv/

@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 
 class AgentException(Exception):
-    """This exception is risen if the Agent occurs in a fatal exception"""
+    """Raised when an agent encounters a fatal error."""
 
     def __init__(
         self,
@@ -21,15 +21,15 @@ class AgentException(Exception):
 
 
 class EvaluatorException(AgentException):
-    """Exception raised when evaluation fails."""
+    """Raised when evaluation fails."""
 
 
 class ConfigException(Exception):
-    """Raised when there's some fatal error in the usage of an ArcoConfig or AgentConfig"""
+    """Raised when there is a fatal error in the usage of a Config or AgentConfig."""
 
 
 class StateException(Exception):
-    """Raised when"""
+    """Raised when a State operation fails."""
 
 
 __all__ = ["AgentException", "ConfigException", "EvaluatorException", "StateException"]

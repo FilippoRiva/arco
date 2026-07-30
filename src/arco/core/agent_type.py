@@ -3,25 +3,32 @@ from typing import ClassVar, Self
 
 
 class AgentType(str):
-    """
-    An open-ended, string-based agent identifier.
+    """An open-ended, string-based agent identifier.
 
-    Behaves like a plain str (hashable, JSON-serializable, comparable),
-    but new agent types can be defined anywhere just by instantiating
-    AgentType("SomeName") — no need to touch this class.
+    Behaves like a plain ``str`` (hashable, JSON-serializable, comparable),
+    but new agent types can be defined anywhere just by calling
+    :meth:`register` — no need to modify this class.
+
+    Auto-registered by :class:`Agent.__init_subclass__` when a concrete
+    subclass is defined.
     """
 
     _registry: ClassVar[dict[str, AgentType]] = {}
 
     @classmethod
     def register(cls, value: str):
-        # Records into the registry of AgentTypes
+        """Register a new agent type.
+
+        Creates a singleton instance and adds an uppercase class attribute
+        (e.g. ``register("Retriever")`` adds ``AgentType.RETRIEVER``).
+
+        :param value: The agent type name (e.g. ``"Retriever"``).
+        """
         if value in cls._registry:
             return
         instance = super().__new__(cls, value)
         cls._registry[value] = instance
 
-        # Adds the property in capslock for the agent (AgentType.register("Retriever") adds AgentType.RETRIEVER)
         attr_name = re.sub(r"\W+", "_", value).strip("_").upper()
         if attr_name and not hasattr(cls, attr_name):
             setattr(cls, attr_name, instance)
@@ -31,12 +38,12 @@ class AgentType(str):
 
     @property
     def value(self) -> str:
-        # keeps `.value` working anywhere the old Enum-style access is used
+        """Return the raw string value (for Enum-style access)."""
         return str(self)
 
     @classmethod
     def all(cls) -> list[AgentType]:
-        """All agent types registered so far."""
+        """Return all registered agent types."""
         return list(cls._registry.values())
 
 

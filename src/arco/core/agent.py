@@ -24,12 +24,24 @@ logger = logging.getLogger(__name__)
 
 
 class Agent(ABC):
+    """Abstract base class for all agents.
+
+    Every concrete subclass is automatically registered in the
+    :class:`AgentType` registry via :meth:`__init_subclass__`.
+
+    Subclasses must implement :meth:`core` and may optionally override
+    :meth:`post_generation_hooks` and the :attr:`evaluator` property.
+    """
+
     def __init_subclass__(cls, **kwargs):
-        """When a subclass inherits this ABC, the agent_type of that subclass is stored and the AgentType "dynamic ENUM".
-        This provides compatibility with any kind of dynamically defined Agent"""
+        """Register concrete subclasses in the AgentType registry.
+
+        Intermediate abstract subclasses (those that still have abstract
+        methods) are skipped.
+        """
         super().__init_subclass__(**kwargs)
         if inspect.isabstract(cls):
-            return  # don't register intermediate abstract subclasses
+            return
         AgentType.register(cls.__name__)
 
     def __init__(self):
@@ -37,10 +49,16 @@ class Agent(ABC):
 
     @property
     def name(self) -> str:
+        """Return the agent type name (e.g. ``"Retriever"``)."""
         return self.type.value
 
     @property
     def evaluator(self) -> Evaluator | None:
+        """Return the evaluator for best-of-N selection and GT evaluation.
+
+        Subclasses should override this to return a specialized evaluator.
+        ``None`` skips best-of-N evaluation.
+        """
         return None
 
     @evaluator.setter
@@ -51,15 +69,15 @@ class Agent(ABC):
 
     @abstractmethod
     def core(self, state: State, llm: LLM) -> State:
-        """
-        Provides the core functionality of the agent.
+        """Implement the agent's core logic.
 
-        Args:
-            state (State): State of the agent.
-            llm : LLM instance of a large language model to be used at inference
+        This is the only method a subclass must implement. It receives the
+        current :class:`State` and an :class:`LLM` instance and returns an
+        updated state with the agent's output appended.
 
-        Returns:
-            Updated state with analysis appended to answers
+        :param state: The current workflow state.
+        :param llm: The LLM instance to use for inference.
+        :returns: Updated :class:`State` with a new :class:`Answer` appended.
         """
         ...
 
@@ -72,7 +90,18 @@ class Agent(ABC):
         error: str | None = None,
         logprobs=None,
     ) -> State:
-        """Build an :class:`Answer` with implicit *agent_id* and *agent_config*, and append it to *state*."""
+        """Build an :class:`Answer` and append it to *state*.
+
+        The answer's ``agent_id`` and ``agent_config`` are filled in
+        automatically from the agent's type and the state's config.
+
+        :param state: The current state.
+        :param message: Human-readable summary of the agent's output.
+        :param output: Structured output for downstream agents.
+        :param error: Error message if the agent failed.
+        :param logprobs: Token-level log probabilities from the LLM.
+        :returns: A new state with the answer appended.
+        """
         from .answer import Answer
 
         return state.add_answer(
@@ -89,6 +118,16 @@ class Agent(ABC):
     def post_generation_hooks(
         self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
     ) -> list[State]:
+        """Post-process best-of-N candidates before evaluation.
+
+        Override this in subclasses to apply transformations across all
+        candidates (e.g. column name standardisation in the Retriever).
+
+        :param results: The list of candidate states from greedy or best-of-N execution.
+        :param llm_acc: The LLM call accumulator for this step.
+        :param config: The agent's configuration for this execution.
+        :returns: The (possibly modified) list of candidate states.
+        """
         return results
 
     def __call__(self, state: State) -> State:
@@ -103,6 +142,17 @@ class Agent(ABC):
                 return state
 
     def _get_config_and_execute(self, state: State) -> State:
+        """Resolve the agent config, run inference (greedy or best-of-N),
+        apply post-generation hooks, evaluate best-of-N candidates, and
+        attach profiling data.
+
+        This is the core execution pipeline for a single agent step,
+        called by :meth:`_invoke` on each iteration of the budget controller
+        loop.
+
+        :param state: The current workflow state.
+        :returns: A new state with the best answer appended and profiling data attached.
+        """
         agent_config: AgentConfig = state.get_agent_config(self.type)
 
         # Start timers
