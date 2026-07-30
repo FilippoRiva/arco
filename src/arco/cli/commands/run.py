@@ -48,7 +48,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     import os
     import sys
 
-    from arco.tools import run_from_config
+    from arco.tools.run import run_from_config
 
     from ..viz import display, printer
 

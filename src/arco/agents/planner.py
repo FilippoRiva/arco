@@ -134,7 +134,7 @@ No explanations. No markdown. Just the JSON array.
             return self.answer(
                 state,
                 message="Workflow complete",
-                output={"agent_choice": "end", "plan": []},
+                output={"agent_choice": "End", "plan": []},
             )
 
         choice = remaining[0].capitalize()

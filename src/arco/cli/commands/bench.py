@@ -51,7 +51,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from rich.rule import Rule
 
     from arco.cli.viz import display, printer
-    from arco.tools import benchmark_from_config
+    from arco.tools.bench import benchmark_from_config
 
     console.print("[green]✓[/green] Benchmark loaded")
     status.stop()
