@@ -1,5 +1,4 @@
 import difflib
-import inspect
 import logging
 import math
 import sys
@@ -34,15 +33,6 @@ class Agent(ABC):
     Subclasses must implement :meth:`core` and may optionally override
     :meth:`post_generation_hooks` and the :attr:`evaluator` property.
     """
-
-    def __init_subclass__(cls, **kwargs):
-        """Register concrete subclasses.
-
-        The class name is used as the agent type identifier.
-        """
-        super().__init_subclass__(**kwargs)
-        if inspect.isabstract(cls):
-            return
 
     def __init__(self):
         self.type = AgentType(self.__class__.__name__)

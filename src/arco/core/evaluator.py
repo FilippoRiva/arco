@@ -108,7 +108,7 @@ class Evaluator(ABC):
 
         Discarded candidates are attached to the selected state's answer.
         """
-        if any(e.score == 0 for e in evaluations):
+        if any(e.score != 0 for e in evaluations):
             idx = max(range(len(evaluations)), key=lambda i: evaluations[i].score)
         else:
             idx = 0

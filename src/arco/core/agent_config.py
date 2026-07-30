@@ -171,7 +171,7 @@ class AgentConfig:
         if self.bon_parameter == "top_k":
             if self.top_k_min is None or self.top_k_max is None:
                 raise ConfigException(
-                    "Cannot generate candidates if top_p_min or top_p_max are None"
+                    "Cannot generate candidates if top_k_min or top_p_max are None"
                 )
             top_ks = [
                 int(k) for k in np.linspace(self.top_k_min, self.top_k_max, self.n)

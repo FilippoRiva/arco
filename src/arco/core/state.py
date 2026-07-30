@@ -80,7 +80,7 @@ class State:
         last_answer = self.get_last_answer()
         if not last_answer:
             return dataclasses.replace(self, answers=[answer])
-        new_answers = tuple([answer.copy() for answer in self.answers[:-1]] + [answer])
+        new_answers = tuple([answer for answer in self.answers[:-1]] + [answer])
         return dataclasses.replace(self, answers=new_answers)
 
     def get_agent_config(self, agent_type: AgentType | None) -> AgentConfig:
@@ -147,7 +147,7 @@ class State:
         state = State(**dictionary)
         agent_configs: dict[AgentType, AgentConfig] = {}
         answers = []
-        for agent_type in state._agent_configs:
+        for agent_type in state.agent_configs:
             agent_configs[agent_type] = AgentConfig.from_dict(
                 dictionary["agent_configs"][agent_type]
             )
