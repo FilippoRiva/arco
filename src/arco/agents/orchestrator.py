@@ -1,7 +1,7 @@
 import difflib
 from typing import TYPE_CHECKING
 
-from arco.core import Agent, AgentType
+from arco.core import Agent
 from arco.evaluators import OrchestratorEvaluator
 
 if TYPE_CHECKING:
@@ -105,15 +105,9 @@ No explanations. Just the agent's name."""
         return OrchestratorEvaluator()
 
     def core(self, state: State, llm: LLM) -> State:
-        last_orchestrator_answer: Answer | None = state.get_last_answer(
-            AgentType.ORCHESTRATOR
-        )
-        last_retriever_answer: Answer | None = state.get_last_answer(
-            AgentType.RETRIEVER
-        )
-        last_visualizer_answer: Answer | None = state.get_last_answer(
-            AgentType.VISUALIZER
-        )
+        last_orchestrator_answer: Answer | None = state.get_last_answer("Orchestrator")
+        last_retriever_answer: Answer | None = state.get_last_answer("Retriever")
+        last_visualizer_answer: Answer | None = state.get_last_answer("Visualizer")
 
         error_is_present = (
             last_retriever_answer is not None

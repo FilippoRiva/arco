@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import duckdb
 import pandas as pd
 
-from arco.core import Agent, AgentException, AgentType, get_llm
+from arco.core import Agent, AgentException, get_llm
 from arco.data import DatabaseSchema, normalize_dataframe_values
 from arco.evaluators import RetrieverEvaluator
 
@@ -241,9 +241,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
 
         candidates = []
         for i, result in enumerate(results):
-            last_retriever_answer: Answer | None = result.get_last_answer(
-                AgentType.RETRIEVER
-            )
+            last_retriever_answer: Answer | None = result.get_last_answer("Retriever")
             output = last_retriever_answer.agent_output
             if (
                 last_retriever_answer is None
@@ -295,12 +293,12 @@ name used by any candidate. Prefer lowercase_with_underscores.
         for candidate, col_map in zip(candidates, mappings):
             idx = candidate["idx"]
             state_it: State = results[idx]
-            ret_ans = state_it.get_last_answer(AgentType.RETRIEVER)
+            ret_ans = state_it.get_last_answer("Retriever")
             if ret_ans is None or "data_df" not in ret_ans.agent_output:
                 logger.error(
                     f"Missing dependencies for standardization of retriever output: found_answer:{ret_ans}, output:{ret_ans.agent_output}"
                 )
-                raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
+                raise AgentException(missing_dependencies_from="Retriever")
             df: pd.DataFrame = ret_ans.agent_output["data_df"]
 
             # Rename

@@ -1,8 +1,10 @@
 import dataclasses
 import json
 import logging
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from .agent_type import AgentType
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # Immutable dataclass representing the state
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class State:
     """Immutable workflow state propagated through the LangGraph.
 
@@ -33,7 +35,7 @@ class State:
     run_id: str
 
     # Dynamic Configuration for agents
-    agent_configs: dict[AgentType, AgentConfig]
+    agent_configs: Mapping[AgentType, AgentConfig]
 
     # List of agent's answers
     answers: list[Answer] = field(default_factory=list)
@@ -57,7 +59,7 @@ class State:
         """Retrieve the most recent answer for a specific agent type.
 
         Args:
-            agent_type: The agent type to filter by (e.g. ``AgentType.VISUALIZER``).
+            agent_type: The agent type to filter by (e.g. ``"Visualizer"``).
                 If ``None``, returns the last answer overall.
 
         Returns:
@@ -99,9 +101,9 @@ class State:
     def get_agents_used(self) -> list[str]:
         """Return the list of agent type names used so far, excluding orchestrator."""
         return [
-            answer.agent_id.value.lower()
+            answer.agent_id.lower()
             for answer in self.answers
-            if answer.agent_id is not AgentType.ORCHESTRATOR
+            if answer.agent_id != "Orchestrator"
         ]
 
     def set_profiling_data(
@@ -132,28 +134,33 @@ class State:
 
     def to_dict(self) -> dict:
         """Serialize the state to a JSON-compatible dict."""
-        return asdict(self)
+        return {
+            "prompt": self.prompt,
+            "run_id": self.run_id,
+            "agent_configs": {k: asdict(v) for k, v in self.agent_configs.items()},
+            "answers": [a.to_dict() for a in self.answers],
+            "global_profiling_data": asdict(self.global_profiling_data),
+            "agents_profiling_data": {
+                k: asdict(v) for k, v in self.agents_profiling_data.items()
+            },
+        }
 
     @classmethod
     def from_dict(cls, dictionary: dict[str, Any]) -> State:
         """Deserialize a state from a dict (inverse of :meth:`to_dict`)."""
         state = State(**dictionary)
-        agent_configs = {}
+        agent_configs: dict[AgentType, AgentConfig] = {}
         answers = []
-        for agent_type in AgentType.all():
-            if agent_type.value in state.agent_configs:
-                agent_configs[agent_type] = AgentConfig.from_dict(
-                    dictionary["agent_configs"][agent_type.value]
-                )
+        for agent_type in state.agent_configs:
+            agent_configs[agent_type] = AgentConfig.from_dict(
+                dictionary["agent_configs"][agent_type]
+            )
         for answer in dictionary["answers"]:
             answers.append(Answer.from_dict(answer))
-        dictionary.update(
-            {
-                "agent_configs": agent_configs,
-                "answers": answers,
-            }
-        )
-        return State(**dictionary)
+        params = dict(dictionary)
+        params["agent_configs"] = MappingProxyType(agent_configs)
+        params["answers"] = answers
+        return State(**params)
 
     def save(self, save_dir: Path):
         """Save the serialized state to a JSON file.

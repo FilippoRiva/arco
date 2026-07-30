@@ -78,7 +78,7 @@ def _answer_html(answer: Answer, verbose: bool) -> str:
     return (
         f"<div style='margin:6px 0;padding:8px 12px;border-left:4px solid #dfe6e9;"
         f"background:#2d3436;border-radius:0 6px 6px 0;color:#dfe6e9'>"
-        f"<div style='margin-bottom:4px'>{_badge(answer.agent_id.value)}</div>"
+        f"<div style='margin-bottom:4px'>{_badge(answer.agent_id)}</div>"
         f"{body}</div>"
     )
 
@@ -163,7 +163,7 @@ def display_workflow_notebook(
         elif event_type == "node_finished":
             last_state = update["state"]
             answer: Answer = last_state.get_last_answer()
-            agent = answer.agent_id.value
+            agent = answer
             progress.append(f"✅ **{agent}**")
 
             # Render answer HTML

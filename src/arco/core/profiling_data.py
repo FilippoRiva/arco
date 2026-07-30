@@ -1,7 +1,7 @@
 from dataclasses import asdict, dataclass, replace
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ProfilingData:
     """Profiling metrics for a single agent execution step.
 

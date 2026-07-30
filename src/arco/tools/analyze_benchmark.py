@@ -11,24 +11,7 @@ from arco.core import State
 from arco.data import BenchmarkDataset
 
 
-def _register_agent_types() -> None:
-    """Import agent modules to populate the AgentType registry without triggering
-    optional dependency imports (e.g. duckdb from the ``sales`` extra)."""
-    from arco.core.agent_type import AgentType
-
-    for name in (
-        "Planner",
-        "Orchestrator",
-        "Retriever",
-        "Analyzer",
-        "Visualizer",
-        "CodingAgent",
-        "ScoringAgent",
-    ):
-        AgentType.register(name)
-
-
-@dataclass
+@dataclass(slots=True)
 class BenchmarkResult:
     """Loaded artifacts from a completed benchmark run."""
 
@@ -41,7 +24,6 @@ class BenchmarkResult:
 
     @classmethod
     def load(cls, benchmark_dir: str) -> BenchmarkResult:
-        _register_agent_types()
         bdir = Path(benchmark_dir)
 
         with open(bdir / "bench_metadata.json") as f:
@@ -182,7 +164,7 @@ def print_trace_analysis(result: BenchmarkResult) -> None:
                 continue
             entry = dataset.entries[entry_id]
             actual_agents = [a["agent_type"] for a in row["trace"]["answers"]]
-            expected_agents = [te.agent_type.value for te in entry.trace]
+            expected_agents = [te for te in entry.trace]
 
             divergence = None
             for i, (actual, expected) in enumerate(zip(actual_agents, expected_agents)):
@@ -428,7 +410,7 @@ def plot_trace_completion(
     completions: list[float] = []
     for entry in dataset.entries:
         entry_ids.append(entry.id)
-        expected = [te.agent_type.value for te in entry.trace]
+        expected = [te for te in entry.trace]
         fractions = []
         for run_df in result.runs.values():
             row = run_df[run_df["entry_id"] == entry.id]

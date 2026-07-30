@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from arco.core import Agent, AgentException, AgentType
+from arco.core import Agent, AgentException
 from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         return VisualizerEvaluator()
 
     def core(self, state: State, llm: LLM) -> State:
-        last_retriever_answer = state.get_last_answer(AgentType.RETRIEVER)
+        last_retriever_answer = state.get_last_answer("Retriever")
         if (
             last_retriever_answer is None
             or "data_df" not in last_retriever_answer.agent_output
@@ -130,7 +130,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             logger.error(
                 f"Missing dependencies for visualization from retriever output: last_ret_answer:{last_retriever_answer}, last_retriever_output:{last_retriever_answer.agent_output}"
             )
-            raise AgentException(missing_answer_from_type=AgentType.RETRIEVER)
+            raise AgentException(missing_answer_from_type="Retriever")
 
         data_df = last_retriever_answer.agent_output["data_df"]
 

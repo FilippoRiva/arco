@@ -29,7 +29,7 @@ from arco.data.exceptions import SchemaParsingException
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class ColumnSchema:
     """Description of a single column within a table.
 
@@ -57,7 +57,7 @@ class ColumnSchema:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class TableSchema:
     """Description of a single table backed by a parquet file.
 
@@ -82,7 +82,7 @@ class TableSchema:
         }
 
 
-@dataclass
+@dataclass(slots=True)
 class DatabaseSchema:
     """Container for all tables in the database, with LLM context helpers.
 

@@ -28,7 +28,7 @@ def display_workflow_compact(events: Generator[str, Any]) -> State:
             elif event_type == "node_finished":
                 last_state = update["state"]
                 answer = last_state.get_last_answer()
-                agent = answer.agent_id.value
+                agent = answer.agent_id
                 status.set(f"{agent} completed")
             elif event_type == "completed":
                 status.stop()
@@ -65,11 +65,10 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
             live.console.print(render_answer(answer=last_answer, verbose=verbose))
 
             # If this was the visualizer, render the chart inline
-            if last_answer.agent_id.value.lower() == "visualizer":
+            if last_answer.agent_id.lower() == "visualizer":
                 status.stop()
-                from arco.core import AgentType
 
-                retriever_answer = last_state.get_last_answer(AgentType.RETRIEVER)
+                retriever_answer = last_state.get_last_answer("Retriever")
                 if retriever_answer:
                     df = retriever_answer.agent_output.get("data_df")
                     chart_config = last_answer.agent_output.get("chart_config")
@@ -78,7 +77,7 @@ def display_workflow(events: Generator[str, Any], verbose=False) -> State:
                         execute_chart_code(df, chart_config, code)
                 status.start()
 
-            status.set(f"{last_answer.agent_id.value} ended its run ")
+            status.set(f"{last_answer.agent_id} ended its run ")
         elif event_type == "codecarbon":
             energy_dict = update["energy_dict"]
         elif event_type == "completed":

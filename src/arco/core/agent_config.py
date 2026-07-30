@@ -1,6 +1,6 @@
 import dataclasses
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class AgentConfig:
     """Configuration for a single agent execution.
 
@@ -102,10 +102,9 @@ class AgentConfig:
         config = AgentConfig.from_dict(agent_dict)
 
         if inherit_globals_from:
-            config._inherit_from_config(inherit_globals_from)
+            config = config._inherit_from_config(inherit_globals_from)
 
-        config._normalize_ranges()
-        return config
+        return config._normalize_ranges()
 
     @classmethod
     def from_config(cls, config: Config) -> AgentConfig:
@@ -114,9 +113,7 @@ class AgentConfig:
         :param config: The global config to inherit from.
         :returns: A new :class:`AgentConfig` instance.
         """
-        result = cls()
-        result._inherit_from_config(config=config)
-        return result
+        return cls()._inherit_from_config(config=config)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> AgentConfig:
@@ -131,16 +128,26 @@ class AgentConfig:
         filtered = {k: v for k, v in data.items() if k in valid_keys}
         return cls(**filtered)
 
-    def update(self, update_dict: dict[str, Any]):
-        """Update fields from a dict, ignoring unknown keys.
+    def set(self, **kwargs) -> AgentConfig:
+        """Return a new AgentConfig with the given fields replaced.
 
-        :param update_dict: Dictionary of field names to values.
+        :param kwargs: Field names and their new values.
+        :returns: A new :class:`AgentConfig` instance.
         """
         valid_keys = {f.name for f in dataclasses.fields(AgentConfig)}
-        for key, value in update_dict.items():
-            if key in valid_keys:
-                setattr(self, key, value)
-        self._normalize_ranges()
+        filtered = {k: v for k, v in kwargs.items() if k in valid_keys}
+        return replace(self, **filtered)
+
+    def update(self, update_dict: dict[str, Any]) -> AgentConfig:
+        """Return a new AgentConfig with fields from *update_dict* applied.
+
+        Unknown keys are silently ignored.  Ranges are normalised after
+        the update.
+
+        :param update_dict: Dictionary of field names to values.
+        :returns: A new :class:`AgentConfig` instance.
+        """
+        return self.set(**update_dict)._normalize_ranges()
 
     def get_candidate_params(self) -> list[tuple[float, float | None, int | None]]:
         """Generate ``(temperature, top_p, top_k)`` tuples for each best-of-N candidate.
@@ -174,29 +181,43 @@ class AgentConfig:
         temps = np.linspace(self.temp_min, self.temp_max, self.n).tolist()
         return [(t, self.top_p_min, self.top_k_min) for t in temps]
 
-    def _inherit_from_config(self, config: Config):
+    def _inherit_from_config(self, config: Config) -> AgentConfig:
+        """Return a new config with unset fields inherited from the global config."""
+        kwargs = {}
         if self.provider == self._DUMMY_STR:
-            self.provider = config.default_provider
+            kwargs["provider"] = config.default_provider
         if self.model == self._DUMMY_STR:
-            self.model = config.default_model
+            kwargs["model"] = config.default_model
         if self.provider_judge == self._DUMMY_STR:
-            self.provider_judge = config.default_provider_judge
+            kwargs["provider_judge"] = config.default_provider_judge
         if self.model_judge == self._DUMMY_STR:
-            self.model_judge = config.default_model_judge
+            kwargs["model_judge"] = config.default_model_judge
         if self.enable_budget_controller is None:
-            self.enable_budget_controller = config.enable_budget_controller
+            kwargs["enable_budget_controller"] = config.enable_budget_controller
+        if kwargs:
+            return replace(self, **kwargs)
+        return self
 
-    def _normalize_ranges(self):
+    def _normalize_ranges(self) -> AgentConfig:
+        """Return a new config with normalised min/max ranges."""
+        kwargs = {}
         if self.n == 1:
-            self.temp_max = self.temp_min
-            self.top_k_max = self.top_k_min
-            self.top_p_max = self.top_p_min
+            if self.temp_max != self.temp_min:
+                kwargs["temp_max"] = self.temp_min
+            if self.top_k_max != self.top_k_min:
+                kwargs["top_k_max"] = self.top_k_min
+            if self.top_p_max != self.top_p_min:
+                kwargs["top_p_max"] = self.top_p_min
         else:
-            self.temp_max = max(self.temp_max, self.temp_min)
+            if self.temp_max < self.temp_min:
+                kwargs["temp_max"] = self.temp_min
             if self.top_k_min and self.top_k_max and self.top_k_max < self.top_k_min:
-                self.top_k_max = self.top_k_min
+                kwargs["top_k_max"] = self.top_k_min
             if self.top_p_min and self.top_p_max and self.top_p_max < self.top_p_min:
-                self.top_p_max = self.top_p_min
+                kwargs["top_p_max"] = self.top_p_min
+        if kwargs:
+            return replace(self, **kwargs)
+        return self
 
     def __rich_repr__(self):
         # Rich automatically detects this method when you pass the object to Pretty()

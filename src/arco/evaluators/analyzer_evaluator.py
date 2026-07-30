@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
+from arco.core import Answer, Evaluation, Evaluator, State, get_llm
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
@@ -116,18 +116,18 @@ class AnalyzerEvaluator(Evaluator):
         return False
 
     def _eval(self, state: State, judge_provider: str, judge_model: str):
-        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
+        last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
         analysis = last_analyzer_answer.agent_output["analysis"]
         if not analysis:
             raise ValueError(
-                f"The {State.__name__} did not contain a {AgentType.ANALYZER.value} {Answer.__name__}"
+                f"The {State.__name__} did not contain a {'Analyzer'.value} {Answer.__name__}"
             )
 
         llm = get_llm(provider=judge_provider, model=judge_model)
 
         prompt = state.prompt
-        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
-        last_analyzer_answer: Answer = state.get_last_answer(AgentType.ANALYZER)
+        last_retriever_answer: Answer = state.get_last_answer("Retriever")
+        last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
         sql_query: str = last_retriever_answer.agent_output["sql_query"]
         data: str = last_retriever_answer.agent_output["data_str"]
         analysis: str = last_analyzer_answer.agent_output["analysis"]

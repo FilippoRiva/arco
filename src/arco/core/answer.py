@@ -8,7 +8,7 @@ from .evaluator import Evaluation
 from .profiling_data import ProfilingData
 
 
-@dataclass
+@dataclass(slots=True)
 class Answer:
     """Container for a single agent's output within a workflow run.
 

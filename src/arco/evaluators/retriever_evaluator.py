@@ -3,7 +3,7 @@ from io import StringIO
 
 import pandas as pd
 
-from arco.core import AgentException, AgentType, Answer, Evaluation, Evaluator, State
+from arco.core import AgentException, Answer, Evaluation, Evaluator, State
 from arco.data import normalize_dataframe_values
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def _compare_dataframes_iou(
 def _apply_gt_alignment(answer: Answer, canonic_cols: list):
     """Rename and reorder df columns to match canonical_cols without LLM."""
     if answer is None or "data_df" not in answer.agent_output:
-        raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
+        raise AgentException(missing_dependencies_from="Retriever")
     df_to_align: pd.DataFrame = answer.agent_output["data_df"]
     current_cols = list(df_to_align.columns)
     if len(current_cols) == len(canonic_cols):
@@ -133,11 +133,9 @@ class RetrieverEvaluator(Evaluator):
 
         # Extract DataFrames from results
         # pyrefly: ignore [bad-assignment]
-        answers: list[Answer] = [r.get_last_answer(AgentType.RETRIEVER) for r in states]
+        answers: list[Answer] = [r.get_last_answer("Retriever") for r in states]
         if None in answers:
-            raise ValueError(
-                f"One {State.__name__} did not contain a {AgentType.RETRIEVER.value} {Answer.__name__}"
-            )
+            raise ValueError(f"One {State.__name__} did not contain a Retriever answer")
 
         # Default when Best-of-1
         if len(answers) == 1:
@@ -173,7 +171,7 @@ class RetrieverEvaluator(Evaluator):
         """
         if not answer:
             raise ValueError(
-                f"Tried to evaluate a {State.__name__} with no {AgentType.RETRIEVER.value} {Answer.__name__} with a {RetrieverEvaluator.__name__}"
+                "Tried to evaluate a state with no Retriever answer with a Retriever Evaluator"
             )
 
         if "data_df" not in answer.agent_output:

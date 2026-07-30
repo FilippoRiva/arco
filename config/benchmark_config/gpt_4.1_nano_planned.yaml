@@ -5,9 +5,9 @@ global:
   default_provider: openai
   default_model: gpt-4.1-nano
   default_provider_judge: openai
-  default_model_judge: gpt-4.1-nano
-  enable_storage: true
-  enable_codecarbon: false
+  default_model_judge: gpt-5.4-nano
+  enable_storage: false
+  enable_codecarbon: true
 
 defaults:
   Retriever:
@@ -33,5 +33,48 @@ defaults:
     max_tokens: 5000
 
 runs:
-  - name: Baseline
-    description: baseline benchmark at standard configs
+  - name: Retriever_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 0.2
+  - name: Retriever_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 0.6
+  - name: Retriever_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 1
+  - name: Analyzer_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 0.2
+  - name: Analyzer_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 0.6
+  - name: Analyzer_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 1
+  - name: Visualizer_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 0.2
+  - name: Visualizer_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 0.6
+  - name: Visualizer_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 1

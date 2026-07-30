@@ -1,7 +1,7 @@
 import json
 from typing import TYPE_CHECKING, Any
 
-from arco.core import AgentType, Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
+from arco.core import Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
@@ -168,8 +168,8 @@ Return ONLY valid JSON:
         """
         llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
 
-        last_visualizer_answer: Answer = state.get_last_answer(AgentType.VISUALIZER)
-        last_retriever_answer: Answer = state.get_last_answer(AgentType.RETRIEVER)
+        last_visualizer_answer: Answer = state.get_last_answer("Visualizer")
+        last_retriever_answer: Answer = state.get_last_answer("Retriever")
         data_df = last_retriever_answer.agent_output["data_df"]
 
         if data_df is not None and hasattr(data_df, "columns"):

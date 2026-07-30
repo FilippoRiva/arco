@@ -9,7 +9,7 @@ from arco.core.profiling_data import ProfilingData
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BenchmarkSummary:
     completion_percentage: float
     ppls: list[float]
@@ -18,7 +18,7 @@ class BenchmarkSummary:
     profiling_datas: list[ProfilingData]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BenchmarkDataset:
     entries: list[BenchmarkEntry]
 
@@ -47,7 +47,7 @@ class BenchmarkDataset:
         return len(self.entries)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BenchmarkEntry:
     prompt: str
     trace: Trace
@@ -74,7 +74,7 @@ class BenchmarkEntry:
         }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Trace:
     trace_list: list[TraceElement]
 
@@ -102,14 +102,14 @@ class Trace:
         return iter(self.trace_list)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TraceElement:
     agent_type: AgentType
     data: dict[str, str | int | float | dict]
 
     def to_dict(self) -> dict:
         return {
-            "agent_type": self.agent_type.value,
+            "agent_type": self.agent_type,
             "data": self.data,
         }
 

@@ -118,7 +118,7 @@ def print_benchmark_summary(summary: BenchmarkSummary):
 
     for agent, values in grouped.items():
         table.add_row(
-            agent.value,
+            agent,
             str(len(values["ppl"])),
             f"{_avg(values['ppl']):.2f}",
             f"{_avg(values['score']):.2f}",
@@ -141,9 +141,7 @@ def print_benchmark_summary(summary: BenchmarkSummary):
 
         t = Text()
         t.append("█", style=color)
-        t.append(
-            f" {agent.value if len(agent.value) < 15 else agent.value[:5] + '...'}({score:.2f})"
-        )
+        t.append(f" {agent if len(agent) < 15 else agent[:5] + '...'}({score:.2f})")
         timeline.append(t)
 
     console.print(

@@ -110,7 +110,7 @@ No explanations. No markdown. Just the JSON array.
         last_agent_name = None
         for ans in reversed(state.answers):
             if ans.agent_id != self.type:
-                last_agent_name = ans.agent_id.value
+                last_agent_name = ans.agent_id
                 if ans.error:
                     last_error = ans.error
                 break

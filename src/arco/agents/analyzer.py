@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from arco.core import Agent, AgentException, AgentType
+from arco.core import Agent, AgentException
 from arco.evaluators import AnalyzerEvaluator
 
 if TYPE_CHECKING:
@@ -63,9 +63,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
         return AnalyzerEvaluator()
 
     def core(self, state: State, llm: LLM) -> State:
-        last_retriever_answer: Answer | None = state.get_last_answer(
-            AgentType.RETRIEVER
-        )
+        last_retriever_answer: Answer | None = state.get_last_answer("Retriever")
         if (
             last_retriever_answer is None
             or "data_str" not in last_retriever_answer.agent_output
@@ -74,7 +72,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             logger.error(
                 f"Missing dependencies for analysis from retriever output: last_ret_answer:{last_retriever_answer}, last_retriever_output:{last_retriever_answer.agent_output}"
             )
-            raise AgentException(missing_dependencies_from=AgentType.RETRIEVER)
+            raise AgentException(missing_dependencies_from="Retriever")
         enriched_data = _enrich_data_with_stats(
             last_retriever_answer.agent_output["data_str"]
         )

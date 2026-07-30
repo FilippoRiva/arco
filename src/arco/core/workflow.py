@@ -57,7 +57,7 @@ class Workflow(ABC):
             else Config(workflow=self.workflow_id)
         )
         self.graph: CompiledStateGraph = self._initialize(self.config)
-        self.config.hydrate_agent_configs(self.list_agents())
+        self.config = self.config.hydrate_agent_configs(self.list_agents())
 
     def stream(self, config: Config | None = None) -> Generator[dict[str, Any]]:
         """Execute the workflow and yield streaming events.
@@ -69,7 +69,7 @@ class Workflow(ABC):
 
         if config:
             self.config = config
-            self.config.hydrate_agent_configs(self.list_agents())
+            self.config = self.config.hydrate_agent_configs(self.list_agents())
 
         llm_tools.OLLAMA_URL = self.config.ollama_url
 

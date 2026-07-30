@@ -14,7 +14,7 @@ class AgentException(Exception):
         *args: object,
     ) -> None:
         if missing_dependencies_from:
-            message = f"Missing a dependency from {missing_dependencies_from.value}"
+            message = f"Missing a dependency from {missing_dependencies_from}"
         elif message is None:
             message = "Agent generated a fatal exception"
         super().__init__(message, args)

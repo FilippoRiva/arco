@@ -1,7 +1,9 @@
 import dataclasses
 import logging
 import random
+from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, replace
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal
 
 import yaml
@@ -69,7 +71,7 @@ def _generate_readable_id():
     return f"{random.choice(prefixes)}-{random.choice(nouns)}-{number}"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Config:
     """Global and per-agent configuration for a workflow run.
 
@@ -102,7 +104,9 @@ class Config:
     enable_storage: bool = False
     save_dir: str = "./output"
     enable_codecarbon: bool = False
-    agent_configs: dict[AgentType, AgentConfig] = field(default_factory=dict)
+    agent_configs: Mapping[AgentType, AgentConfig] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
     config_path: str | None = None
 
     def update_prompt(self, prompt: str) -> Config:
@@ -121,30 +125,47 @@ class Config:
         """
         from copy import deepcopy
 
-        return deepcopy(self)
+        result = object.__new__(Config)
+        for f in fields(Config):
+            val = getattr(self, f.name)
+            if isinstance(val, MappingProxyType):
+                object.__setattr__(
+                    result,
+                    f.name,
+                    MappingProxyType({k: deepcopy(v) for k, v in val.items()}),
+                )
+            else:
+                object.__setattr__(result, f.name, deepcopy(val))
+        return result
 
-    def hydrate_agent_configs(self, agent_list: list[AgentType] | None = None):
-        """Populate :attr:`agent_configs` from the registered agent types.
+    def hydrate_agent_configs(
+        self, agent_list: list[AgentType] | None = None
+    ) -> Config:
+        """Return a new config with :attr:`agent_configs` populated.
 
-        For each agent type, loads the per-agent config from the YAML file
-        (if available) or inherits from the global defaults.
+        For each agent type, loads the per-agent config from the YAML
+        file (if available) or inherits from the global defaults.
 
         :param agent_list: List of agent types to hydrate.  If ``None``,
             all registered :class:`AgentType` values are used.
+        :returns: A new :class:`Config` instance with hydrated agent configs.
         """
-        logger.info(f"Hydrating config for : {[agent.value for agent in agent_list]!s}")
-        from .agent_type import AgentType
+        logger.info(f"Hydrating config for : {[agent for agent in agent_list]!s}")
 
-        self.agent_configs.clear()
-
-        for agent_type in agent_list if agent_list else AgentType.all():
+        new_configs: dict[AgentType, AgentConfig] = {}
+        for agent_type in (
+            agent_list
+            if agent_list
+            else ["Retriever", "Analyzer", "Visualizer", "Orchestrator", "Planner"]
+        ):
             if self.config_path:
                 agent_cfg = AgentConfig.from_yaml(
-                    self.config_path, agent_type.value, inherit_globals_from=self
+                    self.config_path, agent_type, inherit_globals_from=self
                 )
             else:
                 agent_cfg = AgentConfig.from_config(self)
-            self.agent_configs[agent_type] = agent_cfg
+            new_configs[agent_type] = agent_cfg
+        return replace(self, agent_configs=MappingProxyType(new_configs))
 
     def set(self, **kwargs) -> Config:
         """Return a new config with the given fields replaced.
@@ -201,18 +222,25 @@ class Config:
 
         runs = raw.get("runs")
 
-        full_benchmark_config_list = []
+        full_benchmark_config_list: list[dict[str, Any]] = []
 
         for run in runs:
             changes = run.get("changes", [])
 
             run_config = self.copy()
+            new_configs = dict(run_config.agent_configs)
 
             for agent in changes:
                 from .agent_type import AgentType
 
                 agent_type = AgentType(agent)
-                run_config.agent_configs[agent_type].update(changes.get(agent))
+                new_configs[agent_type] = new_configs[agent_type].update(
+                    changes.get(agent)
+                )
+
+            run_config = replace(
+                run_config, agent_configs=MappingProxyType(new_configs)
+            )
 
             single_run_config_dict = {
                 "name": run.get("name"),

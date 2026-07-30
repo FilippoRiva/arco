@@ -228,7 +228,7 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         content = answer.message
 
     return Group(
-        Rule(title=f"[bold cyan]{answer.agent_id.value}[/bold cyan]", style="cyan"),
+        Rule(title=f"[bold cyan]{answer.agent_id}[/bold cyan]", style="cyan"),
         content,
     )
 
@@ -249,7 +249,7 @@ def render_answer_compact(answer: Answer) -> Panel:
         content = "[dim]Completed[/dim]"
     return Panel(
         content,
-        title=f"[bold cyan]{answer.agent_id.value}[/bold cyan]",
+        title=f"[bold cyan]{answer}[/bold cyan]",
         border_style="cyan",
         expand=False,
     )

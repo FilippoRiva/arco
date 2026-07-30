@@ -145,7 +145,7 @@ def benchmark(
         for answer in resulting_state.answers:
             answer_energy_dict = answer.profiling_data.as_dict()
             answer_dict = {
-                "agent_type": answer.agent_id.value,
+                "agent_type": answer.agent_id,
                 "message": answer.message,
                 "evaluation_gt": answer.gt_evaluation.score
                 if answer.gt_evaluation

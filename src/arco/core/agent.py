@@ -5,6 +5,8 @@ import math
 import sys
 import time
 from abc import ABC, abstractmethod
+from dataclasses import replace as dataclass_replace
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from . import llm_tools
@@ -34,15 +36,13 @@ class Agent(ABC):
     """
 
     def __init_subclass__(cls, **kwargs):
-        """Register concrete subclasses in the AgentType registry.
+        """Register concrete subclasses.
 
-        Intermediate abstract subclasses (those that still have abstract
-        methods) are skipped.
+        The class name is used as the agent type identifier.
         """
         super().__init_subclass__(**kwargs)
         if inspect.isabstract(cls):
             return
-        AgentType.register(cls.__name__)
 
     def __init__(self):
         self.type = AgentType(self.__class__.__name__)
@@ -50,7 +50,7 @@ class Agent(ABC):
     @property
     def name(self) -> str:
         """Return the agent type name (e.g. ``"Retriever"``)."""
-        return self.type.value
+        return self.type
 
     @property
     def evaluator(self) -> Evaluator | None:
@@ -232,18 +232,21 @@ class Agent(ABC):
         if not answer:
             return state
 
-        max_perplexity = _AGENT_MAX_PERPLEXITY.get(self.type.value.lower()) or 2
+        max_perplexity = _AGENT_MAX_PERPLEXITY.get(self.type.lower()) or 2
 
         if answer.perplexity is not None and answer.perplexity > max_perplexity:
             answer.budget_controller_choice = "rollback"
 
             agent_config = state.get_agent_config(self.type)
-            agent_config.temp_min = agent_config.temp_min * 0.9
-            agent_config.temp_max = agent_config.temp_max * 0.95
-            if agent_config.n < 3:
-                agent_config.n = agent_config.n + 1
-
-            return state
+            new_n = agent_config.n + 1 if agent_config.n < 3 else agent_config.n
+            new_config = agent_config.set(
+                temp_min=agent_config.temp_min * 0.9,
+                temp_max=agent_config.temp_max * 0.95,
+                n=new_n,
+            )
+            new_configs = dict(state.agent_configs)
+            new_configs[self.type] = new_config
+            return dataclass_replace(state, agent_configs=MappingProxyType(new_configs))
 
         answer.budget_controller_choice = "end"
         return state
