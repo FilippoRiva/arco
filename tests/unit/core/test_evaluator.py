@@ -17,7 +17,7 @@ def test_evaluator(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -39,7 +39,7 @@ def test_evaluator(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -61,7 +61,7 @@ def test_evaluator(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -97,7 +97,7 @@ def test_default_evaluator_selection(config):
     best_state = State(
         prompt="First prompt",
         run_id="1",
-        agent_configs={},
+        _agent_configs={},
         answers=[
             Answer(
                 agent_id=AgentType.RETRIEVER,
@@ -113,7 +113,7 @@ def test_default_evaluator_selection(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -126,7 +126,7 @@ def test_default_evaluator_selection(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -144,7 +144,7 @@ def test_default_evaluator_selection(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -157,7 +157,7 @@ def test_default_evaluator_selection(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -183,7 +183,7 @@ def test_default_evaluator_gt_evaluation(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -195,7 +195,7 @@ def test_default_evaluator_gt_evaluation(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -207,7 +207,7 @@ def test_default_evaluator_gt_evaluation(config):
         State(
             prompt="First prompt",
             run_id="1",
-            agent_configs={},
+            _agent_configs={},
             answers=[
                 Answer(
                     agent_id=AgentType.RETRIEVER,
@@ -227,7 +227,7 @@ def test_default_evaluator_gt_evaluation(config):
 
 def test_no_answers_eval():
     evaluator = Evaluator()
-    state = State(prompt="First prompt", run_id="1", agent_configs={}, answers=[])
+    state = State(prompt="First prompt", run_id="1", _agent_configs={}, answers=[])
 
     with pytest.raises(ValueError):
         evaluator._eval(state)

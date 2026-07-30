@@ -114,9 +114,6 @@ def _apply_gt_alignment(answer: Answer, canonic_cols: list):
 
 
 class RetrieverEvaluator(Evaluator):
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
-        pass
-
     def extract_gt_from_answer(self, answer: Answer) -> dict:
         data = {}
         if "sql_query" in answer.agent_output:
@@ -125,58 +122,50 @@ class RetrieverEvaluator(Evaluator):
             data["data_str"] = answer.agent_output["data_str"]
         return data
 
-    def _batch_eval(self, states: list[State]):
+    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
+        return Evaluation(score=0.0)
+
+    def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
         """
         Each result's score is its average pairwise row-IoU to all other results.
         The most "agreed upon" DataFrame wins.
         """
 
-        # Extract DataFrames from results
-        # pyrefly: ignore [bad-assignment]
         answers: list[Answer] = [r.get_last_answer("Retriever") for r in states]
         if None in answers:
             raise ValueError(f"One {State.__name__} did not contain a Retriever answer")
 
-        # Default when Best-of-1
         if len(answers) == 1:
-            answers[0].evaluation = Evaluation(score=1.0)
-            return True
+            return [Evaluation(score=1.0)]
 
         dfs = [a.agent_output["data_df"] for a in answers]
 
-        # Compute pairwise IoU matrix
+        evaluations = []
         for i in range(len(dfs)):
             if dfs[i] is None:
+                evaluations.append(Evaluation(score=0.0))
                 continue
             total = 0.0
             count = 0
             for j in range(len(dfs)):
                 if i == j or dfs[j] is None:
                     continue
-                total += _compare_dataframes_iou(dfs[i], dfs[j])  # pyrefly: ignore [bad-argument-type]
+                total += _compare_dataframes_iou(dfs[i], dfs[j])
                 count += 1
-            answers[i].evaluation = Evaluation(
-                score=total / count if count > 0 else 0.0
-            )
+            evaluations.append(Evaluation(score=total / count if count > 0 else 0.0))
 
-        return True  # if success
+        return evaluations
 
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
+    ) -> Evaluation:
         """
         Compares the agent's result DataFrame against a ground-truth CSV using
         compare_dataframes_iou, which handles:
         - Float tolerance (atol=1e-2) to absorb precision differences from SQL casts
         """
-        if not answer:
-            raise ValueError(
-                "Tried to evaluate a state with no Retriever answer with a Retriever Evaluator"
-            )
-
-        if "data_df" not in answer.agent_output:
-            answer.gt_evaluation = Evaluation(score=0.0)
-            return
+        if not answer or "data_df" not in answer.agent_output:
+            return Evaluation(score=0.0)
 
         gt_df_cmp = pd.read_csv(StringIO(gt_data["data_str"]))
         gt_df_cmp.columns = [c.lower() for c in gt_df_cmp.columns]
@@ -187,23 +176,8 @@ class RetrieverEvaluator(Evaluator):
         result_df.columns = [c.lower() for c in result_df.columns]
 
         score = _compare_dataframes_iou(result_df, gt_df_cmp)
-        if score < 1.0:
-            n_gt = len(gt_df_cmp)
-            n_model = len(result_df)
-            gt_cols = set(gt_df_cmp.columns)
-            model_cols = set(result_df.columns)
-            if gt_cols != model_cols:
-                missing = sorted(gt_cols - model_cols)
-                extra = sorted(model_cols - gt_cols)
-                parts = [f"GT {n_gt} rows, model {n_model} rows, IOU={score:.3f}."]
-                if missing:
-                    parts.append(f"Missing cols: {missing}.")
-                if extra:
-                    parts.append(f"Extra cols: {extra}.")
-
-        answer.gt_evaluation = Evaluation(score=score)
         logger.debug(f"Evaluation successful : score={score}")
-        return
+        return Evaluation(score=score)
 
 
 __all__ = ["RetrieverEvaluator"]

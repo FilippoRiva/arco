@@ -138,35 +138,6 @@ class Config:
                 object.__setattr__(result, f.name, deepcopy(val))
         return result
 
-    def hydrate_agent_configs(
-        self, agent_list: list[AgentType] | None = None
-    ) -> Config:
-        """Return a new config with :attr:`agent_configs` populated.
-
-        For each agent type, loads the per-agent config from the YAML
-        file (if available) or inherits from the global defaults.
-
-        :param agent_list: List of agent types to hydrate.  If ``None``,
-            all registered :class:`AgentType` values are used.
-        :returns: A new :class:`Config` instance with hydrated agent configs.
-        """
-        logger.info(f"Hydrating config for : {[agent for agent in agent_list]!s}")
-
-        new_configs: dict[AgentType, AgentConfig] = {}
-        for agent_type in (
-            agent_list
-            if agent_list
-            else ["Retriever", "Analyzer", "Visualizer", "Orchestrator", "Planner"]
-        ):
-            if self.config_path:
-                agent_cfg = AgentConfig.from_yaml(
-                    self.config_path, agent_type, inherit_globals_from=self
-                )
-            else:
-                agent_cfg = AgentConfig.from_config(self)
-            new_configs[agent_type] = agent_cfg
-        return replace(self, agent_configs=MappingProxyType(new_configs))
-
     def set(self, **kwargs) -> Config:
         """Return a new config with the given fields replaced.
 
@@ -180,8 +151,7 @@ class Config:
         """Load configuration from a YAML file.
 
         The YAML file should have a ``global`` section with any
-        :class:`Config` fields to override.  Per-agent settings are
-        loaded separately via :meth:`hydrate_agent_configs`.
+        :class:`Config` fields to override.
 
         :param yaml_path: Path to the YAML configuration file.
         :returns: A new :class:`Config` instance.
@@ -203,8 +173,28 @@ class Config:
             ):
                 global_params[field_meta.name] = global_section[field_meta.name]
 
-        instance = cls(**global_params)
-        return instance
+        agents_section = raw.get("agents", {})  # for run configs
+        if agents_section == {}:  # for benchmark configs
+            agents_section = raw.get("defaults", {})
+
+        temp_instance = cls(**global_params)
+
+        agent_configs = {}
+        for key in agents_section:
+            config = AgentConfig.from_yaml(
+                yaml_path, agent_name=key, inherit_globals_from=temp_instance
+            )
+            agent_configs.update({key: config})
+        default_agent_config = AgentConfig.from_config(temp_instance)
+        agent_configs.update({"__default__": default_agent_config})
+        agent_configs = MappingProxyType(agent_configs)
+
+        params = {
+            **global_params,
+            "agent_configs": agent_configs,
+        }
+
+        return cls(**params)
 
     def generate_benchmark_configs(self, yaml_path: str) -> list[dict[str, Any]]:
         """Generate a list of run configurations from a benchmark YAML file.

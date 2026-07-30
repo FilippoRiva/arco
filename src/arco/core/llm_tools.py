@@ -178,7 +178,7 @@ class LLM:
             )
         else:
             suffix = self._REFINEMENT_SUFFIX.format(
-                previous_response=self._previous_response,
+                previous_response=self.last_answer.text,
             )
         prompt = prompt + suffix
         logger.debug(f"Invoking CoT-LLM with prompt : {prompt}")

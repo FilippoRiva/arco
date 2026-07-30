@@ -216,8 +216,7 @@ class Agent(ABC):
         else:
             perplexity = math.exp(-avg_logprob)
 
-        answer.perplexity = perplexity
-        return state.replace_last_answer(answer)
+        return state.replace_last_answer(answer.set(perplexity=perplexity))
 
     def _budget_controller(self, state: State) -> State:
         _AGENT_MAX_PERPLEXITY: dict[str, float] = {
@@ -235,7 +234,10 @@ class Agent(ABC):
         max_perplexity = _AGENT_MAX_PERPLEXITY.get(self.type.lower()) or 2
 
         if answer.perplexity is not None and answer.perplexity > max_perplexity:
-            answer.budget_controller_choice = "rollback"
+            choice = "rollback"
+            state = state.replace_last_answer(
+                answer.set(budget_controller_choice=choice)
+            )
 
             agent_config = state.get_agent_config(self.type)
             new_n = agent_config.n + 1 if agent_config.n < 3 else agent_config.n
@@ -244,12 +246,12 @@ class Agent(ABC):
                 temp_max=agent_config.temp_max * 0.95,
                 n=new_n,
             )
-            new_configs = dict(state.agent_configs)
+            new_configs = dict(state._agent_configs)
             new_configs[self.type] = new_config
             return dataclass_replace(state, agent_configs=MappingProxyType(new_configs))
 
-        answer.budget_controller_choice = "end"
-        return state
+        choice = "end"
+        return state.replace_last_answer(answer.set(budget_controller_choice=choice))
 
     def _execute_greedy(
         self, state: State, config: AgentConfig, llm_acc: LLMCallAccumulator
@@ -294,7 +296,9 @@ class Agent(ABC):
 
             result: State = self.core(state, llm)
             if config.cot_n > 1:
-                result: State = self._apply_cot_iteration(state, llm, result, config)
+                result: State = self._apply_cot_iteration(
+                    result, llm, max_iter=config.cot_n
+                )
             results.append(result)
 
         logger.debug(f"Best-of-n execution completed with {len(results)} candidates")
@@ -315,10 +319,10 @@ class Agent(ABC):
 
             if not current_error:
                 ratio = difflib.SequenceMatcher(
-                    None, previous_output, current_output
+                    None, previous_output.text, current_output.text
                 ).ratio()
 
-                if ratio >= self._COT_SIMILARITY_THRESHOLD:
+                if ratio >= _COT_SIMILARITY_THRESHOLD:
                     break
 
         return state

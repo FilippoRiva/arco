@@ -15,7 +15,7 @@ from arco.core import (
     WorkflowFactory,
     evaluate_state_with_benchmark_entry,
 )
-from arco.data import BenchmarkDataset, BenchmarkSummary
+from arco.data import BenchmarkDataset
 from arco.logs import initialize as init_logging
 
 
@@ -129,7 +129,7 @@ def benchmark(
         resulting_state: State = visualization_logic(workflow.stream(config=config))
 
         yield {"event": "test_case_evaluation_start"}
-        benchmark_summary: BenchmarkSummary = evaluate_state_with_benchmark_entry(
+        benchmark_summary, evaluations = evaluate_state_with_benchmark_entry(
             resulting_state,
             entry,
             workflow.get_evaluators(),
@@ -142,14 +142,12 @@ def benchmark(
 
         # Answer Level Profiling
         execution_trace = {"answers": []}
-        for answer in resulting_state.answers:
+        for answer, evaluation in zip(resulting_state.answers, evaluations):
             answer_energy_dict = answer.profiling_data.as_dict()
             answer_dict = {
                 "agent_type": answer.agent_id,
                 "message": answer.message,
-                "evaluation_gt": answer.gt_evaluation.score
-                if answer.gt_evaluation
-                else None,
+                "evaluation_gt": evaluation.score if evaluation else None,
                 "perplexity": answer.perplexity if answer.perplexity else None,
                 **answer_energy_dict,
             }

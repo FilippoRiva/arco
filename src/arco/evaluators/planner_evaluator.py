@@ -6,29 +6,24 @@ logger = logging.getLogger(__name__)
 
 
 class PlannerEvaluator(Evaluator):
-    def _batch_eval(self, states: list[State]) -> bool:
-        return False
+    def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
+        return None
 
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
-        pass
+    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
+        return Evaluation(score=0.0)
 
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
+    ) -> Evaluation:
         gen_choice = answer.agent_output.get("agent_choice", "").lower()
         expected_choice = gt_data.get("choice", "").lower()
-        if gen_choice == expected_choice:
-            score = 1
-        else:
-            score = 0
-
-        answer.gt_evaluation = Evaluation(score=score)
+        score = 1.0 if gen_choice == expected_choice else 0.0
         logger.debug(f"Evaluation successful : score={score}")
+        return Evaluation(score=score)
 
     def extract_gt_from_answer(self, answer: Answer) -> dict:
         choice = answer.agent_output.get("agent_choice", "")
-        plan = answer.agent_output.get("plan", [])
-        return {"choice": choice.lower(), "plan": plan}
+        return {"choice": choice}
 
 
 __all__ = ["PlannerEvaluator"]

@@ -112,16 +112,14 @@ class AnalyzerEvaluator(Evaluator):
       "faithfulness": {{"score": <1-5>, "reasoning": "<brief>", "hallucinations": []}}
     }}"""
 
-    def _batch_eval(self, states: list[State]) -> bool:
-        return False
+    def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
+        return None
 
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
+    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
         last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
-        analysis = last_analyzer_answer.agent_output["analysis"]
+        analysis = last_analyzer_answer.agent_output.get("analysis", None)
         if not analysis:
-            raise ValueError(
-                f"The {State.__name__} did not contain a {'Analyzer'.value} {Answer.__name__}"
-            )
+            return Evaluation(score=0)
 
         llm = get_llm(provider=judge_provider, model=judge_model)
 
@@ -142,15 +140,14 @@ class AnalyzerEvaluator(Evaluator):
 
         evaluation = fill_json_schema(response.extract_json(), _NO_GT_SCHEMA)
         score = compute_weighted_score(evaluation, _NO_GT_WEIGHTS)
-        last_analyzer_answer.evaluation = Evaluation(score=score)
+        return Evaluation(score=score)
 
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
-        analysis = answer.agent_output["analysis"]
+    ) -> Evaluation:
+        analysis = answer.agent_output.get("analysis", None)
         if not analysis:
-            answer.evaluation = Evaluation(score=0)
-            return
+            return Evaluation(score=0)
 
         llm = get_llm(provider=judge_provider, model=judge_model)
         gt_analysis = gt_data["analysis"]
@@ -167,8 +164,8 @@ class AnalyzerEvaluator(Evaluator):
             _GT_SCHEMA,
         )
         score = compute_weighted_score(evaluation, _GT_WEIGHTS)
-        answer.gt_evaluation = Evaluation(score=score)
         logger.debug(f"Evaluation successful : score={score}")
+        return Evaluation(score=score)
 
     def extract_gt_from_answer(self, answer: Answer) -> dict:
         if "analysis" in answer.agent_output:

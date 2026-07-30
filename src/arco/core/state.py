@@ -22,7 +22,7 @@ class State:
 
     :ivar prompt: The original user prompt.
     :ivar run_id: Unique identifier for this run.
-    :ivar agent_configs: Per-agent configuration dict.
+    :ivar _agent_configs: Per-agent configuration dict.
     :ivar answers: Ordered list of agent answers produced so far.
     :ivar global_profiling_data: Cumulative profiling data across all steps.
     :ivar agents_profiling_data: Per-agent cumulative profiling data.
@@ -38,11 +38,13 @@ class State:
     agent_configs: Mapping[AgentType, AgentConfig]
 
     # List of agent's answers
-    answers: list[Answer] = field(default_factory=list)
+    answers: tuple[Answer] = field(default_factory=tuple)
 
     # List of metrics profiling the current state
     global_profiling_data: ProfilingData = field(default_factory=ProfilingData)
-    agents_profiling_data: dict[AgentType, ProfilingData] = field(default_factory=dict)
+    agents_profiling_data: Mapping[AgentType, ProfilingData] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
 
     def add_answer(self, answer: Answer) -> State:
         """Return a new state with *answer* appended to the answers list.
@@ -53,7 +55,7 @@ class State:
         Returns:
             A new state with the answer added.
         """
-        return dataclasses.replace(self, answers=self.answers + [answer])
+        return dataclasses.replace(self, answers=(*self.answers, answer))
 
     def get_last_answer(self, agent_type: AgentType | None = None) -> Answer | None:
         """Retrieve the most recent answer for a specific agent type.
@@ -78,25 +80,15 @@ class State:
         last_answer = self.get_last_answer()
         if not last_answer:
             return dataclasses.replace(self, answers=[answer])
-        new_answers = [answer.copy() for answer in self.answers]
-        new_answers.pop(-1)
-        new_answers.append(answer)
+        new_answers = tuple([answer.copy() for answer in self.answers[:-1]] + [answer])
         return dataclasses.replace(self, answers=new_answers)
 
-    def get_last_agent_config(
-        self, agent_type: AgentType | None = None
-    ) -> AgentConfig | None:
-        """Return the config for the agent that produced the last answer."""
-        if not agent_type:
-            la = self.get_last_answer()
-            if not la:
-                return None
-            agent_type = la.agent_id
-        return self.get_agent_config(agent_type)
-
-    def get_agent_config(self, agent_type: AgentType) -> AgentConfig:
-        """Return the config for a given agent type."""
-        return self.agent_configs[agent_type]
+    def get_agent_config(self, agent_type: AgentType | None) -> AgentConfig:
+        """Return the agent config for any agent type. If the agent is not specified or defined in the list of
+        available configs, the default config is returned"""
+        if agent_type is not None and agent_type in self.agent_configs:
+            return self.agent_configs[agent_type]
+        return self.agent_configs["__default__"]
 
     def get_agents_used(self) -> list[str]:
         """Return the list of agent type names used so far, excluding orchestrator."""
@@ -116,7 +108,9 @@ class State:
         """
         global_profiling_data = self.global_profiling_data + profiling_data
 
-        agents_profiling_data = self.agents_profiling_data.copy()
+        agents_profiling_data = {
+            k: value.copy() for (k, value) in self.agents_profiling_data.items()
+        }
         if agent_type in self.agents_profiling_data:
             agents_profiling_data[agent_type] = (
                 agents_profiling_data[agent_type] + profiling_data
@@ -124,12 +118,14 @@ class State:
         else:
             agents_profiling_data[agent_type] = profiling_data
 
-        self.get_last_answer(agent_type).profiling_data = profiling_data
+        new_state = self.replace_last_answer(
+            self.get_last_answer(agent_type).set(profiling_data=profiling_data)
+        )
 
         return replace(
-            self,
+            new_state,
             global_profiling_data=global_profiling_data,
-            agents_profiling_data=agents_profiling_data,
+            agents_profiling_data=MappingProxyType(agents_profiling_data),
         )
 
     def to_dict(self) -> dict:
@@ -151,7 +147,7 @@ class State:
         state = State(**dictionary)
         agent_configs: dict[AgentType, AgentConfig] = {}
         answers = []
-        for agent_type in state.agent_configs:
+        for agent_type in state._agent_configs:
             agent_configs[agent_type] = AgentConfig.from_dict(
                 dictionary["agent_configs"][agent_type]
             )

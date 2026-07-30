@@ -7,7 +7,7 @@ from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
-    from . import AgentConfig, AgentType, Answer, State
+    from . import AgentConfig, Answer, State
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,6 @@ class Evaluation:
 
     @classmethod
     def from_dict(cls, dictionary: dict) -> Evaluation:
-        """Deserialize from a dict.
-
-        :param dictionary: Dict with keys ``"score"`` and ``"success"``.
-        :returns: A new :class:`Evaluation` instance.
-        """
         return Evaluation(
             score=float(dictionary["score"]), success=bool(dictionary["success"])
         )
@@ -39,58 +34,68 @@ class Evaluator(ABC):
     """Abstract base class for agent evaluation strategies.
 
     Subclasses must implement :meth:`_eval`, :meth:`_batch_eval`, and
-    :meth:`_gt_eval`.  The public methods :meth:`evaluate_best_of_n` and
-    :meth:`evaluate_ground_truth` orchestrate the evaluation flow.
+    :meth:`_gt_eval`.  All three return :class:`Evaluation` objects
+    instead of mutating answers.
     """
 
     def evaluate_best_of_n(
         self, results: list[State], config: AgentConfig
     ) -> tuple[list[State], State]:
-        """Evaluate a list of candidate states and select the best one.
+        """Evaluate candidates and select the best one.
 
-        Tries :meth:`_batch_eval` first (e.g. pairwise IoU for retrievers).
-        If it returns ``False``, falls back to :meth:`_eval` for each
-        candidate individually (e.g. LLM-as-a-judge).
+        Tries :meth:`_batch_eval` first.  If it returns ``None``,
+        falls back to :meth:`_eval` per candidate.
 
-        :param results: The candidate states from greedy or best-of-N execution.
-        :param config: The agent's configuration (used to get judge model).
-        :returns: A tuple ``(all_results, best_result)`` where *best_result*
-            is the selected state with discarded answers attached.
+        :param results: Candidate states from greedy or best-of-N execution.
+        :param config: Agent configuration (used for judge model).
+        :returns: ``(all_results, best_result, evaluations)``.
         """
         if len(results) == 1:
             return results, results[0]
 
         logger.debug("Evaluating best n results")
 
-        batch_eval_success = self._batch_eval(results)
-        if not batch_eval_success:
+        # evaluate results
+        evaluations = self._batch_eval(results)
+        if evaluations is None:
+            evaluations = []
             for result in results:
-                self._eval(
+                ev = self._eval(
                     result,
                     judge_provider=config.provider_judge,
                     judge_model=config.model_judge,
                 )
+                evaluations.append(ev)
 
-        return results, Evaluator._selection(results)
+        # update results with their evaluations
+        new_results = []
+        for result, evaluation in zip(results, evaluations):
+            last_answer = result.get_last_answer()
+            new_results.append(
+                result.replace_last_answer(last_answer.set(evaluation=evaluation))
+            )
+        results = new_results
+
+        # select the best result
+        best_state = Evaluator._selection(results, evaluations)
+
+        return new_results, best_state
 
     def evaluate_ground_truth(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
-        """Run ground-truth evaluation on a single answer.
-
-        Delegates to :meth:`_gt_eval` and stores the result in
-        ``answer.gt_evaluation``.
+    ) -> Evaluation:
+        """Run ground-truth evaluation and return the result.
 
         :param answer: The answer to evaluate.
-        :param gt_data: Ground-truth data dict (structure depends on the
-            evaluator subclass).
+        :param gt_data: Ground-truth data dict.
         :param judge_provider: Provider for the LLM judge.
         :param judge_model: Model for the LLM judge.
+        :returns: An :class:`Evaluation` with the result.
         """
         logger.info(
             f"Evaluating ground truth data for {answer.agent_id} with this data : {gt_data}"
         )
-        self._gt_eval(
+        return self._gt_eval(
             answer=answer,
             gt_data=gt_data,
             judge_provider=judge_provider,
@@ -98,73 +103,47 @@ class Evaluator(ABC):
         )
 
     @staticmethod
-    def _selection(states: list[State]) -> State:
-        """Select the best state from a list based on evaluation scores.
+    def _selection(states: list[State], evaluations: list[Evaluation]) -> State:
+        """Select the best state given its evaluations.
 
-        Prefers states with a successful evaluation and picks the highest
-        score.  Discarded candidates are attached to the selected state.
+        Discarded candidates are attached to the selected state's answer.
         """
-        answers_with_none: list[Answer | None] = [
-            state.get_last_answer() for state in states
-        ]
-        answers = [ans for ans in answers_with_none if ans is not None]
-        if any(answer.evaluation is None for answer in answers):
-            return states[0]
-        if any(answer.evaluation.success == False for answer in answers):  # pyrefly: ignore [missing-attribute]
-            return states[0]
-        best_state = max(states, key=lambda r: r.get_last_answer().evaluation.score)
-        discarded_states = [*states]
-        discarded_states.remove(best_state)
-        best_state.get_last_answer().discarded_bon_answers = [
-            state.get_last_answer() for state in discarded_states
-        ]
+        if any(e.score == 0 for e in evaluations):
+            idx = max(range(len(evaluations)), key=lambda i: evaluations[i].score)
+        else:
+            idx = 0
+        best_state = states[idx]
+
+        discarded_answers = []
+        for i, s in enumerate(states):
+            if i != idx:
+                ans = s.get_last_answer()
+                if ans is not None:
+                    discarded_answers.append(ans)
+
+        best_answer = best_state.get_last_answer()
+        if best_answer is not None:
+            from dataclasses import replace as dc_replace
+
+            new_answer = dc_replace(
+                best_answer, discarded_bon_answers=discarded_answers
+            )
+            best_state = best_state.replace_last_answer(new_answer)
+
         return best_state
 
     @abstractmethod
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
-        """Evaluate a single candidate state.
-
-        Called by :meth:`evaluate_best_of_n` when :meth:`_batch_eval` fails.
-        Implementations should set ``state.get_last_answer().evaluation`` to
-        an :class:`Evaluation` object.
-
-        :param state: A candidate state containing at least one agent answer.
-        :param judge_provider: The LLM provider to use for judging.
-        :param judge_model: The LLM model to use for judging.
-        """
-        ...
+    def _eval(
+        self, state: State, judge_provider: str, judge_model: str
+    ) -> Evaluation: ...
 
     @abstractmethod
-    def _batch_eval(self, states: list[State]) -> bool:
-        """Evaluate all candidates together (batch comparison).
-
-        Called by :meth:`evaluate_best_of_n` before falling back to
-        :meth:`_eval`.  Implementations should set ``.evaluation`` on
-        each candidate's answer.
-
-        :param states: All candidate states from best-of-N execution.
-        :returns: ``True`` if batch evaluation succeeded (no per-candidate
-            fallback needed), ``False`` otherwise.
-        """
-        ...
+    def _batch_eval(self, states: list[State]) -> list[Evaluation] | None: ...
 
     @abstractmethod
     def _gt_eval(
         self, answer: Answer, gt_data: dict, judge_provider: str, judge_model: str
-    ):
-        """Evaluate a single answer against ground-truth data.
-
-        Called by :meth:`evaluate_ground_truth`.  Implementations should
-        set ``answer.gt_evaluation`` to an :class:`Evaluation` object.
-
-        :param answer: The answer to evaluate.
-        :param gt_data: Ground-truth data dict.  The expected keys depend
-            on the evaluator subclass (e.g. ``"choice"`` for orchestrator,
-            ``"analysis"`` for analyzer, ``"chart_config"`` for visualizer).
-        :param judge_provider: The LLM provider to use for judging.
-        :param judge_model: The LLM model to use for judging.
-        """
-        ...
+    ) -> Evaluation: ...
 
     def extract_gt_from_answer(self, answer: Answer) -> dict:
         """Extract ground-truth data from an Answer for benchmark generation.
@@ -181,10 +160,10 @@ class Evaluator(ABC):
 def evaluate_state_with_benchmark_entry(
     state: State,
     entry: BenchmarkEntry,
-    evaluators: dict[AgentType, Evaluator],
+    evaluators: dict[str, Evaluator],
     judge_provider: str,
     judge_model: str,
-) -> BenchmarkSummary:
+) -> tuple[BenchmarkSummary, list[Evaluation | None]]:
     """Compare a workflow's execution trace against a ground-truth benchmark entry.
 
     Walks through the state's answers in order, matching each against the
@@ -193,49 +172,59 @@ def evaluate_state_with_benchmark_entry(
 
     :param state: The final state produced by the workflow.
     :param entry: The ground-truth :class:`BenchmarkEntry` to compare against.
-    :param evaluators: Dict mapping agent types to their evaluators.
+    :param evaluators: Dict mapping agent type names to their evaluators.
     :param judge_provider: Provider for the LLM judge.
     :param judge_model: Model for the LLM judge.
-    :returns: A :class:`BenchmarkSummary` with completion rate, scores,
-        perplexities, and profiling data.
+    :returns: A tuple ``(summary, evaluations)`` where *evaluations* has
+        one entry per answer in the state (``None`` for answers beyond the
+        first trace divergence).
     """
+    from arco.data import BenchmarkSummary
+
     correct_path = 0
     ppls: list[float] = []
     scores: list[float] = []
-    agents: list[AgentType] = []
+    agents: list[str] = []
     profiling_datas: list[ProfilingData] = []
+    all_evaluations: list[Evaluation | None] = []
+
     for idx, answer in enumerate(state.answers):
         if idx > len(entry.trace) - 1:
-            break
+            all_evaluations.append(None)
+            continue
         correct_trace = entry.trace[idx]
         if answer.agent_id == correct_trace.agent_type:
             correct_path += 1
         else:
-            break
+            all_evaluations.append(None)
+            continue
 
-        evaluator = evaluators[answer.agent_id]
+        evaluator = evaluators.get(answer.agent_id)
         if evaluator is not None:
-            evaluator.evaluate_ground_truth(
+            evaluation = evaluator.evaluate_ground_truth(
                 answer=answer,
                 gt_data=correct_trace.data,
                 judge_provider=judge_provider,
                 judge_model=judge_model,
             )
-            evaluation = answer.gt_evaluation
+            all_evaluations.append(evaluation)
             ppls.append(answer.perplexity)
             scores.append(evaluation.score)
             agents.append(answer.agent_id)
             profiling_datas.append(answer.profiling_data)
-    completion_percentage = correct_path / len(entry.trace)
-    from arco.data import BenchmarkSummary
+        else:
+            all_evaluations.append(None)
 
-    return BenchmarkSummary(
+    completion_percentage = correct_path / len(entry.trace) if entry.trace else 0.0
+
+    summary = BenchmarkSummary(
         completion_percentage=completion_percentage,
         ppls=ppls,
         scores=scores,
         agents=agents,
         profiling_datas=profiling_datas,
     )
+    return summary, all_evaluations
 
 
 __all__ = ["Evaluation", "Evaluator", "evaluate_state_with_benchmark_entry"]

@@ -18,7 +18,7 @@ def base_state_with_mock(agent_config):
     return State(
         prompt="Generate a bar chart",
         run_id="test_run_123",
-        agent_configs={
+        _agent_configs={
             AgentType.ANALYZER: agent_config,
             AgentType.VISUALIZER: agent_config,
         },
@@ -66,7 +66,7 @@ def test_state_initialization(agent_config):
     base_state = State(
         prompt="Generate a bar chart",
         run_id="test_run_123",
-        agent_configs={
+        _agent_configs={
             AgentType.ANALYZER: agent_config,
             AgentType.VISUALIZER: agent_config,
         },
@@ -111,11 +111,11 @@ def test_answer_management(base_state_with_mock, first_answer, second_answer):
     assert middle_answer != last_answer
 
     assert (
-        last_analyzer_config is base_state_with_mock.agent_configs[AgentType.ANALYZER]
+        last_analyzer_config is base_state_with_mock._agent_configs[AgentType.ANALYZER]
     ), "Agent_configs should not mutate"
     assert (
         last_visualizer_config
-        is base_state_with_mock.agent_configs[AgentType.VISUALIZER]
+        is base_state_with_mock._agent_configs[AgentType.VISUALIZER]
     ), "Agent_configs should not mutate"
 
     assert last_config_no_type == last_visualizer_config, (

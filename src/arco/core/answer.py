@@ -1,5 +1,5 @@
 from copy import deepcopy
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields, replace
 from typing import Any, Literal
 
 from .agent import AgentType
@@ -8,7 +8,7 @@ from .evaluator import Evaluation
 from .profiling_data import ProfilingData
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Answer:
     """Container for a single agent's output within a workflow run.
 
@@ -64,22 +64,33 @@ class Answer:
         :param dictionary: The dict produced by :meth:`to_dict`.
         :returns: A new :class:`Answer` instance.
         """
-        ans = Answer(**dictionary)
-        ans.agent_config = AgentConfig.from_dict(dictionary["agent_config"])
-        if ans.agent_id:
-            ans.agent_id = AgentType(ans.agent_id)
-        if ans.evaluation:
-            ans.evaluation = Evaluation.from_dict(dictionary["evaluation"])
-        if ans.gt_evaluation:
-            ans.gt_evaluation = Evaluation.from_dict(dictionary["gt_evaluation"])
-        if ans.discarded_bon_answers:
-            ans.discarded_bon_answers = [
+        dictionary["agent_config"] = AgentConfig.from_dict(dictionary["agent_config"])
+        if "agent_id" in dictionary:
+            dictionary["agent_id"] = AgentType(dictionary["agent_id"])
+        if "evaluation" in dictionary:
+            dictionary["evaluation"] = Evaluation.from_dict(dictionary["evaluation"])
+        if "gt_evaluation" in dictionary:
+            dictionary["gt_evaluation"] = Evaluation.from_dict(
+                dictionary["gt_evaluation"]
+            )
+        if "discarded_bon_answers" in dictionary:
+            dictionary["discarded_bon_answers"] = [
                 Answer.from_dict(discarded_ans)
                 for discarded_ans in dictionary["discarded_bon_answers"]
             ]
-        if ans.profiling_data:
-            ans.profiling_data = ProfilingData(**dictionary["profiling_data"])
-        return ans
+        if "profiling_data" in dictionary:
+            dictionary["profiling_data"] = ProfilingData(**dictionary["profiling_data"])
+        return Answer(**dictionary)
+
+    def set(self, **kwargs) -> Answer:
+        """Return a new Answer with the given fields replaced.
+
+        :param kwargs: Field names and their new values.
+        :returns: A new :class:`Answer` instance.
+        """
+        valid_keys = {f.name for f in fields(Answer)}
+        filtered = {k: v for k, v in kwargs.items() if k in valid_keys}
+        return replace(self, **filtered)
 
     def copy(self) -> Answer:
         """Return a deep copy of this answer."""

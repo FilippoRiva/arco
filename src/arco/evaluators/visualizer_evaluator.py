@@ -161,7 +161,7 @@ Return ONLY valid JSON:
   "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}}
 }}"""
 
-    def _eval(self, state: State, judge_provider: str, judge_model: str):
+    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
         """
         Uses an LLM judge to score chart quality based on data suitability,
         axis mapping, code quality, and goal alignment.
@@ -198,10 +198,10 @@ Return ONLY valid JSON:
 
         evaluation_dict = fill_json_schema(response.extract_json(), _NO_GT_SCHEMA)
         overall_score = compute_weighted_score(evaluation_dict, _NO_GT_WEIGHTS)
-        last_visualizer_answer.evaluation = Evaluation(score=overall_score)
+        return Evaluation(score=overall_score)
 
-    def _batch_eval(self, states: list[State]) -> bool:
-        return False
+    def _batch_eval(self, states: list[State]) -> list[Evaluation]:
+        return None
 
     def _gt_eval(self, answer: Answer, gt_data, judge_provider: str, judge_model: str):
         """
@@ -219,8 +219,7 @@ Return ONLY valid JSON:
 
         code: str = answer.agent_output["code"]
         if code is None:
-            answer.gt_evaluation = Evaluation(score=0)
-            return
+            return Evaluation(score=0)
 
         # Truncate code if too long
         max_code_len = 2000
@@ -245,9 +244,8 @@ Return ONLY valid JSON:
 
         # Compute overall score
         overall_score = compute_weighted_score(evaluation_dict, _GT_WEIGHTS)
-        answer.gt_evaluation = Evaluation(score=overall_score)
         logger.debug(f"Evaluation successful : score={overall_score}")
-        return
+        return Evaluation(score=overall_score)
 
     def extract_gt_from_answer(self, answer: Answer) -> dict:
         data = {}

@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import asdict, dataclass, replace
 
 
@@ -50,6 +51,9 @@ class ProfilingData:
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+    def copy(self) -> ProfilingData:
+        return deepcopy(self)
 
 
 __all__ = ["ProfilingData"]
