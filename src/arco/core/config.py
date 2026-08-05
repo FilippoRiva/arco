@@ -92,8 +92,8 @@ class Config:
     :ivar config_path: Path to the YAML file this config was loaded from.
     """
 
-    workflow: str = ""
-    prompt: str = ""
+    workflow: str
+    prompt: str | None = None
     run_id: str = field(default_factory=lambda: _generate_readable_id())
     enable_budget_controller: bool = True
     default_provider: Literal["openai", "ollama", "openrouter"] = "openai"
@@ -108,6 +108,16 @@ class Config:
         default_factory=lambda: MappingProxyType({})
     )
     config_path: str | None = None
+
+    def __post_init__(self):
+        if "__default__" not in self.agent_configs:
+            default_agent_config = AgentConfig.from_config(self)
+            agent_configs = {
+                "__default__": default_agent_config,
+                **dict(self.agent_configs),
+            }
+            # set the attribute even if the class is frozen :
+            object.__setattr__(self, "agent_configs", MappingProxyType(agent_configs))
 
     def update_prompt(self, prompt: str) -> Config:
         """Return a new config with the prompt replaced and a fresh run ID.
