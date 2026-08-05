@@ -6,7 +6,7 @@ from arco.core.graph import END
 
 
 class StrictSales(Workflow):
-    workflow_id = "sales"
+    workflow_id = "strict_sales"
 
     @override
     def initialize(self, config: Config, graph: Graph):

@@ -9,13 +9,23 @@ if TYPE_CHECKING:
     from arco.core import Workflow
 
 
-def run_from_config(yaml_path: str, log_level: str | None = None):
+def initialize_workflow(
+    yaml_path: str | None = None, workflow_name: str | None = None
+) -> tuple[Config, Workflow]:
     workflows.load_library_workflows()
-    config = Config.from_yaml(yaml_path)
+    if yaml_path:
+        config = Config.from_yaml(yaml_path)
+    elif workflow_name:
+        config = Config(workflow=workflow_name)
+    else:
+        config = Config(workflow=get_workflow_list()[0])
     workflow = WorkflowFactory.get(config=config)
-    yield config
-    yield workflow
-    yield from run(config=config, workflow=workflow, log_level=log_level)
+    return config, workflow
+
+
+def get_workflow_list() -> list[str]:
+    workflows.load_library_workflows()
+    return list(WorkflowFactory.all().keys())
 
 
 def run(config: Config, workflow: Workflow, log_level: str | None = None):

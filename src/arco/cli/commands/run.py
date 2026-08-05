@@ -12,9 +12,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
         "run", help="Invokes the agent given an arco configuration file"
     )
 
-    parser.add_argument(
-        "--config", "-c", type=str, required=True, help="Path to config YAML"
-    )
+    parser.add_argument("--config", "-c", type=str, help="Path to config YAML")
     parser.add_argument(
         "--verbose",
         "-v",
@@ -42,31 +40,51 @@ _GLOBAL_PARAMS = [
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
 
-    status = console.status("[bold cyan]Loading run[/bold cyan]", spinner="dots")
+    status = console.status("[bold cyan]Loading ARCO[/bold cyan]", spinner="dots")
     status.start()
 
     import os
     import sys
 
-    from arco.tools.run import run_from_config
+    from arco.tools.run import get_workflow_list, initialize_workflow, run
 
     from ..viz import display, printer
 
-    if not os.path.isfile(args.config):
-        console.print(
-            f"[bold red]Error[/bold red]: config file not found at [bold cyan]{args.config}[/bold cyan]"
-        )
-        parser.print_help()
-        sys.exit(1)
-
-    generator = run_from_config(yaml_path=args.config, log_level=args.log)
-    config = next(generator)
-    workflow = next(generator)
-
-    printer.print_config_table(config, verbose=args.verbose)
-    printer.print_workflow_graph(workflow)
-
     status.stop()
 
+    if args.config:
+        if not os.path.isfile(args.config):
+            console.print(
+                f"[bold red]Error[/bold red]: config file not found at [bold cyan]{args.config}[/bold cyan]"
+            )
+            parser.print_help()
+            sys.exit(1)
+        config, workflow = initialize_workflow(yaml_path=args.config)
+    else:
+        available_workflows = get_workflow_list()
+        console.print(
+            f"Choose a [bold cyan]workflow[/bold cyan] : {', '.join(available_workflows)}"
+        )
+        user_input = console.input("[bold cyan]Workflow    >[/bold cyan] ")
+        if user_input not in available_workflows:
+            console.print(
+                f"[bold red]Error[/bold red]: The selected workflow is not available : '[bold cyan]{user_input}[/bold cyan]'"
+            )
+            sys.exit(1)
+        config, workflow = initialize_workflow(workflow_name=user_input)
+
+    if config.prompt is None:
+        user_input = console.input("[bold cyan]User prompt >[/bold cyan] ")
+        config = config.update_prompt(user_input)
+        workflow.config = config
+    else:
+        console.print(f"[bold cyan]User prompt >[/bold cyan] {config.prompt}")
+
+    if args.verbose:
+        printer.print_config_table(config, verbose=args.verbose)
+        printer.print_workflow_graph(workflow)
+
     # runs the agent with a visualization logic in rich
-    display.display_workflow(generator, verbose=args.verbose)
+    display.display_workflow(
+        run(config=config, workflow=workflow, log_level=args.log), verbose=args.verbose
+    )

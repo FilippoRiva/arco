@@ -50,7 +50,7 @@ def main():
             parser.print_help()
             sys.exit(1)
     except KeyboardInterrupt:
-        console.print("[bold red]Stopped[/bold red]: Keyboard Interrupt")
+        console.print("\n\n[bold red]Stopped[/bold red]: Keyboard Interrupt")
         sys.exit(1)
 
 
