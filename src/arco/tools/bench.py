@@ -38,14 +38,13 @@ def benchmark_from_config(
     runs_folder = benchmark_save_folder / "runs"
     os.makedirs(benchmark_save_folder, exist_ok=True)
 
-    init_logging(
-        benchmark_id, log_dir=benchmark_save_folder / "logs", level=logging_level
-    )
+    init_logging(benchmark_id, log_dir=benchmark_save_folder, level=logging_level)
 
     # Load run configurations
     list_of_run_configs = default_config.generate_benchmark_configs(config_path)
     yield {"event": "run_configs_loaded", "configs": list_of_run_configs}
 
+    # Run each configuration
     run_config_to_result_list: list[tuple[dict, pd.DataFrame]] = []
     for run_config_dict in list_of_run_configs:
         run_name = run_config_dict["name"].replace(" ", "_")
@@ -125,11 +124,12 @@ def benchmark(
             "max_iteration": len(benchmark_dataset),
         }
 
-        config = config.update_prompt(entry.prompt)
+        config: Config = config.update_prompt(entry.prompt)
+        config: Config = config.set(run_id=name + str(entry.id))
         resulting_state: State = visualization_logic(workflow.stream(config=config))
 
         yield {"event": "test_case_evaluation_start"}
-        benchmark_summary, evaluations = evaluate_state_with_benchmark_entry(
+        benchmark_summary, updated_state = evaluate_state_with_benchmark_entry(
             resulting_state,
             entry,
             workflow.get_evaluators(),
@@ -140,14 +140,16 @@ def benchmark(
 
         yield {"event": "test_case_stop", "evaluation_summary": benchmark_summary}
 
-        # Answer Level Profiling
+        # Build execution trace
         execution_trace = {"answers": []}
-        for answer, evaluation in zip(resulting_state.answers, evaluations):
+        for answer in updated_state.answers:
             answer_energy_dict = answer.profiling_data.as_dict()
             answer_dict = {
                 "agent_type": answer.agent_id,
                 "message": answer.message,
-                "evaluation_gt": evaluation.score if evaluation else None,
+                "evaluation_gt": answer.gt_evaluation.score
+                if answer.gt_evaluation
+                else None,
                 "perplexity": answer.perplexity if answer.perplexity else None,
                 **answer_energy_dict,
             }
@@ -156,12 +158,12 @@ def benchmark(
         # Store results into a df row
         row = {
             "entry_id": entry.id,
-            "run_id": resulting_state.run_id,
+            "run_id": updated_state.run_id,
             "execution_trace": json.dumps(execution_trace),
         }
 
         df_rows.append(row)
-        resulting_states.append(resulting_state)
+        resulting_states.append(updated_state)
 
     # Build results DataFrame
     df = pd.DataFrame(df_rows)

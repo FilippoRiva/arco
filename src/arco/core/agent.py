@@ -195,6 +195,9 @@ class Agent(ABC):
             llm_time=llm_acc.total_time,
             **llm_acc.energy_dict,
         )
+        logger.debug(
+            f"Logging {self.type} profiling data. Codecarbon dict: {llm_acc.energy_dict}"
+        )
         best_result = best_result.set_profiling_data(profiling_data, self.type)
 
         return best_result

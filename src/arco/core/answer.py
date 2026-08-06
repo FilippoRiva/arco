@@ -67,18 +67,18 @@ class Answer:
         dictionary["agent_config"] = AgentConfig.from_dict(dictionary["agent_config"])
         if "agent_id" in dictionary:
             dictionary["agent_id"] = AgentType(dictionary["agent_id"])
-        if "evaluation" in dictionary:
+        if dictionary.get("evaluation") is not None:
             dictionary["evaluation"] = Evaluation.from_dict(dictionary["evaluation"])
-        if "gt_evaluation" in dictionary:
+        if dictionary.get("gt_evaluation") is not None:
             dictionary["gt_evaluation"] = Evaluation.from_dict(
                 dictionary["gt_evaluation"]
             )
-        if "discarded_bon_answers" in dictionary:
+        if dictionary.get("discarded_bon_answers") is not None:
             dictionary["discarded_bon_answers"] = [
                 Answer.from_dict(discarded_ans)
                 for discarded_ans in dictionary["discarded_bon_answers"]
             ]
-        if "profiling_data" in dictionary:
+        if dictionary.get("profiling_data") is not None:
             dictionary["profiling_data"] = ProfilingData(**dictionary["profiling_data"])
         return cls(**dictionary)
 

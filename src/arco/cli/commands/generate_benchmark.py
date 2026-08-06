@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 def register(subparsers: ArgumentParser) -> ArgumentParser:
     parser = subparsers.add_parser(
         "generate-benchmark",
-        help="Run a workflow against a list of prompts to produce a benchmark dataset",
+        help="Produce a benchmark dataset given a list of prompts",
     )
     parser.add_argument("--config", "-c", required=True, help="Path to run_config YAML")
     parser.add_argument(
@@ -31,7 +31,7 @@ def register(subparsers: ArgumentParser) -> ArgumentParser:
 
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
-    from arco.tools import generate_benchmark
+    from arco.tools.generate_benchmark import generate_benchmark
 
     console.print("[bold]Generating benchmark dataset[/bold]")
 

@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 def register(subparsers: ArgumentParser) -> ArgumentParser:
     parser = subparsers.add_parser(
         "analyze-benchmark",
-        help="Analyse a completed benchmark run: export tables and plots",
+        help="Analyze benchmark outputs producing html visuals",
     )
     parser.add_argument(
         "benchmark_dir",

@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -163,24 +164,24 @@ class Evaluator(ABC):
 def evaluate_state_with_benchmark_entry(
     state: State,
     entry: BenchmarkEntry,
-    evaluators: dict[str, Evaluator],
+    evaluators: dict[AgentType, Evaluator],
     judge_provider: str,
     judge_model: str,
-) -> tuple[BenchmarkSummary, list[Evaluation | None]]:
+) -> tuple[BenchmarkSummary, State]:
     """Compare a workflow's execution trace against a ground-truth benchmark entry.
 
     Walks through the state's answers in order, matching each against the
     expected trace element.  Stops at the first divergence.  For each
-    matching step, runs ground-truth evaluation and collects metrics.
+    matching step, runs ground-truth evaluation and attaches the result to
+    the answer's ``gt_evaluation`` field.
 
     :param state: The final state produced by the workflow.
     :param entry: The ground-truth :class:`BenchmarkEntry` to compare against.
     :param evaluators: Dict mapping agent type names to their evaluators.
     :param judge_provider: Provider for the LLM judge.
     :param judge_model: Model for the LLM judge.
-    :returns: A tuple ``(summary, evaluations)`` where *evaluations* has
-        one entry per answer in the state (``None`` for answers beyond the
-        first trace divergence).
+    :returns: A tuple ``(summary, updated_state)`` where *updated_state* has
+        ``gt_evaluation`` set on each evaluated answer.
     """
     from arco.data import BenchmarkSummary
 
@@ -189,17 +190,17 @@ def evaluate_state_with_benchmark_entry(
     agents: list[AgentType] = []
     scores: list[float] = []
     profiling_datas: list[ProfilingData] = []
-    all_evaluations: list[Evaluation | None] = []
+    new_answers: list[Answer] = []
 
     for idx, answer in enumerate(state.answers):
         if idx > len(entry.trace) - 1:
-            all_evaluations.append(None)
+            new_answers.append(answer)
             continue
         correct_trace = entry.trace[idx]
         if answer.agent_id == correct_trace.agent_type:
             correct_path += 1
         else:
-            all_evaluations.append(None)
+            new_answers.append(answer)
             continue
 
         evaluator = evaluators.get(answer.agent_id)
@@ -210,13 +211,13 @@ def evaluate_state_with_benchmark_entry(
                 judge_provider=judge_provider,
                 judge_model=judge_model,
             )
-            all_evaluations.append(evaluation)
+            new_answers.append(answer.set(gt_evaluation=evaluation))
             ppls.append(answer.perplexity)
             scores.append(evaluation.score)
             agents.append(answer.agent_id)
             profiling_datas.append(answer.profiling_data)
         else:
-            all_evaluations.append(None)
+            new_answers.append(answer)
 
     completion_percentage = correct_path / len(entry.trace) if entry.trace else 0.0
 
@@ -227,7 +228,8 @@ def evaluate_state_with_benchmark_entry(
         agents=agents,
         profiling_datas=profiling_datas,
     )
-    return summary, all_evaluations
+    updated_state = dataclasses.replace(state, answers=tuple(new_answers))
+    return summary, updated_state
 
 
 __all__ = ["Evaluation", "Evaluator", "evaluate_state_with_benchmark_entry"]

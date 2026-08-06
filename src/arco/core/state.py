@@ -122,7 +122,7 @@ class State:
         new_answer = self.get_last_answer(agent_type)
         if new_answer is None:
             return self
-        new_answer.set(profiling_data=profiling_data)
+        new_answer = new_answer.set(profiling_data=profiling_data)
         new_state = self.replace_last_answer(new_answer)
 
         return replace(

@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -9,6 +10,8 @@ import plotly.graph_objects as go
 
 from arco.core import State
 from arco.data import BenchmarkDataset
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)

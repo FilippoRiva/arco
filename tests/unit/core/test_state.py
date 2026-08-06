@@ -1,9 +1,8 @@
-import time
 from unittest.mock import Mock
 
 import pytest
 
-from arco.core import AgentType, Answer
+from arco.core import AgentType, Answer, ProfilingData
 from arco.core.config import AgentConfig
 from arco.core.state import State
 
@@ -149,18 +148,28 @@ def test_answers_stringify(base_state_with_mock, first_answer):
     )
 
 
-def test_profiling_metrics(base_state_with_mock):
-    total_timings = 1
-    start_counter = time.perf_counter()
-    agent_type = AgentType.ANALYZER
-    energy = {"test_dict": "with_no_meaning"}
-    result = base_state_with_mock.set_profiling_metrics(
-        total_timings, start_counter, agent_type, energy
+def test_profiling_metrics(base_state_with_mock, first_answer, agent_config):
+    state = base_state_with_mock.add_answer(first_answer)
+    profiling_data = ProfilingData(
+        total_time=1.5,
+        llm_time=0.8,
+        cpu_energy_kwh=0.01,
+        ram_energy_kwh=0.002,
+        emissions_kg_co2=0.0001,
     )
+    agent_type = AgentType.ANALYZER
+    result = state.set_profiling_data(profiling_data, agent_type)
 
     assert result, "Shouldn't be None"
-    assert result != base_state_with_mock, "Should be a different object"
+    assert result != state, "Should be a different object"
     assert result.global_profiling_data, "Shouldn't be None"
+
+    last_answer = result.get_last_answer(agent_type)
+    assert last_answer is not None
+    assert last_answer.profiling_data.total_time == 1.5
+    assert last_answer.profiling_data.llm_time == 0.8
+    assert last_answer.profiling_data.cpu_energy_kwh == 0.01
+    assert last_answer.profiling_data.emissions_kg_co2 == 0.0001
 
 
 def test_dict(base_state_with_mock, first_answer):

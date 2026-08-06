@@ -1,0 +1,1544 @@
+{
+  "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+  "run_id": "Temperature (low - 0.2)0",
+  "agent_configs": {
+    "Retriever": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-4.1-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.2,
+      "temp_max": 0.2,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_budget_controller": false
+    },
+    "Analyzer": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-4.1-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.2,
+      "temp_max": 0.2,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_budget_controller": false
+    },
+    "Visualizer": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-4.1-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.2,
+      "temp_max": 0.2,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_budget_controller": false
+    },
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-4.1-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_budget_controller": false
+    }
+  },
+  "answers": [
+    {
+      "agent_id": "Planner",
+      "message": "Plan: Retriever, Analyzer, Visualizer",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "agent_choice": "Retriever",
+        "plan": [
+          "analyzer",
+          "visualizer"
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": [
+        [
+          "[\"",
+          -0.00011725161311915144
+        ],
+        [
+          "retr",
+          -1.9361264946837764e-07
+        ],
+        [
+          "iever",
+          -5.512236498361744e-07
+        ],
+        [
+          "\",",
+          -9.014684110297821e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "an",
+          -7.3458322731312364e-06
+        ],
+        [
+          "alyzer",
+          -9.088346359931165e-07
+        ],
+        [
+          "\",",
+          -1.2664456789934775e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "visual",
+          -1.9361264946837764e-07
+        ],
+        [
+          "izer",
+          0.0
+        ],
+        [
+          "\"]",
+          -4.320199877838604e-07
+        ]
+      ],
+      "perplexity": 1.0000114298885503,
+      "profiling_data": {
+        "total_time": 5.242710515998624,
+        "llm_time": 1.4822164720026194,
+        "energy_consumed_kwh": 4.6919343589904875e-06,
+        "cpu_energy_kwh": 6.155838173219473e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.07635054166854e-06,
+        "emissions_kg_co2": 1.551707147336616e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Retriever",
+      "message": "The data has been retrieved (29 entries with columns : date, total_sales)",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.2,
+        "temp_max": 0.2,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "data_str": "sold_date,total_sales_value\n2021-11-01,12189.59\n2021-11-02,12946.21\n2021-11-03,11030.39\n2021-11-04,15082.07\n2021-11-05,22844.58\n2021-11-06,17849.04\n2021-11-07,13095.02\n2021-11-08,12484.55\n2021-11-09,11814.85\n2021-11-10,13338.8\n2021-11-11,18651.92\n2021-11-12,20851.53\n2021-11-13,18360.2\n2021-11-14,13220.84\n2021-11-15,12458.49\n2021-11-16,12231.53\n2021-11-17,13483.63\n2021-11-18,15048.1\n2021-11-19,21971.93\n2021-11-20,18252.07\n2021-11-21,13697.58\n2021-11-22,12316.97\n2021-11-23,16716.98\n2021-11-25,52004.6\n2021-11-26,28608.55\n2021-11-27,21168.69\n2021-11-28,15602.53\n2021-11-29,14708.54\n2021-11-30,17954.65\n",
+        "data_df": "     sold_date  total_sales_value\n0   2021-11-01           12189.59\n1   2021-11-02           12946.21\n2   2021-11-03           11030.39\n3   2021-11-04           15082.07\n4   2021-11-05           22844.58\n5   2021-11-06           17849.04\n6   2021-11-07           13095.02\n7   2021-11-08           12484.55\n8   2021-11-09           11814.85\n9   2021-11-10           13338.80\n10  2021-11-11           18651.92\n11  2021-11-12           20851.53\n12  2021-11-13           18360.20\n13  2021-11-14           13220.84\n14  2021-11-15           12458.49\n15  2021-11-16           12231.53\n16  2021-11-17           13483.63\n17  2021-11-18           15048.10\n18  2021-11-19           21971.93\n19  2021-11-20           18252.07\n20  2021-11-21           13697.58\n21  2021-11-22           12316.97\n22  2021-11-23           16716.98\n23  2021-11-25           52004.60\n24  2021-11-26           28608.55\n25  2021-11-27           21168.69\n26  2021-11-28           15602.53\n27  2021-11-29           14708.54\n28  2021-11-30           17954.65",
+        "sql_query": "SELECT \n    s.Sold_Date AS date,\n    SUM(s.Total_Sale_Value) AS total_sales\nFROM \n    sales s\nWHERE \n    EXTRACT(YEAR FROM s.Sold_Date) = 2021\n    AND EXTRACT(MONTH FROM s.Sold_Date) = 11\nGROUP BY \n    s.Sold_Date\nORDER BY \n    s.Sold_Date;"
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": [
+        [
+          "SELECT",
+          -3.607391408877447e-05
+        ],
+        [
+          " \n",
+          -0.055308856070041656
+        ],
+        [
+          "   ",
+          -0.00017958412354346365
+        ],
+        [
+          " s",
+          -0.04284810647368431
+        ],
+        [
+          ".S",
+          -0.0003103175258729607
+        ],
+        [
+          "old",
+          -6.337155355140567e-05
+        ],
+        [
+          "_Date",
+          -9.088346359931165e-07
+        ],
+        [
+          " AS",
+          -0.00470768054947257
+        ],
+        [
+          " date",
+          -0.014275161549448967
+        ],
+        [
+          ",\n",
+          -0.06994932144880295
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " SUM",
+          -1.735893965815194e-05
+        ],
+        [
+          "(s",
+          -1.5048530030981055e-06
+        ],
+        [
+          ".Total",
+          -1.8624639324116288e-06
+        ],
+        [
+          "_S",
+          0.0
+        ],
+        [
+          "ale",
+          0.0
+        ],
+        [
+          "_Value",
+          -3.054500666621607e-06
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          -1.2113979209971149e-05
+        ],
+        [
+          " total",
+          -0.008655465207993984
+        ],
+        [
+          "_sales",
+          -0.0004915529862046242
+        ],
+        [
+          "\n",
+          -0.013982845470309258
+        ],
+        [
+          "FROM",
+          -7.896309739408025e-07
+        ],
+        [
+          " \n",
+          -0.004413978196680546
+        ],
+        [
+          "   ",
+          -3.128163257315464e-07
+        ],
+        [
+          " sales",
+          -2.816093228830141e-06
+        ],
+        [
+          " s",
+          -5.836499985889532e-05
+        ],
+        [
+          "\n",
+          -1.9361264946837764e-07
+        ],
+        [
+          "WHERE",
+          -0.0009469495271332562
+        ],
+        [
+          " \n",
+          -0.0019287518225610256
+        ],
+        [
+          "   ",
+          -3.7697225252486533e-06
+        ],
+        [
+          " EX",
+          -0.44577181339263916
+        ],
+        [
+          "TRACT",
+          -3.128163257315464e-07
+        ],
+        [
+          "(Y",
+          -0.005945271346718073
+        ],
+        [
+          "EAR",
+          -5.200166469876422e-06
+        ],
+        [
+          " FROM",
+          -3.726595241460018e-05
+        ],
+        [
+          " s",
+          -1.9361264946837764e-07
+        ],
+        [
+          ".S",
+          -5.512236498361744e-07
+        ],
+        [
+          "old",
+          -2.816093228830141e-06
+        ],
+        [
+          "_Date",
+          -1.2664456789934775e-06
+        ],
+        [
+          ")",
+          -5.9153885558771435e-06
+        ],
+        [
+          " =",
+          -3.128163257315464e-07
+        ],
+        [
+          " ",
+          -1.9361264946837764e-07
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "1",
+          -1.9361264946837764e-07
+        ],
+        [
+          "\n",
+          -0.03181895241141319
+        ],
+        [
+          "   ",
+          -2.2961512513575144e-05
+        ],
+        [
+          " AND",
+          -1.9361264946837764e-07
+        ],
+        [
+          " EX",
+          -4.961759259458631e-06
+        ],
+        [
+          "TRACT",
+          -5.512236498361744e-07
+        ],
+        [
+          "(M",
+          -4.763666947837919e-05
+        ],
+        [
+          "ON",
+          -8.061054359131958e-06
+        ],
+        [
+          "TH",
+          -2.45848218582978e-06
+        ],
+        [
+          " FROM",
+          -3.054500666621607e-06
+        ],
+        [
+          " s",
+          -1.0280383548888494e-06
+        ],
+        [
+          ".S",
+          0.0
+        ],
+        [
+          "old",
+          -1.2664456789934775e-06
+        ],
+        [
+          "_Date",
+          -1.5048530030981055e-06
+        ],
+        [
+          ")",
+          -6.704273118884885e-07
+        ],
+        [
+          " =",
+          -1.9361264946837764e-07
+        ],
+        [
+          " ",
+          -3.128163257315464e-07
+        ],
+        [
+          "11",
+          0.0
+        ],
+        [
+          "\n",
+          -4.320199877838604e-07
+        ],
+        [
+          "GROUP",
+          -4.60414821645827e-06
+        ],
+        [
+          " BY",
+          0.0
+        ],
+        [
+          " \n",
+          -0.0013269031187519431
+        ],
+        [
+          "   ",
+          -7.896309739408025e-07
+        ],
+        [
+          " s",
+          -0.009756559506058693
+        ],
+        [
+          ".S",
+          -1.9361264946837764e-07
+        ],
+        [
+          "old",
+          -1.2664456789934775e-06
+        ],
+        [
+          "_Date",
+          -5.512236498361744e-07
+        ],
+        [
+          "\n",
+          -7.896309739408025e-07
+        ],
+        [
+          "ORDER",
+          -9.088346359931165e-07
+        ],
+        [
+          " BY",
+          -1.9361264946837764e-07
+        ],
+        [
+          " \n",
+          -0.000488110730657354
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " s",
+          -7.493430894101039e-05
+        ],
+        [
+          ".S",
+          -4.320199877838604e-07
+        ],
+        [
+          "old",
+          -1.981667537620524e-06
+        ],
+        [
+          "_Date",
+          -4.320199877838604e-07
+        ],
+        [
+          ";",
+          -0.024376483634114265
+        ]
+      ],
+      "perplexity": 1.0091517686982356,
+      "profiling_data": {
+        "total_time": 6.447028361999401,
+        "llm_time": 2.4091327819987782,
+        "energy_consumed_kwh": 7.664543823800789e-06,
+        "cpu_energy_kwh": 1.0012930237997383e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 6.663250800001051e-06,
+        "emissions_kg_co2": 2.5348026043197494e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "Next: Analyzer",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "agent_choice": "Analyzer",
+        "plan": [
+          "visualizer"
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.0006381530001817737,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Analyzer",
+      "message": "In November 2021, the daily sales ranged from a minimum of approximately $11,030 to a maximum of about $52,005. The total sales for the month amounted to approximately $499,984.43 across 29 days.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.2,
+        "temp_max": 0.2,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "analysis": "In November 2021, the daily sales ranged from a minimum of approximately $11,030 to a maximum of about $52,005. The total sales for the month amounted to approximately $499,984.43 across 29 days."
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": [
+        [
+          "In",
+          -0.2521088421344757
+        ],
+        [
+          " November",
+          -1.282920129597187e-05
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "1",
+          -7.896309739408025e-07
+        ],
+        [
+          ",",
+          -5.512236498361744e-07
+        ],
+        [
+          " the",
+          -0.4882214665412903
+        ],
+        [
+          " daily",
+          -0.01769586093723774
+        ],
+        [
+          " sales",
+          -0.0031818747520446777
+        ],
+        [
+          " ranged",
+          -0.0022093774750828743
+        ],
+        [
+          " from",
+          -7.896309739408025e-07
+        ],
+        [
+          " a",
+          -0.12775179743766785
+        ],
+        [
+          " minimum",
+          -0.08894262462854385
+        ],
+        [
+          " of",
+          0.0
+        ],
+        [
+          " approximately",
+          -0.11420966684818268
+        ],
+        [
+          " $",
+          -0.003188405418768525
+        ],
+        [
+          "11",
+          -0.029750604182481766
+        ],
+        [
+          ",",
+          -3.128163257315464e-07
+        ],
+        [
+          "030",
+          -9.372294698550832e-06
+        ],
+        [
+          " to",
+          -1.0149669647216797
+        ],
+        [
+          " a",
+          -9.610702363715973e-06
+        ],
+        [
+          " maximum",
+          -6.704273118884885e-07
+        ],
+        [
+          " of",
+          -5.512236498361744e-07
+        ],
+        [
+          " about",
+          -0.17163294553756714
+        ],
+        [
+          " $",
+          -9.088346359931165e-07
+        ],
+        [
+          "52",
+          -2.1008713702030946e-06
+        ],
+        [
+          ",",
+          -3.128163257315464e-07
+        ],
+        [
+          "005",
+          -0.01109450776129961
+        ],
+        [
+          ".",
+          -0.25227633118629456
+        ],
+        [
+          " The",
+          -0.0013183351838961244
+        ],
+        [
+          " total",
+          -0.001633762731216848
+        ],
+        [
+          " sales",
+          -0.0002478694950696081
+        ],
+        [
+          " for",
+          -0.033600177615880966
+        ],
+        [
+          " the",
+          -0.005352936219424009
+        ],
+        [
+          " month",
+          -0.002491237595677376
+        ],
+        [
+          " amounted",
+          -1.2396824359893799
+        ],
+        [
+          " to",
+          -3.128163257315464e-07
+        ],
+        [
+          " approximately",
+          -0.17468030750751495
+        ],
+        [
+          " $",
+          -2.5776860184123507e-06
+        ],
+        [
+          "499",
+          -0.04860427975654602
+        ],
+        [
+          ",",
+          -4.320199877838604e-07
+        ],
+        [
+          "984",
+          -4.961759259458631e-06
+        ],
+        [
+          ".",
+          -0.7535938024520874
+        ],
+        [
+          "43",
+          -0.015316165052354336
+        ],
+        [
+          " across",
+          -1.0398569107055664
+        ],
+        [
+          " ",
+          -0.03339243307709694
+        ],
+        [
+          "29",
+          -1.6240566083070007e-06
+        ],
+        [
+          " days",
+          -0.0007927165133878589
+        ],
+        [
+          ".",
+          -0.3697901964187622
+        ]
+      ],
+      "perplexity": 1.1371477272493118,
+      "profiling_data": {
+        "total_time": 4.798912988000666,
+        "llm_time": 1.0481059439989622,
+        "energy_consumed_kwh": 3.1976018320529726e-06,
+        "cpu_energy_kwh": 4.1890201260894683e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 2.7786998194440253e-06,
+        "emissions_kg_co2": 1.057504482692895e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "Next: Visualizer",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "agent_choice": "Visualizer",
+        "plan": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.003672093000204768,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Visualizer",
+      "message": "Visualization generated",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.2,
+        "temp_max": 0.2,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "code": "import matplotlib.pyplot as plt\n\nx_data = data_df[\"date\"]\ny_data = data_df[\"total_sales\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, y_data, label=\"total_sales\")\nplt.xlabel(\"date\")\nplt.ylabel(\"total_sales\")\nplt.title(\"Sales Trend for Nov 2021\")\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+        "chart_config": {
+          "chart_type": "line",
+          "x_axis": "date",
+          "y_axis": "total_sales",
+          "title": "Sales Trend for Nov 2021",
+          "df_columns": "date, total_sales"
+        }
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.7875,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": [
+        [
+          "import",
+          -0.0889425128698349
+        ],
+        [
+          " matplotlib",
+          -1.5048530030981055e-06
+        ],
+        [
+          ".pyplot",
+          0.0
+        ],
+        [
+          " as",
+          0.0
+        ],
+        [
+          " plt",
+          0.0
+        ],
+        [
+          "\n\n",
+          -0.0013896391028538346
+        ],
+        [
+          "x",
+          -0.2560059428215027
+        ],
+        [
+          "_data",
+          -0.12760743498802185
+        ],
+        [
+          " =",
+          -4.320199877838604e-07
+        ],
+        [
+          " data",
+          0.0
+        ],
+        [
+          "_df",
+          0.0
+        ],
+        [
+          "[\"",
+          -1.1472419600977446e-06
+        ],
+        [
+          "date",
+          -4.320199877838604e-07
+        ],
+        [
+          "\"]\n",
+          -1.8624639324116288e-06
+        ],
+        [
+          "y",
+          -1.9361264946837764e-07
+        ],
+        [
+          "_data",
+          -1.1637164789135568e-05
+        ],
+        [
+          " =",
+          -6.704273118884885e-07
+        ],
+        [
+          " data",
+          0.0
+        ],
+        [
+          "_df",
+          -3.128163257315464e-07
+        ],
+        [
+          "[\"",
+          -1.9361264946837764e-07
+        ],
+        [
+          "total",
+          0.0
+        ],
+        [
+          "_sales",
+          -6.704273118884885e-07
+        ],
+        [
+          "\"]\n\n",
+          -1.8670179997570813e-05
+        ],
+        [
+          "plt",
+          -3.128163257315464e-07
+        ],
+        [
+          ".figure",
+          -1.9361264946837764e-07
+        ],
+        [
+          "(figsize",
+          0.0
+        ],
+        [
+          "=(",
+          0.0
+        ],
+        [
+          "10",
+          -0.0017133781220763922
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          " ",
+          -0.00029601677670143545
+        ],
+        [
+          "6",
+          -1.0280383548888494e-06
+        ],
+        [
+          "))\n",
+          0.0
+        ],
+        [
+          "plt",
+          -4.320199877838604e-07
+        ],
+        [
+          ".plot",
+          -5.872261317563243e-05
+        ],
+        [
+          "(x",
+          -1.2664456789934775e-06
+        ],
+        [
+          "_data",
+          -1.5048530030981055e-06
+        ],
+        [
+          ",",
+          -3.128163257315464e-07
+        ],
+        [
+          " y",
+          0.0
+        ],
+        [
+          "_data",
+          -3.128163257315464e-07
+        ],
+        [
+          ",",
+          -1.9361264946837764e-07
+        ],
+        [
+          " label",
+          -0.011417838744819164
+        ],
+        [
+          "=\"",
+          -0.04858771339058876
+        ],
+        [
+          "total",
+          -0.20141568779945374
+        ],
+        [
+          "_sales",
+          -3.173704271830502e-06
+        ],
+        [
+          "\")\n",
+          -0.2531870901584625
+        ],
+        [
+          "plt",
+          -3.128163257315464e-07
+        ],
+        [
+          ".xlabel",
+          0.0
+        ],
+        [
+          "(\"",
+          -5.512236498361744e-07
+        ],
+        [
+          "date",
+          -3.128163257315464e-07
+        ],
+        [
+          "\")\n",
+          -5.512236498361744e-07
+        ],
+        [
+          "plt",
+          -5.512236498361744e-07
+        ],
+        [
+          ".ylabel",
+          0.0
+        ],
+        [
+          "(\"",
+          0.0
+        ],
+        [
+          "total",
+          -1.2664456789934775e-06
+        ],
+        [
+          "_sales",
+          -8.895480277715251e-06
+        ],
+        [
+          "\")\n",
+          -3.128163257315464e-07
+        ],
+        [
+          "plt",
+          -5.512236498361744e-07
+        ],
+        [
+          ".title",
+          0.0
+        ],
+        [
+          "(\"",
+          0.0
+        ],
+        [
+          "Sales",
+          -5.512236498361744e-07
+        ],
+        [
+          " Trend",
+          -2.339278580620885e-06
+        ],
+        [
+          " for",
+          -3.128163257315464e-07
+        ],
+        [
+          " Nov",
+          -7.896309739408025e-07
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "1",
+          -1.1472419600977446e-06
+        ],
+        [
+          "\")\n",
+          -5.512236498361744e-07
+        ],
+        [
+          "plt",
+          -2.1008713702030946e-06
+        ],
+        [
+          ".legend",
+          -0.004635184071958065
+        ],
+        [
+          "()\n",
+          -3.128163257315464e-07
+        ],
+        [
+          "plt",
+          0.0
+        ],
+        [
+          ".grid",
+          -1.5094070477061905e-05
+        ],
+        [
+          "(True",
+          -6.392202976712724e-06
+        ],
+        [
+          ",",
+          -0.06198001280426979
+        ],
+        [
+          " alpha",
+          -0.07823904603719711
+        ],
+        [
+          "=",
+          0.0
+        ],
+        [
+          "0",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "3",
+          -1.9361264946837764e-07
+        ],
+        [
+          ")\n",
+          -4.179569077678025e-05
+        ],
+        [
+          "plt",
+          -6.704273118884885e-07
+        ],
+        [
+          ".tight",
+          -0.012516596354544163
+        ],
+        [
+          "_layout",
+          -1.1472419600977446e-06
+        ],
+        [
+          "()\n",
+          -1.8624639324116288e-06
+        ],
+        [
+          "plt",
+          -1.6240566083070007e-06
+        ],
+        [
+          ".show",
+          0.0
+        ],
+        [
+          "()",
+          -1.6047699318733066e-05
+        ],
+        [
+          "{\n",
+          -9.729906196298543e-06
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "chart",
+          -6.704273118884885e-07
+        ],
+        [
+          "_type",
+          -5.676981345459353e-06
+        ],
+        [
+          "\":",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "line",
+          -4.978233846486546e-05
+        ],
+        [
+          "\",\n",
+          -5.512236498361744e-07
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "x",
+          -7.493430894101039e-05
+        ],
+        [
+          "_axis",
+          -1.9361264946837764e-07
+        ],
+        [
+          "\":",
+          -1.9361264946837764e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "date",
+          0.0
+        ],
+        [
+          "\",\n",
+          -1.3856492842023727e-06
+        ],
+        [
+          " ",
+          -1.9361264946837764e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "y",
+          0.0
+        ],
+        [
+          "_axis",
+          -7.896309739408025e-07
+        ],
+        [
+          "\":",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "total",
+          -4.320199877838604e-07
+        ],
+        [
+          "_sales",
+          -9.088346359931165e-07
+        ],
+        [
+          "\",\n",
+          -5.512236498361744e-07
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "title",
+          -0.059105947613716125
+        ],
+        [
+          "\":",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Sales",
+          -5.512236498361744e-07
+        ],
+        [
+          " Trend",
+          -0.0005837726057507098
+        ],
+        [
+          " for",
+          -0.03804803267121315
+        ],
+        [
+          " Nov",
+          -0.0067154900170862675
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "1",
+          -6.704273118884885e-07
+        ],
+        [
+          "\"\n",
+          -0.000453910295618698
+        ],
+        [
+          "}",
+          0.0
+        ]
+      ],
+      "perplexity": 1.009916562033863,
+      "profiling_data": {
+        "total_time": 10.88697944500018,
+        "llm_time": 3.2227201529967715,
+        "energy_consumed_kwh": 1.0193263152642796e-05,
+        "cpu_energy_kwh": 1.3342577804201148e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 8.85900537222268e-06,
+        "emissions_kg_co2": 3.3710956033157206e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "Workflow complete",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-4.1-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_budget_controller": false
+      },
+      "agent_output": {
+        "agent_choice": "End",
+        "plan": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "logprobs": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.0007230480005091522,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 27.380664604999765,
+    "llm_time": 8.162175350997131,
+    "energy_consumed_kwh": 2.5747343167487044e-05,
+    "cpu_energy_kwh": 3.370036634150747e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 2.2377306533336297e-05,
+    "emissions_kg_co2": 8.51510983766498e-06
+  },
+  "agents_profiling_data": {
+    "Planner": {
+      "total_time": 5.24774380999952,
+      "llm_time": 1.4822164720026194,
+      "energy_consumed_kwh": 4.6919343589904875e-06,
+      "cpu_energy_kwh": 6.155838173219473e-07,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 4.07635054166854e-06,
+      "emissions_kg_co2": 1.551707147336616e-06
+    },
+    "Retriever": {
+      "total_time": 6.447028361999401,
+      "llm_time": 2.4091327819987782,
+      "energy_consumed_kwh": 7.664543823800789e-06,
+      "cpu_energy_kwh": 1.0012930237997383e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 6.663250800001051e-06,
+      "emissions_kg_co2": 2.5348026043197494e-06
+    },
+    "Analyzer": {
+      "total_time": 4.798912988000666,
+      "llm_time": 1.0481059439989622,
+      "energy_consumed_kwh": 3.1976018320529726e-06,
+      "cpu_energy_kwh": 4.1890201260894683e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 2.7786998194440253e-06,
+      "emissions_kg_co2": 1.057504482692895e-06
+    },
+    "Visualizer": {
+      "total_time": 10.88697944500018,
+      "llm_time": 3.2227201529967715,
+      "energy_consumed_kwh": 1.0193263152642796e-05,
+      "cpu_energy_kwh": 1.3342577804201148e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 8.85900537222268e-06,
+      "emissions_kg_co2": 3.3710956033157206e-06
+    }
+  }
+}

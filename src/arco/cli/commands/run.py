@@ -8,9 +8,7 @@ if TYPE_CHECKING:
 # Script Parser Registration
 # ---------------------------------------------------------------------------
 def register(subparsers: ArgumentParser) -> ArgumentParser:
-    parser = subparsers.add_parser(
-        "run", help="Invokes the agent given an arco configuration file"
-    )
+    parser = subparsers.add_parser("run", help="Invokes a workflow")
 
     parser.add_argument("--config", "-c", type=str, help="Path to config YAML")
     parser.add_argument(

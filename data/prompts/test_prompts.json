@@ -1,0 +1,7 @@
+[
+  {
+    "id": 11,
+    "prompt": "Show monthly revenue split by promo flag for 2023 as a grouped bar chart. The grouped bar chart should show, for each month, 2 bars representing promo and non-promo sales",
+    "difficulty": 2
+  }
+]

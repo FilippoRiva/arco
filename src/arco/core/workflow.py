@@ -6,6 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from langchain_core.messages import AIMessageChunk
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 
 from arco.core import (
@@ -140,13 +141,13 @@ class Workflow(ABC):
                         "state": current_state,
                     }
                 elif stream_type == "messages":
-                    message_chunk: dict
                     metadata: dict
+                    message_chunk: AIMessageChunk
                     message_chunk, metadata = data
                     yield {
                         "event": "token",
                         "node": metadata.get("langgraph_node"),
-                        "content": message_chunk.get("content", None),
+                        "content": message_chunk.content,
                     }
         except AgentException as e:
             yield {"event": "error", "message": str(e)}

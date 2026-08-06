@@ -7,7 +7,7 @@ global:
   default_provider_judge: openai
   default_model_judge: gpt-4.1-nano
   enable_storage: true
-  enable_codecarbon: false
+  enable_codecarbon: true
 
 defaults:
   Retriever:

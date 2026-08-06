@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 def register(subparsers: ArgumentParser) -> ArgumentParser:
     parser = subparsers.add_parser(
-        "benchmark", help="Runs a given set of configurations against a GT dataset"
+        "benchmark", help="Benchmarks a workflow on a benchmark dataset"
     )
     parser.add_argument(
         "--dataset", "-d", required=True, help="Path to benchmark dataset JSON"
