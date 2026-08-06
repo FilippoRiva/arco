@@ -1,5 +1,6 @@
+from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from arco import workflows
 from arco.core import Config, WorkflowFactory
@@ -28,7 +29,9 @@ def get_workflow_list() -> list[str]:
     return list(WorkflowFactory.all().keys())
 
 
-def run(config: Config, workflow: Workflow, log_level: str | None = None):
+def run(
+    config: Config, workflow: Workflow, log_level: str | None = None
+) -> Generator[dict[str, Any]]:
 
     init_logging(config.run_id, log_dir=Path(config.save_dir) / "logs", level=log_level)
 

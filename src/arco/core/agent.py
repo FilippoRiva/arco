@@ -113,7 +113,8 @@ class Agent(ABC):
         Override this in subclasses to apply transformations across all
         candidates (e.g. column name standardisation in the Retriever).
 
-        :param results: The list of candidate states from greedy or best-of-N execution.
+        :param results: The list of candidate states from greedy or best-of-N
+        execution.
         :param llm_acc: The LLM call accumulator for this step.
         :param config: The agent's configuration for this execution.
         :returns: The (possibly modified) list of candidate states.
@@ -128,7 +129,11 @@ class Agent(ABC):
             state = self._get_config_and_execute(state)
             state = self._arco_evaluation(state)
             state = self._budget_controller(state)
-            if state.get_last_answer(self.type).budget_controller_choice == "end":
+            last_answer = state.get_last_answer(self.type)
+            if (
+                last_answer is not None
+                and last_answer.budget_controller_choice == "end"
+            ):
                 return state
 
     def _get_config_and_execute(self, state: State) -> State:
@@ -141,7 +146,8 @@ class Agent(ABC):
         loop.
 
         :param state: The current workflow state.
-        :returns: A new state with the best answer appended and profiling data attached.
+        :returns: A new state with the best answer appended and
+        profiling data attached.
         """
         agent_config: AgentConfig = state.get_agent_config(self.type)
 
@@ -236,7 +242,7 @@ class Agent(ABC):
                 temp_max=agent_config.temp_max * 0.95,
                 n=new_n,
             )
-            new_configs = dict(state._agent_configs)
+            new_configs = dict(state.agent_configs)
             new_configs[self.type] = new_config
             return dataclass_replace(state, agent_configs=MappingProxyType(new_configs))
 
@@ -298,16 +304,21 @@ class Agent(ABC):
         _COT_SIMILARITY_THRESHOLD = 0.95
 
         llm.cot_enabled = True
+        loop_state: State = state
         for cot_i in range(1, max_iter):
             # Apply Refinement
-            llm.execution_error = state.answers[-1].error
+            llm.execution_error = loop_state.answers[-1].error
 
-            previous_output: LLMAnswer = llm.last_answer
-            state: State = self.core(state, llm)
-            current_output: LLMAnswer = llm.last_answer
-            current_error = state.answers[-1].error
+            previous_output: LLMAnswer | None = llm.last_answer
+            loop_state = self.core(state, llm)
+            current_output: LLMAnswer | None = llm.last_answer
+            current_error = loop_state.answers[-1].error
 
-            if not current_error:
+            if (
+                previous_output is not None
+                and current_output is not None
+                and not current_error
+            ):
                 ratio = difflib.SequenceMatcher(
                     None, previous_output.text, current_output.text
                 ).ratio()

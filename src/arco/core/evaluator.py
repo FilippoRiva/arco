@@ -8,6 +8,7 @@ from .profiling_data import ProfilingData
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from . import AgentConfig, Answer, State
+    from .agent_type import AgentType
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ class Evaluator(ABC):
         new_results = []
         for result, evaluation in zip(results, evaluations):
             last_answer = result.get_last_answer()
+            if last_answer is None:
+                continue
             new_results.append(
                 result.replace_last_answer(last_answer.set(evaluation=evaluation))
             )
@@ -182,9 +185,9 @@ def evaluate_state_with_benchmark_entry(
     from arco.data import BenchmarkSummary
 
     correct_path = 0
-    ppls: list[float] = []
+    ppls: list[float | None] = []
+    agents: list[AgentType] = []
     scores: list[float] = []
-    agents: list[str] = []
     profiling_datas: list[ProfilingData] = []
     all_evaluations: list[Evaluation | None] = []
 

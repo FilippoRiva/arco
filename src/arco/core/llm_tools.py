@@ -7,6 +7,7 @@ and response extraction used across evaluators and agents.
 """
 
 import json
+import logging
 import os
 import re
 from json import JSONDecodeError
@@ -17,6 +18,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from .tracking import LLMCallAccumulator
 
@@ -29,8 +31,6 @@ DEFAULT_LLM_ACC = LLMCallAccumulator("None")
 if TYPE_CHECKING:
     from .agent_config import AgentConfig
 
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -171,6 +171,10 @@ class LLM:
         return answer
 
     def _cot_invoke(self, prompt: str, execution_error: str | None) -> LLMAnswer:
+        if self.last_answer is None:
+            raise ValueError(
+                "Chain of thought has been invoked on a missing answer (the last answer is None)"
+            )
         if execution_error:
             suffix = self._ERROR_SUFFIX.format(
                 previous_response=self.last_answer.text,
@@ -244,7 +248,6 @@ def get_llm(
         chat_model = ChatOpenAI(
             model=model,
             temperature=temperature,
-            max_tokens=max_tokens,
             streaming=streaming,
             callbacks=[llm_accumulator],
             top_p=top_p,
@@ -254,12 +257,11 @@ def get_llm(
         api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
             raise ValueError(
-                "OpenRouter requires an API key: pass openrouter_api_key or "
-                "set the OPENROUTER_API_KEY environment variable."
+                "OpenRouter requires an API key: pass openrouter_api_key or set the OPENROUTER_API_KEY environment variable."
             )
         chat_model = ChatOpenAI(
             model=model,
-            api_key=api_key,
+            api_key=SecretStr(api_key),
             base_url=openrouter_url,
             temperature=temperature,
             # max_tokens=max_tokens,
@@ -295,7 +297,7 @@ def get_llm(
     return LLM(base_chat_model=chat_model)
 
 
-def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | None:
+def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]]:
     metadata = message.response_metadata
     if "logprobs" in metadata and metadata["logprobs"] is not None:
         logprobs_data = metadata["logprobs"]
@@ -339,7 +341,7 @@ def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]] | Non
                 for i in range(len(logprobs_data))
             ]
 
-    return None
+    return []
 
 
 def check_model_availability(provider: str, model: str) -> tuple[bool, str]:

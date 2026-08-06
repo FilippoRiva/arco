@@ -46,16 +46,16 @@ def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
             return answer.agent_output["agent_choice"]
         return "End"
 
+    path_map: dict[str | Agent, Agent | str] = {
+        retriever: retriever,
+        analyzer: analyzer,
+        visualizer: visualizer,
+        "End": END,
+    }
+
     # Routing logic
     graph.add_conditional_edges(
-        orchestrating_agent,
-        route_to_agent,
-        {
-            retriever: retriever,
-            analyzer: analyzer,
-            visualizer: visualizer,
-            "End": END,
-        },
+        source=orchestrating_agent, path=route_to_agent, path_map=path_map
     )
 
     # Edges returning to orchestrator

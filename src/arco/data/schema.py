@@ -230,7 +230,9 @@ class DatabaseSchema:
             schema = cls(tables=tables, compact_threshold=5)
             return schema
         else:
-            raise SchemaParsingException("The schema was not parsable")
+            raise SchemaParsingException(
+                f"The schema was not parsable. Path : {data_dir_path}"
+            )
 
 
 __all__ = ["DatabaseSchema"]

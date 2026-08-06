@@ -2,6 +2,7 @@ import json
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
+from typing import Self
 
 from arco.core import AgentType
 from arco.core.profiling_data import ProfilingData
@@ -12,65 +13,21 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True, slots=True)
 class BenchmarkSummary:
     completion_percentage: float
-    ppls: list[float]
+    ppls: list[float | None]
     scores: list[float]
     agents: list[AgentType]
     profiling_datas: list[ProfilingData]
 
 
 @dataclass(frozen=True, slots=True)
-class BenchmarkDataset:
-    entries: list[BenchmarkEntry]
-
-    @classmethod
-    def from_json(cls, json_path) -> BenchmarkDataset:
-        logger.info(f"Loading benchmark dataset from {json_path}")
-        with open(json_path) as f:
-            json_data = json.load(f)
-
-        entries = []
-        for entry in json_data:
-            entries.append(BenchmarkEntry.from_dict(entry_dict=entry))
-        logger.info(f"Loaded {len(entries)} benchmark entries")
-
-        return cls(entries=entries)
-
-    def save(self, path: str):
-        with open(path, "w") as f:
-            json.dump([entry.to_dict() for entry in self.entries], f, indent=2)
-        logger.info(f"Benchmark dataset saved to {path}")
-
-    def __iter__(self) -> Iterator[BenchmarkEntry]:
-        return iter(self.entries)
-
-    def __len__(self) -> int:
-        return len(self.entries)
-
-
-@dataclass(frozen=True, slots=True)
-class BenchmarkEntry:
-    prompt: str
-    trace: Trace
-    id: int
-    difficulty: int
-
-    @classmethod
-    def from_dict(
-        cls, entry_dict: dict[str, str | int | float | dict]
-    ) -> BenchmarkEntry:
-        return cls(
-            prompt=entry_dict["prompt"],
-            id=int(entry_dict["id"]),
-            difficulty=int(entry_dict["difficulty"]),
-            trace=Trace.from_trace_data(entry_dict["trace"]),
-        )
+class TraceElement:
+    agent_type: AgentType
+    data: dict[str, str | int | float | dict]
 
     def to_dict(self) -> dict:
         return {
-            "prompt": self.prompt,
-            "trace": self.trace.to_dict(),
-            "id": self.id,
-            "difficulty": self.difficulty,
+            "agent_type": self.agent_type,
+            "data": self.data,
         }
 
 
@@ -79,9 +36,7 @@ class Trace:
     trace_list: list[TraceElement]
 
     @classmethod
-    def from_trace_data(
-        cls, trace_list_data: list[dict[str, str | int | float | dict]]
-    ):
+    def from_trace_data(cls, trace_list_data: list[dict]):
         trace_list = []
         for trace_element in trace_list_data:
             agent_type = AgentType(trace_element["agent_type"])
@@ -103,15 +58,57 @@ class Trace:
 
 
 @dataclass(frozen=True, slots=True)
-class TraceElement:
-    agent_type: AgentType
-    data: dict[str, str | int | float | dict]
+class BenchmarkEntry:
+    prompt: str
+    trace: Trace
+    id: int
+    difficulty: int
+
+    @classmethod
+    def from_dict(cls, entry_dict: dict) -> Self:
+        return cls(
+            prompt=entry_dict["prompt"],
+            id=int(entry_dict["id"]),
+            difficulty=int(entry_dict["difficulty"]),
+            trace=Trace.from_trace_data(entry_dict["trace"]),
+        )
 
     def to_dict(self) -> dict:
         return {
-            "agent_type": self.agent_type,
-            "data": self.data,
+            "prompt": self.prompt,
+            "trace": self.trace.to_dict(),
+            "id": self.id,
+            "difficulty": self.difficulty,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class BenchmarkDataset:
+    entries: list[BenchmarkEntry]
+
+    @classmethod
+    def from_json(cls, json_path) -> Self:
+        logger.info(f"Loading benchmark dataset from {json_path}")
+        with open(json_path) as f:
+            json_data = json.load(f)
+
+        entries = []
+        for entry in json_data:
+            entries.append(BenchmarkEntry.from_dict(entry_dict=entry))
+        logger.info(f"Loaded {len(entries)} benchmark entries")
+
+        return cls(entries=entries)
+
+    def save(self, path: str):
+        with open(path, "w") as f:
+            json.dump([entry.to_dict() for entry in self.entries], f, indent=2)
+        logger.info(f"Benchmark dataset saved to {path}")
+
+    def __iter__(self) -> Iterator[BenchmarkEntry]:
+        return iter(self.entries)
+
+    def __len__(self) -> int:
+        return len(self.entries)
 
 
 __all__ = [

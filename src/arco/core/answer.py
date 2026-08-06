@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field, fields, replace
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from .agent import AgentType
 from .agent_config import AgentConfig
@@ -40,7 +40,7 @@ class Answer:
     agent_output: dict = field(default_factory=dict)
     evaluation: Evaluation | None = None
     gt_evaluation: Evaluation | None = None
-    discarded_bon_answers: list[Answer] | None = None
+    discarded_bon_answers: list[Self] | None = None
     error: str | None = None
     logprobs: list[tuple[str, float | int]] | None = None
     perplexity: float | None = None
@@ -55,7 +55,7 @@ class Answer:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, dictionary: dict[str, Any]) -> Answer:
+    def from_dict(cls, dictionary: dict[str, Any]) -> Self:
         """Deserialize an answer from a dict (inverse of :meth:`to_dict`).
 
         Recursively converts nested dicts back into :class:`AgentConfig`,
@@ -80,9 +80,9 @@ class Answer:
             ]
         if "profiling_data" in dictionary:
             dictionary["profiling_data"] = ProfilingData(**dictionary["profiling_data"])
-        return Answer(**dictionary)
+        return cls(**dictionary)
 
-    def set(self, **kwargs) -> Answer:
+    def set(self, **kwargs) -> Self:
         """Return a new Answer with the given fields replaced.
 
         :param kwargs: Field names and their new values.
@@ -92,6 +92,6 @@ class Answer:
         filtered = {k: v for k, v in kwargs.items() if k in valid_keys}
         return replace(self, **filtered)
 
-    def copy(self) -> Answer:
+    def copy(self) -> Self:
         """Return a deep copy of this answer."""
         return deepcopy(self)

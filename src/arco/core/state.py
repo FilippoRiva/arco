@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Self
 
 from .agent_type import AgentType
 from .answer import Answer
@@ -22,7 +22,7 @@ class State:
 
     :ivar prompt: The original user prompt.
     :ivar run_id: Unique identifier for this run.
-    :ivar _agent_configs: Per-agent configuration dict.
+    :ivar agent_configs: Per-agent configuration Mapping.
     :ivar answers: Ordered list of agent answers produced so far.
     :ivar global_profiling_data: Cumulative profiling data across all steps.
     :ivar agents_profiling_data: Per-agent cumulative profiling data.
@@ -38,7 +38,7 @@ class State:
     agent_configs: Mapping[AgentType, AgentConfig]
 
     # List of agent's answers
-    answers: tuple[Answer] = field(default_factory=tuple)
+    answers: tuple[Answer, ...] = field(default_factory=tuple[Answer, ...])
 
     # List of metrics profiling the current state
     global_profiling_data: ProfilingData = field(default_factory=ProfilingData)
@@ -46,7 +46,7 @@ class State:
         default_factory=lambda: MappingProxyType({})
     )
 
-    def add_answer(self, answer: Answer) -> State:
+    def add_answer(self, answer: Answer) -> Self:
         """Return a new state with *answer* appended to the answers list.
 
         Args:
@@ -75,20 +75,21 @@ class State:
             )
         return answers[-1] if len(answers) > 0 else None
 
-    def replace_last_answer(self, answer: Answer) -> State:
+    def replace_last_answer(self, answer: Answer) -> Self:
         """Return a new state with the last answer replaced."""
         last_answer = self.get_last_answer()
         if not last_answer:
-            return dataclasses.replace(self, answers=[answer])
+            return dataclasses.replace(self, answers=(answer))
         new_answers = tuple([answer for answer in self.answers[:-1]] + [answer])
         return dataclasses.replace(self, answers=new_answers)
 
     def get_agent_config(self, agent_type: AgentType | None) -> AgentConfig:
-        """Return the agent config for any agent type. If the agent is not specified or defined in the list of
-        available configs, the default config is returned"""
+        """Return the agent config for any agent type. If the agent is not
+        specified or defined in the list of available configs,
+        the default config is returned"""
         if agent_type is not None and agent_type in self.agent_configs:
             return self.agent_configs[agent_type]
-        return self.agent_configs["__default__"]
+        return self.agent_configs[AgentType("__default__")]
 
     def get_agents_used(self) -> list[str]:
         """Return the list of agent type names used so far, excluding orchestrator."""
@@ -100,7 +101,7 @@ class State:
 
     def set_profiling_data(
         self, profiling_data: ProfilingData, agent_type: AgentType
-    ) -> State:
+    ) -> Self:
         """Attach profiling data and return a new state.
 
         Accumulates into ``global_profiling_data``, per-agent
@@ -118,9 +119,11 @@ class State:
         else:
             agents_profiling_data[agent_type] = profiling_data
 
-        new_state = self.replace_last_answer(
-            self.get_last_answer(agent_type).set(profiling_data=profiling_data)
-        )
+        new_answer = self.get_last_answer(agent_type)
+        if new_answer is None:
+            return self
+        new_answer.set(profiling_data=profiling_data)
+        new_state = self.replace_last_answer(new_answer)
 
         return replace(
             new_state,
@@ -142,7 +145,7 @@ class State:
         }
 
     @classmethod
-    def from_dict(cls, dictionary: dict[str, Any]) -> State:
+    def from_dict(cls, dictionary: dict[str, Any]) -> Self:
         """Deserialize a state from a dict (inverse of :meth:`to_dict`)."""
         state = State(**dictionary)
         agent_configs: dict[AgentType, AgentConfig] = {}
@@ -156,7 +159,7 @@ class State:
         params = dict(dictionary)
         params["agent_configs"] = MappingProxyType(agent_configs)
         params["answers"] = answers
-        return State(**params)
+        return cls(**params)
 
     def save(self, save_dir: Path):
         """Save the serialized state to a JSON file.

@@ -9,3 +9,4 @@
 # =============================================================================
 global:
   workflow: "planned_sales"
+  prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"

@@ -6,7 +6,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 
 from arco.core import (
     Agent,
@@ -73,6 +73,10 @@ class Workflow(ABC):
 
         tracking.initialize_tracking(self.config)
 
+        if self.config.prompt is None:
+            yield {"event": "error", "message": "No prompt provided"}
+            return None
+
         input_state: State = State(
             prompt=self.config.prompt,
             run_id=self.config.run_id,
@@ -101,13 +105,14 @@ class Workflow(ABC):
 
         _run_t0 = time.perf_counter()
 
-        graph_config = {
-            "configurable": {
-                "thread_id": self.config.run_id,
-                "enable_budget_controller": self.config.enable_budget_controller,
+        graph_config = RunnableConfig(
+            {
+                "configurable": {
+                    "thread_id": self.config.run_id,
+                    "enable_budget_controller": self.config.enable_budget_controller,
+                }
             }
-        }
-
+        )
         current_state = None
 
         try:
@@ -116,11 +121,17 @@ class Workflow(ABC):
                 config=graph_config,
                 stream_mode=["tasks", "updates", "messages"],
             ):
+                stream_type: str
+                data: Any
                 stream_type, data = chunk
-                if stream_type == "tasks" and "input" in data:
+                if (
+                    stream_type == "tasks"
+                    and "input" in data
+                    and isinstance(data, dict)
+                ):
                     yield {"event": "node_started", "node": data["name"]}
                     logger.debug("node_started_event: " + str(data))
-                elif stream_type == "updates":
+                elif stream_type == "updates" and isinstance(data, dict):
                     node_name = next(iter(data.keys()))
                     current_state = State(**data[node_name])
                     yield {
@@ -129,11 +140,13 @@ class Workflow(ABC):
                         "state": current_state,
                     }
                 elif stream_type == "messages":
+                    message_chunk: dict
+                    metadata: dict
                     message_chunk, metadata = data
                     yield {
                         "event": "token",
                         "node": metadata.get("langgraph_node"),
-                        "content": message_chunk.content,
+                        "content": message_chunk.get("content", None),
                     }
         except AgentException as e:
             yield {"event": "error", "message": str(e)}
@@ -151,7 +164,6 @@ class Workflow(ABC):
 
         yield {"event": "completed", "state": final_result}
         logger.info("Workflow completed successfully")
-        return final_result
 
     @abstractmethod
     def initialize(self, config: Config, graph: Graph):
@@ -182,6 +194,7 @@ class Workflow(ABC):
         return {
             agent_type: agent.evaluator
             for agent_type, agent in self._agent_list.items()
+            if agent.evaluator is not None
         }
 
     def __str__(self) -> str:

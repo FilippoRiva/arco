@@ -37,7 +37,7 @@ class AgentConfig:
     """
 
     # Optional per-step LLM overrides
-    _DUMMY_STR = "_DUMMY_STR"  # used only for typechecking, the actual value is inherited from ArcoConfig and is always a str
+    _DUMMY_STR = "_DUMMY_STR_"
     provider: str = _DUMMY_STR
     model: str = _DUMMY_STR
     provider_judge: str = _DUMMY_STR
@@ -99,7 +99,7 @@ class AgentConfig:
         else:
             agent_dict = {}
 
-        config = AgentConfig.from_dict(agent_dict)
+        config = cls.from_dict(agent_dict)
 
         if inherit_globals_from:
             config = config._inherit_from_config(inherit_globals_from)

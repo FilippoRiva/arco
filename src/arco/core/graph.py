@@ -1,14 +1,13 @@
 from collections.abc import Awaitable, Callable, Hashable, Sequence
-from typing import Self
 
 from langgraph.graph import END as LANGGRAPH_END
 from langgraph.graph import StateGraph
 
-END = LANGGRAPH_END
-
 from .agent import Agent
 from .agent_type import AgentType
 from .state import State
+
+END = LANGGRAPH_END
 
 
 class Graph(StateGraph):
@@ -26,28 +25,28 @@ class Graph(StateGraph):
 
     def add_agent(
         self,
-        node: str | Agent,
-        action: Agent | None = None,
-    ) -> Self:
+        agent: Agent,
+    ):
         """Add a node to the graph.
 
         If *node* is an :class:`Agent`, its ``name`` is used as the
         node name and the agent is stored in the internal registry.
         """
-        if isinstance(node, Agent):
-            self._agents.update({node.type: node})
-            action = node
-            node = node.name
+        self._agents.update({agent.type: agent})
+        action: Agent = agent
+        node: str = agent.name
         super().add_node(node, action)
 
-    def set_entry_agent(self, agent: Agent) -> Self:
+    def set_entry_agent(self, agent: Agent | str):
         """Set the entry point of the graph.
 
         Accepts an :class:`Agent` instance or a string node name.
         """
         if isinstance(agent, Agent):
-            agent = agent.name
-        super().set_entry_point(agent)
+            agent_id: str = agent.name
+        elif isinstance(agent, str):
+            agent_id: str = agent
+        super().set_entry_point(agent_id)
 
     def add_agent_edge(self, from_node: Agent | str | list[str], to_node: Agent | str):
         """Add a directed edge between two nodes.
@@ -69,8 +68,8 @@ class Graph(StateGraph):
         source: Agent | str,
         path: Callable[..., Hashable | Sequence[Hashable]]
         | Callable[..., Awaitable[Hashable | Sequence[Hashable]]],
-        path_map: dict[Hashable, str] | list[str] | None = None,
-    ) -> Self:
+        path_map: dict[str | Agent, str | Agent],
+    ):
         """Add conditional edges from a node.
 
         Accepts :class:`Agent` instances in *source* and in the
@@ -86,8 +85,10 @@ class Graph(StateGraph):
                 if isinstance(value, Agent):
                     value = value.name
                 temp.update({key: value})
-            path_map = temp
-        super().add_conditional_edges(source, path, path_map)
+            fixed_map: dict[Hashable, str] = temp
+            super().add_conditional_edges(source, path, fixed_map)
+        else:
+            raise TypeError("The provided path_map is not a compatible dictionary")
 
 
 __all__ = ["END", "Graph"]

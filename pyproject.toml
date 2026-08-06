@@ -10,27 +10,27 @@ authors = [{ name = "Filippo Riva" }]
 # --- Core Runtime Dependencies ---
 # These are required for the application to function.
 dependencies = [
-    # LangGraph
-    "langgraph>=1.2.0",
-    "langgraph-sdk>=0.3.14",
-    # LangChain
-    "langchain-core>=1.4.0",
-    "langchain-openai>=1.2.1",
-    "langchain-ollama>=1.1.0",
-    # LLM and models
-    "ollama>=0.6.2",
-    "llama-index>=0.14.22",
-    # Tracing and Profiling
-    "codecarbon>=3.2.7",
-    # SQL, DuckDB and Data Management
-    "pandas>=3.0.3",
-    # Utils
-    "numpy>=2.4.5",
-    "requests>=2.34.2",
-    "pyyaml",
-    # Terminal and Visualization
-    "rich>=15.0.0",
-    "grandalf",
+  # LangGraph
+  "langgraph>=1.2.0",
+  "langgraph-sdk>=0.3.14",
+  # LangChain
+  "langchain-core>=1.4.0",
+  "langchain-openai>=1.2.1",
+  "langchain-ollama>=1.1.0",
+  # LLM and models
+  "ollama>=0.6.2",
+  "llama-index>=0.14.22",
+  # Tracing and Profiling
+  "codecarbon>=3.2.7",
+  # SQL, DuckDB and Data Management
+  "pandas>=3.0.3",
+  # Utils
+  "numpy>=2.4.5",
+  "requests>=2.34.2",
+  "pyyaml",
+  # Terminal and Visualization
+  "rich>=15.0.0",
+  "grandalf",
 ]
 
 
@@ -48,20 +48,13 @@ build-backend = "hatchling.build"
 # --- Development & Workflows-specific extras ---
 # These are only installed when explicitly requested (e.g., 'uv sync --all-extras' or 'uv sync --extra dev')
 [project.optional-dependencies]
-sales = [
-    "matplotlib>=3.11.1",
-    "pyarrow>=25.0.0",
-    "duckdb>=1.5.2",
-]
+sales = ["matplotlib>=3.11.1", "pyarrow>=25.0.0", "duckdb>=1.5.2"]
 dev = [
-    "ruff>=0.16.0",
-    "ipykernel>=7.2.0",
-    "pytest>=9.0.3",
-    "pytest-cov>=7.1.0",
-    "scipy",
-    "pre-commit>=4.6.1",
+  "ruff>=0.16.0",
+  "ipykernel>=7.2.0",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
+  "scipy",
+  "pre-commit>=4.6.1",
 ]
-analysis = [
-    "plotly>=6.0.1",
-    "kaleido",
-]
+analysis = ["plotly>=6.0.1", "kaleido"]

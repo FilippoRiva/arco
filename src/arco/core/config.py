@@ -4,7 +4,7 @@ import random
 from collections.abc import Mapping
 from dataclasses import dataclass, field, fields, replace
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import yaml
 
@@ -119,7 +119,7 @@ class Config:
             # set the attribute even if the class is frozen :
             object.__setattr__(self, "agent_configs", MappingProxyType(agent_configs))
 
-    def update_prompt(self, prompt: str) -> Config:
+    def update_prompt(self, prompt: str) -> Self:
         """Return a new config with the prompt replaced and a fresh run ID.
 
         :param prompt: The new prompt string.
@@ -148,7 +148,7 @@ class Config:
                 object.__setattr__(result, f.name, deepcopy(val))
         return result
 
-    def set(self, **kwargs) -> Config:
+    def set(self, **kwargs) -> Self:
         """Return a new config with the given fields replaced.
 
         :param kwargs: Field names and their new values.
@@ -157,7 +157,7 @@ class Config:
         return replace(self, **kwargs)
 
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> Config:
+    def from_yaml(cls, yaml_path: str) -> Self:
         """Load configuration from a YAML file.
 
         The YAML file should have a ``global`` section with any
@@ -224,6 +224,8 @@ class Config:
 
         full_benchmark_config_list: list[dict[str, Any]] = []
 
+        from .agent_type import AgentType
+
         for run in runs:
             changes = run.get("changes", [])
 
@@ -231,8 +233,6 @@ class Config:
             new_configs = dict(run_config.agent_configs)
 
             for agent in changes:
-                from .agent_type import AgentType
-
                 agent_type = AgentType(agent)
                 new_configs[agent_type] = new_configs[agent_type].update(
                     changes.get(agent)
@@ -252,7 +252,7 @@ class Config:
             full_benchmark_config_list.append(single_run_config_dict)
         return full_benchmark_config_list
 
-    def _shuffle_id(self) -> Config:
+    def _shuffle_id(self) -> Self:
         """Return a new config with a fresh run ID."""
         return replace(self, run_id=_generate_readable_id())
 
