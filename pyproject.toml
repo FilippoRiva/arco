@@ -19,10 +19,9 @@ dependencies = [
   "langchain-ollama>=1.1.0",
   # LLM and models
   "ollama>=0.6.2",
-  "llama-index>=0.14.22",
   # Tracing and Profiling
   "codecarbon>=3.2.7",
-  # SQL, DuckDB and Data Management
+  # Data Management
   "pandas>=3.0.3",
   # Utils
   "numpy>=2.4.5",
@@ -31,6 +30,8 @@ dependencies = [
   # Terminal and Visualization
   "rich>=15.0.0",
   "grandalf",
+  "plotly>=6.0.1",
+  "kaleido",
 ]
 
 
@@ -45,16 +46,23 @@ arco = "arco.cli.cli:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# --- Development & Workflows-specific extras ---
-# These are only installed when explicitly requested (e.g., 'uv sync --all-extras' or 'uv sync --extra dev')
+# --- Optional-dependencies ---
+# These are only installed when explicitly requested (e.g., 'uv sync --all-extras' or 'uv sync --extra sales')
 [project.optional-dependencies]
 sales = ["matplotlib>=3.11.1", "pyarrow>=25.0.0", "duckdb>=1.5.2"]
-dev = [
-  "ruff>=0.16.0",
-  "ipykernel>=7.2.0",
-  "pytest>=9.0.3",
-  "pytest-cov>=7.1.0",
-  "scipy",
-  "pre-commit>=4.6.1",
-]
-analysis = ["plotly>=6.0.1", "kaleido"]
+
+
+# --- Development-dependencies ---
+# These groups are intended to be needed only for local development and test-notebooks. 
+[dependency-groups]
+dev = ["ruff>=0.16.0", "pre-commit>=4.6.1"]
+test = ["pytest>=9.0.3", "pytest-cov>=7.1.0"]
+notebooks = ["ipykernel>=7.2.0", "scipy"]
+
+
+[tool.uv]
+default-groups = [
+  "dev",
+  "test",
+  "notebooks",
+] # so that 'uv sync' considers all three as defaults (not just dev) and downloads them automatically

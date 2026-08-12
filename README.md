@@ -143,8 +143,8 @@ configuration files.
 
 ### `arco generate-benchmark`
 
-Produces a benchmark dataset (.json) by running a workflow configuration against each
-prompt in a provided list.
+Produces a benchmark dataset (.json) by running a workflow configuration against
+each prompt in a provided list.
 
 ```bash
 arco generate-benchmark \
@@ -254,3 +254,10 @@ Energy usage and CO₂ emissions will be measured per-LLM-call and saved in
 ---
 
 ## Output Examples
+
+![Benchmark analysis dashboard](docs/benchmark_analysis/dashboard.png)
+
+A sample benchmark analysis dashboard generated from a real benchmark run using
+`arco analyze-benchmark`. Open the interactive HTML version at
+[docs/benchmark_analysis/dashboard.html](docs/benchmark_analysis/dashboard.html)
+to explore per-agent scores, timing breakdowns, energy consumption, and more.
