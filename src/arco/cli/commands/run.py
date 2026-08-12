@@ -1,13 +1,13 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser, Namespace
+    from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
 # ---------------------------------------------------------------------------
-def register(subparsers: ArgumentParser) -> ArgumentParser:
+def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
     parser = subparsers.add_parser("run", help="Invokes a workflow")
 
     parser.add_argument("--config", "-c", type=str, help="Path to config YAML")
@@ -60,6 +60,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         config, workflow = initialize_workflow(yaml_path=args.config)
     else:
         available_workflows = get_workflow_list()
+        if len(available_workflows) == 0:
+            console.print(
+                "No workflow available, please define a workflow or install an optional workflows module"
+            )
+            sys.exit(1)
         console.print(
             f"Choose a [bold cyan]workflow[/bold cyan] : {', '.join(available_workflows)}"
         )

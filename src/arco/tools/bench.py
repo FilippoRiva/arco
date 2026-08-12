@@ -4,6 +4,7 @@ import os
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -15,6 +16,7 @@ from arco.core import (
     WorkflowFactory,
     evaluate_state_with_benchmark_entry,
 )
+from arco.core.agent_type import AgentType
 from arco.data import BenchmarkDataset
 from arco.logs import initialize as init_logging
 
@@ -27,7 +29,11 @@ def benchmark_from_config(
     logging_level: str | None,
     run_visualization_logic: Callable,
 ):
-    workflows.load_library_workflows()
+    available_workflows = workflows.load_workflows()
+    if len(available_workflows) == 0:
+        yield {"event": "error", "message": "No workflow available"}
+        return
+
     start_time = time.time()
     default_config = Config.from_yaml(config_path)
     workflow = WorkflowFactory.get(config=default_config)
@@ -56,7 +62,8 @@ def benchmark_from_config(
                 "path": runs_folder / run_name / run_csv_name,
             }
         else:
-            result_df, resulting_states = None, None
+            result_df: pd.DataFrame | None = None
+            resulting_states: list[State] | None = None
             for event in benchmark(
                 **run_config_dict,
                 benchmark_dataset=benchmark_dataset,
@@ -64,17 +71,31 @@ def benchmark_from_config(
                 visualization_logic=run_visualization_logic,
             ):
                 if event["event"] == "result":
-                    result_df, resulting_states = event["result"]
+                    result: Any = event["result"]
+                    if not isinstance(result, tuple):
+                        raise TypeError(f"Expected tuple, got {type(result)}")
+                    result_df, resulting_states = result
+                    if not isinstance(result_df, pd.DataFrame):
+                        raise TypeError(f"Expected pd.DataFrame, got {type(result_df)}")
+                    if not isinstance(resulting_states, list) or not isinstance(
+                        resulting_states[0], State
+                    ):
+                        raise TypeError(
+                            f"Expected list[State], got {type(resulting_states)}"
+                        )
                 else:
                     yield event
-            os.makedirs(runs_folder / run_name, exist_ok=True)
-            result_df.to_csv(runs_folder / run_name / run_csv_name, index=False)
-            for result in resulting_states:
-                result.save(runs_folder / run_name)
-            yield {
-                "event": "benchmark_run_save",
-                "path": runs_folder / run_name / run_csv_name,
-            }
+            if result_df is not None and resulting_states is not None:
+                os.makedirs(runs_folder / run_name, exist_ok=True)
+                result_df.to_csv(runs_folder / run_name / run_csv_name, index=False)
+                for result in resulting_states:
+                    result.save(runs_folder / run_name)
+                yield {
+                    "event": "benchmark_run_save",
+                    "path": runs_folder / run_name / run_csv_name,
+                }
+            else:
+                raise RuntimeError("No result has been retrieved from the benchmark")
 
         run_config_to_result_list.append((run_config_dict, result_df))
 
@@ -124,17 +145,19 @@ def benchmark(
             "max_iteration": len(benchmark_dataset),
         }
 
-        config: Config = config.update_prompt(entry.prompt)
-        config: Config = config.set(run_id=name + str(entry.id))
-        resulting_state: State = visualization_logic(workflow.stream(config=config))
+        config_new_prompt: Config = config.update_prompt(entry.prompt)
+        updated_config: Config = config_new_prompt.set(run_id=name + str(entry.id))
+        resulting_state: State = visualization_logic(
+            workflow.stream(config=updated_config)
+        )
 
         yield {"event": "test_case_evaluation_start"}
         benchmark_summary, updated_state = evaluate_state_with_benchmark_entry(
             resulting_state,
             entry,
             workflow.get_evaluators(),
-            config.default_provider_judge,
-            config.default_model_judge,
+            updated_config.default_provider_judge,
+            updated_config.default_model_judge,
         )
         yield {"event": "test_case_evaluation_stop"}
 
@@ -195,7 +218,7 @@ def aggregate_results(
 
         # agent -> metric -> list of values
         agents_summary_stats = collections.defaultdict(
-            lambda: collections.defaultdict(list)
+            lambda: collections.defaultdict(list[tuple[AgentType, float]])
         )
 
         for trace in traces:

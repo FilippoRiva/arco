@@ -1,8 +1,9 @@
-from typing import override
+from typing import TYPE_CHECKING, override
 
-from arco.agents import Analyzer, Orchestrator, Planner, Retriever, Visualizer
-from arco.core import Agent, Config, Graph, State, Workflow
-from arco.core.graph import END
+from arco.core import Workflow
+
+if TYPE_CHECKING:
+    from arco.core import Agent, Config, Graph, State
 
 
 class StrictSales(Workflow):
@@ -10,6 +11,9 @@ class StrictSales(Workflow):
 
     @override
     def initialize(self, config: Config, graph: Graph):
+        from arco.agents import Analyzer, Retriever, Visualizer
+        from arco.core.graph import END
+
         # Get Agents
         retriever = Retriever()
         analyzer = Analyzer()
@@ -29,6 +33,9 @@ class StrictSales(Workflow):
 
 
 def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
+    from arco.agents import Analyzer, Retriever, Visualizer
+    from arco.core.graph import END
+
     retriever = Retriever()
     analyzer = Analyzer()
     visualizer = Visualizer()
@@ -69,6 +76,8 @@ class OrchestratedSales(Workflow):
 
     @override
     def initialize(self, config: Config, graph: Graph):
+        from arco.agents import Orchestrator
+
         orchestrator = Orchestrator()
         _instrument_orchestrated_graph(graph=graph, orchestrating_agent=orchestrator)
 
@@ -78,6 +87,8 @@ class PlannedSales(Workflow):
 
     @override
     def initialize(self, config: Config, graph: Graph):
+        from arco.agents import Planner
+
         planner = Planner()
         _instrument_orchestrated_graph(graph=graph, orchestrating_agent=planner)
 

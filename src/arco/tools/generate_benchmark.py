@@ -24,7 +24,7 @@ def generate_benchmark(
         run_visualization_logic: Callable that receives ``workflow.stream(config=…)``
             and returns the final :class:`~arco.core.State`.
     """
-    workflows.load_library_workflows()
+    workflows.load_workflows()
 
     with open(prompts_path) as f:
         raw: list = json.load(f)

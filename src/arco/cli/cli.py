@@ -25,12 +25,14 @@ def main():
     )
 
     # Add subcommands
-    subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
+    subparsers_action = parser.add_subparsers(
+        dest="command", help="Available subcommands"
+    )
     commands = {
-        "run": run.register(subparsers),
-        "generate-benchmark": generate_benchmark.register(subparsers),
-        "benchmark": bench.register(subparsers),
-        "analyze-benchmark": analyze_benchmark.register(subparsers),
+        "run": run.register(subparsers_action),
+        "generate-benchmark": generate_benchmark.register(subparsers_action),
+        "benchmark": bench.register(subparsers_action),
+        "analyze-benchmark": analyze_benchmark.register(subparsers_action),
     }
 
     handlers = {

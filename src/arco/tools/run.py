@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 def initialize_workflow(
     yaml_path: str | None = None, workflow_name: str | None = None
 ) -> tuple[Config, Workflow]:
-    workflows.load_library_workflows()
+    workflows.load_workflows()
     if yaml_path:
         config = Config.from_yaml(yaml_path)
     elif workflow_name:
@@ -25,8 +25,7 @@ def initialize_workflow(
 
 
 def get_workflow_list() -> list[str]:
-    workflows.load_library_workflows()
-    return list(WorkflowFactory.all().keys())
+    return workflows.load_workflows()
 
 
 def run(

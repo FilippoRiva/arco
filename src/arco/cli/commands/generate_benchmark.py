@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser, Namespace
+    from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 
-def register(subparsers: ArgumentParser) -> ArgumentParser:
+def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
     parser = subparsers.add_parser(
         "generate-benchmark",
         help="Produce a benchmark dataset given a list of prompts",

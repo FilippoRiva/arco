@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser, Namespace
+    from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 
 # ---------------------------------------------------------------------------
 # Script Parser Registration
 # ---------------------------------------------------------------------------
-def register(subparsers: ArgumentParser) -> ArgumentParser:
+def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
     parser = subparsers.add_parser(
         "benchmark", help="Benchmarks a workflow on a benchmark dataset"
     )
@@ -51,6 +51,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from rich.rule import Rule
 
     from arco.cli.viz import display, printer
+    from arco.data.benchmark_dataset import BenchmarkSummary
     from arco.tools.bench import benchmark_from_config
 
     console.print("[green]✓[/green] Benchmark loaded")
@@ -71,7 +72,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     )
 
     for _event in generator:
-        event = _event["event"]
+        event: str = _event["event"]
         if event == "run_configs_loaded":
             console.print("[green]✓[/green] Run configurations loaded")
         elif event == "benchmark_already_exists":
@@ -79,11 +80,15 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 f"[yellow]![/yellow] Benchmark already exists, skipping execution. Path: '{_event['path']}'"
             )
         elif event == "benchmark_start":
-            printer.print_benchmark_header(
-                name=_event["name"],
-                description=_event["description"],
-                changes=_event["changes"],
-            )
+            if isinstance(_event["changes"], dict):
+                changes: dict[str, Any] = _event["changes"]
+                printer.print_benchmark_header(
+                    name=_event["name"],
+                    description=_event["description"],
+                    changes=changes,
+                )
+            else:
+                raise ValueError("The passed changes are not in a dictionary format")
         elif event == "benchmark_run_save":
             console.print(f"[green]✓[/green] Benchmark saved. Path: '{_event['path']}'")
         elif event == "test_case_start":
@@ -93,9 +98,16 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 )
             )
         elif event == "test_case_stop":
-            printer.print_benchmark_summary(_event["evaluation_summary"])
+            if isinstance(_event["evaluation_summary"], BenchmarkSummary):
+                printer.print_benchmark_summary(_event["evaluation_summary"])
+            else:
+                raise ValueError(
+                    f"The passed BenchmarkSummary is instead a {type(_event['evaluation_summary'])}"
+                )
         elif event == "test_case_evaluation_start":
             status = console.status("Evaluating result")
             status.start()
+        elif event == "error":
+            console.print(f"[red]Error[/red] {_event['message']}")
         elif event == "test_case_evaluation_stop":
             status.stop()
