@@ -8,9 +8,10 @@
 .codex/
 ./opencode.json
 
-# Python libraries and build files
+# Python libraries, build files and uv package manager
 .venv/
 build/
+uv.lock
 
 # Local outputs
 output/storage/
