@@ -3,7 +3,7 @@ from io import StringIO
 
 import pandas as pd
 
-from arco.core import AgentException, Answer, Evaluation, Evaluator, State
+from arco.core import AgentException, AgentType, Answer, Evaluation, Evaluator, State
 from arco.data import normalize_dataframe_values
 
 logger = logging.getLogger(__name__)
@@ -131,14 +131,16 @@ class RetrieverEvaluator(Evaluator):
         The most "agreed upon" DataFrame wins.
         """
 
-        answers: list[Answer] = [r.get_last_answer("Retriever") for r in states]
+        answers: list[Answer | None] = [
+            r.get_last_answer(AgentType("Retriever")) for r in states
+        ]
         if None in answers:
             raise ValueError(f"One {State.__name__} did not contain a Retriever answer")
 
         if len(answers) == 1:
             return [Evaluation(score=1.0)]
 
-        dfs = [a.agent_output["data_df"] for a in answers]
+        dfs = [a.agent_output["data_df"] for a in answers if a is not None]
 
         evaluations = []
         for i in range(len(dfs)):
