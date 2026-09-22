@@ -35,6 +35,7 @@ defaults:
 runs:
   - name: Baseline
     description: baseline benchmark at standard configs
+    changes: {}
   - name: Temperature (low - 0.2)
     description: Temperature test on low temperature settings
     changes:
