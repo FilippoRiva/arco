@@ -14,6 +14,6 @@ echo ""
 echo "> Loading the virtual environment..."
 source "${_ARCO_ROOT}/.venv/bin/activate"
 echo ""
-source "${_ARCO_ROOT}/load_env_from_keyring.sh"
+source "${_ARCO_ROOT}/scripts/load_env_from_keyring.sh"
 
 unset _ARCO_ROOT
