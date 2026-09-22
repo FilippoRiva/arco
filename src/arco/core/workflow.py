@@ -36,6 +36,8 @@ class Workflow(ABC):
     :class:`WorkflowFactory` via :meth:`__init_subclass__`.
     """
 
+    description: ClassVar[str] = "No description available."
+
     def __init_subclass__(cls, **kwargs):
         """Register concrete subclasses in the WorkflowFactory registry.
 

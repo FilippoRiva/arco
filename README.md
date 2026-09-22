@@ -71,7 +71,7 @@ project's virtual environment first:
 ```bash
 source .venv/bin/activate
 arco --help
-arco run -c config/run_config/planned.yaml
+arco run
 ```
 
 The activation only applies to the current shell. To install ARCO as a
@@ -85,7 +85,7 @@ uv tool update-shell
 Restart your shell afterwards, then run:
 
 ```bash
-arco run -c /path/to/config.yaml
+arco run
 ```
 
 Use the virtual-environment approach when developing ARCO, since changes are

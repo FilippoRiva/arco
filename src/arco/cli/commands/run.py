@@ -44,7 +44,12 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     import os
     import sys
 
-    from arco.tools.run import get_workflow_list, initialize_workflow, run
+    from arco.tools.run import (
+        get_workflow_descriptions,
+        get_workflow_list,
+        initialize_workflow,
+        run,
+    )
 
     from ..viz import display, printer
 
@@ -65,9 +70,17 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 "No workflow available, please define a workflow or install an optional workflows module"
             )
             sys.exit(1)
-        console.print(
-            f"\nChoose a [bold cyan]workflow[/bold cyan] : {', '.join(available_workflows)}\n"
-        )
+        workflow_descriptions = get_workflow_descriptions()
+        console.print("\n[bold cyan]Available workflows[/bold cyan]\n")
+        for workflow_id in available_workflows:
+            description = workflow_descriptions.get(
+                workflow_id, "No description available."
+            )
+            console.print(
+                f"  [bold cyan]{workflow_id}[/bold cyan]"
+                f"  [dim]— {description}[/dim]"
+            )
+        console.print()
         user_input = console.input("[bold cyan]Workflow    >[/bold cyan] ")
         if user_input not in available_workflows:
             console.print(

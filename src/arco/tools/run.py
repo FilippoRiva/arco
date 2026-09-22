@@ -28,6 +28,15 @@ def get_workflow_list() -> list[str]:
     return workflows.load_workflows()
 
 
+def get_workflow_descriptions() -> dict[str, str]:
+    """Return registered workflow descriptions keyed by workflow ID."""
+    workflows.load_workflows()
+    return {
+        workflow_id: workflow_cls.description
+        for workflow_id, workflow_cls in WorkflowFactory.all().items()
+    }
+
+
 def run(
     config: Config, workflow: Workflow, log_level: str | None = None
 ) -> Generator[dict[str, Any]]:
