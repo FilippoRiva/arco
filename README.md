@@ -88,6 +88,15 @@ Restart your shell afterwards, then run:
 arco run
 ```
 
+To load both the virtual environment and keyring credentials with one command
+in the current shell, use:
+
+```bash
+source ./activate_arco.sh
+arco run -c config/run_config/planned.yaml
+```
+
+
 Use the virtual-environment approach when developing ARCO, since changes are
 immediately available after `uv sync`. Use `uv tool install --editable .` when
 you want `arco` available globally while still reflecting source changes.
