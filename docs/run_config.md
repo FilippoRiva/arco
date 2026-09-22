@@ -38,6 +38,7 @@ agents:
 | `provider` | string (enum) | The AI model provider backend. One of: `openai`, `ollama`, `openrouter`. |
 | `model` | string | The specific model identifier. |
 | `ollama_url` | string (URI) | Base URL for local Ollama instances. Required if `provider` is `ollama`. |
+| `data_dir` | string | Directory containing the datasets and `*_schema.yaml` files used by data-aware agents. Defaults to `./data/datasets/sales`. |
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |

@@ -18,7 +18,7 @@ class StrictSales(Workflow):
         from arco.core.graph import END
 
         # Get Agents
-        retriever = Retriever()
+        retriever = Retriever(data_dir=config.data_dir)
         analyzer = Analyzer()
         visualizer = Visualizer()
 
@@ -35,12 +35,14 @@ class StrictSales(Workflow):
         graph.add_agent_edge(visualizer, END)
 
 
-def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
+def _instrument_orchestrated_graph(
+    graph: Graph, orchestrating_agent: Agent, data_dir: str
+):
     from arco.agents import Analyzer, Retriever, Visualizer
     from arco.core import State  # noqa: F401 - needed by langgraph
     from arco.core.graph import END
 
-    retriever = Retriever()
+    retriever = Retriever(data_dir=data_dir)
     analyzer = Analyzer()
     visualizer = Visualizer()
 
@@ -86,7 +88,11 @@ class OrchestratedSales(Workflow):
         from arco.agents import Orchestrator
 
         orchestrator = Orchestrator()
-        _instrument_orchestrated_graph(graph=graph, orchestrating_agent=orchestrator)
+        _instrument_orchestrated_graph(
+            graph=graph,
+            orchestrating_agent=orchestrator,
+            data_dir=config.data_dir,
+        )
 
 
 class PlannedSales(Workflow):
@@ -100,7 +106,11 @@ class PlannedSales(Workflow):
         from arco.agents import Planner
 
         planner = Planner()
-        _instrument_orchestrated_graph(graph=graph, orchestrating_agent=planner)
+        _instrument_orchestrated_graph(
+            graph=graph,
+            orchestrating_agent=planner,
+            data_dir=config.data_dir,
+        )
 
 
 __all__ = ["OrchestratedSales", "PlannedSales", "StrictSales"]

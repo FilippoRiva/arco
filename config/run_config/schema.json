@@ -54,6 +54,11 @@
           "format": "uri",
           "description": "The base URL for local Ollama instances. Needed if provider is ollama"
         },
+        "data_dir": {
+          "type": "string",
+          "default": "./data/datasets/sales",
+          "description": "Directory containing the parquet datasets and *_schema.yaml files used by data-aware agents."
+        },
         "enable_storage": {
           "type": ["boolean", "null"],
           "default": null,

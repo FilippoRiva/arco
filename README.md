@@ -92,7 +92,7 @@ To load both the virtual environment and keyring credentials with one command
 in the current shell, use:
 
 ```bash
-source ./activate_arco.sh
+source scripts/activate_arco.sh
 arco run -c config/run_config/planned.yaml
 ```
 

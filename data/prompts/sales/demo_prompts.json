@@ -1,0 +1,12 @@
+[
+  {
+    "id": 0,
+    "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+    "difficulty": 2
+  },
+  {
+    "id": 1,
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+    "difficulty": 2
+  }
+]
