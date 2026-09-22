@@ -41,6 +41,7 @@ agents:
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
+| `enable_storage` | boolean or null | Enables persisted workflow state and generated visualization images under `save_dir/storage`. If omitted, interactive `arco run` enables it and benchmark commands disable it. |
 | `enable_reasoning` | boolean | Requests provider-supported reasoning summaries/thinking output. Defaults to `false`; only supported reasoning models return it. |
 | `enable_logprobs` | boolean | Requests token log probabilities where supported. Defaults to `true`; automatically omitted for OpenAI Responses reasoning calls. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |

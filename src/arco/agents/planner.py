@@ -97,7 +97,7 @@ No explanations. No markdown. Just the JSON array.
 
             return self.answer(
                 state,
-                message=f"Plan: {', '.join(a.capitalize() for a in plan)}",
+                message=f"My proposed plan is - {', '.join(a.capitalize() for a in plan)}",
                 output={"agent_choice": choice, "plan": remaining},
                 logprobs=response.logprobs,
                 thinking=response.reasoning,
@@ -143,7 +143,7 @@ No explanations. No markdown. Just the JSON array.
         logger.info(f"Choice from previous plan: {choice}")
         return self.answer(
             state,
-            message=f"Next: {choice}",
+            message=f"The next agent should be {choice}",
             output={"agent_choice": choice, "plan": remaining[1:]},
         )
 

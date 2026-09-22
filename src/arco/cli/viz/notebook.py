@@ -14,7 +14,6 @@ Usage in a notebook cell::
 
 from __future__ import annotations
 
-import io
 from collections.abc import Generator
 from typing import TYPE_CHECKING, Any
 
@@ -83,52 +82,13 @@ def _answer_html(answer: Answer, verbose: bool) -> str:
     )
 
 
-def _render_chart(retriever_answer: Answer, visualizer_answer: Answer) -> None:
-    from IPython.display import Image as IPyImage
-    from IPython.display import display as ipy_display
-
-    df = retriever_answer.agent_output.get("data_df")
-    chart_config = visualizer_answer.agent_output.get("chart_config")
-    code = visualizer_answer.agent_output.get("code")
-    if df is None or not chart_config or not code:
-        return
-
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import pandas as pd
-
-    buf = io.BytesIO()
-    namespace = {
-        "data_df": df,
-        "config": chart_config,
-        "plt": plt,
-        "pd": pd,
-        "np": np,
-        "buf": buf,
-    }
-    modified = code.replace(
-        "plt.show()",
-        "plt.savefig(buf, format='png', dpi=100, bbox_inches='tight'); plt.close()",
-    )
-    try:
-        exec(modified, namespace)  # noqa: S102
-    except Exception:  # noqa: BLE001
-        return
-
-    buf.seek(0)
-    ipy_display(IPyImage(buf.read()))
-
-
 # ── public API ───────────────────────────────────────────────────────────
 
 
 def display_workflow_notebook(
     events: Generator[dict[str, Any]], verbose: bool = False
 ) -> Any:
-    """Run a workflow inside a notebook with inline progress and charts.
+    """Run a workflow inside a notebook with progress and stored artifacts.
 
     Parameters
     ----------
@@ -145,8 +105,6 @@ def display_workflow_notebook(
     from IPython.display import display as ipy_display
 
     last_state: Any = None
-    last_retriever_answer: Any = None
-    last_visualizer_answer: Any = None
     answers_rendered: list[str] = []
     progress: list[str] = []
 
@@ -169,11 +127,7 @@ def display_workflow_notebook(
             # Render answer HTML
             answers_rendered.append(_answer_html(answer, verbose=verbose))
 
-            # Hold on to retriever + visualizer answers for chart rendering
-            if agent.lower() == "retriever":
-                last_retriever_answer = answer
-            elif agent.lower() == "visualizer":
-                last_visualizer_answer = answer
+            # Artifact storage is handled by the Visualizer agent.
         elif event_type == "completed":
             t = update["state"].global_profiling_data.total_time
             ts = f"{t:.2f}s" if t is not None else "?"
@@ -188,11 +142,7 @@ def display_workflow_notebook(
     for html in answers_rendered:
         ipy_display(HTML(html))
 
-    # 2) Chart (render after its answer panel)
-    if last_retriever_answer is not None and last_visualizer_answer is not None:
-        _render_chart(last_retriever_answer, last_visualizer_answer)
-
-    # 3) Progress summary
+    # 2) Progress summary
     if progress:
         md = "\n\n".join(p for p in progress if p != "---")
         from IPython.display import Markdown

@@ -85,7 +85,8 @@ class Config:
     :ivar default_provider_judge: The default provider for LLM-as-a-judge.
     :ivar default_model_judge: The default model for LLM-as-a-judge.
     :ivar ollama_url: Base URL for the Ollama server.
-    :ivar enable_storage: Whether to persist state artifacts to disk.
+    :ivar enable_storage: Whether to persist artifacts. ``None`` lets the
+          frontend choose its default (interactive runs enable it; benchmarks disable it).
     :ivar save_dir: Directory for output artifacts.
     :ivar enable_codecarbon: Whether to enable CodeCarbon energy tracking.
     :ivar enable_reasoning: Whether to request provider-native reasoning output.
@@ -103,7 +104,7 @@ class Config:
     default_provider_judge: Literal["openai", "ollama", "openrouter"] = "openai"
     default_model_judge: str = "gpt-4o-mini"
     ollama_url: str = "http://localhost:11434"
-    enable_storage: bool = False
+    enable_storage: bool | None = None
     save_dir: str = "./output"
     enable_codecarbon: bool = False
     # Request provider-supported reasoning summaries/thinking output. This is

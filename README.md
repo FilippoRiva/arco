@@ -65,6 +65,41 @@ uv run arco --help
 
 You should see the available ARCO commands.
 
+To invoke the command directly without repeating `uv run`, activate the
+project's virtual environment first:
+
+```bash
+source .venv/bin/activate
+arco --help
+arco run -c config/run_config/planned.yaml
+```
+
+The activation only applies to the current shell. To install ARCO as a
+standalone editable command available from any shell, use:
+
+```bash
+uv tool install --editable .
+uv tool update-shell
+```
+
+Restart your shell afterwards, then run:
+
+```bash
+arco run -c /path/to/config.yaml
+```
+
+Use the virtual-environment approach when developing ARCO, since changes are
+immediately available after `uv sync`. Use `uv tool install --editable .` when
+you want `arco` available globally while still reflecting source changes.
+
+### Artifact storage defaults
+
+Interactive `arco run` executions save workflow state and generated
+visualization images by default under `./output/storage`. Benchmark commands
+leave storage disabled by default to avoid producing an image for every test
+case. Set `enable_storage: true` or `enable_storage: false` explicitly in a
+configuration to override these mode-specific defaults.
+
 ### 4. Provider setup
 
 #### Ollama Setup [Optional]

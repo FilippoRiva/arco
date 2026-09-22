@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 from rich.console import Group
 from rich.panel import Panel
@@ -244,6 +245,13 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
     )
 
 
+def _artifact_link(path: str) -> Text:
+    """Render a local artifact path as a terminal-clickable link."""
+    artifact = Path(str(path)).expanduser()
+    uri = artifact.resolve().as_uri()
+    return Text(str(artifact), style=f"underline cyan link {uri}")
+
+
 def _verbose_output_value(key: str, value) -> object:
     """Make large structured agent outputs readable in the verbose view."""
     if key == "data_df" and hasattr(value, "shape") and hasattr(value, "columns"):
@@ -346,6 +354,15 @@ def render_answer_verbose(answer: Answer) -> Panel:
         _verbose_token_summary(answer),
     ]
 
+    image_path = answer.agent_output.get("image_path")
+    if image_path:
+        sections.extend(
+            [
+                Rule("Stored visualization", style="dim"),
+                _artifact_link(image_path),
+            ]
+        )
+
     if answer.thinking:
         sections.extend(
             [
@@ -395,6 +412,10 @@ def render_answer_minimal(answer: Answer) -> Text:
     if answer.message:
         row.append("  ")
         row.append(answer.message)
+    image_path = answer.agent_output.get("image_path")
+    if image_path:
+        row.append("  image: ", style="dim")
+        row.append(_artifact_link(image_path))
     if answer.error:
         row.append(f"  ({answer.error})", style="red")
     return row

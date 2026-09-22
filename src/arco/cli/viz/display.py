@@ -13,7 +13,6 @@ from arco.cli.viz.panels import (
     render_energy_impact_panel,
 )
 from arco.cli.viz.status import RunStatusPanel
-from arco.cli.viz.utils import execute_chart_code
 
 if TYPE_CHECKING:
     from arco.core import Answer, State
@@ -80,19 +79,6 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State:
             if not verbose:
                 live.console.print()
 
-            # If this was the visualizer, render the chart inline
-            if last_answer.agent_id.lower() == "visualizer":
-                status.stop()
-
-                retriever_answer = last_state.get_last_answer("Retriever")
-                if retriever_answer:
-                    df = retriever_answer.agent_output.get("data_df")
-                    chart_config = last_answer.agent_output.get("chart_config")
-                    code = last_answer.agent_output.get("code")
-                    if df is not None and chart_config and code:
-                        execute_chart_code(df, chart_config, code)
-                status.start()
-
             status.set(f"{last_answer.agent_id} ended its run ")
         elif event_type == "codecarbon":
             energy_dict = update["energy_dict"]
@@ -125,9 +111,7 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State:
                     )
                 )
             else:
-                live.console.print(
-                    Text(f"✗ {update['message']}", style="bold red")
-                )
+                live.console.print(Text(f"✗ {update['message']}", style="bold red"))
                 live.console.print()
 
     if energy_dict and verbose:

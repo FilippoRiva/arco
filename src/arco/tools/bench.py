@@ -36,6 +36,9 @@ def benchmark_from_config(
 
     start_time = time.time()
     default_config = Config.from_yaml(config_path)
+    # Benchmarks should not create image artifacts unless explicitly requested.
+    if default_config.enable_storage is None:
+        default_config = default_config.set(enable_storage=False)
     workflow = WorkflowFactory.get(config=default_config)
     benchmark_dataset = BenchmarkDataset.from_json(dataset_path)
 

@@ -51,8 +51,9 @@
           "description": "The base URL for local Ollama instances. Needed if provider is ollama"
         },
         "enable_storage": {
-          "type": "boolean",
-          "description": "Toggle to determine whether final output artifacts should be persisted to disk."
+          "type": ["boolean", "null"],
+          "default": null,
+          "description": "Persist final workflow state and generated visualization images under save_dir/storage. If omitted, benchmark commands disable it."
         },
         "save_dir": {
           "type": "string",

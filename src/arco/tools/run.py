@@ -31,6 +31,11 @@ def get_workflow_list() -> list[str]:
 def run(
     config: Config, workflow: Workflow, log_level: str | None = None
 ) -> Generator[dict[str, Any]]:
+    # Interactive runs should leave generated artifacts, including charts,
+    # somewhere the user can inspect. An explicit YAML value still wins.
+    if config.enable_storage is None:
+        config = config.set(enable_storage=True)
+    workflow.config = config
 
     init_logging(config.run_id, log_dir=Path(config.save_dir) / "logs", level=log_level)
 

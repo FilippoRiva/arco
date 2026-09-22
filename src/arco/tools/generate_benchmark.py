@@ -44,6 +44,9 @@ def generate_benchmark(
             )
 
     default_config = Config.from_yaml(config_path)
+    # Benchmark-data generation should not create image artifacts by default.
+    if default_config.enable_storage is None:
+        default_config = default_config.set(enable_storage=False)
     workflow = WorkflowFactory.get(config=default_config)
 
     prompts_len = len(prompts)

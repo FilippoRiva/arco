@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import io
+import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from arco.core import Agent, AgentException
@@ -6,9 +11,53 @@ from arco.evaluators import VisualizerEvaluator
 if TYPE_CHECKING:
     from arco.core import LLM, Evaluator, State
 
-import logging
-
 logger = logging.getLogger(__name__)
+
+
+def _store_chart_image(data_df, chart_config: dict, code: str, state: State) -> Path:
+    """Execute generated chart code and persist the resulting PNG.
+
+    Artifact persistence belongs to the visualizer rather than the CLI so
+    workflows can be executed through other frontends without losing charts.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+
+    buffer = io.BytesIO()
+    namespace = {
+        "data_df": data_df,
+        "config": chart_config,
+        "plt": plt,
+        "pd": pd,
+        "np": np,
+        "buf": buffer,
+    }
+    render_code = code.replace(
+        "plt.show()",
+        "plt.savefig(buf, format='png', dpi=100, bbox_inches='tight'); plt.close('all')",
+    )
+    exec(render_code, namespace)  # noqa: S102 - generated visualization code
+
+    buffer.seek(0)
+    image_data = buffer.getvalue()
+    if not image_data:
+        raise RuntimeError("The generated chart did not produce an image")
+
+    output_dir = Path(state.save_dir) / "storage" / "charts"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    title = chart_config.get("title", "chart") if chart_config else "chart"
+    filename_source = f"{state.run_id}_{title}"
+    safe_filename = "".join(
+        character if character.isalnum() or character in " _-" else "_"
+        for character in filename_source
+    ).strip()
+    image_path = output_dir / f"{safe_filename or 'chart'}.png"
+    image_path.write_bytes(image_data)
+    return image_path
 
 
 class Visualizer(Agent):
@@ -173,23 +222,41 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             logger.warning(f"Failed code execution : {type(e).__name__} : {e}")
             exec_error = f"{type(e).__name__}: {e}"
 
+        chart_path: Path | None = None
+        if not exec_error and state.enable_storage:
+            try:
+                chart_path = _store_chart_image(
+                    data_df=data_df,
+                    chart_config=chart_config,
+                    code=code,
+                    state=state,
+                )
+                logger.info(f"Chart stored at: {chart_path}")
+            except Exception as e:  # noqa: BLE001 - generated code can fail arbitrarily
+                logger.warning(f"Failed to store chart : {type(e).__name__} : {e}")
+                exec_error = f"{type(e).__name__}: {e}"
+
+        output = {"code": code, "chart_config": chart_config}
+        if chart_path is not None:
+            output["image_path"] = str(chart_path)
+
         if exec_error:
             return self.answer(
                 state,
-                message="The generated code couldn't be executed",
-                output={"code": code, "chart_config": chart_config},
+                message="The generated visualization couldn't be completed",
+                output=output,
                 logprobs=logprobs_code + logprobs_chart_config,
                 error=exec_error,
                 thinking=response.reasoning,
             )
-        else:
-            return self.answer(
-                state,
-                message="Visualization generated",
-                output={"code": code, "chart_config": chart_config},
-                logprobs=logprobs_code + logprobs_chart_config,
-                thinking=response.reasoning,
-            )
+
+        return self.answer(
+            state,
+            message="Visualization generated",
+            output=output,
+            logprobs=logprobs_code + logprobs_chart_config,
+            thinking=response.reasoning,
+        )
 
 
 __all__ = ["Visualizer"]

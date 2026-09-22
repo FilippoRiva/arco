@@ -47,6 +47,7 @@ runs:
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
+| `enable_storage` | boolean or null | Enables persisted workflow state and generated visualization images under `save_dir/storage`. If omitted, benchmark commands disable it. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
 | `phoenix_project_name` | string | Project name registered with the Arize Phoenix client. |

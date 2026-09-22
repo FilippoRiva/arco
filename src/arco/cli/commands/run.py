@@ -66,7 +66,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             )
             sys.exit(1)
         console.print(
-            f"Choose a [bold cyan]workflow[/bold cyan] : {', '.join(available_workflows)}"
+            f"\nChoose a [bold cyan]workflow[/bold cyan] : {', '.join(available_workflows)}\n"
         )
         user_input = console.input("[bold cyan]Workflow    >[/bold cyan] ")
         if user_input not in available_workflows:

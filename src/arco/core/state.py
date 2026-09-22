@@ -23,6 +23,8 @@ class State:
     :ivar prompt: The original user prompt.
     :ivar run_id: Unique identifier for this run.
     :ivar agent_configs: Per-agent configuration Mapping.
+    :ivar enable_storage: Whether agents may persist generated artifacts.
+    :ivar save_dir: Base directory for persisted artifacts.
     :ivar answers: Ordered list of agent answers produced so far.
     :ivar global_profiling_data: Cumulative profiling data across all steps.
     :ivar agents_profiling_data: Per-agent cumulative profiling data.
@@ -36,6 +38,10 @@ class State:
 
     # Dynamic Configuration for agents
     agent_configs: Mapping[AgentType, AgentConfig]
+
+    # Artifact storage settings available to agents that generate artifacts.
+    enable_storage: bool = False
+    save_dir: str = "./output"
 
     # List of agent's answers
     answers: tuple[Answer, ...] = field(default_factory=tuple[Answer, ...])
@@ -137,6 +143,8 @@ class State:
             "prompt": self.prompt,
             "run_id": self.run_id,
             "agent_configs": {k: asdict(v) for k, v in self.agent_configs.items()},
+            "enable_storage": self.enable_storage,
+            "save_dir": self.save_dir,
             "answers": [a.to_dict() for a in self.answers],
             "global_profiling_data": asdict(self.global_profiling_data),
             "agents_profiling_data": {

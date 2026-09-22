@@ -65,10 +65,15 @@ class Workflow(ABC):
         Yields dicts with keys ``event``, ``state``, ``node``, etc.
         Terminal event types: ``"completed"`` (with ``state``) or ``"error"``.
         """
-        yield {"event": "started", "run_id": self.config.run_id, "config": self.config}
-
         if config:
             self.config = config
+        # A direct workflow/notebook invocation is interactive by default.
+        # Benchmark frontends resolve their omitted value to False before
+        # calling the workflow.
+        if self.config.enable_storage is None:
+            self.config = self.config.set(enable_storage=True)
+
+        yield {"event": "started", "run_id": self.config.run_id, "config": self.config}
 
         llm_tools.OLLAMA_URL = self.config.ollama_url
 
@@ -82,6 +87,8 @@ class Workflow(ABC):
             prompt=self.config.prompt,
             run_id=self.config.run_id,
             agent_configs=self.config.agent_configs,
+            enable_storage=bool(self.config.enable_storage),
+            save_dir=self.config.save_dir,
         )
 
         requested_models = [
