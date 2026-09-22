@@ -37,12 +37,12 @@ class Answer:
     agent_id: AgentType
     message: str
     agent_config: AgentConfig
+    logprobs: list[tuple[str, float | int]]
     agent_output: dict = field(default_factory=dict)
     evaluation: Evaluation | None = None
     gt_evaluation: Evaluation | None = None
     discarded_bon_answers: list[Self] | None = None
     error: str | None = None
-    logprobs: list[tuple[str, float | int]] | None = None
     thinking: str | None = None
     perplexity: float | None = None
     profiling_data: ProfilingData = field(default_factory=ProfilingData)

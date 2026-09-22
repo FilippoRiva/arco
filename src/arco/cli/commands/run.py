@@ -77,15 +77,19 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         config, workflow = initialize_workflow(workflow_name=user_input)
 
     if config.prompt is None:
+        console.print()
         user_input = console.input("[bold cyan]User prompt >[/bold cyan] ")
+        console.print()
         config = config.update_prompt(user_input)
         workflow.config = config
     else:
+        console.print()
         console.print(f"[bold cyan]User prompt >[/bold cyan] {config.prompt}")
+        console.print()
 
     if args.verbose:
-        printer.print_config_table(config, verbose=args.verbose)
-        printer.print_workflow_graph(workflow)
+        printer.print_run_overview(config, workflow, verbose=args.verbose)
+        console.print()
 
     # runs the agent with a visualization logic in rich
     display.display_workflow(

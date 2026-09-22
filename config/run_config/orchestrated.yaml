@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./../schema.json
+# yaml-language-server: $schema=./schema.json
 # =============================================================================
 # ORCHESTRATED RUN CONFIGURATION
 # =============================================================================
@@ -10,3 +10,4 @@
 global:
   workflow: "orchestrated_sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
+

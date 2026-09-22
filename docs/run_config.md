@@ -41,6 +41,8 @@ agents:
 | `save_state` | boolean | Whether final output artifacts should be persisted to disk. |
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
+| `enable_reasoning` | boolean | Requests provider-supported reasoning summaries/thinking output. Defaults to `false`; only supported reasoning models return it. |
+| `enable_logprobs` | boolean | Requests token log probabilities where supported. Defaults to `true`; automatically omitted for OpenAI Responses reasoning calls. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
 | `phoenix_project_name` | string | Project name registered with the Arize Phoenix client. |
@@ -76,6 +78,8 @@ agents:
 | `temp_min` | number (0.0–2.0) | Minimum sampling temperature limit. |
 | `temp_max` | number (0.0–2.0) | Maximum sampling temperature limit. |
 | `cot_n` | integer (≥ 1) | Chain-of-thought generation count multiplier (optional). |
+| `enable_reasoning` | boolean | Per-agent override for provider-native reasoning output. |
+| `enable_logprobs` | boolean | Per-agent override for token log probabilities. |
 | `top_p_min` | number (0.0–1.0) | Minimum top-p (nucleus sampling) threshold limit. |
 | `top_p_max` | number (0.0–1.0) | Maximum top-p (nucleus sampling) threshold limit. |
 | `top_k_min` | integer (≥ 1) | Minimum top-k token cutoff pool limit. |

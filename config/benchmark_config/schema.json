@@ -62,6 +62,16 @@
         "enable_codecarbon": {
           "type": "boolean",
           "description": "Toggle to enable codecarbon consumption measurements. The output dir is set with the save_dir option"
+        },
+        "enable_reasoning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Request provider-supported reasoning summaries or thinking output"
+        },
+        "enable_logprobs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Request token log probabilities where supported by the selected API/model"
         }
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
@@ -115,6 +125,14 @@
             "type": "integer",
             "minimum": 1,
             "description": "Chain-of-thought generation count multiplier (optional)."
+          },
+          "enable_reasoning": {
+            "type": "boolean",
+            "description": "Request provider-native reasoning output for this agent"
+          },
+          "enable_logprobs": {
+            "type": "boolean",
+            "description": "Request token log probabilities where supported"
           },
           "top_p_min": {
             "type": "number",

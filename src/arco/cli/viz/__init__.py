@@ -4,6 +4,7 @@ from .printer import (
     print_benchmark_header,
     print_benchmark_summary,
     print_config_table,
+    print_run_overview,
     print_workflow_graph,
 )
 from .utils import execute_chart_code
@@ -16,5 +17,6 @@ __all__ = [
     "print_benchmark_header",
     "print_benchmark_summary",
     "print_config_table",
+    "print_run_overview",
     "print_workflow_graph",
 ]

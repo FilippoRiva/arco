@@ -180,6 +180,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 output={"code": code, "chart_config": chart_config},
                 logprobs=logprobs_code + logprobs_chart_config,
                 error=exec_error,
+                thinking=response.reasoning,
             )
         else:
             return self.answer(
@@ -187,6 +188,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
                 message="Visualization generated",
                 output={"code": code, "chart_config": chart_config},
                 logprobs=logprobs_code + logprobs_chart_config,
+                thinking=response.reasoning,
             )
 
 

@@ -78,7 +78,8 @@ class Agent(ABC):
         message: str = "",
         output: dict | None = None,
         error: str | None = None,
-        logprobs=None,
+        logprobs: list[tuple[str, float | int]] | None = None,
+        thinking: str | None = None,
     ) -> State:
         """Build an :class:`Answer` and append it to *state*.
 
@@ -90,9 +91,13 @@ class Agent(ABC):
         :param output: Structured output for downstream agents.
         :param error: Error message if the agent failed.
         :param logprobs: Token-level log probabilities from the LLM.
+        :param thinking: Provider-native reasoning summary or thinking output.
         :returns: A new state with the answer appended.
         """
         from .answer import Answer
+
+        if logprobs is None:
+            logprobs = []
 
         return state.add_answer(
             Answer(
@@ -102,6 +107,7 @@ class Agent(ABC):
                 agent_output=output or {},
                 error=error,
                 logprobs=logprobs,
+                thinking=thinking,
             )
         )
 
@@ -204,7 +210,7 @@ class Agent(ABC):
 
     def _arco_evaluation(self, state: State) -> State:
         answer = state.get_last_answer(self.type)
-        if not answer or answer.logprobs is None:
+        if not answer or len(answer.logprobs) == 0:
             return state
 
         # Compute Perplexity
@@ -291,6 +297,8 @@ class Agent(ABC):
                 llm_accumulator=llm_acc,
                 provider=config.provider,
                 model=config.model,
+                enable_reasoning=bool(config.enable_reasoning),
+                enable_logprobs=bool(config.enable_logprobs),
             )
 
             result: State = self.core(state, llm)

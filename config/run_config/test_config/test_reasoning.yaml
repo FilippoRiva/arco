@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./../schema.json
+# =============================================================================
+# TEST REASONING
+# =============================================================================
+# Test for the reasoning models output
+
+global:
+  workflow: "planned_sales"
+  prompt: "Reason on which kind of visualization should be extremely helpful on this sales data, then produce it"
+  default_provider: openrouter
+  default_model: deepseek/deepseek-v4-flash
+  enable_reasoning: true
+  enable_storage: true # just for debugging purposes

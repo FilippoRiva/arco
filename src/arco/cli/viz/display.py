@@ -4,9 +4,14 @@ from typing import TYPE_CHECKING, Any
 
 from rich.live import Live
 from rich.panel import Panel
+from rich.text import Text
 
 from arco.cli.console import console
-from arco.cli.viz.panels import render_answer, render_energy_impact_panel
+from arco.cli.viz.panels import (
+    render_answer_minimal,
+    render_answer_verbose,
+    render_energy_impact_panel,
+)
 from arco.cli.viz.status import RunStatusPanel
 from arco.cli.viz.utils import execute_chart_code
 
@@ -15,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def display_workflow_compact(events: Generator[str, Any]) -> State:
-    status = RunStatusPanel()
+    status = RunStatusPanel(compact=True)
 
     with Live(status, refresh_per_second=8, screen=False):
         last_state = None
@@ -43,7 +48,9 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State:
     :param verbose: Whether if we want verbose visualization or not
     :return: The final resulting state
     """
-    status = RunStatusPanel()
+    # Keep progress itself minimal in both modes; verbose details are shown
+    # in the completed agent cards below.
+    status = RunStatusPanel(compact=True)
     last_state = None
 
     live = Live(status, refresh_per_second=8, screen=False)
@@ -53,20 +60,25 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State:
     for update in events:
         event_type = update["event"]
         if event_type == "check_connection":
-            status.set(f"Checking models availability : {update['models']}")
+            status.set("Checking models")
         elif event_type == "started":
-            status.set("Started the graph execution ")
+            status.set("Starting")
         elif event_type == "node_started":
             start_time = time.time()
-            status.set(f"{update['node']} is running ", start_time)
-            status.active_node = update["node"]
-        elif event_type == "token":
-            pass
+            node = update["node"]
+            status.set(node if not verbose else f"{node} is running ", start_time)
+            status.active_node = node
         elif event_type == "node_finished":
             status.clear_stream()
             last_state = update["state"]
             last_answer: Answer = last_state.get_last_answer()
-            live.console.print(render_answer(answer=last_answer, verbose=verbose))
+            live.console.print(
+                render_answer_verbose(last_answer)
+                if verbose
+                else render_answer_minimal(last_answer)
+            )
+            if not verbose:
+                live.console.print()
 
             # If this was the visualizer, render the chart inline
             if last_answer.agent_id.lower() == "visualizer":
@@ -86,33 +98,53 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State:
             energy_dict = update["energy_dict"]
         elif event_type == "completed":
             status.stop()
-            live.console.print(
-                Panel(
-                    f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {
-                        update['state'].global_profiling_data.total_time:.2f}s[/dim]",
-                    border_style="blue",
+            total_time = update["state"].global_profiling_data.total_time
+            if verbose:
+                live.console.print(
+                    Panel(
+                        f"[bold cyan]Agent Run Completed[/bold cyan]\n[dim]Total run time : {
+                            total_time:.2f}s[/dim]"
+                        if total_time is not None
+                        else "[bold cyan]Agent Run Completed[/bold cyan]",
+                        border_style="blue",
+                    )
                 )
-            )
+            else:
+                completed = Text()
+                completed.append("✓ ", style="bold green")
+                completed.append("Completed", style="bold")
+                if total_time is not None:
+                    completed.append(f"  {total_time:.2f}s", style="dim")
+                live.console.print(completed)
         elif event_type == "error":
-            live.console.print(
-                Panel(
-                    f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
-                    border_style="red",
+            if verbose:
+                live.console.print(
+                    Panel(
+                        f"[bold red]Error[/bold red]\n[dim]{update['message']}[/dim]",
+                        border_style="red",
+                    )
                 )
-            )
+            else:
+                live.console.print(
+                    Text(f"✗ {update['message']}", style="bold red")
+                )
+                live.console.print()
 
-    if energy_dict:
+    if energy_dict and verbose:
         console.print(render_energy_impact_panel(energy_dict))
 
     # Fallback when model fails completely
     if not last_state:
         status.stop()
-        live.console.print(
-            Panel(
-                "[bold red]Agent Run Failed[/bold red]\n[dim]No output produced[/dim]",
-                border_style="red",
+        if verbose:
+            live.console.print(
+                Panel(
+                    "[bold red]Agent Run Failed[/bold red]\n[dim]No output produced[/dim]",
+                    border_style="red",
+                )
             )
-        )
+        else:
+            live.console.print(Text("✗ No output produced", style="bold red"))
         return None
 
     return last_state

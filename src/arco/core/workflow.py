@@ -121,10 +121,12 @@ class Workflow(ABC):
                 input_state,
                 config=graph_config,
                 stream_mode=["tasks", "updates", "messages"],
+                version="v2",
             ):
                 stream_type: str
                 data: Any
-                stream_type, data = chunk
+                stream_type = chunk["type"]
+                data = chunk["data"]
                 if (
                     stream_type == "tasks"
                     and "input" in data
@@ -144,10 +146,20 @@ class Workflow(ABC):
                     metadata: dict
                     message_chunk: AIMessageChunk
                     message_chunk, metadata = data
+                    logger.debug(
+                        "STREAM MESSAGE ... type=%s content=%r content_blocks=%r "
+                        "additional_kwargs=%r metadata=%r",
+                        type(message_chunk).__name__,
+                        getattr(message_chunk, "content", None),
+                        getattr(message_chunk, "content_blocks", None),
+                        getattr(message_chunk, "additional_kwargs", None),
+                        metadata,
+                    )
                     yield {
                         "event": "token",
                         "node": metadata.get("langgraph_node"),
-                        "content": message_chunk.content,
+                        "content": llm_tools._message_text(message_chunk),
+                        "reasoning": llm_tools._extract_reasoning(message_chunk),
                     }
         except AgentException as e:
             yield {"event": "error", "message": str(e)}

@@ -100,6 +100,7 @@ No explanations. No markdown. Just the JSON array.
                 message=f"Plan: {', '.join(a.capitalize() for a in plan)}",
                 output={"agent_choice": choice, "plan": remaining},
                 logprobs=response.logprobs,
+                thinking=response.reasoning,
             )
 
         # --- SUBSEQUENT INVOCATIONS: consume from plan ---
@@ -135,6 +136,7 @@ No explanations. No markdown. Just the JSON array.
                 state,
                 message="Workflow complete",
                 output={"agent_choice": "End", "plan": []},
+                thinking=last_planner.thinking,
             )
 
         choice = remaining[0].capitalize()

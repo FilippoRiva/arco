@@ -158,6 +158,7 @@ No explanations. Just the agent's name."""
             message=f"The chosen agent is {matched_agent}",
             output={"agent_choice": matched_agent},
             logprobs=orchestrator_response.logprobs,
+            thinking=orchestrator_response.reasoning,
         )
 
 
