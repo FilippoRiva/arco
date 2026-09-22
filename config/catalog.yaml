@@ -1,0 +1,38 @@
+# Named experiment definitions used by generate-benchmark, benchmark, and analysis.
+# Paths are relative to the repository root.
+experiments:
+  sales-planned-deepseek4flash:
+    description: Planned sales workflow evaluated with deepseek v4 flash
+    workflow: planned_sales
+    generation:
+      config: config/run_config/sales/benchmarks_generation/planned.yaml
+      prompts: data/prompts/sales/demo_prompts.json
+      output: data/benchmarks/demo/planned_ground_truth.json
+    benchmark:
+      config: config/benchmark_config/sales/planned_deepseek_v4_flash.yaml
+      output_dir: output/benchmarks/sales-planned-deepseek4flash
+    tags: [sales, planned, deepseek-v4-flash]
+
+  sales-planned-gpt41-nano:
+    description: Planned sales workflow evaluated with GPT-4.1 nano.
+    workflow: planned_sales
+    generation:
+      config: config/run_config/sales/benchmarks_generation/planned.yaml
+      prompts: data/prompts/sales/prompts.json
+      output: data/benchmarks/sales/planned_ground_truth.json
+    benchmark:
+      config: config/benchmark_config/sales/gpt_4.1_nano_planned.yaml
+      output_dir: output/benchmarks/sales-planned-gpt41-nano
+    tags: [sales, planned, gpt-4.1-nano]
+
+  demo-planned-gpt41-nano:
+    description: Small planned sales benchmark used for demonstrations.
+    workflow: planned_sales
+    generation:
+      config: config/run_config/demo/benchmarks_generation/demo_run_config.yaml
+      prompts: data/prompts/sales/demo_prompts.json
+      output: data/benchmarks/demo/planned_ground_truth.json
+    benchmark:
+      config: config/benchmark_config/demo/demo_benchmark_config.yaml
+      output_dir: output/benchmarks/demo-planned-gpt41-nano
+    tags: [demo, sales, planned]

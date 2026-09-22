@@ -240,6 +240,12 @@ The list of prompts json file should only contain a json list as : `['prompt_1',
 The generated JSON contains one entry per prompt, each with the agent's trace,
 output, and metadata — ready to use as a ground-truth dataset for `arco benchmark`.
 
+For catalog-managed experiments, the equivalent command is:
+
+```bash
+arco generate-benchmark --experiment sales-planned-gpt41-nano
+```
+
 ### `arco benchmark`
 
 Runs a benchmark suite by executing multiple ARCO configurations against a
@@ -274,7 +280,20 @@ Benchmark results are automatically saved as a series of CSV/json files
 containing execution metrics, evaluations, and profiling information.
 
 Refer to [Benchmark Configuration Files](docs/benchmark_config.md) for writing benchmark
-configuration files.
+configuration files. You can also run a catalog-managed experiment with:
+
+```bash
+arco benchmark --experiment sales-planned-gpt41-nano
+```
+
+See [Experiment Catalogs](docs/experiments.md) for the full generation,
+benchmarking, and analysis workflow.
+
+List catalog-managed experiments with:
+
+```bash
+arco experiments
+```
 
 ### `arco analyze-benchmark`
 
@@ -290,10 +309,11 @@ Arguments
 benchmark_dir  # Path to the benchmark output directory containing bench_metadata.json
 ```
 
-Example
+Examples
 
 ```bash
 arco analyze-benchmark output/benchmarks/my-experiment
+arco analyze-benchmark --experiment sales-planned-gpt41-nano
 ```
 
 This command reads the benchmark metadata and generates an HTML report with

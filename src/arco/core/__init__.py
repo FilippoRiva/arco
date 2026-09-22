@@ -6,6 +6,7 @@ from .answer import *
 from .config import *
 from .evaluator import *
 from .exceptions import *
+from .experiment import *
 from .graph import *
 from .llm_tools import *
 from .profiling_data import *
@@ -25,6 +26,8 @@ __all__ = [
     "Evaluation",
     "Evaluator",
     "EvaluatorException",
+    "ExperimentCatalog",
+    "ExperimentSpec",
     "Graph",
     "LLMAnswer",
     "LLMCallAccumulator",

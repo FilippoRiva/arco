@@ -1,0 +1,116 @@
+[
+  {
+    "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Retriever"
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n  s.Sold_Date AS date,\n  SUM(s.Total_Sale_Value) AS sales_value\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2021\n  AND EXTRACT(MONTH FROM s.Sold_Date) = 11\nGROUP BY s.Sold_Date\nORDER BY s.Sold_Date ASC;",
+          "data_str": "date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Analyzer"
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "Sales in Nov 2021 (date as x, sales_value as y) range from **$11,030.39** on **2021-11-03** to **$52,004.60** on **2021-11-25**, with a total of **$499,984.43** across **29** daily records. The daily sales trend peaks on **2021-11-25** and **2021-11-26 ($28,608.55)**, while mid-month days mostly sit in the **~$12k\u2013$19k** range (e.g., **2021-11-05: $22,844.58**, **2021-11-12: $20,851.53**, **2021-11-30: $17,954.65**)."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Visualizer"
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "date",
+            "y_axis": "sales_value",
+            "title": "Sales Trend for Nov 2021 (Date vs Sales)",
+            "df_columns": "date, sales_value"
+          },
+          "chart_code": "import matplotlib.pyplot as plt\n\nx_data = data_df[\"date\"]\ny_data = data_df[\"sales_value\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, y_data, marker=\"o\", linestyle=\"-\", label=\"Sales Value\")\nplt.xlabel(\"date\")\nplt.ylabel(\"sales_value\")\nplt.title(\"Sales Trend for Nov 2021 (Date vs Sales)\")\nplt.grid(True, alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "End"
+        }
+      }
+    ],
+    "id": 0,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Retriever"
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd,\n    SUM(s.Qty_Sold) AS total_units_sold\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n),\nmonths_2023 AS (\n  SELECT\n    gs.month_start,\n    COALESCE(m.total_revenue_usd, 0) AS total_revenue_usd,\n    COALESCE(m.total_units_sold, 0) AS total_units_sold\n  FROM (\n    SELECT\n      DATE_TRUNC('month', DATE '2023-01-01') + (i * INTERVAL '1 month') AS month_start\n    FROM range(12) AS t(i)\n  ) gs\n  LEFT JOIN monthly m\n    ON m.month_start = gs.month_start\n)\nSELECT\n  mo.month_start,\n  mo.total_revenue_usd,\n  mo.total_units_sold\nFROM months_2023 mo\nORDER BY mo.month_start;",
+          "data_str": "month_start,total_revenue_usd,total_units_sold\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Analyzer"
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "In 2023, total revenue and total units sold by month were: Jan $434,172.81 & 33,653; Feb $411,762.72 & 31,545; Mar $423,070.84 & 32,460; Apr $384,479.68 & 30,199; May $381,326.43 & 31,154; Jun $364,806.74 & 29,082; Jul $353,284.21 & 27,932; Aug $401,061.54 & 31,903; Sep $422,554.97 & 31,847; Oct $454,231.06 & 38,208; Nov $511,104.29 & 41,043; Dec $874,263.67 & 60,941. Monthly revenue trended mostly downward from Jan ($434,172.81) through Jul ($353,284.21), then increased from Aug onward, peaking in Dec at $874,263.67."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Visualizer"
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "month_start",
+            "y_axis": "total_revenue_usd",
+            "title": "Monthly Revenue Trend for 2023 (Total Revenue vs Month)",
+            "df_columns": "month_start, total_revenue_usd, total_units_sold"
+          },
+          "chart_code": "x_data = data_df[\"month_start\"]\ny_data = data_df[\"total_revenue_usd\"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker=\"o\", linewidth=2, label=\"Total Revenue (USD)\")\n\nplt.xlabel(\"Month Start\")\nplt.ylabel(\"Total Revenue (USD)\")\nplt.title(\"Monthly Revenue Trend for 2023 (Total Revenue vs Month)\")\nplt.grid(True, alpha=0.3)\nplt.legend()\n\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "End"
+        }
+      }
+    ],
+    "id": 1,
+    "difficulty": 2
+  }
+]

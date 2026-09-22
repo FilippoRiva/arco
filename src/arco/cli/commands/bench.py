@@ -12,13 +12,14 @@ def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
         "benchmark", help="Benchmarks a workflow on a benchmark dataset"
     )
     parser.add_argument(
-        "--dataset", "-d", required=True, help="Path to benchmark dataset JSON"
+        "--dataset", "-d", help="Path to benchmark dataset JSON"
     )
     parser.add_argument(
-        "--config", "-c", required=True, help="Path to benchmark_config.yaml"
+        "--config", "-c", help="Path to benchmark_config.yaml"
     )
+    parser.add_argument("--experiment", help="Experiment ID from config/catalog.yaml")
     parser.add_argument(
-        "--save-dir", default="./output/benchmarks", help="Output directory"
+        "--save-dir", default=None, help="Output directory"
     )
     parser.add_argument("--id", type=str, default=None, help="ID of this benchmark")
     parser.add_argument(
@@ -51,11 +52,30 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from rich.rule import Rule
 
     from arco.cli.viz import display, printer
+    from arco.core import ExperimentCatalog
     from arco.data.benchmark_dataset import BenchmarkSummary
     from arco.tools.bench import benchmark_from_config
 
     console.print("[green]✓[/green] Benchmark loaded")
     status.stop()
+
+    if args.experiment:
+        experiment = ExperimentCatalog.load().get(args.experiment)
+        config_path = str(experiment.benchmark_config_path)
+        dataset_path = str(experiment.ground_truth_path)
+        benchmark_id = args.id or experiment.output_dir_path.name
+        save_dir = args.save_dir or str(experiment.output_dir_path.parent)
+        experiment_metadata = experiment.metadata()
+    else:
+        if not args.config or not args.dataset:
+            parser.error(
+                "--config and --dataset are required unless --experiment is used"
+            )
+        config_path = args.config
+        dataset_path = args.dataset
+        benchmark_id = args.id
+        save_dir = args.save_dir or "./output/benchmarks"
+        experiment_metadata = None
 
     if args.verbose:
         visualization_logic = partial(display.display_workflow, verbose=True)
@@ -63,12 +83,13 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         visualization_logic = display.display_workflow_compact
 
     generator = benchmark_from_config(
-        config_path=args.config,
-        dataset_path=args.dataset,
-        id=args.id,
-        save_dir=args.save_dir,
+        config_path=config_path,
+        dataset_path=dataset_path,
+        id=benchmark_id,
+        save_dir=save_dir,
         run_visualization_logic=visualization_logic,
         logging_level=args.log,
+        experiment_metadata=experiment_metadata,
     )
 
     for _event in generator:

@@ -28,6 +28,7 @@ def benchmark_from_config(
     save_dir: str,
     logging_level: str | None,
     run_visualization_logic: Callable,
+    experiment_metadata: dict[str, Any] | None = None,
 ):
     available_workflows = workflows.load_workflows()
     if len(available_workflows) == 0:
@@ -105,6 +106,7 @@ def benchmark_from_config(
     aggregated_df = aggregate_results(run_config_to_result_list)
     aggregated_df.to_csv(benchmark_save_folder / "summary.csv", index=False)
     bench_metadata = {
+        "experiment": experiment_metadata,
         "benchmark_run": config_path,
         "dataset_path": dataset_path,
         "total_runtime": time.time() - start_time,

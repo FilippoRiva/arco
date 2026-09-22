@@ -1,0 +1,2703 @@
+{
+  "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+  "run_id": "Retriever_high_temp1",
+  "agent_configs": {
+    "Retriever": {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash-0731",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.4-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 1,
+      "temp_max": 1.0,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_reasoning": false,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    },
+    "Analyzer": {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash-0731",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.4-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 1.0,
+      "temp_max": 1.0,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_reasoning": false,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    },
+    "Visualizer": {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash-0731",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.4-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 1.0,
+      "temp_max": 1.0,
+      "top_p_min": 0.95,
+      "top_p_max": 0.95,
+      "top_k_min": 64,
+      "top_k_max": 64,
+      "max_tokens": 5000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_reasoning": false,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    },
+    "__default__": {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-v4-flash-0731",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.4-nano",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "cot_n": 1,
+      "enable_reasoning": false,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "Planner",
+      "message": "My proposed plan is - Retriever, Analyzer, Visualizer",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "[\"",
+          0.0
+        ],
+        [
+          "ret",
+          0.0
+        ],
+        [
+          "ri",
+          0.0
+        ],
+        [
+          "ever",
+          0.0
+        ],
+        [
+          "\",",
+          -3.6954811548639555e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "analy",
+          0.0
+        ],
+        [
+          "zer",
+          0.0
+        ],
+        [
+          "\",",
+          0.0
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "visual",
+          0.0
+        ],
+        [
+          "izer",
+          0.0
+        ],
+        [
+          "\"]",
+          0.0
+        ]
+      ],
+      "agent_output": {
+        "agent_choice": "Retriever",
+        "plan": [
+          "analyzer",
+          "visualizer"
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000002842678215,
+      "profiling_data": {
+        "total_time": 13.110368592999293,
+        "llm_time": 9.745239644998946,
+        "energy_consumed_kwh": 0.00045859147963147023,
+        "cpu_energy_kwh": 1.914930257004373e-05,
+        "gpu_energy_kwh": 0.00041253199669200047,
+        "ram_energy_kwh": 2.691018036942599e-05,
+        "emissions_kg_co2": 0.00015166445696076058
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Retriever",
+      "message": "The data has been retrieved (12 entries with columns : month, total_revenue, total_units_sold)",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 1,
+        "temp_max": 1.0,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "WITH",
+          -0.0013636585790663958
+        ],
+        [
+          " monthly",
+          -0.005245374981313944
+        ],
+        [
+          "_s",
+          -3.2186455882765586e-06
+        ],
+        [
+          "ales",
+          0.0
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " (\n",
+          -0.00023195437097456306
+        ],
+        [
+          "   ",
+          -7.64102369430475e-05
+        ],
+        [
+          " SELECT",
+          0.0
+        ],
+        [
+          " CAST",
+          -0.0008138681878335774
+        ],
+        [
+          "(D",
+          -1.1920928244535389e-07
+        ],
+        [
+          "ATE",
+          0.0
+        ],
+        [
+          "_TR",
+          0.0
+        ],
+        [
+          "UNC",
+          0.0
+        ],
+        [
+          "('",
+          0.0
+        ],
+        [
+          "month",
+          -4.768370445162873e-07
+        ],
+        [
+          "',",
+          0.0
+        ],
+        [
+          " s",
+          -5.483612312673358e-06
+        ],
+        [
+          ".S",
+          -5.483612312673358e-06
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          "_",
+          -1.1920928244535389e-07
+        ],
+        [
+          "Date",
+          0.0
+        ],
+        [
+          ")",
+          -2.3841855067985307e-07
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " DATE",
+          0.0
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          -1.1920928244535389e-07
+        ],
+        [
+          " month",
+          -2.3841855067985307e-07
+        ],
+        [
+          ",\n",
+          -3.576278118089249e-07
+        ],
+        [
+          "          ",
+          -1.1920928244535389e-07
+        ],
+        [
+          " R",
+          -9.536738616588991e-07
+        ],
+        [
+          "OUND",
+          0.0
+        ],
+        [
+          "(",
+          0.0
+        ],
+        [
+          "SUM",
+          0.0
+        ],
+        [
+          "(s",
+          -1.1920928244535389e-07
+        ],
+        [
+          ".T",
+          0.0
+        ],
+        [
+          "otal",
+          0.0
+        ],
+        [
+          "_S",
+          0.0
+        ],
+        [
+          "ale",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "Value",
+          -1.1920928244535389e-07
+        ],
+        [
+          "),",
+          -1.311301275563892e-06
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "2",
+          0.0
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          -1.1920928244535389e-07
+        ],
+        [
+          " total",
+          0.0
+        ],
+        [
+          "_re",
+          0.0
+        ],
+        [
+          "venue",
+          0.0
+        ],
+        [
+          ",\n",
+          0.0
+        ],
+        [
+          "          ",
+          -1.1920928244535389e-07
+        ],
+        [
+          " SUM",
+          0.0
+        ],
+        [
+          "(s",
+          0.0
+        ],
+        [
+          ".Q",
+          0.0
+        ],
+        [
+          "ty",
+          0.0
+        ],
+        [
+          "_S",
+          -1.1920928244535389e-07
+        ],
+        [
+          "old",
+          -2.3841855067985307e-07
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " total",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "units",
+          0.0
+        ],
+        [
+          "_s",
+          0.0
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " FROM",
+          0.0
+        ],
+        [
+          " sales",
+          0.0
+        ],
+        [
+          " s",
+          -5.960462772236497e-07
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " WHERE",
+          0.0
+        ],
+        [
+          " s",
+          0.0
+        ],
+        [
+          ".S",
+          0.0
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "Date",
+          0.0
+        ],
+        [
+          " >=",
+          0.0
+        ],
+        [
+          " DATE",
+          0.0
+        ],
+        [
+          " '",
+          0.0
+        ],
+        [
+          "202",
+          -1.1920928244535389e-07
+        ],
+        [
+          "3",
+          -1.1920928244535389e-07
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "'\n",
+          -8.940656698541716e-06
+        ],
+        [
+          "     ",
+          -1.4305104514278355e-06
+        ],
+        [
+          " AND",
+          0.0
+        ],
+        [
+          " s",
+          0.0
+        ],
+        [
+          ".S",
+          0.0
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "Date",
+          0.0
+        ],
+        [
+          " <",
+          -3.6954811548639555e-06
+        ],
+        [
+          " ",
+          -0.12693561613559723
+        ],
+        [
+          " DATE",
+          0.0
+        ],
+        [
+          " '",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "4",
+          -5.960462772236497e-07
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "'\n",
+          -1.1920928244535389e-07
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " GROUP",
+          0.0
+        ],
+        [
+          " BY",
+          0.0
+        ],
+        [
+          " ",
+          -4.470248313737102e-05
+        ],
+        [
+          "1",
+          0.0
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "),\n",
+          -0.0004970983718521893
+        ],
+        [
+          "months",
+          -1.1920928244535389e-07
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " (\n",
+          0.0
+        ],
+        [
+          "   ",
+          0.0
+        ],
+        [
+          " SELECT",
+          0.0
+        ],
+        [
+          " CAST",
+          -0.0002044230350293219
+        ],
+        [
+          "(range",
+          -2.6702524337451905e-05
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " DATE",
+          0.0
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " month",
+          0.0
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "   ",
+          -2.3841855067985307e-07
+        ],
+        [
+          " FROM",
+          0.0
+        ],
+        [
+          " range",
+          0.0
+        ],
+        [
+          "(D",
+          -2.3841855067985307e-07
+        ],
+        [
+          "ATE",
+          0.0
+        ],
+        [
+          " '",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "3",
+          -1.1920928244535389e-07
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          0.0
+        ],
+        [
+          "',",
+          0.0
+        ],
+        [
+          " DATE",
+          0.0
+        ],
+        [
+          " '",
+          0.0
+        ],
+        [
+          "202",
+          -1.1920928244535389e-07
+        ],
+        [
+          "4",
+          -1.6689160474925302e-05
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          -1.1920928244535389e-07
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "01",
+          -2.3841855067985307e-07
+        ],
+        [
+          "',",
+          0.0
+        ],
+        [
+          " INTER",
+          0.0
+        ],
+        [
+          "VAL",
+          -5.960462772236497e-07
+        ],
+        [
+          " ",
+          -5.960462772236497e-07
+        ],
+        [
+          "1",
+          -1.1920928244535389e-07
+        ],
+        [
+          " MON",
+          0.0
+        ],
+        [
+          "TH",
+          -2.3841855067985307e-07
+        ],
+        [
+          ")\n",
+          -2.3841855067985307e-07
+        ],
+        [
+          ")\n",
+          -2.3841855067985307e-07
+        ],
+        [
+          "SELECT",
+          0.0
+        ],
+        [
+          " m",
+          -0.002528091659769416
+        ],
+        [
+          ".m",
+          -2.3841855067985307e-07
+        ],
+        [
+          "onth",
+          0.0
+        ],
+        [
+          ",\n",
+          -1.728519782773219e-05
+        ],
+        [
+          "      ",
+          0.0
+        ],
+        [
+          " CO",
+          0.0
+        ],
+        [
+          "ALES",
+          0.0
+        ],
+        [
+          "CE",
+          0.0
+        ],
+        [
+          "(",
+          -5.125986263010418e-06
+        ],
+        [
+          "ms",
+          -1.7881377516459906e-06
+        ],
+        [
+          ".total",
+          -3.576278118089249e-07
+        ],
+        [
+          "_re",
+          0.0
+        ],
+        [
+          "venue",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "0",
+          0.0
+        ],
+        [
+          ")",
+          -1.0728830375228426e-06
+        ],
+        [
+          " AS",
+          -2.0861407392658293e-05
+        ],
+        [
+          " total",
+          0.0
+        ],
+        [
+          "_re",
+          -1.1920928244535389e-07
+        ],
+        [
+          "venue",
+          0.0
+        ],
+        [
+          ",\n",
+          0.0
+        ],
+        [
+          "      ",
+          0.0
+        ],
+        [
+          " CO",
+          0.0
+        ],
+        [
+          "ALES",
+          0.0
+        ],
+        [
+          "CE",
+          0.0
+        ],
+        [
+          "(",
+          -1.1920928244535389e-07
+        ],
+        [
+          "ms",
+          0.0
+        ],
+        [
+          ".total",
+          0.0
+        ],
+        [
+          "_",
+          -1.1920928244535389e-07
+        ],
+        [
+          "units",
+          0.0
+        ],
+        [
+          "_s",
+          0.0
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "0",
+          0.0
+        ],
+        [
+          ")",
+          0.0
+        ],
+        [
+          " AS",
+          0.0
+        ],
+        [
+          " total",
+          0.0
+        ],
+        [
+          "_",
+          -1.1920928244535389e-07
+        ],
+        [
+          "units",
+          0.0
+        ],
+        [
+          "_s",
+          0.0
+        ],
+        [
+          "old",
+          0.0
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "FROM",
+          0.0
+        ],
+        [
+          " months",
+          0.0
+        ],
+        [
+          " m",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\n",
+          0.0
+        ],
+        [
+          "LEFT",
+          0.0
+        ],
+        [
+          " JOIN",
+          0.0
+        ],
+        [
+          " monthly",
+          -4.768370445162873e-07
+        ],
+        [
+          "_s",
+          0.0
+        ],
+        [
+          "ales",
+          -1.1920928244535389e-07
+        ],
+        [
+          " ms",
+          0.0
+        ],
+        [
+          " ON",
+          -1.0251946150674485e-05
+        ],
+        [
+          " m",
+          -2.3841855067985307e-07
+        ],
+        [
+          ".m",
+          0.0
+        ],
+        [
+          "onth",
+          0.0
+        ],
+        [
+          " =",
+          -1.1920928244535389e-07
+        ],
+        [
+          " ms",
+          -1.1920928244535389e-07
+        ],
+        [
+          ".m",
+          0.0
+        ],
+        [
+          "onth",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\n",
+          -1.1920928244535389e-07
+        ],
+        [
+          "ORDER",
+          -5.960462772236497e-07
+        ],
+        [
+          " BY",
+          0.0
+        ],
+        [
+          " m",
+          -9.536738616588991e-07
+        ],
+        [
+          ".m",
+          0.0
+        ],
+        [
+          "onth",
+          0.0
+        ],
+        [
+          ";",
+          -0.38693198561668396
+        ]
+      ],
+      "agent_output": {
+        "data_str": "month_start,total_revenue_usd,total_units_sold\n2023-01-01,434172.81,33653\n2023-02-01,411762.72,31545\n2023-03-01,423070.84,32460\n2023-04-01,384479.68,30199\n2023-05-01,381326.43,31154\n2023-06-01,364806.74,29082\n2023-07-01,353284.21,27932\n2023-08-01,401061.54,31903\n2023-09-01,422554.97,31847\n2023-10-01,454231.06,38208\n2023-11-01,511104.29,41043\n2023-12-01,874263.67,60941\n",
+        "data_df": "   month_start  total_revenue_usd  total_units_sold\n0   2023-01-01          434172.81             33653\n1   2023-02-01          411762.72             31545\n2   2023-03-01          423070.84             32460\n3   2023-04-01          384479.68             30199\n4   2023-05-01          381326.43             31154\n5   2023-06-01          364806.74             29082\n6   2023-07-01          353284.21             27932\n7   2023-08-01          401061.54             31903\n8   2023-09-01          422554.97             31847\n9   2023-10-01          454231.06             38208\n10  2023-11-01          511104.29             41043\n11  2023-12-01          874263.67             60941",
+        "sql_query": "WITH monthly_sales AS (\n    SELECT CAST(DATE_TRUNC('month', s.Sold_Date) AS DATE) AS month,\n           ROUND(SUM(s.Total_Sale_Value), 2) AS total_revenue,\n           SUM(s.Qty_Sold) AS total_units_sold\n    FROM sales s\n    WHERE s.Sold_Date >= DATE '2023-01-01'\n      AND s.Sold_Date <  DATE '2024-01-01'\n    GROUP BY 1\n),\nmonths AS (\n    SELECT CAST(range AS DATE) AS month\n    FROM range(DATE '2023-01-01', DATE '2024-01-01', INTERVAL 1 MONTH)\n)\nSELECT m.month,\n       COALESCE(ms.total_revenue, 0) AS total_revenue,\n       COALESCE(ms.total_units_sold, 0) AS total_units_sold\nFROM months m\nLEFT JOIN monthly_sales ms ON m.month = ms.month\nORDER BY m.month;"
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0023465655036137,
+      "profiling_data": {
+        "total_time": 76.02374867300023,
+        "llm_time": 72.32098528000279,
+        "energy_consumed_kwh": 0.0026808472375094124,
+        "cpu_energy_kwh": 0.00013610265280186528,
+        "gpu_energy_kwh": 0.002344691875751981,
+        "ram_energy_kwh": 0.00020005270895556658,
+        "emissions_kg_co2": 0.0008866044366946378
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "The next agent should be Analyzer",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [],
+      "agent_output": {
+        "agent_choice": "Analyzer",
+        "plan": [
+          "visualizer"
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.0009250149996660184,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Analyzer",
+      "message": "For each month in 2023, revenue and units sold were: Jan $434,172.81/33,653; Feb $411,762.72/31,545; Mar $423,070.84/32,460; Apr $384,479.68/30,199; May $381,326.43/31,154; Jun $364,806.74/29,082; Jul $353,284.21/27,932; Aug $401,061.54/31,903; Sep $422,554.97/31,847; Oct $454,231.06/38,208; Nov $511,104.29/41,043; Dec $874,263.67/60,941. Total 2023 revenue was $5,416,118.96 with 419,967 units sold. July had the lowest monthly revenue/units, while December had the highest.",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 1.0,
+        "temp_max": 1.0,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "For",
+          -0.030726805329322815
+        ],
+        [
+          " each",
+          -0.8262433409690857
+        ],
+        [
+          " month",
+          -0.00020358874462544918
+        ],
+        [
+          " in",
+          -0.06196817383170128
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          ",",
+          -0.04863797500729561
+        ],
+        [
+          " revenue",
+          -0.015753109008073807
+        ],
+        [
+          " and",
+          -0.00195526541210711
+        ],
+        [
+          " units",
+          -4.768360213347478e-06
+        ],
+        [
+          " sold",
+          -2.3841855067985307e-07
+        ],
+        [
+          " were",
+          -0.0009141556802205741
+        ],
+        [
+          ":",
+          -3.7788631743751466e-05
+        ],
+        [
+          " Jan",
+          -2.861018856492592e-06
+        ],
+        [
+          " $",
+          -7.152531907195225e-06
+        ],
+        [
+          "434",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "172",
+          -5.483612312673358e-06
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "81",
+          0.0
+        ],
+        [
+          "/",
+          -0.69317626953125
+        ],
+        [
+          "33",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "653",
+          0.0
+        ],
+        [
+          ";",
+          -0.0007160721579566598
+        ],
+        [
+          " Feb",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "411",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "762",
+          -1.1920928244535389e-07
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "72",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "31",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "545",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Mar",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "423",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "070",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "84",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "32",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "460",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Apr",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "384",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "479",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "68",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "30",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "199",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " May",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "381",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "326",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "43",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "31",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "154",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Jun",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "364",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "806",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "74",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "29",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "082",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Jul",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "353",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "284",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "21",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "27",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "932",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Aug",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "401",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "061",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "54",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "31",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "903",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Sep",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "422",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "554",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "97",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "31",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "847",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Oct",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "454",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "231",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "06",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "38",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "208",
+          0.0
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Nov",
+          0.0
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "511",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "104",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "29",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "41",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "043",
+          -1.1920928244535389e-07
+        ],
+        [
+          ";",
+          0.0
+        ],
+        [
+          " Dec",
+          -0.0019286142196506262
+        ],
+        [
+          " $",
+          0.0
+        ],
+        [
+          "874",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "263",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "67",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "60",
+          -1.1920928244535389e-07
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "941",
+          0.0
+        ],
+        [
+          ".",
+          -0.0011701886542141438
+        ],
+        [
+          " Total",
+          -0.009666184894740582
+        ],
+        [
+          " ",
+          -6.437094270950183e-05
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          " revenue",
+          -1.1920928244535389e-07
+        ],
+        [
+          " was",
+          -3.576278118089249e-07
+        ],
+        [
+          " $",
+          -1.1920928244535389e-07
+        ],
+        [
+          "5",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "416",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "118",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "96",
+          0.0
+        ],
+        [
+          " with",
+          -0.05257199704647064
+        ],
+        [
+          " ",
+          -1.0728830375228426e-06
+        ],
+        [
+          "419",
+          0.0
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          "967",
+          0.0
+        ],
+        [
+          " units",
+          -0.005233753472566605
+        ],
+        [
+          " sold",
+          0.0
+        ],
+        [
+          ".",
+          -1.9357593059539795
+        ],
+        [
+          " July",
+          -0.051347121596336365
+        ],
+        [
+          " had",
+          -0.006835766136646271
+        ],
+        [
+          " the",
+          0.0
+        ],
+        [
+          " lowest",
+          -5.960462772236497e-07
+        ],
+        [
+          " monthly",
+          -0.006829254329204559
+        ],
+        [
+          " revenue",
+          -0.020220454782247543
+        ],
+        [
+          "/",
+          -1.1369355916976929
+        ],
+        [
+          "units",
+          -4.768258077092469e-05
+        ],
+        [
+          ",",
+          -0.0017137139802798629
+        ],
+        [
+          " while",
+          -0.0002616301644593477
+        ],
+        [
+          " December",
+          0.0
+        ],
+        [
+          " had",
+          -7.83174327807501e-05
+        ],
+        [
+          " the",
+          -0.00010239553375868127
+        ],
+        [
+          " highest",
+          -3.576278118089249e-07
+        ],
+        [
+          ".",
+          -0.0013777059502899647
+        ]
+      ],
+      "agent_output": {
+        "analysis": "For each month in 2023, revenue and units sold were: Jan $434,172.81/33,653; Feb $411,762.72/31,545; Mar $423,070.84/32,460; Apr $384,479.68/30,199; May $381,326.43/31,154; Jun $364,806.74/29,082; Jul $353,284.21/27,932; Aug $401,061.54/31,903; Sep $422,554.97/31,847; Oct $454,231.06/38,208; Nov $511,104.29/41,043; Dec $874,263.67/60,941. Total 2023 revenue was $5,416,118.96 with 419,967 units sold. July had the lowest monthly revenue/units, while December had the highest."
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0255123158789814,
+      "profiling_data": {
+        "total_time": 24.291310370997962,
+        "llm_time": 20.890125804999116,
+        "energy_consumed_kwh": 0.0008998530474179256,
+        "cpu_energy_kwh": 3.9519071105493305e-05,
+        "gpu_energy_kwh": 0.0008025648087179871,
+        "ram_energy_kwh": 5.776916759444552e-05,
+        "emissions_kg_co2": 0.0002975976001359615
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "The next agent should be Visualizer",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [],
+      "agent_output": {
+        "agent_choice": "Visualizer",
+        "plan": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.0007635820002178662,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Visualizer",
+      "message": "Visualization generated",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 1.0,
+        "temp_max": 1.0,
+        "top_p_min": 0.95,
+        "top_p_max": 0.95,
+        "top_k_min": 64,
+        "top_k_max": 64,
+        "max_tokens": 5000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "import",
+          -0.01430224534124136
+        ],
+        [
+          " matplotlib",
+          -0.0007098776986822486
+        ],
+        [
+          ".pyplot",
+          -1.1920928244535389e-07
+        ],
+        [
+          " as",
+          0.0
+        ],
+        [
+          " plt",
+          0.0
+        ],
+        [
+          "\n",
+          -0.0011714984430000186
+        ],
+        [
+          "import",
+          -2.682172998902388e-05
+        ],
+        [
+          " pandas",
+          0.0
+        ],
+        [
+          " as",
+          0.0
+        ],
+        [
+          " pd",
+          0.0
+        ],
+        [
+          "\n\n",
+          -3.576278118089249e-07
+        ],
+        [
+          "x",
+          -0.00862102210521698
+        ],
+        [
+          "_data",
+          -4.768370445162873e-07
+        ],
+        [
+          " =",
+          0.0
+        ],
+        [
+          " data",
+          0.0
+        ],
+        [
+          "_df",
+          0.0
+        ],
+        [
+          "[\"",
+          0.0
+        ],
+        [
+          "month",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\"]\n",
+          -5.960462772236497e-07
+        ],
+        [
+          "y",
+          -1.1920928244535389e-07
+        ],
+        [
+          "_data",
+          0.0
+        ],
+        [
+          " =",
+          0.0
+        ],
+        [
+          " data",
+          0.0
+        ],
+        [
+          "_df",
+          0.0
+        ],
+        [
+          "[\"",
+          0.0
+        ],
+        [
+          "total",
+          0.0
+        ],
+        [
+          "_re",
+          -1.1920928244535389e-07
+        ],
+        [
+          "venue",
+          0.0
+        ],
+        [
+          "\"]\n\n",
+          -9.536738616588991e-07
+        ],
+        [
+          "plt",
+          0.0
+        ],
+        [
+          ".figure",
+          -1.1920928244535389e-07
+        ],
+        [
+          "(f",
+          0.0
+        ],
+        [
+          "ig",
+          0.0
+        ],
+        [
+          "size",
+          0.0
+        ],
+        [
+          "=(",
+          -1.1920928244535389e-07
+        ],
+        [
+          "10",
+          -3.576278118089249e-07
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          " ",
+          -1.1920928244535389e-07
+        ],
+        [
+          "6",
+          0.0
+        ],
+        [
+          "))\n",
+          -1.1920928244535389e-07
+        ],
+        [
+          "plt",
+          0.0
+        ],
+        [
+          ".plot",
+          -2.3841855067985307e-07
+        ],
+        [
+          "(x",
+          0.0
+        ],
+        [
+          "_data",
+          -3.576278118089249e-07
+        ],
+        [
+          ",",
+          0.0
+        ],
+        [
+          " y",
+          0.0
+        ],
+        [
+          "_data",
+          0.0
+        ],
+        [
+          ")\n",
+          -0.02350327931344509
+        ],
+        [
+          "plt",
+          -2.3841855067985307e-07
+        ],
+        [
+          ".xlabel",
+          0.0
+        ],
+        [
+          "(\"",
+          0.0
+        ],
+        [
+          "month",
+          -0.47407951951026917
+        ],
+        [
+          "\")\n",
+          -3.576278118089249e-07
+        ],
+        [
+          "plt",
+          -1.1920928244535389e-07
+        ],
+        [
+          ".ylabel",
+          0.0
+        ],
+        [
+          "(\"",
+          0.0
+        ],
+        [
+          "total",
+          -1.0728830375228426e-06
+        ],
+        [
+          "_re",
+          -6.198863957251888e-06
+        ],
+        [
+          "venue",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\")\n",
+          -2.50339189733495e-06
+        ],
+        [
+          "plt",
+          0.0
+        ],
+        [
+          ".title",
+          0.0
+        ],
+        [
+          "(\"",
+          0.0
+        ],
+        [
+          "Monthly",
+          -1.1920928244535389e-07
+        ],
+        [
+          " Revenue",
+          0.0
+        ],
+        [
+          " Trends",
+          0.0
+        ],
+        [
+          " for",
+          0.0
+        ],
+        [
+          " ",
+          -1.1920928244535389e-07
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "3",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\")\n",
+          -4.768370445162873e-07
+        ],
+        [
+          "plt",
+          -2.3841855067985307e-07
+        ],
+        [
+          ".grid",
+          -6.198863957251888e-06
+        ],
+        [
+          "(",
+          0.0
+        ],
+        [
+          "True",
+          -1.7404405298293568e-05
+        ],
+        [
+          ",",
+          -0.011047860607504845
+        ],
+        [
+          " alpha",
+          -0.01817712001502514
+        ],
+        [
+          "=",
+          0.0
+        ],
+        [
+          "0",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "3",
+          -1.1920928244535389e-07
+        ],
+        [
+          ")\n",
+          -1.6689286894688848e-06
+        ],
+        [
+          "plt",
+          -1.1920928244535389e-07
+        ],
+        [
+          ".t",
+          -4.768360213347478e-06
+        ],
+        [
+          "ight",
+          0.0
+        ],
+        [
+          "_layout",
+          0.0
+        ],
+        [
+          "()\n",
+          -2.3841855067985307e-07
+        ],
+        [
+          "plt",
+          -1.0728830375228426e-06
+        ],
+        [
+          ".show",
+          0.0
+        ],
+        [
+          "()",
+          -2.3841855067985307e-07
+        ],
+        [
+          "chart",
+          -1.0728830375228426e-06
+        ],
+        [
+          "_type",
+          0.0
+        ],
+        [
+          "\":\"",
+          -0.0031777145341038704
+        ],
+        [
+          "line",
+          -1.1920928244535389e-07
+        ],
+        [
+          "\",\"",
+          -4.768360213347478e-06
+        ],
+        [
+          "x",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "axis",
+          0.0
+        ],
+        [
+          "\":\"",
+          0.0
+        ],
+        [
+          "month",
+          0.0
+        ],
+        [
+          "\",\"",
+          0.0
+        ],
+        [
+          "y",
+          0.0
+        ],
+        [
+          "_",
+          0.0
+        ],
+        [
+          "axis",
+          0.0
+        ],
+        [
+          "\":\"",
+          0.0
+        ],
+        [
+          "total",
+          -1.1920928244535389e-07
+        ],
+        [
+          "_re",
+          0.0
+        ],
+        [
+          "venue",
+          0.0
+        ],
+        [
+          "\",\"",
+          0.0
+        ],
+        [
+          "title",
+          0.0
+        ],
+        [
+          "\":\"",
+          0.0
+        ],
+        [
+          "Monthly",
+          -2.861018856492592e-06
+        ],
+        [
+          " Revenue",
+          -4.768370445162873e-07
+        ],
+        [
+          " Trends",
+          0.0
+        ],
+        [
+          " for",
+          -1.5020257706055418e-05
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          "\"}",
+          -4.172316494077677e-06
+        ]
+      ],
+      "agent_output": {
+        "code": "import matplotlib.pyplot as plt\nimport pandas as pd\n\nx_data = data_df[\"month\"]\ny_data = data_df[\"total_revenue\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, y_data)\nplt.xlabel(\"month\")\nplt.ylabel(\"total_revenue\")\nplt.title(\"Monthly Revenue Trends for 2023\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()",
+        "chart_config": {
+          "chart_type": "line",
+          "x_axis": "month",
+          "y_axis": "total_revenue",
+          "title": "Monthly Revenue Trends for 2023",
+          "df_columns": "month, total_revenue, total_units_sold"
+        }
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.7875,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.004673858073617,
+      "profiling_data": {
+        "total_time": 20.35542384099972,
+        "llm_time": 13.523719467000774,
+        "energy_consumed_kwh": 0.0005809261271059914,
+        "cpu_energy_kwh": 2.6606724624999624e-05,
+        "gpu_energy_kwh": 0.0005169870802559928,
+        "ram_energy_kwh": 3.733232222499888e-05,
+        "emissions_kg_co2": 0.00019212272690423925
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Planner",
+      "message": "Workflow complete",
+      "agent_config": {
+        "provider": "openrouter",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.4-nano",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "cot_n": 1,
+        "enable_reasoning": false,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [],
+      "agent_output": {
+        "agent_choice": "End",
+        "plan": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": null,
+      "perplexity": null,
+      "profiling_data": {
+        "total_time": 0.0007557980025012512,
+        "llm_time": 0.0,
+        "energy_consumed_kwh": null,
+        "cpu_energy_kwh": null,
+        "gpu_energy_kwh": null,
+        "ram_energy_kwh": null,
+        "emissions_kg_co2": null
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 133.7832958729996,
+    "llm_time": 116.48007019700162,
+    "energy_consumed_kwh": 0.0046202178916647995,
+    "cpu_energy_kwh": 0.00022137775110240193,
+    "gpu_energy_kwh": 0.004076775761417961,
+    "ram_energy_kwh": 0.00032206437914443693,
+    "emissions_kg_co2": 0.001527989220695599
+  },
+  "agents_profiling_data": {
+    "Planner": {
+      "total_time": 13.112812988001679,
+      "llm_time": 9.745239644998946,
+      "energy_consumed_kwh": 0.00045859147963147023,
+      "cpu_energy_kwh": 1.914930257004373e-05,
+      "gpu_energy_kwh": 0.00041253199669200047,
+      "ram_energy_kwh": 2.691018036942599e-05,
+      "emissions_kg_co2": 0.00015166445696076058
+    },
+    "Retriever": {
+      "total_time": 76.02374867300023,
+      "llm_time": 72.32098528000279,
+      "energy_consumed_kwh": 0.0026808472375094124,
+      "cpu_energy_kwh": 0.00013610265280186528,
+      "gpu_energy_kwh": 0.002344691875751981,
+      "ram_energy_kwh": 0.00020005270895556658,
+      "emissions_kg_co2": 0.0008866044366946378
+    },
+    "Analyzer": {
+      "total_time": 24.291310370997962,
+      "llm_time": 20.890125804999116,
+      "energy_consumed_kwh": 0.0008998530474179256,
+      "cpu_energy_kwh": 3.9519071105493305e-05,
+      "gpu_energy_kwh": 0.0008025648087179871,
+      "ram_energy_kwh": 5.776916759444552e-05,
+      "emissions_kg_co2": 0.0002975976001359615
+    },
+    "Visualizer": {
+      "total_time": 20.35542384099972,
+      "llm_time": 13.523719467000774,
+      "energy_consumed_kwh": 0.0005809261271059914,
+      "cpu_energy_kwh": 2.6606724624999624e-05,
+      "gpu_energy_kwh": 0.0005169870802559928,
+      "ram_energy_kwh": 3.733232222499888e-05,
+      "emissions_kg_co2": 0.00019212272690423925
+    }
+  }
+}

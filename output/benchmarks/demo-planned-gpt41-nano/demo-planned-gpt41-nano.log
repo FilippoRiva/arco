@@ -1,0 +1,270 @@
+20:35:13 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:35:20 [INFO   ] arco.agents.planner: Choice: Retriever
+20:35:26 [INFO   ] arco.agents.retriever: Query : SELECT 
+    s.Sold_Date AS date,
+    SUM(s.Total_Sale_Value) AS total_sales
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2021
+    AND EXTRACT(MONTH FROM s.Sold_Date) = 11
+GROUP BY 
+    s.Sold_Date
+ORDER BY 
+    s.Sold_Date;
+20:35:26 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:35:31 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In November 2021, daily sales ranged from a minimum of approximately $11,030.39 on November 3rd to a maximum of approximately $52,004.60 on November 25th. The total sales for the month summed to about $499,984.43 over 29 days.
+20:35:31 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:35:36 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'total_sales', 'title': 'Sales Trend for Nov 2021', 'df_columns': 'date, total_sales'}
+20:35:41 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+x_data = data_df["date"]
+y_data = data_df["total_sales"]
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_data, y_data, label="total_sales", color="blue")
+plt.xlabel("date")
+plt.ylabel("total_sales")
+plt.title("Sales Trend for Nov 2021")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+20:35:42 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Baseline0_Sales Trend for Nov 2021.png
+20:35:42 [INFO   ] arco.agents.planner: Workflow complete
+20:35:42 [INFO   ] arco.core.state: Saving state to output/storage
+20:35:42 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:35:42 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:35:42 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': 'SELECT\n  s.Sold_Date AS date,\n  SUM(s.Total_Sale_Value) AS sales_value\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2021\n  AND EXTRACT(MONTH FROM s.Sold_Date) = 11\nGROUP BY\n  s.Sold_Date\nORDER BY\n  date;', 'data_str': 'date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n'}
+20:35:42 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:35:42 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'Sales in Nov 2021 (date as **x**, sales_value as **y**) are listed for each sold date from **2021-11-01 (12189.59)** through **2021-11-30 (17954.65)**, with daily totals ranging from **11030.39** to **52004.60** (max on **2021-11-25**). Overall, there are **29** date entries for the month with total sales **499,984.43** (mean **17,240.84**).'}
+20:35:45 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:35:45 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'sales_value', 'title': 'Sales Trend for Nov 2021 (Date vs Sales Value)', 'df_columns': 'date, sales_value'}, 'chart_code': 'x_data = data_df["date"]\ny_data = data_df["sales_value"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Sales Value")\n\nplt.xlabel("date")\nplt.ylabel("sales_value")\nplt.title("Sales Trend for Nov 2021 (Date vs Sales Value)")\nplt.grid(True, axis="both", alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:35:50 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:35:50 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:35:56 [INFO   ] arco.agents.planner: Choice: Retriever
+20:36:01 [INFO   ] arco.agents.retriever: Query : SELECT 
+    DATE_TRUNC('month', s.Sold_Date) AS month,
+    SUM(s.Total_Sale_Value) AS total_revenue_usd,
+    SUM(s.Qty_Sold) AS total_units_sold
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY 
+    month
+ORDER BY 
+    month;
+20:36:01 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:36:08 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In 2023, the total revenue ranged from $353,284.21 in July to $874,263.67 in December, with a total annual revenue of approximately $5,416,119. The total units sold ranged from 27,932 in July to 60,941 in December, totaling 419,967 units for the year.
+20:36:08 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:36:13 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'month', 'y_axis': 'total_revenue_usd', 'title': 'Monthly Revenue Trends for 2023', 'df_columns': 'month, total_revenue_usd, total_units_sold'}
+20:36:20 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+x_data = data_df["month"]
+y_data = data_df["total_revenue_usd"]
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_data, y_data, marker='o', label='total_revenue_usd')
+plt.xlabel("month")
+plt.ylabel("total_revenue_usd")
+plt.title("Monthly Revenue Trends for 2023")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+20:36:20 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Baseline1_Monthly Revenue Trends for 2023.png
+20:36:20 [INFO   ] arco.agents.planner: Workflow complete
+20:36:20 [INFO   ] arco.core.state: Saving state to output/storage
+20:36:20 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:36:20 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:36:20 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd,\n    SUM(s.Qty_Sold) AS total_units_sold\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n)\nSELECT\n  m.month_start AS month,\n  m.total_revenue_usd,\n  m.total_units_sold\nFROM monthly m\nORDER BY m.month_start;", 'data_str': 'month,total_revenue_usd,total_units_sold\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n'}
+20:36:20 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:36:20 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'In 2023, monthly total revenue (USD) and total units sold were: Jan $434,172.81 / 33,653; Feb $411,762.72 / 31,545; Mar $423,070.84 / 32,460; Apr $384,479.68 / 30,199; May $381,326.43 / 31,154; Jun $364,806.74 / 29,082; Jul $353,284.21 / 27,932; Aug $401,061.54 / 31,903; Sep $422,554.97 / 31,847; Oct $454,231.06 / 38,208; Nov $511,104.29 / 41,043; Dec $874,263.67 / 60,941. Monthly revenue rises from $353,284.21 in July to $874,263.67 in December, with the lowest month being July and the highest month being December.'}
+20:36:22 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:36:22 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'month', 'y_axis': 'total_revenue_usd', 'title': '2023 Monthly Revenue Trends', 'df_columns': 'month, total_revenue_usd, total_units_sold'}, 'chart_code': 'x_data = data_df["month"]\ny_data = data_df["total_revenue_usd"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Total Revenue (USD)")\n\nplt.xlabel("month")\nplt.ylabel("total_revenue_usd")\nplt.title("2023 Monthly Revenue Trends")\nplt.grid(True, axis="both", alpha=0.3)\n\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:36:26 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:36:26 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Baseline
+20:36:26 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Baseline
+20:36:26 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:36:31 [INFO   ] arco.agents.planner: Choice: Retriever
+20:36:37 [INFO   ] arco.agents.retriever: Query : SELECT 
+    s.Sold_Date AS date,
+    SUM(s.Total_Sale_Value) AS total_sales
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2021
+    AND EXTRACT(MONTH FROM s.Sold_Date) = 11
+GROUP BY 
+    s.Sold_Date
+ORDER BY 
+    s.Sold_Date;
+20:36:37 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:36:43 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In November 2021, daily sales ranged from a minimum of approximately $11,030.39 on November 3rd to a maximum of approximately $52,004.60 on November 25th. The total sales for the month amounted to about $499,984.43 across 29 days.
+20:36:43 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:36:49 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'total_sales', 'title': 'Sales Trend for Nov 2021', 'df_columns': 'date, total_sales'}
+20:36:54 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+x_data = data_df["date"]
+y_data = data_df["total_sales"]
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_data, y_data, label="total_sales")
+plt.xlabel("date")
+plt.ylabel("total_sales")
+plt.title("Sales Trend for Nov 2021")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+20:36:55 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Temperature _low - 0_2_0_Sales Trend for Nov 2021.png
+20:36:55 [INFO   ] arco.agents.planner: Workflow complete
+20:36:55 [INFO   ] arco.core.state: Saving state to output/storage
+20:36:55 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:36:55 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:36:55 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': 'SELECT\n  s.Sold_Date AS date,\n  SUM(s.Total_Sale_Value) AS sales_value\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2021\n  AND EXTRACT(MONTH FROM s.Sold_Date) = 11\nGROUP BY\n  s.Sold_Date\nORDER BY\n  date;', 'data_str': 'date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n'}
+20:36:55 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:36:55 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'Sales in Nov 2021 (date as **x**, sales_value as **y**) are listed for each sold date from **2021-11-01 (12189.59)** through **2021-11-30 (17954.65)**, with daily totals ranging from **11030.39** to **52004.60** (max on **2021-11-25**). Overall, there are **29** date entries for the month with total sales **499,984.43** (mean **17,240.84**).'}
+20:36:56 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:36:56 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'sales_value', 'title': 'Sales Trend for Nov 2021 (Date vs Sales Value)', 'df_columns': 'date, sales_value'}, 'chart_code': 'x_data = data_df["date"]\ny_data = data_df["sales_value"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Sales Value")\n\nplt.xlabel("date")\nplt.ylabel("sales_value")\nplt.title("Sales Trend for Nov 2021 (Date vs Sales Value)")\nplt.grid(True, axis="both", alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:37:00 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:37:00 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:37:06 [INFO   ] arco.agents.planner: Choice: Retriever
+20:37:12 [INFO   ] arco.agents.retriever: Query : SELECT 
+    DATE_TRUNC('month', s.Sold_Date) AS month,
+    SUM(s.Total_Sale_Value) AS total_revenue,
+    SUM(s.Qty_Sold) AS total_units_sold
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY 
+    month
+ORDER BY 
+    month;
+20:37:12 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:37:17 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In 2023, the total revenue ranged from $353,284.21 in July to $874,263.67 in December, with monthly revenues increasing significantly in the last two months. Total units sold varied from 27,932 in July to 60,941 in December. The data shows a clear upward trend in revenue during the final months of the year.
+20:37:17 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:37:22 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'month', 'y_axis': 'total_revenue', 'title': 'Monthly Revenue Trends for 2023', 'df_columns': 'month, total_revenue, total_units_sold'}
+20:37:27 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+x_data = data_df["month"]
+y_data = data_df["total_revenue"]
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_data, y_data, marker='o', label='total_revenue')
+plt.xlabel("month")
+plt.ylabel("total_revenue")
+plt.title("Monthly Revenue Trends for 2023")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+20:37:27 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Temperature _low - 0_2_1_Monthly Revenue Trends for 2023.png
+20:37:28 [INFO   ] arco.agents.planner: Workflow complete
+20:37:28 [INFO   ] arco.core.state: Saving state to output/storage
+20:37:28 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:37:28 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:37:28 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd,\n    SUM(s.Qty_Sold) AS total_units_sold\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n)\nSELECT\n  m.month_start AS month,\n  m.total_revenue_usd,\n  m.total_units_sold\nFROM monthly m\nORDER BY m.month_start;", 'data_str': 'month,total_revenue_usd,total_units_sold\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n'}
+20:37:28 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:37:28 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'In 2023, monthly total revenue (USD) and total units sold were: Jan $434,172.81 / 33,653; Feb $411,762.72 / 31,545; Mar $423,070.84 / 32,460; Apr $384,479.68 / 30,199; May $381,326.43 / 31,154; Jun $364,806.74 / 29,082; Jul $353,284.21 / 27,932; Aug $401,061.54 / 31,903; Sep $422,554.97 / 31,847; Oct $454,231.06 / 38,208; Nov $511,104.29 / 41,043; Dec $874,263.67 / 60,941. Monthly revenue rises from $353,284.21 in July to $874,263.67 in December, with the lowest month being July and the highest month being December.'}
+20:37:29 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:37:29 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'month', 'y_axis': 'total_revenue_usd', 'title': '2023 Monthly Revenue Trends', 'df_columns': 'month, total_revenue_usd, total_units_sold'}, 'chart_code': 'x_data = data_df["month"]\ny_data = data_df["total_revenue_usd"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Total Revenue (USD)")\n\nplt.xlabel("month")\nplt.ylabel("total_revenue_usd")\nplt.title("2023 Monthly Revenue Trends")\nplt.grid(True, axis="both", alpha=0.3)\n\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:37:32 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:37:32 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Temperature_(low_-_0.2)
+20:37:32 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Temperature_(low_-_0.2)
+20:37:32 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:37:38 [INFO   ] arco.agents.planner: Choice: Retriever
+20:37:43 [INFO   ] arco.agents.retriever: Query : SELECT 
+    s.Sold_Date AS date,
+    SUM(s.Total_Sale_Value) AS total_sales
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2021
+    AND EXTRACT(MONTH FROM s.Sold_Date) = 11
+GROUP BY 
+    s.Sold_Date
+ORDER BY 
+    s.Sold_Date;
+20:37:43 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:37:49 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In November 2021, daily sales ranged from $11,030.39 on November 3rd to $52,004.60 on November 25th. The total sales for the month summed to $499,984.43.
+20:37:49 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:37:54 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'total_sales', 'title': 'Sales Trend for Nov 2021', 'df_columns': 'date, total_sales'}
+20:37:59 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+# Extract data from the DataFrame
+x_data = data_df["date"]
+y_data = data_df["total_sales"]
+
+# Create the plot
+plt.figure(figsize=(10, 6))
+plt.plot(x_data, y_data, label="total_sales", color="blue")
+
+# Add labels, title, legend, and grid
+plt.xlabel("date")
+plt.ylabel("total_sales")
+plt.title("Sales Trend for Nov 2021")
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Adjust layout and display the plot
+plt.tight_layout()
+plt.show()
+20:37:59 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Temperature _high  - 1_2_0_Sales Trend for Nov 2021.png
+20:37:59 [INFO   ] arco.agents.planner: Workflow complete
+20:37:59 [INFO   ] arco.core.state: Saving state to output/storage
+20:37:59 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:37:59 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:37:59 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': 'SELECT\n  s.Sold_Date AS date,\n  SUM(s.Total_Sale_Value) AS sales_value\nFROM sales s\nWHERE EXTRACT(YEAR FROM s.Sold_Date) = 2021\n  AND EXTRACT(MONTH FROM s.Sold_Date) = 11\nGROUP BY\n  s.Sold_Date\nORDER BY\n  date;', 'data_str': 'date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n'}
+20:37:59 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:37:59 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'Sales in Nov 2021 (date as **x**, sales_value as **y**) are listed for each sold date from **2021-11-01 (12189.59)** through **2021-11-30 (17954.65)**, with daily totals ranging from **11030.39** to **52004.60** (max on **2021-11-25**). Overall, there are **29** date entries for the month with total sales **499,984.43** (mean **17,240.84**).'}
+20:38:01 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:38:01 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'date', 'y_axis': 'sales_value', 'title': 'Sales Trend for Nov 2021 (Date vs Sales Value)', 'df_columns': 'date, sales_value'}, 'chart_code': 'x_data = data_df["date"]\ny_data = data_df["sales_value"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Sales Value")\n\nplt.xlabel("date")\nplt.ylabel("sales_value")\nplt.title("Sales Trend for Nov 2021 (Date vs Sales Value)")\nplt.grid(True, axis="both", alpha=0.3)\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:38:04 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:38:04 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+20:38:10 [INFO   ] arco.agents.planner: Choice: Retriever
+20:38:15 [INFO   ] arco.agents.retriever: Query : SELECT 
+    DATE_TRUNC('month', s.Sold_Date) AS Month,
+    SUM(s.Total_Sale_Value) AS Total_Revenue,
+    SUM(s.Qty_Sold) AS Total_Units_Sold
+FROM 
+    sales s
+WHERE 
+    EXTRACT(YEAR FROM s.Sold_Date) = 2023
+GROUP BY 
+    Month
+ORDER BY 
+    Month;
+20:38:15 [INFO   ] arco.agents.planner: Choice from previous plan: Analyzer
+20:38:20 [INFO   ] arco.agents.analyzer: Analysis result (logprobs : True): In 2023, total revenue varied from $353,284.21 in July to $874,263.67 in December, with monthly revenues generally increasing towards the year's end. Total units sold ranged from 27,932 in July to 60,941 in December, indicating a rise in units sold during the last months of the year.
+20:38:20 [INFO   ] arco.agents.planner: Choice from previous plan: Visualizer
+20:38:25 [INFO   ] arco.agents.visualizer: Chart config : {'chart_type': 'line', 'x_axis': 'Month', 'y_axis': 'Total_Revenue', 'title': 'Monthly Revenue Trends for 2023', 'df_columns': 'Month, Total_Revenue, Total_Units_Sold'}
+20:38:31 [INFO   ] arco.agents.visualizer: Code : import matplotlib.pyplot as plt
+
+x = data_df["Month"]
+y = data_df["Total_Revenue"]
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, marker='o', label="Total_Revenue")
+plt.xlabel("Month")
+plt.ylabel("Total_Revenue")
+plt.title("Monthly Revenue Trends for 2023")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+20:38:31 [INFO   ] arco.agents.visualizer: Chart stored at: output/storage/charts/Temperature _high  - 1_2_1_Monthly Revenue Trends for 2023.png
+20:38:31 [INFO   ] arco.agents.planner: Workflow complete
+20:38:31 [INFO   ] arco.core.state: Saving state to output/storage
+20:38:31 [INFO   ] arco.core.workflow: Workflow completed successfully
+20:38:31 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Retriever'}
+20:38:31 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Retriever with this data : {'sql': "WITH monthly AS (\n  SELECT\n    DATE_TRUNC('month', s.Sold_Date) AS month_start,\n    SUM(s.Total_Sale_Value) AS total_revenue_usd,\n    SUM(s.Qty_Sold) AS total_units_sold\n  FROM sales s\n  WHERE EXTRACT(YEAR FROM s.Sold_Date) = 2023\n  GROUP BY 1\n)\nSELECT\n  m.month_start AS month,\n  m.total_revenue_usd,\n  m.total_units_sold\nFROM monthly m\nORDER BY m.month_start;", 'data_str': 'month,total_revenue_usd,total_units_sold\n2023-01-01,434172.8082997259,33653.0\n2023-02-01,411762.7182441354,31545.0\n2023-03-01,423070.8383087404,32460.0\n2023-04-01,384479.67831129767,30199.0\n2023-05-01,381326.4280229807,31154.0\n2023-06-01,364806.73785564303,29082.0\n2023-07-01,353284.2078382373,27932.0\n2023-08-01,401061.53772878647,31903.0\n2023-09-01,422554.9674690459,31847.0\n2023-10-01,454231.05710360967,38208.0\n2023-11-01,511104.2874179352,41043.0\n2023-12-01,874263.6683309432,60941.0\n'}
+20:38:31 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Analyzer'}
+20:38:31 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Analyzer with this data : {'analysis': 'In 2023, monthly total revenue (USD) and total units sold were: Jan $434,172.81 / 33,653; Feb $411,762.72 / 31,545; Mar $423,070.84 / 32,460; Apr $384,479.68 / 30,199; May $381,326.43 / 31,154; Jun $364,806.74 / 29,082; Jul $353,284.21 / 27,932; Aug $401,061.54 / 31,903; Sep $422,554.97 / 31,847; Oct $454,231.06 / 38,208; Nov $511,104.29 / 41,043; Dec $874,263.67 / 60,941. Monthly revenue rises from $353,284.21 in July to $874,263.67 in December, with the lowest month being July and the highest month being December.'}
+20:38:33 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'Visualizer'}
+20:38:33 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Visualizer with this data : {'chart_config': {'chart_type': 'line', 'x_axis': 'month', 'y_axis': 'total_revenue_usd', 'title': '2023 Monthly Revenue Trends', 'df_columns': 'month, total_revenue_usd, total_units_sold'}, 'chart_code': 'x_data = data_df["month"]\ny_data = data_df["total_revenue_usd"]\n\nplt.figure(figsize=(12, 6))\nplt.plot(x_data, y_data, marker="o", linewidth=2, label="Total Revenue (USD)")\n\nplt.xlabel("month")\nplt.ylabel("total_revenue_usd")\nplt.title("2023 Monthly Revenue Trends")\nplt.grid(True, axis="both", alpha=0.3)\n\nplt.legend()\nplt.tight_layout()\nplt.show()'}
+20:38:36 [INFO   ] arco.core.evaluator: Evaluating ground truth data for Planner with this data : {'choice': 'End'}
+20:38:36 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Temperature_(high__-_1.2)
+20:38:36 [INFO   ] arco.core.state: Saving state to /home/rhiphi/projects/arco/output/benchmarks/demo-planned-gpt41-nano/runs/Temperature_(high__-_1.2)

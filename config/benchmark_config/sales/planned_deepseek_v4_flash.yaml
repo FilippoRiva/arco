@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=./../schema.json
+global:
+  workflow: "planned_sales"
+  enable_budget_controller: false
+  default_provider: openrouter
+  default_model: deepseek/deepseek-v4-flash-0731
+  default_provider_judge: openai
+  default_model_judge: gpt-5.4-nano
+  enable_storage: false
+  enable_codecarbon: true
+
+defaults:
+  Retriever:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Analyzer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+  Visualizer:
+    temp_min: 1.0
+    top_p_min: 0.95
+    top_k_min: 64
+    n: 1
+    cot_n: 1
+    max_tokens: 5000
+
+runs:
+  - name: Retriever_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 0.2
+  - name: Retriever_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 0.6
+  - name: Retriever_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Retriever:
+        temp_min: 1
+  - name: Analyzer_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 0.2
+  - name: Analyzer_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 0.6
+  - name: Analyzer_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Analyzer:
+        temp_min: 1
+  - name: Visualizer_low_temp
+    description: low_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 0.2
+  - name: Visualizer_mid_temp
+    description: mid_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 0.6
+  - name: Visualizer_high_temp
+    description: high_temp_setting for the retriever
+    changes:
+      Visualizer:
+        temp_min: 1
