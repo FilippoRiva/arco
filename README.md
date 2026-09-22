@@ -49,10 +49,10 @@ UV will automatically create a virtual environment and sync all dependencies:
 uv sync
 ```
 
-For a development installation (providing testing and notebooks support) use:
+To use the sales workflows make sure to install the optional dependencies by :
 
 ```bash
-uv sync --extra dev
+uv sync --extra sales
 ```
 
 ### 3. Verify Installation
@@ -98,6 +98,21 @@ variable containing your API key:
 
 ```bash
 export OPENROUTER_API_KEY=<your-api-key>
+```
+
+#### API key management [Optional]
+
+If you have the `secret-tool` command installed you can store your keys using : 
+```bash
+secret-tool store app arco provider openai <your-openai-key>
+secret-tool store app arco provider openrouter <your-openrouter-key>
+```
+
+If you store them with these exacts names you can load by sourcing the `load_env_from_keyring.sh` script:
+```bash
+source load_env_from_keyring.sh
+```
+```
 ```
 
 ---
