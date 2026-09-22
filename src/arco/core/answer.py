@@ -43,6 +43,7 @@ class Answer:
     discarded_bon_answers: list[Self] | None = None
     error: str | None = None
     logprobs: list[tuple[str, float | int]] | None = None
+    thinking: str | None = None
     perplexity: float | None = None
     profiling_data: ProfilingData = field(default_factory=ProfilingData)
     budget_controller_choice: Literal["rollback", "end"] = "end"

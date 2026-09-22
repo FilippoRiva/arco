@@ -190,6 +190,17 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         ]
 
         ## Optional subpanels
+        # thinking
+        if answer.thinking:
+            thinking_subpanel = Panel(
+                answer.thinking,
+                title="[dim]Thinking[/dim]",
+                title_align="left",
+                border_style="dim",
+                expand=False,
+            )
+            group_elements += [thinking_subpanel]
+
         # error messages
         if answer.error:
             error_subpanel = Panel(

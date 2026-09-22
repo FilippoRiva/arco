@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, ReasoningContentBlock
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
@@ -47,11 +47,17 @@ class LLMAnswer:
         tuples, or ``None`` if not available.
     """
 
-    def __init__(self, response):
+    def __init__(self, response: AIMessage):
         self.text: str = (
             str(response.content) if hasattr(response, "content") else str(response)
         )
         self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
+        if response.content_blocks is not None:
+            self.reasoning: str = "".join(
+                b.get("reasoning", "")
+                for b in response.content_blocks
+                if b["type"] == "reasoning"
+            )
 
     def extract_fenced_content(self) -> str:
         """Extract content from a Markdown fenced code block.
