@@ -34,6 +34,7 @@ class StrictSales(Workflow):
 
 def _instrument_orchestrated_graph(graph: Graph, orchestrating_agent: Agent):
     from arco.agents import Analyzer, Retriever, Visualizer
+    from arco.core import State  # noqa: F401 - needed by langgraph
     from arco.core.graph import END
 
     retriever = Retriever()
