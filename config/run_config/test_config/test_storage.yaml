@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=./../schema.json
 # =============================================================================
-# TEST STORAGE (save_state)
+# TEST STORAGE
 # =============================================================================
 # Test for the storage functionality
 
 global:
   workflow: "planned_sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
-  save_state: true
+  enable_storage: true
 

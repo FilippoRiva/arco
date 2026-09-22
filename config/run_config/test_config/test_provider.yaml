@@ -7,5 +7,5 @@
 global:
   workflow: "planned_sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
-  default_provider: ollama
-  default_model: phi3
+  default_provider: openrouter
+  default_model: deepseek/deepseek-v4-flash-0731

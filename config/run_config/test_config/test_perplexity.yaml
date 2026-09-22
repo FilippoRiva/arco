@@ -14,8 +14,6 @@ global:
     comparing average revenue per unit (promo vs non-promo) for each
     product class in 2021, sorted by absolute difference descending.
   enable_codecarbon: true
-  orchestration_enabled: true
-  enable_budget_controller: false
   provider: openai
   model: gpt-4.1-nano
 
@@ -23,7 +21,8 @@ agents:
   Retriever:
     temp_min: 0.3 # SQL gen is extremely schematic
   Analyzer:
-    temp_min: 1.7 # High temp to check perplexity
+    n: 1
+    temp_min: 1.5 # High temp to check perplexity
     max_tokens: 1000
   Visualizer:
     temp_min: 0.5 # Code and JSON generation is extremely schematic
