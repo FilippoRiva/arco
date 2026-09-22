@@ -104,8 +104,8 @@ export OPENROUTER_API_KEY=<your-api-key>
 
 If you have the `secret-tool` command installed you can store your keys using : 
 ```bash
-secret-tool store app arco provider openai <your-openai-key>
-secret-tool store app arco provider openrouter <your-openrouter-key>
+secret-tool store --label="<your-openai-key-label>" app arco provider openai
+secret-tool store --label="<your-openrouter-key-label>" app arco provider openrouter
 ```
 
 If you store them with these exacts names you can load by sourcing the `load_env_from_keyring.sh` script:
