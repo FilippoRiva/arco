@@ -35,6 +35,71 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _message_text(response: AIMessage) -> str:
+    """Return only text blocks from a provider-native message response."""
+    content = getattr(response, "content", "")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+    return str(content)
+
+
+def _reasoning_value_to_text(value: Any) -> str:
+    """Normalise provider-specific reasoning fields to text."""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "\n".join(
+            text for item in value for text in [_reasoning_value_to_text(item)] if text
+        )
+    if isinstance(value, dict):
+        for key in ("text", "reasoning", "reasoning_content", "summary"):
+            if key in value:
+                text = _reasoning_value_to_text(value[key])
+                if text:
+                    return text
+    return ""
+
+
+def _extract_reasoning(response: AIMessage) -> str:
+    """Extract reasoning from OpenAI, Ollama, and OpenRouter message shapes."""
+    parts: list[str] = []
+    for block in getattr(response, "content_blocks", []) or []:
+        if isinstance(block, dict) and block.get("type") == "reasoning":
+            text = _reasoning_value_to_text(
+                block.get("reasoning") or block.get("summary")
+            )
+            if text:
+                parts.append(text)
+
+    additional_kwargs = getattr(response, "additional_kwargs", {}) or {}
+    for key in ("reasoning_content", "reasoning"):
+        text = _reasoning_value_to_text(additional_kwargs.get(key))
+        if text and text not in parts:
+            parts.append(text)
+
+    return "\n".join(parts)
+
+
+def _log_raw_response(response: AIMessage) -> None:
+    """Log all provider response fields useful when debugging reasoning."""
+    logger.debug("RAW CONTENT ... %r", getattr(response, "content", None))
+    logger.debug("RAW CONTENT BLOCKS ... %r", getattr(response, "content_blocks", None))
+    logger.debug(
+        "RAW ADDITIONAL KWARGS ... %r",
+        getattr(response, "additional_kwargs", None),
+    )
+    logger.debug(
+        "RAW RESPONSE METADATA ... %r",
+        getattr(response, "response_metadata", None),
+    )
+
+
 class LLMAnswer:
     """Pre-extracted LLM response — no manual content/logprobs wrangling.
 
@@ -47,11 +112,11 @@ class LLMAnswer:
         tuples, or ``None`` if not available.
     """
 
-    def __init__(self, response):
-        self.text: str = (
-            str(response.content) if hasattr(response, "content") else str(response)
-        )
+    def __init__(self, response: AIMessage):
+        self.text: str = _message_text(response)
         self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
+        self.reasoning: str = _extract_reasoning(response)
+        logger.debug("Reasoning output: %s", self.reasoning)
 
     def extract_fenced_content(self) -> str:
         """Extract content from a Markdown fenced code block.
@@ -107,6 +172,43 @@ class LLMAnswer:
         return self.extract_fenced_content()
 
 
+class _OpenRouterChatOpenAI(ChatOpenAI):
+    """ChatOpenAI adapter that preserves OpenRouter reasoning fields.
+
+    OpenRouter returns reasoning on the assistant message using fields that
+    the standard OpenAI message converter intentionally drops. Preserve those
+    fields as ``reasoning_content`` so the common extractor can consume them.
+    """
+
+    def _create_chat_result(self, response, generation_info=None):
+        result = super()._create_chat_result(response, generation_info)
+        response_dict = (
+            response
+            if isinstance(response, dict)
+            else response.model_dump(exclude_none=False, warnings=False)
+        )
+
+        for choice, generation in zip(
+            response_dict.get("choices", []), result.generations, strict=False
+        ):
+            raw_message = choice.get("message", {})
+            reasoning = (
+                raw_message.get("reasoning")
+                or raw_message.get("reasoning_content")
+                or raw_message.get("reasoning_details")
+            )
+            if reasoning:
+                generation.message.additional_kwargs["reasoning_content"] = (
+                    _reasoning_value_to_text(reasoning)
+                )
+                if raw_message.get("reasoning_details"):
+                    generation.message.additional_kwargs["reasoning_details"] = (
+                        raw_message["reasoning_details"]
+                    )
+
+        return result
+
+
 class LLM:
     """Thin wrapper around a LangChain chat model with CoT refinement support.
 
@@ -151,6 +253,26 @@ class LLM:
         self.last_answer: LLMAnswer | None = None
         self.execution_error: str | None = None
 
+    def _invoke_raw(self, prompt: str) -> AIMessage:
+        """Invoke the model, retrying without logprobs if unsupported."""
+        try:
+            return self._chat_model.invoke(prompt)
+        except Exception as exc:
+            error_text = str(exc).lower()
+            if (
+                "logprobs" not in error_text
+                or getattr(self._chat_model, "logprobs", None) is not True
+            ):
+                raise
+
+            logger.warning(
+                "Model %s does not support logprobs; retrying without it: %s",
+                getattr(self._chat_model, "model_name", "unknown"),
+                exc,
+            )
+            self._chat_model = self._chat_model.model_copy(update={"logprobs": None})
+            return self._chat_model.invoke(prompt)
+
     def invoke(self, prompt: str) -> LLMAnswer:
         """Send a prompt to the LLM and return the response.
 
@@ -165,7 +287,9 @@ class LLM:
             answer = self._cot_invoke(prompt, self.execution_error)
         else:
             logger.debug(f"Invoking LLM with prompt : {prompt}")
-            answer = LLMAnswer(self._chat_model.invoke(prompt))
+            response = self._invoke_raw(prompt)
+            _log_raw_response(response)
+            answer = LLMAnswer(response)
         logger.debug(f"Answer text : {answer.text}")
         self.last_answer = answer
         return answer
@@ -186,7 +310,9 @@ class LLM:
             )
         prompt = prompt + suffix
         logger.debug(f"Invoking CoT-LLM with prompt : {prompt}")
-        return LLMAnswer(self._chat_model.invoke(prompt))
+        response = self._invoke_raw(prompt)
+        _log_raw_response(response)
+        return LLMAnswer(response)
 
 
 def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) -> LLM:
@@ -208,6 +334,8 @@ def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) 
         num_beams=agent_config.num_beams,
         no_repeat_ngram_size=agent_config.no_repeat_ngram_size,
         llm_accumulator=llm_acc,
+        enable_reasoning=bool(agent_config.enable_reasoning),
+        enable_logprobs=bool(agent_config.enable_logprobs),
     )
 
 
@@ -223,6 +351,8 @@ def get_llm(
     no_repeat_ngram_size: int | None = None,
     llm_accumulator: LLMCallAccumulator = DEFAULT_LLM_ACC,
     openrouter_url: str = "https://openrouter.ai/api/v1",
+    enable_reasoning: bool = False,
+    enable_logprobs: bool = True,
 ) -> LLM:
     """Factory to create an :class:`LLM` instance with specific parameters.
 
@@ -240,40 +370,84 @@ def get_llm(
     :param model: The specific model ID to instantiate.
     :param llm_accumulator: Callback accumulator for timing and energy tracking.
     :param openrouter_url: Base URL for the OpenRouter API.
+    :param enable_reasoning: Request provider-supported reasoning summaries or
+        thinking output. Unsupported models may ignore or reject this option.
+    :param enable_logprobs: Request token log probabilities where supported.
+        This is automatically omitted for the OpenAI Responses API.
     :returns: A configured :class:`LLM` instance.
     :raises ValueError: If the provider is ``'openrouter'`` but the
         ``OPENROUTER_API_KEY`` environment variable is not set.
     """
     if provider.lower() == "openai":
-        chat_model = ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            streaming=streaming,
-            callbacks=[llm_accumulator],
-            top_p=top_p,
-            logprobs=True,
-        )
+        openai_kwargs = {
+            "model": model,
+            "streaming": streaming,
+            "callbacks": [llm_accumulator],
+        }
+        # These sampling options are valid for normal Chat Completions. Do
+        # not send them for reasoning Responses calls: reasoning models may
+        # reject temperature/top_p just as Responses rejects logprobs.
+        if not enable_reasoning:
+            if temperature is not None:
+                openai_kwargs["temperature"] = temperature
+            if top_p is not None:
+                openai_kwargs["top_p"] = top_p
+            if enable_logprobs:
+                openai_kwargs["logprobs"] = True
+        if enable_reasoning:
+            if enable_logprobs:
+                logger.debug(
+                    "Disabling logprobs for %s: OpenAI Responses API does not support it",
+                    model,
+                )
+            if temperature is not None or top_p is not None:
+                logger.debug(
+                    "Disabling temperature/top_p for %s: reasoning Responses call",
+                    model,
+                )
+            # OpenAI reasoning summaries are available through the Responses
+            # API. Raw private chain-of-thought is not exposed by OpenAI.
+            openai_kwargs.update(
+                {
+                    "use_responses_api": True,
+                    "output_version": "responses/v1",
+                    "reasoning": {
+                        "effort": "medium",
+                        "summary": "detailed",
+                    },
+                }
+            )
+        chat_model = ChatOpenAI(**openai_kwargs)
     elif provider.lower() == "openrouter":
         api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
             raise ValueError(
                 "OpenRouter requires an API key: pass openrouter_api_key or set the OPENROUTER_API_KEY environment variable."
             )
-        chat_model = ChatOpenAI(
+        openrouter_extra_body = {
+            "provider": {
+                "require_parameters": True  # use only providers that allow all the parameters from the request
+            }
+        }
+        if enable_reasoning:
+            # OpenRouter exposes reasoning through its OpenAI-compatible
+            # chat-completions endpoint using extra_body.
+            openrouter_extra_body["reasoning"] = {
+                "enabled": True,
+                "effort": "medium",
+            }
+        chat_model = _OpenRouterChatOpenAI(
             model=model,
             api_key=SecretStr(api_key),
             base_url=openrouter_url,
             temperature=temperature,
-            # max_tokens=max_tokens,
-            # streaming=streaming,
+            # ChatOpenAI drops OpenRouter reasoning fields from streaming
+            # deltas. Use one non-streamed response when reasoning is enabled
+            # so _create_chat_result can preserve the final reasoning field.
+            streaming=streaming and not enable_reasoning,
             callbacks=[llm_accumulator],
-            # top_p=top_p,
-            logprobs=True,
-            extra_body={
-                "provider": {
-                    "require_parameters": True  # use only providers that allow all the parameters from the request
-                }
-            },
+            logprobs=enable_logprobs,
+            extra_body=openrouter_extra_body,
         )
     else:
         kwargs = {
@@ -284,7 +458,8 @@ def get_llm(
             "top_p": top_p,
             "client_kwargs": {"timeout": OLLAMA_REQUEST_TIMEOUT},
             "callbacks": [llm_accumulator],
-            "logprobs": True,
+            "logprobs": enable_logprobs,
+            "reasoning": enable_reasoning,
         }
 
         if top_k is not None:

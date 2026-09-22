@@ -221,6 +221,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
             error=error,
             output=output,
             logprobs=logprobs_relevant_tables + logprobs_gen_sql,
+            thinking=response.reasoning,
         )
 
     def post_generation_hooks(
@@ -240,6 +241,8 @@ name used by any candidate. Prefer lowercase_with_underscores.
             llm_accumulator=llm_acc,
             provider=config.provider,
             model=config.model,
+            enable_reasoning=bool(config.enable_reasoning),
+            enable_logprobs=bool(config.enable_logprobs),
         )
 
         candidates = []

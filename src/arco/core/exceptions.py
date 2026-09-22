@@ -32,4 +32,8 @@ class StateException(Exception):
     """Raised when a State operation fails."""
 
 
+class LLMException(Exception):
+    """Raised when an LLM fails to operate"""
+
+
 __all__ = ["AgentException", "ConfigException", "EvaluatorException", "StateException"]

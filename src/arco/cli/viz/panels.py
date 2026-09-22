@@ -190,6 +190,17 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         ]
 
         ## Optional subpanels
+        # thinking
+        if answer.thinking:
+            thinking_subpanel = Panel(
+                answer.thinking,
+                title="[dim]Thinking[/dim]",
+                title_align="left",
+                border_style="dim",
+                expand=False,
+            )
+            group_elements += [thinking_subpanel]
+
         # error messages
         if answer.error:
             error_subpanel = Panel(
@@ -231,6 +242,162 @@ def render_answer(answer: Answer, verbose: bool) -> Panel:
         Rule(title=f"[bold cyan]{answer.agent_id}[/bold cyan]", style="cyan"),
         content,
     )
+
+
+def _verbose_output_value(key: str, value) -> object:
+    """Make large structured agent outputs readable in the verbose view."""
+    if key == "data_df" and hasattr(value, "shape") and hasattr(value, "columns"):
+        rows, columns = value.shape
+        return f"<DataFrame: {rows} rows × {columns} columns: {list(value.columns)}>"
+    if isinstance(value, str) and len(value) > 1600:
+        return value[:1600] + "\n… <truncated; see stored output>"
+    return value
+
+
+def _verbose_output(output: dict) -> dict:
+    return {key: _verbose_output_value(key, value) for key, value in output.items()}
+
+
+def _verbose_metrics_table(answer: Answer) -> Table:
+    config = answer.agent_config
+    temperature, top_p, top_k = config.get_candidate_params()[0]
+    sampling = f"temperature={temperature}"
+    if top_p is not None:
+        sampling += f", top_p={top_p}"
+    if top_k is not None:
+        sampling += f", top_k={top_k}"
+
+    evaluation = (
+        f"{answer.evaluation.score:.3f}"
+        if answer.evaluation is not None
+        else "-"
+    )
+    gt_evaluation = (
+        f"{answer.gt_evaluation.score:.3f}"
+        if answer.gt_evaluation is not None
+        else "-"
+    )
+    perplexity = (
+        f"{answer.perplexity:.3f}" if answer.perplexity is not None else "-"
+    )
+    profiling = answer.profiling_data
+
+    table = Table.grid(padding=(0, 2), expand=True)
+    table.add_column(style="dim", no_wrap=True)
+    table.add_column()
+    table.add_column(style="dim", no_wrap=True)
+    table.add_column()
+    table.add_row("Provider", str(config.provider), "Model", str(config.model))
+    table.add_row("Sampling", sampling, "Best-of-N", str(config.n))
+    table.add_row(
+        "Options",
+        f"reasoning={config.enable_reasoning}, logprobs={config.enable_logprobs}",
+        "CoT",
+        str(config.cot_n),
+    )
+    table.add_row("Evaluation", evaluation, "Ground truth", gt_evaluation)
+    table.add_row("Perplexity", perplexity, "Budget", answer.budget_controller_choice)
+    table.add_row(
+        "Time",
+        f"{profiling.total_time:.2f}s" if profiling.total_time is not None else "-",
+        "LLM time",
+        f"{profiling.llm_time:.2f}s" if profiling.llm_time is not None else "-",
+    )
+    table.add_row(
+        "Energy",
+        f"{profiling.energy_consumed_kwh:.6f} kWh"
+        if profiling.energy_consumed_kwh is not None
+        else "-",
+        "CO₂",
+        f"{profiling.emissions_kg_co2:.6f} kg"
+        if profiling.emissions_kg_co2 is not None
+        else "-",
+    )
+    return table
+
+
+def _verbose_token_summary(answer: Answer) -> Text:
+    if not answer.logprobs:
+        return Text("No token log probabilities returned.", style="dim")
+    numeric = [float(logprob) for _, logprob in answer.logprobs]
+    average = sum(numeric) / len(numeric)
+    return Text(
+        f"{len(answer.logprobs)} tokens  ·  average logprob {average:.4f}  ·  "
+        f"perplexity {answer.perplexity:.3f}"
+        if answer.perplexity is not None
+        else f"{len(answer.logprobs)} tokens  ·  average logprob {average:.4f}"
+    )
+
+
+def render_answer_verbose(answer: Answer) -> Panel:
+    """Render a readable, information-dense answer card for ``--verbose``."""
+    sections = [
+        Text(answer.message or "No summary returned.", style="white"),
+        Rule("Run details", style="dim"),
+        _verbose_metrics_table(answer),
+        Rule("Agent output", style="dim"),
+        Pretty(
+            _verbose_output(answer.agent_output),
+            max_depth=3,
+            max_length=4,
+            indent_size=2,
+        ),
+        Rule("Token statistics", style="dim"),
+        _verbose_token_summary(answer),
+    ]
+
+    if answer.thinking:
+        sections.extend(
+            [
+                Rule("Reasoning summary", style="magenta"),
+                Text(answer.thinking, style="magenta"),
+            ]
+        )
+
+    if answer.error:
+        sections.extend(
+            [
+                Rule("Error", style="red"),
+                Text(answer.error, style="red"),
+            ]
+        )
+
+    if answer.agent_config.n > 1 and answer.discarded_bon_answers:
+        discarded = Table.grid(padding=(0, 2), expand=True)
+        discarded.add_column(style="dim", no_wrap=True)
+        discarded.add_column()
+        for index, candidate in enumerate(answer.discarded_bon_answers, start=1):
+            discarded.add_row(
+                f"Candidate {index}",
+                candidate.message or candidate.error or "No summary returned.",
+            )
+        sections.extend([Rule("Discarded candidates", style="dim"), discarded])
+
+    return Panel(
+        Group(*sections),
+        title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
+        subtitle=_format_answer_subtitle(answer),
+        subtitle_align="right",
+        border_style="red" if answer.error else "cyan",
+        padding=(1, 2),
+        expand=True,
+    )
+
+
+def render_answer_minimal(answer: Answer) -> Text:
+    """Render the normal run transcript as a compact, plain-text row."""
+    row = Text()
+    if answer.error:
+        row.append("✗ ", style="bold red")
+    else:
+        row.append("✓ ", style="bold green")
+    row.append(str(answer.agent_id), style="bold cyan")
+    if answer.message:
+        row.append("  ")
+        row.append(answer.message)
+    if answer.error:
+        row.append(f"  ({answer.error})", style="red")
+    return row
 
 
 def render_answer_compact(answer: Answer) -> Panel:

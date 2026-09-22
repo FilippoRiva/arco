@@ -3,6 +3,7 @@ from statistics import mean
 from typing import TYPE_CHECKING, Any
 
 from rich import box
+from rich.console import Group
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
@@ -154,30 +155,53 @@ def print_benchmark_summary(summary: BenchmarkSummary):
     console.print(f"Completion: [bold cyan]{summary.completion_percentage:.1%}[/]")
 
 
-def print_config_table(config: Config, verbose: bool | None = None):
-    """Helper to render a consistent Rich tables."""
+def _config_table(config: Config, verbose: bool | None = None) -> Table:
+    """Build the global configuration table without printing it."""
     configs_to_show = {
         f.name: getattr(config, f.name) for f in config.__dataclass_fields__.values()
     }
     configs_to_show.pop("agent_configs")
 
-    # Visualize run configuration
-    params_list = [
-        *[(key, value) for key, value in configs_to_show.items()],
-    ]
-    if verbose is not None:
-        params_list.append(("verbose", verbose))
-    table = Table(box=box.ROUNDED)
+    table = Table(box=None, padding=(0, 1), expand=False)
     table.add_column("Parameter", style="cyan", no_wrap=True)
     table.add_column("Current Value", style="white")
-    for key, value in params_list:
+    for key, value in configs_to_show.items():
         table.add_row(key, str(value))
-    console.print(table)
+    if verbose is not None:
+        table.add_row("verbose", str(verbose))
+    return table
+
+
+def print_config_table(config: Config, verbose: bool | None = None):
+    """Print the global configuration as a borderless table."""
+    console.print(_config_table(config, verbose=verbose))
 
 
 def print_workflow_graph(workflow: Workflow):
-    console.print(
-        Panel(
-            str(workflow), title="Selected Workflow", title_align="center", expand=False
-        )
+    """Print the selected workflow without wrapping it in a panel."""
+    console.print(Text("Selected workflow", style="bold cyan"))
+    console.print(Text(str(workflow), style="cyan"))
+
+
+def print_run_overview(
+    config: Config, workflow: Workflow, verbose: bool | None = None
+):
+    """Print configuration and workflow side by side.
+
+    This is deliberately borderless so the overview reads as one piece of
+    information instead of two nested boxes.
+    """
+    config_view = Group(
+        Text("Global parameters", style="bold cyan"),
+        _config_table(config, verbose=verbose),
     )
+    workflow_view = Group(
+        Text("Selected workflow", style="bold cyan"),
+        Text(str(workflow), style="cyan"),
+    )
+
+    overview = Table.grid(padding=(0, 4), expand=True)
+    overview.add_column(ratio=1)
+    overview.add_column(ratio=1)
+    overview.add_row(config_view, workflow_view)
+    console.print(overview)

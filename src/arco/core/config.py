@@ -88,6 +88,8 @@ class Config:
     :ivar enable_storage: Whether to persist state artifacts to disk.
     :ivar save_dir: Directory for output artifacts.
     :ivar enable_codecarbon: Whether to enable CodeCarbon energy tracking.
+    :ivar enable_reasoning: Whether to request provider-native reasoning output.
+    :ivar enable_logprobs: Whether to request token log probabilities when supported.
     :ivar agent_configs: Per-agent configuration dict, keyed by :class:`AgentType`.
     :ivar config_path: Path to the YAML file this config was loaded from.
     """
@@ -104,6 +106,11 @@ class Config:
     enable_storage: bool = False
     save_dir: str = "./output"
     enable_codecarbon: bool = False
+    # Request provider-supported reasoning summaries/thinking output. This is
+    # opt-in because ordinary chat models may reject reasoning parameters.
+    enable_reasoning: bool = False
+    # Request token log probabilities where the selected API/model supports it.
+    enable_logprobs: bool = True
     agent_configs: Mapping[AgentType, AgentConfig] = field(
         default_factory=lambda: MappingProxyType({})
     )

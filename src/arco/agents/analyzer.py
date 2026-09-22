@@ -90,6 +90,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
             message=f"{result.text}",
             output={"analysis": result.text},
             logprobs=result.logprobs,
+            thinking=result.reasoning,
         )
 
 

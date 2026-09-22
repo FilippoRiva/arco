@@ -33,6 +33,8 @@ class AgentConfig:
     :ivar num_beams: Beam search width (1 = greedy/disabled, skipped for OpenAI).
     :ivar no_repeat_ngram_size: Prevent repeating n-grams (skipped for OpenAI).
     :ivar cot_n: Number of chain-of-thought refinement iterations (default 1).
+    :ivar enable_reasoning: Whether to request provider-native reasoning output.
+    :ivar enable_logprobs: Whether to request token log probabilities when supported.
     :ivar enable_budget_controller: Whether the ARCO budget controller is active.
     """
 
@@ -65,6 +67,10 @@ class AgentConfig:
 
     # CoT iterative refinement
     cot_n: int = 1
+
+    # Provider-native reasoning/thinking output
+    enable_reasoning: bool | None = None
+    enable_logprobs: bool | None = None
 
     # ARCO parameters
     enable_budget_controller: bool | None = None
@@ -194,6 +200,10 @@ class AgentConfig:
             kwargs["model_judge"] = config.default_model_judge
         if self.enable_budget_controller is None:
             kwargs["enable_budget_controller"] = config.enable_budget_controller
+        if self.enable_reasoning is None:
+            kwargs["enable_reasoning"] = config.enable_reasoning
+        if self.enable_logprobs is None:
+            kwargs["enable_logprobs"] = config.enable_logprobs
         if kwargs:
             return replace(self, **kwargs)
         return self
