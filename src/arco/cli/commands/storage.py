@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 import termios
 import tty
@@ -91,7 +92,7 @@ def _selector_view(states: list[tuple[Path, State]], selected: int):
         )
     return Group(
         "[bold cyan]Saved workflow states[/bold cyan]",
-        "[dim]↑/↓ select · Enter open · q quit[/dim]",
+        "[dim]↑/↓ select · Enter open · d delete · D delete all · q quit[/dim]",
         table,
     )
 
@@ -127,7 +128,18 @@ def _state_view(path: Path, state: State):
     return Group(*sections)
 
 
-def _open_interactively(states: list[tuple[Path, State]]) -> None:
+def _delete_storage_contents(storage_dir: Path) -> int:
+    deleted = 0
+    for child in storage_dir.iterdir():
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+        deleted += 1
+    return deleted
+
+
+def _open_interactively(states: list[tuple[Path, State]], storage_dir: Path) -> None:
     from rich.live import Live
 
     from arco.cli.console import console
@@ -166,6 +178,43 @@ def _open_interactively(states: list[tuple[Path, State]]) -> None:
 
                 if key in {"q", "Q"}:
                     return
+                if key in {"d", "D"}:
+                    live.stop()
+                    if key == "d":
+                        path, _ = states[selected]
+                        console.print(
+                            f"Delete [bold]{path.name}[/bold]? [y/N] ", end=""
+                        )
+                        confirmed = sys.stdin.read(1).lower() == "y"
+                        console.print()
+                        if confirmed:
+                            path.unlink()
+                            states.pop(selected)
+                            if not states:
+                                console.print("[green]✓[/green] Storage is empty")
+                                return
+                            selected = min(selected, len(states) - 1)
+                    else:
+                        console.print(
+                            f"Delete all contents of [bold]{storage_dir}[/bold]? [y/N] ",
+                            end="",
+                        )
+                        confirmed = sys.stdin.read(1).lower() == "y"
+                        console.print()
+                        if confirmed:
+                            deleted = _delete_storage_contents(storage_dir)
+                            console.print(
+                                f"[green]✓[/green] Removed {deleted} storage item(s)"
+                            )
+                            return
+                    live = Live(
+                        _selector_view(states, selected),
+                        console=console,
+                        refresh_per_second=12,
+                        transient=True,
+                    )
+                    live.start()
+                    continue
                 if key in {"\r", "\n"}:
                     detail = states[selected]
                     live.stop()
@@ -212,4 +261,4 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         console.print(_selector_view(states, 0))
         return
 
-    _open_interactively(states)
+    _open_interactively(states, storage_dir)

@@ -301,8 +301,10 @@ Browse saved workflow states interactively with newest states first:
 arco storage
 ```
 
-Use `↑`/`↓` to select a state, `Enter` to open it, `←` or `Backspace` to
-return to the list, and `q` to quit. A specific state can be opened directly:
+Use `↑`/`↓` to select a state, `Enter` to open it, `d` to delete the
+selected state, `D` to delete all storage, `←` or `Backspace` to return to the
+list, and `q` to quit. Delete actions ask for a `y`/`n` confirmation. A
+specific state can be opened directly:
 
 ```bash
 arco storage --run-id <run-id>
