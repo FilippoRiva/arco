@@ -1,7 +1,7 @@
 import math
 from pathlib import Path
 
-from rich.console import Group
+from rich.console import Group, RenderableType
 from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.rule import Rule
@@ -46,7 +46,7 @@ def _render_discarded_answer_panel(answer: Answer) -> Panel:
     )
 
 
-def render_answer(answer: Answer, verbose: bool) -> Panel:
+def render_answer(answer: Answer, verbose: bool) -> RenderableType:
     # Build the main panel
     group_elements = [answer.message]
     if verbose and answer.agent_config:
@@ -276,18 +276,12 @@ def _verbose_metrics_table(answer: Answer) -> Table:
         sampling += f", top_k={top_k}"
 
     evaluation = (
-        f"{answer.evaluation.score:.3f}"
-        if answer.evaluation is not None
-        else "-"
+        f"{answer.evaluation.score:.3f}" if answer.evaluation is not None else "-"
     )
     gt_evaluation = (
-        f"{answer.gt_evaluation.score:.3f}"
-        if answer.gt_evaluation is not None
-        else "-"
+        f"{answer.gt_evaluation.score:.3f}" if answer.gt_evaluation is not None else "-"
     )
-    perplexity = (
-        f"{answer.perplexity:.3f}" if answer.perplexity is not None else "-"
-    )
+    perplexity = f"{answer.perplexity:.3f}" if answer.perplexity is not None else "-"
     profiling = answer.profiling_data
 
     table = Table.grid(padding=(0, 2), expand=True)
@@ -337,7 +331,7 @@ def _verbose_token_summary(answer: Answer) -> Text:
     )
 
 
-def render_answer_verbose(answer: Answer) -> Panel:
+def render_answer_verbose(answer: Answer) -> RenderableType:
     """Render a readable, information-dense answer card for ``--verbose``."""
     sections = [
         Text(answer.message or "No summary returned.", style="white"),
@@ -390,14 +384,17 @@ def render_answer_verbose(answer: Answer) -> Panel:
             )
         sections.extend([Rule("Discarded candidates", style="dim"), discarded])
 
-    return Panel(
-        Group(*sections),
-        title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
-        subtitle=_format_answer_subtitle(answer),
-        subtitle_align="right",
-        border_style="red" if answer.error else "cyan",
-        padding=(1, 2),
-        expand=True,
+    return Group(
+        Text("\n"),
+        Panel(
+            Group(*sections),
+            title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
+            subtitle=_format_answer_subtitle(answer),
+            subtitle_align="right",
+            border_style="red" if answer.error else "cyan",
+            padding=(1, 2),
+            expand=True,
+        ),
     )
 
 

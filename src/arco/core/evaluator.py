@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
     from . import AgentConfig, Answer, State
     from .agent_type import AgentType
+    from .tracking import LLMCallAccumulator
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,10 @@ class Evaluator(ABC):
     """
 
     def evaluate_best_of_n(
-        self, results: list[State], config: AgentConfig
+        self,
+        results: list[State],
+        config: AgentConfig,
+        llm_accumulator: LLMCallAccumulator | None = None,
     ) -> tuple[list[State], State]:
         """Evaluate candidates and select the best one.
 
@@ -50,6 +54,8 @@ class Evaluator(ABC):
 
         :param results: Candidate states from greedy or best-of-N execution.
         :param config: Agent configuration (used for judge model).
+        :param llm_accumulator: Optional agent-level accumulator for best-of-N
+            judge calls. Ground-truth evaluation is intentionally excluded.
         :returns: ``(all_results, best_result, evaluations)``.
         """
         if len(results) == 1:
@@ -66,6 +72,7 @@ class Evaluator(ABC):
                     result,
                     judge_provider=config.provider_judge,
                     judge_model=config.model_judge,
+                    llm_accumulator=llm_accumulator,
                 )
                 evaluations.append(ev)
 
@@ -138,7 +145,11 @@ class Evaluator(ABC):
 
     @abstractmethod
     def _eval(
-        self, state: State, judge_provider: str, judge_model: str
+        self,
+        state: State,
+        judge_provider: str,
+        judge_model: str,
+        llm_accumulator: LLMCallAccumulator | None = None,
     ) -> Evaluation: ...
 
     @abstractmethod

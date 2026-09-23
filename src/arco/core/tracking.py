@@ -8,7 +8,7 @@ once per workflow run to enable CodeCarbon integration.
 
 import os
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .config import Config
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 import logging
 from collections import defaultdict
 
-from codecarbon import EmissionsTracker
+from codecarbon import OfflineEmissionsTracker
 from langchain_core.callbacks import BaseCallbackHandler
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)
@@ -43,18 +43,19 @@ def initialize_tracking(config: Config) -> None:
 class LLMCallAccumulator(BaseCallbackHandler):
     """Accumulates wall-clock time and energy of LLM ``.invoke()`` calls.
 
-    Attach as a callback to a LangChain LLM to measure only the time
-    and energy spent inside actual LLM calls, excluding non-LLM
-    work (DB queries, parquet reads, code execution, etc.) that may
-    be present in the same step function.
+    Attach as a callback to a LangChain LLM for per-call timing. When
+    CodeCarbon is enabled, the same accumulator also tracks the complete
+    agent step, including DB queries, parquet reads, code execution, and
+    other non-LLM work.
 
-    When CodeCarbon is enabled, a fresh :class:`EmissionsTracker` is
-    started at the beginning of each ``invoke()`` and stopped at the
-    end, collecting CPU, GPU, and RAM energy plus CO2 emissions.
+    When CodeCarbon is enabled, one offline tracker is started for the
+    accumulator's complete agent step and stopped by :meth:`finish`,
+    collecting CPU, GPU, and RAM energy plus CO2 emissions.
 
     Thread-safe for sequential use (one step at a time).
 
-    :ivar total_time: Cumulative wall-clock seconds spent in LLM calls.
+    :ivar total_time: Cumulative wall-clock seconds spent in LLM calls;
+        CodeCarbon energy covers the complete agent step.
     :ivar energy_dict: Cumulative energy metrics dict with keys
         ``energy_consumed_kwh``, ``cpu_energy_kwh``, ``gpu_energy_kwh``,
         ``ram_energy_kwh``, and ``emissions_kg_co2``.
@@ -70,7 +71,7 @@ class LLMCallAccumulator(BaseCallbackHandler):
         """
         super().__init__()
         self._starts: dict[str, float | int] = {}
-        self._cc_trackers: dict[str, Any] = {}
+        self._cc_tracker: OfflineEmissionsTracker | None = None
         self.total_time: float | int = 0.0
         self._cc_output_dir: str | None = (
             os.path.join(LLMCallAccumulator._save_dir, name)
@@ -92,55 +93,64 @@ class LLMCallAccumulator(BaseCallbackHandler):
         LLMCallAccumulator._save_dir = save_dir
         LLMCallAccumulator._enabled = True
 
-    def _start_cc_tracker(self, key: str) -> None:
-        if not self._enabled:
+    def _start_cc_tracker(self) -> None:
+        if not self._enabled or self._cc_tracker is not None:
             return
-        emission_tracker = EmissionsTracker(  # type: ignore[call-arg]
+        # Milan is represented by Italy/Lombardy. Offline tracking avoids
+        # CodeCarbon's repeated cloud/geolocation network lookups.
+        self._cc_tracker = OfflineEmissionsTracker(  # type: ignore[call-arg]
             project_name="llm_invoke",
+            country_iso_code="ITA",
+            region="Lombardy",
             output_dir=self._cc_output_dir,
             save_to_file=False,
             measure_power_secs=1,
             log_level="error",
             allow_multiple_runs=True,
         )
-        emission_tracker.start()
-        self._cc_trackers[key] = emission_tracker
+        self._cc_tracker.start()
 
-    def _stop_cc_tracker(self, key: str) -> None:
-        emission_tracker: EmissionsTracker = self._cc_trackers.pop(key, None)
+    def start(self) -> None:
+        """Start agent-level CodeCarbon tracking, including non-LLM work."""
+        self._start_cc_tracker()
+
+    def finish(self) -> None:
+        """Stop the agent-level tracker and collect its accumulated energy."""
+        emission_tracker = self._cc_tracker
         if emission_tracker is None:
             return
+        self._cc_tracker = None
         emission_tracker.stop()
         emission_data = getattr(emission_tracker, "final_emissions_data", None)
-        if emission_data is not None:
-            self.energy_dict["energy_consumed_kwh"] += (
-                getattr(emission_data, "energy_consumed", 0.0) or 0.0
-            )
-            self.energy_dict["cpu_energy_kwh"] += (
-                getattr(emission_data, "cpu_energy", 0.0) or 0.0
-            )
-            self.energy_dict["gpu_energy_kwh"] += (
-                getattr(emission_data, "gpu_energy", 0.0) or 0.0
-            )
-            self.energy_dict["ram_energy_kwh"] += (
-                getattr(emission_data, "ram_energy", 0.0) or 0.0
-            )
-            self.energy_dict["emissions_kg_co2"] += (
-                getattr(emission_data, "emissions", 0.0) or 0.0
-            )
+        if emission_data is None:
+            return
+        self.energy_dict["energy_consumed_kwh"] += (
+            getattr(emission_data, "energy_consumed", 0.0) or 0.0
+        )
+        self.energy_dict["cpu_energy_kwh"] += (
+            getattr(emission_data, "cpu_energy", 0.0) or 0.0
+        )
+        self.energy_dict["gpu_energy_kwh"] += (
+            getattr(emission_data, "gpu_energy", 0.0) or 0.0
+        )
+        self.energy_dict["ram_energy_kwh"] += (
+            getattr(emission_data, "ram_energy", 0.0) or 0.0
+        )
+        self.energy_dict["emissions_kg_co2"] += (
+            getattr(emission_data, "emissions", 0.0) or 0.0
+        )
 
     def on_llm_start(self, serialized, prompts, *, run_id, **kwargs) -> None:
         """LangChain callback: start timing and (optionally) CodeCarbon tracking."""
         key = str(run_id)
         self._starts[key] = time.perf_counter()
-        self._start_cc_tracker(key)
+        self._start_cc_tracker()
 
     def on_llm_end(self, response, *, run_id, **kwargs) -> None:
-        """LangChain callback: stop timing and CodeCarbon tracking."""
+        """LangChain callback: stop timing for this LLM call."""
         key = str(run_id)
         if key in self._starts:
             self.total_time += time.perf_counter() - self._starts.pop(key)
-        self._stop_cc_tracker(key)
 
     def on_llm_error(self, error, *, run_id, **kwargs) -> None:
         self.on_llm_end(response=error, run_id=run_id, **kwargs)

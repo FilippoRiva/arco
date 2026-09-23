@@ -5,10 +5,7 @@
 # Test config for the codecarbon integration
 
 global:
+  run_id: "codecarbon_test"
   workflow: "planned_sales"
   prompt: "Show me the sales in Nov 2021"
   enable_codecarbon: true
-  # Additional caching (not strictly needed for codecarbon)
-  run_id: "codecarbon_test"
-  enable_storage: false
-  save_dir: "./output"

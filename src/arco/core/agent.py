@@ -164,33 +164,43 @@ class Agent(ABC):
         from .llm_tools import LLMCallAccumulator
 
         llm_acc = LLMCallAccumulator(self.type)
+        # Start before agent logic so DB access, parsing, code execution, and
+        # agents that do not call an LLM still receive energy profiling data.
+        llm_acc.start()
 
-        ###
-        # Inference
-        ###
-        if agent_config.n == 1:
-            results = self._execute_greedy(
-                state=state, config=agent_config, llm_acc=llm_acc
-            )
-        else:
-            results = self._execute_best_of_n(
-                state=state, config=agent_config, llm_acc=llm_acc
+        try:
+            ###
+            # Inference
+            ###
+            if agent_config.n == 1:
+                results = self._execute_greedy(
+                    state=state, config=agent_config, llm_acc=llm_acc
+                )
+            else:
+                results = self._execute_best_of_n(
+                    state=state, config=agent_config, llm_acc=llm_acc
+                )
+
+            # Run Post Generation Hooks (dynamically overridden if needed, see Retriever as an example)
+            results = self.post_generation_hooks(
+                results, llm_acc=llm_acc, config=agent_config
             )
 
-        # Run Post Generation Hooks (dynamically overridden if needed, see Retriever as an example)
-        results = self.post_generation_hooks(
-            results, llm_acc=llm_acc, config=agent_config
-        )
-
-        ###
-        # Evaluation
-        ###
-        if self.evaluator:
-            results, best_result = self.evaluator.evaluate_best_of_n(
-                results=results, config=agent_config
-            )
-        else:
-            best_result = results[0]
+            ###
+            # Evaluation
+            ###
+            if self.evaluator:
+                results, best_result = self.evaluator.evaluate_best_of_n(
+                    results=results,
+                    config=agent_config,
+                    llm_accumulator=llm_acc,
+                )
+            else:
+                best_result = results[0]
+        finally:
+            # CodeCarbon is scoped to the complete agent step, including any
+            # best-of-N judge calls, rather than to every individual LLM call.
+            llm_acc.finish()
 
         ###
         # Profiling

@@ -161,12 +161,22 @@ Return ONLY valid JSON:
   "functional_equivalence": {{"score": <1-5>, "reasoning": "<brief>", "would_render": <true/false>}}
 }}"""
 
-    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
+    def _eval(
+        self,
+        state: State,
+        judge_provider: str,
+        judge_model: str,
+        llm_accumulator=None,
+    ) -> Evaluation:
         """
         Uses an LLM judge to score chart quality based on data suitability,
         axis mapping, code quality, and goal alignment.
         """
-        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
+        llm = llm_tools.get_llm(
+            provider=judge_provider,
+            model=judge_model,
+            llm_accumulator=llm_accumulator,
+        )
 
         last_visualizer_answer: Answer = state.get_last_answer("Visualizer")
         last_retriever_answer: Answer = state.get_last_answer("Retriever")

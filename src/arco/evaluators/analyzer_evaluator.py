@@ -115,13 +115,23 @@ class AnalyzerEvaluator(Evaluator):
     def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
         return None
 
-    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
+    def _eval(
+        self,
+        state: State,
+        judge_provider: str,
+        judge_model: str,
+        llm_accumulator=None,
+    ) -> Evaluation:
         last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
         analysis = last_analyzer_answer.agent_output.get("analysis", None)
         if not analysis:
             return Evaluation(score=0)
 
-        llm = get_llm(provider=judge_provider, model=judge_model)
+        llm = get_llm(
+            provider=judge_provider,
+            model=judge_model,
+            llm_accumulator=llm_accumulator,
+        )
 
         prompt = state.prompt
         last_retriever_answer: Answer = state.get_last_answer("Retriever")

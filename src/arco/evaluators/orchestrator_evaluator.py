@@ -6,7 +6,13 @@ logger = logging.getLogger(__name__)
 
 
 class OrchestratorEvaluator(Evaluator):
-    def _eval(self, state: State, judge_provider: str, judge_model: str) -> Evaluation:
+    def _eval(
+        self,
+        state: State,
+        judge_provider: str,
+        judge_model: str,
+        llm_accumulator=None,
+    ) -> Evaluation:
         return Evaluation(score=0.0)
 
     def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
