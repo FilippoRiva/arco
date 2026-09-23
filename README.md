@@ -295,6 +295,19 @@ List catalog-managed experiments with:
 arco experiments
 ```
 
+Browse saved workflow states interactively with newest states first:
+
+```bash
+arco storage
+```
+
+Use `↑`/`↓` to select a state, `Enter` to open it, `←` or `Backspace` to
+return to the list, and `q` to quit. A specific state can be opened directly:
+
+```bash
+arco storage --run-id <run-id>
+```
+
 ### `arco analyze-benchmark`
 
 Analyzes benchmark outputs and produces HTML visualizations.

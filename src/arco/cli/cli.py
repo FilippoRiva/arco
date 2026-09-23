@@ -22,6 +22,7 @@ def main():
         experiments,
         generate_benchmark,
         run,
+        storage,
     )
     from arco.cli.console import console
 
@@ -40,6 +41,7 @@ def main():
         "benchmark": bench.register(subparsers_action),
         "analyze-benchmark": analyze_benchmark.register(subparsers_action),
         "experiments": experiments.register(subparsers_action),
+        "storage": storage.register(subparsers_action),
     }
 
     handlers = {
@@ -48,6 +50,7 @@ def main():
         "benchmark": bench.handle,
         "analyze-benchmark": analyze_benchmark.handle,
         "experiments": experiments.handle,
+        "storage": storage.handle,
     }
 
     # Parse
