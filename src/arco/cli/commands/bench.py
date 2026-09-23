@@ -49,14 +49,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     status.start()
     from functools import partial
 
-    from rich.rule import Rule
-
     from arco.cli.viz import display, printer
     from arco.core import ExperimentCatalog
     from arco.data.benchmark_dataset import BenchmarkSummary
     from arco.tools.bench import benchmark_from_config
 
-    console.print("[green]✓[/green] Benchmark loaded")
     status.stop()
 
     if args.experiment:
@@ -76,6 +73,15 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         benchmark_id = args.id
         save_dir = args.save_dir or "./output/benchmarks"
         experiment_metadata = None
+
+    console.print()
+    console.print("[bold cyan]Benchmark[/bold cyan]")
+    if args.experiment:
+        console.print(f"  Experiment  [cyan]{args.experiment}[/cyan]")
+    console.print(f"  Config      [dim]{config_path}[/dim]")
+    console.print(f"  Dataset     [dim]{dataset_path}[/dim]")
+    console.print(f"  Output      [dim]{save_dir}[/dim]")
+    console.print()
 
     if args.verbose:
         visualization_logic = partial(display.display_workflow, verbose=True)
@@ -98,7 +104,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             console.print("[green]✓[/green] Run configurations loaded")
         elif event == "benchmark_already_exists":
             console.print(
-                f"[yellow]![/yellow] Benchmark already exists, skipping execution. Path: '{_event['path']}'"
+                f"[yellow]![/yellow] Skipping existing run: [dim]{_event['path']}[/dim]"
             )
         elif event == "benchmark_start":
             if isinstance(_event["changes"], dict):
@@ -111,12 +117,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             else:
                 raise ValueError("The passed changes are not in a dictionary format")
         elif event == "benchmark_run_save":
-            console.print(f"[green]✓[/green] Benchmark saved. Path: '{_event['path']}'")
+            console.print(f"[green]✓[/green] Run saved  [dim]{_event['path']}[/dim]")
         elif event == "test_case_start":
+            console.print()
             console.print(
-                Rule(
-                    f"[bold blue]Test Case {_event['iteration']}/{_event['max_iteration']}[/bold blue]"
-                )
+                f"[bold blue]Test case {_event['iteration']}/{_event['max_iteration']}[/bold blue]"
             )
         elif event == "test_case_stop":
             if isinstance(_event["evaluation_summary"], BenchmarkSummary):
@@ -125,10 +130,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 raise ValueError(
                     f"The passed BenchmarkSummary is instead a {type(_event['evaluation_summary'])}"
                 )
+            console.print()
         elif event == "test_case_evaluation_start":
             status = console.status("Evaluating result")
             status.start()
         elif event == "error":
-            console.print(f"[red]Error[/red] {_event['message']}")
+            console.print(f"[red]✗[/red] {_event['message']}")
         elif event == "test_case_evaluation_stop":
             status.stop()

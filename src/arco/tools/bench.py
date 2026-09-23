@@ -175,6 +175,7 @@ def benchmark(
             answer_dict = {
                 "agent_type": answer.agent_id,
                 "message": answer.message,
+                "error": answer.error,
                 "evaluation_gt": answer.gt_evaluation.score
                 if answer.gt_evaluation
                 else None,

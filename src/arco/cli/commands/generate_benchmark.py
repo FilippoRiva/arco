@@ -37,7 +37,9 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.core import ExperimentCatalog
     from arco.tools.generate_benchmark import generate_benchmark
 
-    console.print("[bold]Generating benchmark dataset[/bold]")
+    console.print()
+    console.print("[bold cyan]Generate benchmark dataset[/bold cyan]")
+    console.print()
 
     if args.experiment:
         experiment = ExperimentCatalog.load().get(args.experiment)
@@ -62,10 +64,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         visualization_logic = partial(display_workflow, verbose=True)
 
     if args.experiment:
-        console.print(f"Experiment: {args.experiment}")
-    console.print(f"Configs from {config_path}")
-    console.print(f"Prompts from {prompts_path}")
-    console.print(f"Saved to {output_path}")
+        console.print(f"  Experiment  [cyan]{args.experiment}[/cyan]")
+    console.print(f"  Config      [dim]{config_path}[/dim]")
+    console.print(f"  Prompts     [dim]{prompts_path}[/dim]")
+    console.print(f"  Output      [dim]{output_path}[/dim]")
+    console.print()
 
     for event in generate_benchmark(
         config_path=config_path,
@@ -75,19 +78,26 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     ):
         e = event["event"]
         if e == "started":
-            console.print(f"  {event['total']} prompt(s) loaded")
+            console.print(f"[dim]Loaded {event['total']} prompt(s)[/dim]")
         elif e == "prompt_start":
+            if event["index"] > 0:
+                console.print()
             console.print(
-                f"  [{event['index'] + 1}/{event['total']}] [id: {event['id']}] {event['prompt']}..."
+                f"  [cyan]▶[/cyan] [{event['index'] + 1}/{event['total']}] "
+                f"{event['prompt'][:72]}"
             )
         elif e == "prompt_done":
-            console.print(f"    -> trace: {event['trace_len']} step(s)")
-        elif e == "prompt_error":
-            console.print(f"    [red]error: {event['message']}[/red]")
-        elif e == "completed":
             console.print(
-                f"\n[green]Done[/green] — {event['entries']} entries saved to {event['path']}"
+                f"    [green]✓[/green] trace completed · {event['trace_len']} step(s)"
             )
+        elif e == "prompt_error":
+            console.print(f"    [red]✗[/red] {event['message']}")
+        elif e == "completed":
+            console.print()
+            console.print(
+                f"[bold green]✓ Complete[/bold green]  {event['entries']} entries"
+            )
+            console.print(f"  Saved to [dim]{event['path']}[/dim]")
 
 
 def _collect_state(events):

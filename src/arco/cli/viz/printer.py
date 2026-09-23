@@ -2,7 +2,6 @@ from collections import defaultdict
 from statistics import mean
 from typing import TYPE_CHECKING, Any
 
-from rich import box
 from rich.console import Group
 from rich.panel import Panel
 from rich.table import Table
@@ -19,48 +18,31 @@ if TYPE_CHECKING:
 def print_benchmark_header(
     name: str, description: str, changes: dict[str, Any]
 ) -> None:
-    """Print a rich panel summarizing the benchmark run's name, description, and changes."""
-    header = Text(f"Benchmark run : {name}", style="bold cyan", justify="center")
+    """Print one compact, borderless benchmark run summary."""
+    console.print()
+    console.print(f"[bold cyan]▶ {name}[/bold cyan]")
+    if description:
+        console.print(f"  [dim]{description}[/dim]")
 
-    body = Table.grid(padding=(0, 1))
-    body.add_column(justify="right", style="bold dim")
-    body.add_column()
-    body.add_row(
-        "Description:", description or "[dim italic]none provided[/dim italic]"
-    )
+    if not changes:
+        console.print("  [dim]Default configuration[/dim]")
+        return
 
-    if changes:
-        changes_table = Table(
-            title="Overrides",
-            show_header=True,
-            header_style="bold magenta",
-            box=box.SIMPLE_HEAVY,
-            expand=False,
-        )
-        changes_table.add_column("Agent", style="bold yellow")
-        changes_table.add_column("Parameter", style="cyan")
-        changes_table.add_column("Value", style="green")
-
-        for agent_name, params in changes.items():
-            if isinstance(params, dict):
-                first = True
-                for param, value in params.items():
-                    changes_table.add_row(
-                        agent_name if first else "", param, str(value)
-                    )
-                    first = False
-            else:
-                changes_table.add_row(agent_name, "-", str(params))
-    else:
-        changes_table = Text(
-            "No overrides — running with defaults.", style="dim italic"
-        )
-
-    body.add_row("Changes:", changes_table)
-
-    console.print(
-        Panel(body, title=header, border_style="blue", box=box.ROUNDED, padding=(1, 2))
-    )
+    changes_table = Table(box=None, padding=(0, 1), expand=False)
+    changes_table.add_column("Agent", style="yellow", no_wrap=True)
+    changes_table.add_column("Parameter", style="cyan", no_wrap=True)
+    changes_table.add_column("Value", style="green")
+    for agent_name, params in changes.items():
+        if isinstance(params, dict):
+            first = True
+            for param, value in params.items():
+                changes_table.add_row(
+                    agent_name if first else "", param, str(value)
+                )
+                first = False
+        else:
+            changes_table.add_row(agent_name, "-", str(params))
+    console.print(changes_table)
 
 
 PROFILE_FIELDS = [

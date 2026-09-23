@@ -35,9 +35,14 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     else:
         parser.error("benchmark_dir or --experiment is required")
 
-    console.print(f"[bold]Analysing benchmark:[/bold] {benchmark_dir}")
+    console.print()
+    console.print("[bold cyan]Analyze benchmark[/bold cyan]")
+    console.print(f"  Source  [dim]{benchmark_dir}[/dim]")
+    console.print()
     try:
         analyze_benchmark(benchmark_dir)
+        console.print()
+        console.print("[bold green]✓ Analysis complete[/bold green]")
     except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
+        console.print(f"[bold red]✗ Analysis failed[/bold red]  {e}")
         raise
