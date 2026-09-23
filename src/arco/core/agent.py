@@ -277,9 +277,11 @@ class Agent(ABC):
 
         # Run inference
         result: State = self.core(state, llm)
-        if config.cot_n > 1:
-            result: State = self._apply_cot_iteration(
-                state=state, llm=llm, max_iter=config.cot_n
+        if config.iterative_refinement_n > 1:
+            result = self._apply_iterative_refinement(
+                state=result,
+                llm=llm,
+                max_iter=config.iterative_refinement_n,
             )
         return [result]
 
@@ -312,28 +314,34 @@ class Agent(ABC):
             )
 
             result: State = self.core(state, llm)
-            if config.cot_n > 1:
-                result: State = self._apply_cot_iteration(
-                    result, llm, max_iter=config.cot_n
+            if config.iterative_refinement_n > 1:
+                result = self._apply_iterative_refinement(
+                    state=result,
+                    llm=llm,
+                    max_iter=config.iterative_refinement_n,
                 )
             results.append(result)
 
         logger.debug(f"Best-of-n execution completed with {len(results)} candidates")
         return results
 
-    def _apply_cot_iteration(self, state: State, llm: LLM, max_iter: int) -> State:
-        _COT_SIMILARITY_THRESHOLD = 0.95
+    def _apply_iterative_refinement(
+        self, state: State, llm: LLM, max_iter: int
+    ) -> State:
+        """Iteratively refine an already-generated agent result."""
+        similarity_threshold = 0.95
 
-        llm.cot_enabled = True
+        llm.iterative_refinement_enabled = True
         loop_state: State = state
-        for cot_i in range(1, max_iter):
-            # Apply Refinement
-            llm.execution_error = loop_state.answers[-1].error
-
+        for _ in range(1, max_iter):
             previous_output: LLMAnswer | None = llm.last_answer
-            loop_state = self.core(state, llm)
+            previous_answer = loop_state.get_last_answer(self.type)
+            llm.execution_error = previous_answer.error if previous_answer else None
+
+            loop_state = self.core(loop_state, llm)
             current_output: LLMAnswer | None = llm.last_answer
-            current_error = loop_state.answers[-1].error
+            current_answer = loop_state.get_last_answer(self.type)
+            current_error = current_answer.error if current_answer else None
 
             if (
                 previous_output is not None
@@ -344,10 +352,10 @@ class Agent(ABC):
                     None, previous_output.text, current_output.text
                 ).ratio()
 
-                if ratio >= _COT_SIMILARITY_THRESHOLD:
+                if ratio >= similarity_threshold:
                     break
 
-        return state
+        return loop_state
 
 
 __all__ = ["Agent"]

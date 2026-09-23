@@ -30,8 +30,10 @@ def _format_answer_subtitle(answer: Answer) -> str:
         )
     if answer.gt_evaluation and answer.gt_evaluation.success:
         subtitle_elements.append(f"GT-Eval : {round(answer.gt_evaluation.score, 3)}")
-    if conf.cot_n > 1:
-        subtitle_elements.append(f"CoT : {conf.cot_n}")
+    if conf.iterative_refinement_n > 1:
+        subtitle_elements.append(
+            f"Refinement : {conf.iterative_refinement_n}"
+        )
     return "[dim]" + ", ".join(subtitle_elements) + "[/dim]"
 
 
@@ -294,8 +296,8 @@ def _verbose_metrics_table(answer: Answer) -> Table:
     table.add_row(
         "Options",
         f"reasoning={config.enable_reasoning}, logprobs={config.enable_logprobs}",
-        "CoT",
-        str(config.cot_n),
+        "Refinement",
+        str(config.iterative_refinement_n),
     )
     table.add_row("Evaluation", evaluation, "Ground truth", gt_evaluation)
     table.add_row("Perplexity", perplexity, "Budget", answer.budget_controller_choice)
@@ -427,8 +429,10 @@ def render_answer_compact(answer: Answer) -> Panel:
         metrics.append(f"[green]GT[/green] {answer.gt_evaluation.score:.3f}")
     if getattr(answer, "perplexity", None) is not None:
         metrics.append(f"[yellow]PPL[/yellow] {answer.perplexity:.2f}")
-    if answer.agent_config.cot_n > 1:
-        metrics.append(f"[magenta]CoT[/magenta] {answer.agent_config.cot_n}")
+    if answer.agent_config.iterative_refinement_n > 1:
+        metrics.append(
+            f"[magenta]Refinement[/magenta] {answer.agent_config.iterative_refinement_n}"
+        )
     content = " • ".join(metrics)
     if not content:
         content = "[dim]Completed[/dim]"

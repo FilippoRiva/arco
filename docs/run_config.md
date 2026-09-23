@@ -79,7 +79,7 @@ agents:
 | `bon_param` | string (enum) | Best-of-N selection parameter. One of: `temperature`, `top_k`, `top_p`. |
 | `temp_min` | number (0.0–2.0) | Minimum sampling temperature limit. |
 | `temp_max` | number (0.0–2.0) | Maximum sampling temperature limit. |
-| `cot_n` | integer (≥ 1) | Chain-of-thought generation count multiplier (optional). |
+| `iterative_refinement_n` | integer (≥ 1) | Number of iterative refinement generations (optional). |
 | `enable_reasoning` | boolean | Per-agent override for provider-native reasoning output. |
 | `enable_logprobs` | boolean | Per-agent override for token log probabilities. |
 | `top_p_min` | number (0.0–1.0) | Minimum top-p (nucleus sampling) threshold limit. |

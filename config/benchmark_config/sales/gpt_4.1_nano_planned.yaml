@@ -15,21 +15,21 @@ defaults:
     top_p_min: 0.95
     top_k_min: 64
     n: 1
-    cot_n: 1
+    iterative_refinement_n: 1
     max_tokens: 5000
   Analyzer:
     temp_min: 1.0
     top_p_min: 0.95
     top_k_min: 64
     n: 1
-    cot_n: 1
+    iterative_refinement_n: 1
     max_tokens: 5000
   Visualizer:
     temp_min: 1.0
     top_p_min: 0.95
     top_k_min: 64
     n: 1
-    cot_n: 1
+    iterative_refinement_n: 1
     max_tokens: 5000
 
 runs:

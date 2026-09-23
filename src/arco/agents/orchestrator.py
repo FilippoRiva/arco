@@ -29,7 +29,7 @@ class Orchestrator(Agent):
    - The visualization has been generated
    - All relevant agents for the user's request have been executed
    
-## CHAIN OF THOUGHT REASONING
+## DECISION PROCESS
 Before selecting the next tool, think step by step:
 
 **Step 1: Analyzing User Request**
@@ -84,7 +84,7 @@ Example 2 - Error present:
 
 
 ## YOUR TASK
-Based on the chain of thought reasoning above and the current state, select the next agent to execute.
+Based on the decision process above and the current state, select the next agent to execute.
           
 ## USER PROMPT 
 - prompt = {prompt}

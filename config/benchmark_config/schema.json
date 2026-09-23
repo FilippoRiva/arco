@@ -127,10 +127,10 @@
             "maximum": 2.0,
             "description": "Maximum sampling temperature limit."
           },
-          "cot_n": {
+          "iterative_refinement_n": {
             "type": "integer",
             "minimum": 1,
-            "description": "Chain-of-thought generation count multiplier (optional)."
+            "description": "Number of iterative refinement generations (optional)."
           },
           "enable_reasoning": {
             "type": "boolean",
@@ -210,7 +210,7 @@
                 },
                 "temp_min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
                 "temp_max": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-                "cot_n": { "type": "integer", "minimum": 1 },
+                "iterative_refinement_n": { "type": "integer", "minimum": 1 },
                 "top_p_min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
                 "top_p_max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
                 "top_k_min": { "type": "integer", "minimum": 1 },

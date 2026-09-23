@@ -1,7 +1,7 @@
 """LLM abstraction layer: wrappers, factories, and utilities.
 
 This module provides :class:`LLMAnswer` (pre-extracted response with
-logprobs), :class:`LLM` (thin wrapper with CoT refinement), factory
+logprobs), :class:`LLM` (thin wrapper with iterative refinement), factory
 functions for creating LLM instances, and utilities for JSON parsing
 and response extraction used across evaluators and agents.
 """
@@ -210,19 +210,20 @@ class _OpenRouterChatOpenAI(ChatOpenAI):
 
 
 class LLM:
-    """Thin wrapper around a LangChain chat model with CoT refinement support.
+    """Thin wrapper around a LangChain chat model with iterative refinement.
 
-    Wraps a :class:`BaseChatModel` and adds chain-of-thought refinement
-    via :meth:`_cot_invoke`.  The :attr:`cot_enabled` flag and
-    :attr:`execution_error` control whether refinement is applied.
+    Wraps a :class:`BaseChatModel` and can append an iterative refinement
+    instruction to the previous response. This is not provider reasoning
+    generation or a reasoning trace.
 
-    :ivar cot_enabled: If ``True``, :meth:`invoke` applies CoT refinement.
+    :ivar iterative_refinement_enabled: If ``True``, :meth:`invoke` applies
+        iterative refinement.
     :ivar last_answer: The most recent :class:`LLMAnswer` produced.
-    :ivar execution_error: Error string from the last execution, used
-        as context for the next CoT refinement.
+    :ivar execution_error: Error string from the last execution, used as
+        refinement feedback.
     """
 
-    _REFINEMENT_SUFFIX = """
+    _ITERATIVE_REFINEMENT_SUFFIX = """
     ## ITERATIVE REFINEMENT
     Your previous attempt produced the following response:
     ---
@@ -234,7 +235,7 @@ class LLM:
     Output only the final response with no meta-commentary.
     """
 
-    _ERROR_SUFFIX = """
+    _ITERATIVE_REFINEMENT_ERROR_SUFFIX = """
     ## ITERATIVE REFINEMENT — EXECUTION ERROR
     Your previous attempt produced the following response:
     ---
@@ -249,7 +250,7 @@ class LLM:
 
     def __init__(self, base_chat_model: BaseChatModel):
         self._chat_model: BaseChatModel = base_chat_model
-        self.cot_enabled: bool = False
+        self.iterative_refinement_enabled: bool = False
         self.last_answer: LLMAnswer | None = None
         self.execution_error: str | None = None
 
@@ -276,15 +277,15 @@ class LLM:
     def invoke(self, prompt: str) -> LLMAnswer:
         """Send a prompt to the LLM and return the response.
 
-        If :attr:`cot_enabled` is ``True``, the prompt is extended with
+        If :attr:`iterative_refinement_enabled` is ``True``, the prompt is extended with
         a refinement suffix based on the previous answer and any
         execution error.
 
         :param prompt: The prompt string.
         :returns: An :class:`LLMAnswer` with the response text and logprobs.
         """
-        if self.cot_enabled:
-            answer = self._cot_invoke(prompt, self.execution_error)
+        if self.iterative_refinement_enabled:
+            answer = self._iterative_refinement_invoke(prompt, self.execution_error)
         else:
             logger.debug(f"Invoking LLM with prompt : {prompt}")
             response = self._invoke_raw(prompt)
@@ -294,22 +295,24 @@ class LLM:
         self.last_answer = answer
         return answer
 
-    def _cot_invoke(self, prompt: str, execution_error: str | None) -> LLMAnswer:
+    def _iterative_refinement_invoke(
+        self, prompt: str, execution_error: str | None
+    ) -> LLMAnswer:
         if self.last_answer is None:
             raise ValueError(
-                "Chain of thought has been invoked on a missing answer (the last answer is None)"
+                "Iterative refinement requires a previous answer"
             )
         if execution_error:
-            suffix = self._ERROR_SUFFIX.format(
+            suffix = self._ITERATIVE_REFINEMENT_ERROR_SUFFIX.format(
                 previous_response=self.last_answer.text,
                 execution_error=execution_error,
             )
         else:
-            suffix = self._REFINEMENT_SUFFIX.format(
+            suffix = self._ITERATIVE_REFINEMENT_SUFFIX.format(
                 previous_response=self.last_answer.text,
             )
         prompt = prompt + suffix
-        logger.debug(f"Invoking CoT-LLM with prompt : {prompt}")
+        logger.debug(f"Invoking iterative-refinement LLM with prompt : {prompt}")
         response = self._invoke_raw(prompt)
         _log_raw_response(response)
         return LLMAnswer(response)
@@ -406,7 +409,7 @@ def get_llm(
                     model,
                 )
             # OpenAI reasoning summaries are available through the Responses
-            # API. Raw private chain-of-thought is not exposed by OpenAI.
+            # API. Raw private reasoning is not exposed by OpenAI.
             openai_kwargs.update(
                 {
                     "use_responses_api": True,

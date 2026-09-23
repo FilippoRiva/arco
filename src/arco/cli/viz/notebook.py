@@ -59,8 +59,8 @@ def _answer_html(answer: Answer, verbose: bool) -> str:
             bits.append(f"GT={answer.gt_evaluation.score:.2f}")
         if answer.perplexity is not None:
             bits.append(f"PPL={answer.perplexity:.4f}")
-        if conf.cot_n > 1:
-            bits.append(f"CoT={conf.cot_n}")
+        if conf.iterative_refinement_n > 1:
+            bits.append(f"Refinement={conf.iterative_refinement_n}")
 
         if bits:
             meta = " · ".join(bits)

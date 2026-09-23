@@ -27,7 +27,7 @@ From the list of available tables, select only the tables needed to answer the u
 ## USER QUESTION
 {prompt}
 
-## CHAIN OF THOUGHT REASONING
+## QUERY PLANNING
 Before selecting tables, think step by step:
 
 **Step 1: Understanding the Question**

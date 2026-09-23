@@ -85,7 +85,7 @@ defaults:
 | `bon_param` | string (enum) | Best-of-N selection parameter. One of: `temperature`, `top_k`, `top_p`. |
 | `temp_min` | number (0.0–2.0) | Minimum sampling temperature limit. |
 | `temp_max` | number (0.0–2.0) | Maximum sampling temperature limit. |
-| `cot_n` | integer (≥ 1) | Chain-of-thought generation count multiplier (optional). |
+| `iterative_refinement_n` | integer (≥ 1) | Number of iterative refinement generations (optional). |
 | `top_p_min` | number (0.0–1.0) | Minimum top-p (nucleus sampling) threshold limit. |
 | `top_p_max` | number (0.0–1.0) | Maximum top-p (nucleus sampling) threshold limit. |
 | `top_k_min` | integer (≥ 1) | Minimum top-k token cutoff pool limit. |
@@ -120,7 +120,7 @@ Each key in `changes` is an agent name, and its value is an override object with
 | `bon_param` | string (enum) | `temperature`, `top_k`, `top_p` |
 | `temp_min` | number | 0.0–2.0 |
 | `temp_max` | number | 0.0–2.0 |
-| `cot_n` | integer | ≥ 1 |
+| `iterative_refinement_n` | integer | ≥ 1 |
 | `top_p_min` | number | 0.0–1.0 |
 | `top_p_max` | number | 0.0–1.0 |
 | `top_k_min` | integer | ≥ 1 |

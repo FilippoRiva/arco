@@ -8,7 +8,7 @@ Compatible with **OpenAI**, **OpenRouter** and **Ollama** backends.
 It provides:
 
 - Single agent **Best-of-N** support
-- **Chain of Thought** integration
+- **Iterative refinement** integration
 - Local **Energy and Emissions** profiling through CodeCarbon
 - **Performance** profiling through a proper benchmarking interface
 

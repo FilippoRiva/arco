@@ -32,7 +32,7 @@ class AgentConfig:
     :ivar max_tokens: Maximum tokens for LLM generation (default 2000).
     :ivar num_beams: Beam search width (1 = greedy/disabled, skipped for OpenAI).
     :ivar no_repeat_ngram_size: Prevent repeating n-grams (skipped for OpenAI).
-    :ivar cot_n: Number of chain-of-thought refinement iterations (default 1).
+    :ivar iterative_refinement_n: Number of iterative refinement iterations (default 1).
     :ivar enable_reasoning: Whether to request provider-native reasoning output.
     :ivar enable_logprobs: Whether to request token log probabilities when supported.
     :ivar enable_budget_controller: Whether the ARCO budget controller is active.
@@ -65,8 +65,8 @@ class AgentConfig:
         None  # Prevent repeating n-grams of this size; skipped for OpenAI provider
     )
 
-    # CoT iterative refinement
-    cot_n: int = 1
+    # Iterative refinement of the previous agent response
+    iterative_refinement_n: int = 1
 
     # Provider-native reasoning/thinking output
     enable_reasoning: bool | None = None

@@ -18,7 +18,7 @@ agents:
     bon_param: "temperature"
     temp_min: 0.1
     temp_max: 1.0
-    cot_n: 2
+    iterative_refinement_n: 2
 
   Analyzer:
     provider: openai
