@@ -1,4 +1,88 @@
+import sys
+import termios
+import tty
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
+
+
+@contextmanager
+def _raw_terminal() -> Iterator[None]:
+    """Temporarily read single key presses from an interactive terminal."""
+    fd = sys.stdin.fileno()
+    previous = termios.tcgetattr(fd)
+    try:
+        tty.setcbreak(fd)
+        yield
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, previous)
+
+
+def _workflow_selector_view(
+    workflows: list[str], descriptions: dict[str, str], selected: int
+):
+    from rich.console import Group
+    from rich.table import Table
+
+    table = Table(box=None, padding=(0, 1), expand=False)
+    table.add_column("", width=2)
+    table.add_column("Workflow", no_wrap=True)
+    table.add_column("Description")
+
+    for index, workflow_id in enumerate(workflows):
+        marker = "[bold cyan]❯[/bold cyan]" if index == selected else " "
+        table.add_row(
+            marker,
+            f"[bold cyan]{workflow_id}[/bold cyan]",
+            f"[dim]{descriptions.get(workflow_id, 'No description available.')}[/dim]",
+        )
+
+    return Group(
+        "[bold cyan]Available workflows[/bold cyan]",
+        "[dim]↑/↓ select · Enter choose · q quit[/dim]",
+        table,
+    )
+
+
+def _select_workflow(workflows: list[str], descriptions: dict[str, str]) -> str | None:
+    """Select a workflow using the arrow-key interaction."""
+    from rich.live import Live
+
+    from arco.cli.console import console
+
+    selected = 0
+    live = Live(
+        _workflow_selector_view(workflows, descriptions, selected),
+        console=console,
+        refresh_per_second=12,
+        transient=True,
+    )
+    live.start()
+    try:
+        with _raw_terminal():
+            while True:
+                key = sys.stdin.read(1)
+                if key in {"q", "Q"}:
+                    return None
+                if key in {"\r", "\n"}:
+                    return workflows[selected]
+                if key == "\x1b":
+                    sequence = sys.stdin.read(2)
+                    if sequence == "[A":
+                        selected = (selected - 1) % len(workflows)
+                        live.update(
+                            _workflow_selector_view(workflows, descriptions, selected),
+                            refresh=True,
+                        )
+                    elif sequence == "[B":
+                        selected = (selected + 1) % len(workflows)
+                        live.update(
+                            _workflow_selector_view(workflows, descriptions, selected),
+                            refresh=True,
+                        )
+    finally:
+        live.stop()
+
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace, _SubParsersAction
@@ -42,7 +126,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     status.start()
 
     import os
-    import sys
 
     from arco.tools.run import (
         get_workflow_descriptions,
@@ -71,23 +154,30 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             )
             sys.exit(1)
         workflow_descriptions = get_workflow_descriptions()
-        console.print("\n[bold cyan]Available workflows[/bold cyan]\n")
-        for workflow_id in available_workflows:
-            description = workflow_descriptions.get(
-                workflow_id, "No description available."
-            )
-            console.print(
-                f"  [bold cyan]{workflow_id}[/bold cyan]"
-                f"  [dim]— {description}[/dim]"
-            )
-        console.print()
-        user_input = console.input("[bold cyan]Workflow    >[/bold cyan] ")
-        if user_input not in available_workflows:
-            console.print(
-                f"[bold red]Error[/bold red]: The selected workflow is not available : '[bold cyan]{user_input}[/bold cyan]'"
-            )
-            sys.exit(1)
+        if sys.stdin.isatty():
+            user_input = _select_workflow(available_workflows, workflow_descriptions)
+            if user_input is None:
+                return
+        else:
+            console.print("\n[bold cyan]Available workflows[/bold cyan]\n")
+            for workflow_id in available_workflows:
+                description = workflow_descriptions.get(
+                    workflow_id, "No description available."
+                )
+                console.print(
+                    f"  [bold cyan]{workflow_id}[/bold cyan]"
+                    f"  [dim]— {description}[/dim]"
+                )
+            console.print()
+            user_input = console.input("[bold cyan]Workflow    >[/bold cyan] ")
+            if user_input not in available_workflows:
+                console.print(
+                    f"[bold red]Error[/bold red]: The selected workflow is not available : '[bold cyan]{user_input}[/bold cyan]'"
+                )
+                sys.exit(1)
         config, workflow = initialize_workflow(workflow_name=user_input)
+
+    console.print(f"\n[bold cyan]Workfow[/bold cyan]: {workflow.workflow_id}")
 
     if config.prompt is None:
         console.print()
