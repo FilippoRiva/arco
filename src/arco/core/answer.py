@@ -28,6 +28,8 @@ class Answer:
           selected (recursive list of :class:`Answer` objects).
     :ivar error: Error message if the agent's execution failed.
     :ivar logprobs: Token-level log probabilities from the LLM.
+    :ivar generation_params: Actual sampling parameters used for this
+          candidate, when it was generated as part of best-of-N.
     :ivar perplexity: Perplexity computed from the logprobs.
     :ivar profiling_data: Timing and energy profiling data for this step.
     :ivar budget_controller_choice: Whether the budget controller decided
@@ -38,6 +40,7 @@ class Answer:
     message: str
     agent_config: AgentConfig
     logprobs: list[tuple[str, float | int]]
+    generation_params: tuple[float, float | None, int | None] | None = None
     agent_output: dict = field(default_factory=dict)
     evaluation: Evaluation | None = None
     gt_evaluation: Evaluation | None = None
@@ -81,6 +84,8 @@ class Answer:
             ]
         if dictionary.get("profiling_data") is not None:
             dictionary["profiling_data"] = ProfilingData(**dictionary["profiling_data"])
+        if dictionary.get("generation_params") is not None:
+            dictionary["generation_params"] = tuple(dictionary["generation_params"])
         return cls(**dictionary)
 
     def set(self, **kwargs) -> Self:

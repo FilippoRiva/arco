@@ -91,6 +91,10 @@ class Config:
     :ivar save_dir: Directory for output artifacts.
     :ivar enable_codecarbon: Whether to enable CodeCarbon energy tracking.
     :ivar enable_reasoning: Whether to request provider-native reasoning output.
+    :ivar reasoning_effort: Provider-specific reasoning effort level.
+    :ivar reasoning_summary: Provider-specific reasoning summary mode.
+    :ivar reasoning_max_tokens: Optional direct reasoning-token budget.
+    :ivar verbosity: Provider-specific visible response verbosity.
     :ivar enable_logprobs: Whether to request token log probabilities when supported.
     :ivar agent_configs: Per-agent configuration dict, keyed by :class:`AgentType`.
     :ivar config_path: Path to the YAML file this config was loaded from.
@@ -112,6 +116,10 @@ class Config:
     # Request provider-supported reasoning summaries/thinking output. This is
     # opt-in because ordinary chat models may reject reasoning parameters.
     enable_reasoning: bool = False
+    reasoning_effort: str | None = None
+    reasoning_summary: str | None = None
+    reasoning_max_tokens: int | None = None
+    verbosity: str | None = None
     # Request token log probabilities where the selected API/model supports it.
     enable_logprobs: bool = True
     agent_configs: Mapping[AgentType, AgentConfig] = field(

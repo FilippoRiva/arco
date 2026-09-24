@@ -338,6 +338,10 @@ def get_llm_from_config(agent_config: AgentConfig, llm_acc: LLMCallAccumulator) 
         no_repeat_ngram_size=agent_config.no_repeat_ngram_size,
         llm_accumulator=llm_acc,
         enable_reasoning=bool(agent_config.enable_reasoning),
+        reasoning_effort=agent_config.reasoning_effort,
+        reasoning_summary=agent_config.reasoning_summary,
+        reasoning_max_tokens=agent_config.reasoning_max_tokens,
+        verbosity=agent_config.verbosity,
         enable_logprobs=bool(agent_config.enable_logprobs),
     )
 
@@ -355,6 +359,10 @@ def get_llm(
     llm_accumulator: LLMCallAccumulator = DEFAULT_LLM_ACC,
     openrouter_url: str = "https://openrouter.ai/api/v1",
     enable_reasoning: bool = False,
+    reasoning_effort: str | None = None,
+    reasoning_summary: str | None = None,
+    reasoning_max_tokens: int | None = None,
+    verbosity: str | None = None,
     enable_logprobs: bool = True,
 ) -> LLM:
     """Factory to create an :class:`LLM` instance with specific parameters.
@@ -375,6 +383,11 @@ def get_llm(
     :param openrouter_url: Base URL for the OpenRouter API.
     :param enable_reasoning: Request provider-supported reasoning summaries or
         thinking output. Unsupported models may ignore or reject this option.
+    :param reasoning_effort: Provider-specific reasoning effort, such as
+        ``low``, ``medium``, or ``high``.
+    :param reasoning_summary: OpenAI Responses reasoning summary mode.
+    :param reasoning_max_tokens: Direct reasoning-token budget where supported.
+    :param verbosity: Visible response verbosity where supported.
     :param enable_logprobs: Request token log probabilities where supported.
         This is automatically omitted for the OpenAI Responses API.
     :returns: A configured :class:`LLM` instance.
@@ -386,6 +399,9 @@ def get_llm(
             "model": model,
             "streaming": streaming,
             "callbacks": [llm_accumulator],
+            # ChatOpenAI maps max_tokens to max_completion_tokens for Chat
+            # Completions and to max_output_tokens for Responses API.
+            "max_tokens": max_tokens,
         }
         # These sampling options are valid for normal Chat Completions. Do
         # not send them for reasoning Responses calls: reasoning models may
@@ -415,9 +431,10 @@ def get_llm(
                     "use_responses_api": True,
                     "output_version": "responses/v1",
                     "reasoning": {
-                        "effort": "medium",
-                        "summary": "detailed",
+                        "effort": reasoning_effort or "medium",
+                        "summary": reasoning_summary or "auto",
                     },
+                    "verbosity": verbosity,
                 }
             )
         chat_model = ChatOpenAI(**openai_kwargs)
@@ -427,29 +444,46 @@ def get_llm(
             raise ValueError(
                 "OpenRouter requires an API key: pass openrouter_api_key or set the OPENROUTER_API_KEY environment variable."
             )
+        # Optional parameters are not uniformly supported by every routed
+        # provider. Let OpenRouter choose a compatible endpoint instead of
+        # rejecting the whole request when one provider lacks a parameter.
         openrouter_extra_body = {
             "provider": {
-                "require_parameters": True  # use only providers that allow all the parameters from the request
+                "require_parameters": False,
             }
         }
         if enable_reasoning:
-            # OpenRouter exposes reasoning through its OpenAI-compatible
-            # chat-completions endpoint using extra_body.
-            openrouter_extra_body["reasoning"] = {
-                "enabled": True,
-                "effort": "medium",
-            }
+            if enable_logprobs:
+                logger.debug(
+                    "Disabling logprobs for OpenRouter reasoning request on %s",
+                    model,
+                )
+            if verbosity is not None:
+                logger.debug(
+                    "Ignoring verbosity for OpenRouter request on %s",
+                    model,
+                )
+            # OpenRouter accepts either an effort level or a direct reasoning
+            # token budget, but not both in the same request.
+            reasoning_config = {"enabled": True}
+            if reasoning_max_tokens is not None:
+                reasoning_config["max_tokens"] = reasoning_max_tokens
+            else:
+                reasoning_config["effort"] = reasoning_effort or "medium"
+            openrouter_extra_body["reasoning"] = reasoning_config
         chat_model = _OpenRouterChatOpenAI(
             model=model,
             api_key=SecretStr(api_key),
             base_url=openrouter_url,
             temperature=temperature,
+            max_tokens=max_tokens,
             # ChatOpenAI drops OpenRouter reasoning fields from streaming
             # deltas. Use one non-streamed response when reasoning is enabled
             # so _create_chat_result can preserve the final reasoning field.
             streaming=streaming and not enable_reasoning,
             callbacks=[llm_accumulator],
-            logprobs=enable_logprobs,
+            # Reasoning endpoints commonly do not expose token logprobs.
+            logprobs=enable_logprobs and not enable_reasoning,
             extra_body=openrouter_extra_body,
         )
     else:
@@ -462,7 +496,11 @@ def get_llm(
             "client_kwargs": {"timeout": OLLAMA_REQUEST_TIMEOUT},
             "callbacks": [llm_accumulator],
             "logprobs": enable_logprobs,
-            "reasoning": enable_reasoning,
+            "reasoning": (
+                reasoning_effort
+                if enable_reasoning and reasoning_effort
+                else enable_reasoning
+            ),
         }
 
         if top_k is not None:

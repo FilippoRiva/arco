@@ -74,6 +74,23 @@
           "default": false,
           "description": "Request provider-supported reasoning summaries or thinking output"
         },
+        "reasoning_effort": {
+          "type": ["string", "null"],
+          "description": "Provider-specific reasoning effort, for example low, medium, or high"
+        },
+        "reasoning_summary": {
+          "type": ["string", "null"],
+          "description": "OpenAI Responses reasoning summary mode, for example auto or detailed"
+        },
+        "reasoning_max_tokens": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Direct reasoning-token budget where supported"
+        },
+        "verbosity": {
+          "type": ["string", "null"],
+          "description": "Visible response verbosity where supported"
+        },
         "enable_logprobs": {
           "type": "boolean",
           "default": true,
@@ -136,6 +153,10 @@
             "type": "boolean",
             "description": "Request provider-native reasoning output for this agent"
           },
+          "reasoning_effort": { "type": ["string", "null"] },
+          "reasoning_summary": { "type": ["string", "null"] },
+          "reasoning_max_tokens": { "type": ["integer", "null"], "minimum": 1 },
+          "verbosity": { "type": ["string", "null"] },
           "enable_logprobs": {
             "type": "boolean",
             "description": "Request token log probabilities where supported"
@@ -211,6 +232,11 @@
                 "temp_min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
                 "temp_max": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
                 "iterative_refinement_n": { "type": "integer", "minimum": 1 },
+                "enable_reasoning": { "type": "boolean" },
+                "reasoning_effort": { "type": ["string", "null"] },
+                "reasoning_summary": { "type": ["string", "null"] },
+                "reasoning_max_tokens": { "type": ["integer", "null"], "minimum": 1 },
+                "verbosity": { "type": ["string", "null"] },
                 "top_p_min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
                 "top_p_max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
                 "top_k_min": { "type": "integer", "minimum": 1 },

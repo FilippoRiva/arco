@@ -217,6 +217,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             message = "Couldn't retrieve the data."
             error = f"SQL query references do not resolve : {e!s}"
             logger.warning("Failed : SQL query references do not resolve .")
+        except AttributeError as e:
+            message = "Couldn't retrieve the data."
+            error = f"Attribute Error : {e!s}"
+            logger.warning("Failed: The Query failed")
         return self.answer(
             state,
             message=message,
@@ -244,6 +248,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             provider=config.provider,
             model=config.model,
             enable_reasoning=bool(config.enable_reasoning),
+            reasoning_effort=config.reasoning_effort,
+            reasoning_summary=config.reasoning_summary,
+            reasoning_max_tokens=config.reasoning_max_tokens,
+            verbosity=config.verbosity,
             enable_logprobs=bool(config.enable_logprobs),
         )
 

@@ -44,6 +44,10 @@ agents:
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
 | `enable_storage` | boolean or null | Enables persisted workflow state and generated visualization images under `save_dir/storage`. If omitted, interactive `arco run` enables it and benchmark commands disable it. |
 | `enable_reasoning` | boolean | Requests provider-supported reasoning summaries/thinking output. Defaults to `false`; only supported reasoning models return it. |
+| `reasoning_effort` | string or null | Provider-specific effort such as `low`, `medium`, or `high`. |
+| `reasoning_summary` | string or null | OpenAI Responses summary mode such as `auto`, `concise`, or `detailed`. |
+| `reasoning_max_tokens` | integer or null | Direct reasoning-token budget where supported. |
+| `verbosity` | string or null | Visible response verbosity where supported. |
 | `enable_logprobs` | boolean | Requests token log probabilities where supported. Defaults to `true`; automatically omitted for OpenAI Responses reasoning calls. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
@@ -81,6 +85,10 @@ agents:
 | `temp_max` | number (0.0–2.0) | Maximum sampling temperature limit. |
 | `iterative_refinement_n` | integer (≥ 1) | Number of iterative refinement generations (optional). |
 | `enable_reasoning` | boolean | Per-agent override for provider-native reasoning output. |
+| `reasoning_effort` | string or null | Per-agent reasoning effort override. |
+| `reasoning_summary` | string or null | Per-agent reasoning summary override. |
+| `reasoning_max_tokens` | integer or null | Per-agent reasoning-token budget override. |
+| `verbosity` | string or null | Per-agent visible verbosity override. |
 | `enable_logprobs` | boolean | Per-agent override for token log probabilities. |
 | `top_p_min` | number (0.0–1.0) | Minimum top-p (nucleus sampling) threshold limit. |
 | `top_p_max` | number (0.0–1.0) | Maximum top-p (nucleus sampling) threshold limit. |

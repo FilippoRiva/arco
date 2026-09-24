@@ -5,9 +5,24 @@
 # Test for the reasoning models output
 
 global:
+  run_id: "test_reasoning"
   workflow: "planned_sales"
   prompt: "Reason on which kind of visualization should be extremely helpful on this sales data, then produce it"
   default_provider: openrouter
   default_model: deepseek/deepseek-v4-flash
   enable_reasoning: true
+  reasoning_effort: medium
+  reasoning_summary: auto
+  reasoning_max_tokens: 4000
+  verbosity: low
   enable_storage: true # just for debugging purposes
+
+agents:
+  Planner:
+    max_tokens: 8000
+  Retriever:
+    max_tokens: 8000
+  Analyzer:
+    max_tokens: 8000
+  Visualizer:
+    max_tokens: 8000

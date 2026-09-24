@@ -310,6 +310,10 @@ class Agent(ABC):
                 provider=config.provider,
                 model=config.model,
                 enable_reasoning=bool(config.enable_reasoning),
+                reasoning_effort=config.reasoning_effort,
+                reasoning_summary=config.reasoning_summary,
+                reasoning_max_tokens=config.reasoning_max_tokens,
+                verbosity=config.verbosity,
                 enable_logprobs=bool(config.enable_logprobs),
             )
 
@@ -319,6 +323,13 @@ class Agent(ABC):
                     state=result,
                     llm=llm,
                     max_iter=config.iterative_refinement_n,
+                )
+            last_answer = result.get_last_answer(self.type)
+            if last_answer is not None:
+                result = result.replace_last_answer(
+                    last_answer.set(
+                        generation_params=(temp, top_p, top_k),
+                    )
                 )
             results.append(result)
 

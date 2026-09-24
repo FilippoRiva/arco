@@ -34,6 +34,10 @@ class AgentConfig:
     :ivar no_repeat_ngram_size: Prevent repeating n-grams (skipped for OpenAI).
     :ivar iterative_refinement_n: Number of iterative refinement iterations (default 1).
     :ivar enable_reasoning: Whether to request provider-native reasoning output.
+    :ivar reasoning_effort: Provider-specific reasoning effort level.
+    :ivar reasoning_summary: Provider-specific reasoning summary mode.
+    :ivar reasoning_max_tokens: Optional direct reasoning-token budget.
+    :ivar verbosity: Provider-specific visible response verbosity.
     :ivar enable_logprobs: Whether to request token log probabilities when supported.
     :ivar enable_budget_controller: Whether the ARCO budget controller is active.
     """
@@ -70,6 +74,10 @@ class AgentConfig:
 
     # Provider-native reasoning/thinking output
     enable_reasoning: bool | None = None
+    reasoning_effort: str | None = None
+    reasoning_summary: str | None = None
+    reasoning_max_tokens: int | None = None
+    verbosity: str | None = None
     enable_logprobs: bool | None = None
 
     # ARCO parameters
@@ -202,6 +210,14 @@ class AgentConfig:
             kwargs["enable_budget_controller"] = config.enable_budget_controller
         if self.enable_reasoning is None:
             kwargs["enable_reasoning"] = config.enable_reasoning
+        if self.reasoning_effort is None:
+            kwargs["reasoning_effort"] = config.reasoning_effort
+        if self.reasoning_summary is None:
+            kwargs["reasoning_summary"] = config.reasoning_summary
+        if self.reasoning_max_tokens is None:
+            kwargs["reasoning_max_tokens"] = config.reasoning_max_tokens
+        if self.verbosity is None:
+            kwargs["verbosity"] = config.verbosity
         if self.enable_logprobs is None:
             kwargs["enable_logprobs"] = config.enable_logprobs
         if kwargs:

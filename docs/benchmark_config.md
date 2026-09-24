@@ -49,6 +49,11 @@ runs:
 | `save_dir` | string | Directory path where output artifacts and execution metrics are saved. Also used for CodeCarbon results. Default: `./output`. |
 | `enable_codecarbon` | boolean | Enables CodeCarbon emissions/consumption measurements. Output directory is set via `save_dir`. |
 | `enable_storage` | boolean or null | Enables persisted workflow state and generated visualization images under `save_dir/storage`. If omitted, benchmark commands disable it. |
+| `enable_reasoning` | boolean | Requests provider-supported reasoning output. |
+| `reasoning_effort` | string or null | Provider-specific reasoning effort. |
+| `reasoning_summary` | string or null | OpenAI Responses summary mode. |
+| `reasoning_max_tokens` | integer or null | Direct reasoning-token budget where supported. |
+| `verbosity` | string or null | Visible response verbosity where supported. |
 | `enable_tracing` | boolean | Enables Arize Phoenix tracing. |
 | `phoenix_endpoint` | string (URI) | Endpoint of the Arize Phoenix client. |
 | `phoenix_project_name` | string | Project name registered with the Arize Phoenix client. |
@@ -86,6 +91,11 @@ defaults:
 | `temp_min` | number (0.0–2.0) | Minimum sampling temperature limit. |
 | `temp_max` | number (0.0–2.0) | Maximum sampling temperature limit. |
 | `iterative_refinement_n` | integer (≥ 1) | Number of iterative refinement generations (optional). |
+| `enable_reasoning` | boolean | Per-agent reasoning override. |
+| `reasoning_effort` | string or null | Per-agent reasoning effort override. |
+| `reasoning_summary` | string or null | Per-agent reasoning summary override. |
+| `reasoning_max_tokens` | integer or null | Per-agent reasoning-token budget override. |
+| `verbosity` | string or null | Per-agent visible verbosity override. |
 | `top_p_min` | number (0.0–1.0) | Minimum top-p (nucleus sampling) threshold limit. |
 | `top_p_max` | number (0.0–1.0) | Maximum top-p (nucleus sampling) threshold limit. |
 | `top_k_min` | integer (≥ 1) | Minimum top-k token cutoff pool limit. |
