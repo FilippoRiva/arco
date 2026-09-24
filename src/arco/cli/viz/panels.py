@@ -1,4 +1,3 @@
-import math
 from pathlib import Path
 
 from rich.console import Group, RenderableType
@@ -9,242 +8,6 @@ from rich.table import Table
 from rich.text import Text
 
 from arco.core import Answer
-
-
-def _format_answer_subtitle(answer: Answer) -> str:
-    conf = answer.agent_config
-    subtitle_elements = []
-    if conf.n > 1:
-        idx = {"temperature": 0, "top_p": 1, "top_k": 2}[conf.bon_parameter]
-        varying_vals = [p[idx] for p in conf.get_candidate_params()]
-        subtitle_elements.append(
-            f"Best-of-{conf.n} on {conf.bon_parameter}({varying_vals})"
-        )
-        if answer.evaluation and answer.evaluation.success:
-            subtitle_elements.append(f"Eval : {round(answer.evaluation.score, 3)}")
-        else:
-            subtitle_elements.append("Eval : none")
-    else:
-        subtitle_elements.append(
-            f"Temp: {round(answer.agent_config.get_candidate_params()[0][0], 3)}"
-        )
-    if answer.gt_evaluation and answer.gt_evaluation.success:
-        subtitle_elements.append(f"GT-Eval : {round(answer.gt_evaluation.score, 3)}")
-    if conf.iterative_refinement_n > 1:
-        subtitle_elements.append(
-            f"Refinement : {conf.iterative_refinement_n}"
-        )
-    return "[dim]" + ", ".join(subtitle_elements) + "[/dim]"
-
-
-def _render_discarded_answer_panel(answer: Answer) -> Panel:
-    return Panel(
-        renderable=answer.message,
-        title="[dim cyan]Discarded[/dim cyan]",
-        subtitle=_format_answer_subtitle(answer),
-        subtitle_align="right",
-        border_style="dim",
-        expand=True,
-    )
-
-
-def render_answer(answer: Answer, verbose: bool) -> RenderableType:
-    # Build the main panel
-    group_elements = [answer.message]
-    if verbose and answer.agent_config:
-        ## Mandatory Subpanels
-        # generation_and_eval info
-        table = Table.grid(padding=(0, 2))
-        table.add_column(style="cyan")
-        table.add_column(justify="right")
-        rows = [
-            (
-                "Ground-Truth eval",
-                f"{answer.gt_evaluation.score:.2f}"
-                if answer.gt_evaluation is not None
-                else "-",
-            ),
-            (
-                "Best-of-N eval",
-                f"{answer.evaluation.score:.2f}"
-                if answer.evaluation is not None
-                else "-",
-            ),
-            (
-                "Perplexity",
-                f"{answer.perplexity:.4f}" if answer.perplexity is not None else "-",
-            ),
-            (
-                "BC choice",
-                f"{answer.budget_controller_choice}"
-                if answer.perplexity is not None
-                else "-",
-            ),
-        ]
-        for k, v in rows:
-            table.add_row(k, v)
-        generation_and_eval_info = Panel(
-            table,
-            title="[dim]Generation and Evaluation Info[/dim]",
-            title_align="left",
-            border_style="dim",
-            expand=False,
-        )
-
-        # profiling_data
-        p = answer.profiling_data
-        table = Table.grid(padding=(0, 2))
-        table.add_column(style="cyan")
-        table.add_column(justify="right")
-        rows = [
-            (
-                "Total time",
-                f"{p.total_time:.2f} s" if p.total_time is not None else "-",
-            ),
-            ("LLM time", f"{p.llm_time:.2f} s" if p.llm_time is not None else "-"),
-            (
-                "Energy",
-                f"{p.energy_consumed_kwh:.6f} kWh"
-                if p.energy_consumed_kwh is not None
-                else "-",
-            ),
-            (
-                "CPU",
-                f"{p.cpu_energy_kwh:.6f} kWh" if p.cpu_energy_kwh is not None else "-",
-            ),
-            (
-                "GPU",
-                f"{p.gpu_energy_kwh:.6f} kWh" if p.gpu_energy_kwh is not None else "-",
-            ),
-            (
-                "RAM",
-                f"{p.ram_energy_kwh:.6f} kWh" if p.ram_energy_kwh is not None else "-",
-            ),
-            (
-                "CO₂",
-                f"{p.emissions_kg_co2:.6f} kg"
-                if p.emissions_kg_co2 is not None
-                else "-",
-            ),
-        ]
-        for k, v in rows:
-            table.add_row(k, v)
-        profiling_subpanel = Panel(
-            table,
-            title="[dim]Profiling[/dim]",
-            title_align="left",
-            border_style="dim",
-            expand=False,
-        )
-
-        # perplexity
-        perplexity_text = Text()
-
-        if answer.logprobs:
-            for token, logprob in answer.logprobs:
-                try:
-                    token_ppl = math.exp(-logprob)
-                except OverflowError:
-                    token_ppl = float("inf")
-                if token_ppl < 1.2:
-                    style = "bold green"
-                elif token_ppl < 5.0:
-                    style = "yellow"
-                else:
-                    style = "bold red"
-                perplexity_text.append(token, style=style)
-        else:
-            perplexity_text = "-"
-
-        perplexity_subpanel = Panel(
-            perplexity_text,
-            title="[dim]Token Perplexity Analysis[/dim]",
-            title_align="left",
-            subtitle="[bold green]■ <1.2 (High)[/bold green] [yellow]■ <5.0 (Mid)[/yellow] [bold red]■ ≥5.0 (Low Confidence)[/bold red]",
-            subtitle_align="right",
-            border_style="dim",
-            expand=False,
-        )
-
-        # config panel
-        agent_output_subpanel = Panel(
-            Pretty(answer.agent_output, max_length=2, max_depth=2, indent_size=2),
-            title="[dim]Agent Output[/dim]",
-            title_align="left",
-            border_style="dim",
-            expand=False,
-        )
-
-        # config panel
-        config_subpanel = Panel(
-            Pretty(answer.agent_config, max_length=2, max_depth=2, indent_size=2),
-            title="[dim]Config[/dim]",
-            title_align="left",
-            border_style="dim",
-            expand=False,
-        )
-
-        group_elements += [
-            generation_and_eval_info,
-            profiling_subpanel,
-            perplexity_subpanel,
-            agent_output_subpanel,
-            config_subpanel,
-        ]
-
-        ## Optional subpanels
-        # thinking
-        if answer.thinking:
-            thinking_subpanel = Panel(
-                answer.thinking,
-                title="[dim]Thinking[/dim]",
-                title_align="left",
-                border_style="dim",
-                expand=False,
-            )
-            group_elements += [thinking_subpanel]
-
-        # error messages
-        if answer.error:
-            error_subpanel = Panel(
-                answer.error,
-                title="[red]Error Message[/red]",
-                title_align="left",
-                border_style="red",
-                expand=False,
-            )
-            group_elements += [error_subpanel]
-
-        # Create a subpanel for discarded answers
-        if answer.agent_config.n > 1:
-            group_elements.append(
-                Panel(
-                    Group(
-                        *[
-                            _render_discarded_answer_panel(discarded_answer)
-                            for discarded_answer in (
-                                answer.discarded_bon_answers
-                                if answer.discarded_bon_answers
-                                else []
-                            )
-                        ]
-                    ),
-                    title="[dim]Discarded Answer[/dim]",
-                    title_align="left",
-                    border_style="dim",
-                    expand=False,
-                )
-            )
-
-        content = Group(*group_elements)
-
-    else:
-        content = answer.message
-
-    return Group(
-        Rule(title=f"[bold cyan]{answer.agent_id}[/bold cyan]", style="cyan"),
-        content,
-    )
 
 
 def _artifact_link(path: str) -> Text:
@@ -268,14 +31,33 @@ def _verbose_output(output: dict) -> dict:
     return {key: _verbose_output_value(key, value) for key, value in output.items()}
 
 
-def _verbose_metrics_table(answer: Answer) -> Table:
-    config = answer.agent_config
-    temperature, top_p, top_k = config.get_candidate_params()[0]
+def _sampling_label(answer: Answer) -> str:
+    """Return the sampling settings actually used for this answer.
+
+    Best-of-N candidates store their concrete values because their shared
+    ``AgentConfig`` only contains the configured range, not the value selected
+    for an individual candidate. Older persisted answers fall back to the
+    first configured candidate and are explicitly labelled as configured.
+    """
+    params = answer.generation_params
+    configured = False
+    if params is None:
+        params = answer.agent_config.get_candidate_params()[0]
+        configured = answer.agent_config.n > 1
+    temperature, top_p, top_k = params
     sampling = f"temperature={temperature}"
     if top_p is not None:
         sampling += f", top_p={top_p}"
     if top_k is not None:
         sampling += f", top_k={top_k}"
+    if configured:
+        sampling += " (configured)"
+    return sampling
+
+
+def _verbose_metrics_table(answer: Answer) -> Table:
+    config = answer.agent_config
+    sampling = _sampling_label(answer)
 
     evaluation = (
         f"{answer.evaluation.score:.3f}" if answer.evaluation is not None else "-"
@@ -295,7 +77,12 @@ def _verbose_metrics_table(answer: Answer) -> Table:
     table.add_row("Sampling", sampling, "Best-of-N", str(config.n))
     table.add_row(
         "Options",
-        f"reasoning={config.enable_reasoning}, logprobs={config.enable_logprobs}",
+        (
+            f"reasoning={config.enable_reasoning}, "
+            f"effort={config.reasoning_effort or 'default'}, "
+            f"summary={config.reasoning_summary or 'default'}, "
+            f"logprobs={config.enable_logprobs}"
+        ),
         "Refinement",
         str(config.iterative_refinement_n),
     )
@@ -375,14 +162,26 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
             ]
         )
 
-    if answer.agent_config.n > 1 and answer.discarded_bon_answers:
+    if answer.discarded_bon_answers:
         discarded = Table.grid(padding=(0, 2), expand=True)
         discarded.add_column(style="dim", no_wrap=True)
-        discarded.add_column()
+        discarded.add_column(ratio=4)
+        discarded.add_column(style="dim", no_wrap=True)
+        discarded.add_column(ratio=2)
         for index, candidate in enumerate(answer.discarded_bon_answers, start=1):
+            evaluation = (
+                f"{candidate.evaluation.score:.3f}"
+                if candidate.evaluation is not None
+                else "-"
+            )
+            summary = candidate.message or "No summary returned."
+            if candidate.error:
+                summary += f" ({candidate.error})"
             discarded.add_row(
-                f"Candidate {index}",
-                candidate.message or candidate.error or "No summary returned.",
+                f"Discarded {index}",
+                summary,
+                f"Evaluation: {evaluation}",
+                f"Sampling: {_sampling_label(candidate)}",
             )
         sections.extend([Rule("Discarded candidates", style="dim"), discarded])
 
@@ -391,7 +190,6 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
         Panel(
             Group(*sections),
             title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
-            subtitle=_format_answer_subtitle(answer),
             subtitle_align="right",
             border_style="red" if answer.error else "cyan",
             padding=(1, 2),
@@ -400,7 +198,7 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
     )
 
 
-def render_answer_minimal(answer: Answer) -> Text:
+def render_answer(answer: Answer) -> Text:
     """Render the normal run transcript as a compact, plain-text row."""
     row = Text()
     if answer.error:
@@ -418,70 +216,3 @@ def render_answer_minimal(answer: Answer) -> Text:
     if answer.error:
         row.append(f"  ({answer.error})", style="red")
     return row
-
-
-def render_answer_compact(answer: Answer) -> Panel:
-    metrics = []
-
-    if answer.evaluation and answer.evaluation.success:
-        metrics.append(f"[cyan]Eval[/cyan] {answer.evaluation.score:.3f}")
-    if answer.gt_evaluation and answer.gt_evaluation.success:
-        metrics.append(f"[green]GT[/green] {answer.gt_evaluation.score:.3f}")
-    if getattr(answer, "perplexity", None) is not None:
-        metrics.append(f"[yellow]PPL[/yellow] {answer.perplexity:.2f}")
-    if answer.agent_config.iterative_refinement_n > 1:
-        metrics.append(
-            f"[magenta]Refinement[/magenta] {answer.agent_config.iterative_refinement_n}"
-        )
-    content = " • ".join(metrics)
-    if not content:
-        content = "[dim]Completed[/dim]"
-    return Panel(
-        content,
-        title=f"[bold cyan]{answer}[/bold cyan]",
-        border_style="cyan",
-        expand=False,
-    )
-
-
-def render_energy_impact_panel(energy_dict: dict[str, float]) -> Panel:
-    """Pretty prints CodeCarbon metrics from a structured energy_dict."""
-    if not energy_dict:
-        return Panel("No energy dict")
-
-    ed = energy_dict
-    # Extract metrics using your exact dictionary keys
-    emissions = ed.get("emissions_kg_co2", 0.0)
-    total_energy = ed.get("energy_consumed_kwh", 0.0)
-    duration = ed.get("duration_sec", 0.0)
-
-    cpu_power = ed.get("cpu_power_w", 0.0)
-    cpu_energy = ed.get("cpu_energy_kwh", 0.0)
-
-    gpu_power = ed.get("gpu_power_w", 0.0)
-    gpu_energy = ed.get("gpu_energy_kwh", 0.0)
-
-    ram_energy = ed.get("ram_energy_kwh", 0.0)
-
-    # Build a grid for formatting
-    grid = Table.grid(expand=True)
-    grid.add_column(style="bold green", width=22)
-    grid.add_column(style="cyan")
-
-    grid.add_row("🌱 Carbon Footprint:", f"{emissions:.6f} kg CO₂eq")
-    grid.add_row("⚡ Total Energy:", f"{total_energy:.6f} kWh")
-    grid.add_row("⏱️ Duration:", f"{duration:.2f} seconds")
-    grid.add_row("", "")  # Spacer
-    grid.add_row("💻 CPU Core:", f"{cpu_power:.2f} W  ({cpu_energy:.6f} kWh)")
-    if gpu_power > 0 or gpu_energy > 0:
-        grid.add_row("🎮 GPU Core:", f"{gpu_power:.2f} W  ({gpu_energy:.6f} kWh)")
-    grid.add_row("💾 RAM Overhead:", f"Pooled  ({ram_energy:.6f} kWh)")
-
-    # Render unified layout
-    return Panel(
-        grid,
-        title="[bold green]📊 Codecarbon Report Summary[/bold green]",
-        border_style="green",
-        padding=(1, 2),
-        expand=False,
-    )

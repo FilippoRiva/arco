@@ -6,11 +6,9 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
-from arco.cli.console import console
 from arco.cli.viz.panels import (
-    render_answer_minimal,
+    render_answer,
     render_answer_verbose,
-    render_energy_impact_panel,
 )
 from arco.cli.viz.status import RunStatusPanel
 
@@ -55,7 +53,6 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
     live = Live(status, refresh_per_second=8, screen=False)
     live.__enter__()
 
-    energy_dict: dict = {}
     for update in events:
         event_type = update["event"]
         if event_type == "check_connection":
@@ -74,14 +71,14 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
             live.console.print(
                 render_answer_verbose(last_answer)
                 if verbose
-                else render_answer_minimal(last_answer)
+                else render_answer(last_answer)
             )
             if not verbose:
                 live.console.print()
 
             status.set(f"{last_answer.agent_id} ended its run ")
         elif event_type == "codecarbon":
-            energy_dict = update["energy_dict"]
+            pass
         elif event_type == "completed":
             status.stop()
             total_time = update["state"].global_profiling_data.total_time
@@ -113,9 +110,6 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
             else:
                 live.console.print(Text(f"✗ {update['message']}", style="bold red"))
                 live.console.print()
-
-    if energy_dict and verbose:
-        console.print(render_energy_impact_panel(energy_dict))
 
     # Fallback when model fails completely
     if not last_state:
