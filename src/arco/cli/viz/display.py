@@ -98,6 +98,7 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
                 completed.append("Completed", style="bold")
                 if total_time is not None:
                     completed.append(f"  {total_time:.2f}s", style="dim")
+                completed.append("\n")
                 live.console.print(completed)
         elif event_type == "error":
             if verbose:

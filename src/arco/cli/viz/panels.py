@@ -200,31 +200,23 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
 
 
 def render_answer(answer: Answer) -> RenderableType:
-    """Render an agent answer as formatted Markdown in a terminal panel."""
-    sections: list[RenderableType] = [
-        Markdown(answer.message or "No summary returned."),
-    ]
+    """Render the normal run transcript without wrapping it in a panel."""
+    renderables: list[RenderableType] = []
+    if answer.error:
+        icon = Text("✗ ", style="bold red")
+    else:
+        icon = Text("✓ ", style="bold green")
+    renderables.append(icon + Text(str(answer.agent_id), style="bold cyan"))
+
+    if answer.message:
+        renderables.extend([Text("  "), Markdown(answer.message)])
 
     image_path = answer.agent_output.get("image_path")
     if image_path:
-        sections.extend(
-            [
-                Text("Stored visualization", style="dim"),
-                _artifact_link(image_path),
-            ]
+        renderables.extend(
+            [Text("\n  image: ", style="dim") + _artifact_link(image_path)]
         )
     if answer.error:
-        sections.extend(
-            [
-                Text("Error", style="bold red"),
-                Text(answer.error, style="red"),
-            ]
-        )
+        renderables.append(Text(f"`\n  ({answer.error})", style="red"))
 
-    return Panel(
-        Group(*sections),
-        title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
-        border_style="red" if answer.error else "cyan",
-        padding=(0, 1),
-        expand=True,
-    )
+    return Group(*renderables)
