@@ -16,7 +16,6 @@ from arco.core import (
     WorkflowFactory,
     evaluate_state_with_benchmark_entry,
 )
-from arco.core.agent_type import AgentType
 from arco.data import BenchmarkDataset
 from arco.logs import initialize as init_logging
 
@@ -222,33 +221,40 @@ def aggregate_results(
 
         traces = result_df["execution_trace"].apply(json.loads)
 
-        # agent -> metric -> list of values
-        agents_summary_stats = collections.defaultdict(
-            lambda: collections.defaultdict(list[tuple[AgentType, float]])
+        # agent -> metric -> list of numeric values
+        agents_summary_stats: dict[str, dict[str, list[float]]] = collections.defaultdict(
+            lambda: collections.defaultdict(list)
         )
 
         for trace in traces:
             for answer in trace["answers"]:
-                agent = answer["agent_type"]
+                agent = str(answer["agent_type"])
 
                 for metric in to_aggregate:
                     value = answer.get(metric)
 
-                    # Ignore missing values
+                    # Ignore missing values. Benchmark metrics are numeric,
+                    # but JSON/pandas leaves their runtime type unknown here.
                     if value is not None:
-                        agents_summary_stats[agent][metric].append(value)
+                        agents_summary_stats[agent][metric].append(float(value))
 
-        # Compute averages
-        for agent, metrics in agents_summary_stats.items():
-            for metric, values in metrics.items():
-                metrics[metric] = sum(values) / len(values)
+        # Compute averages into a separate structure so the input lists retain
+        # their declared type while they are being accumulated.
+        averages_by_agent: dict[str, dict[str, float]] = {
+            agent: {
+                metric: sum(values) / len(values)
+                for metric, values in metrics.items()
+                if values
+            }
+            for agent, metrics in agents_summary_stats.items()
+        }
 
         run_summaries.append(
             {
                 "name": name,
                 "description": description,
                 "changes": changes,
-                "metrics_by_agent": json.dumps(agents_summary_stats),
+                "metrics_by_agent": json.dumps(averages_by_agent),
             }
         )
 

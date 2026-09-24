@@ -1,5 +1,6 @@
 import csv
 import os
+from typing import cast
 
 import pandas as pd
 from pandas import Series
@@ -118,9 +119,12 @@ def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
 
     df_copy: pd.DataFrame = df.copy()
     for col in df_copy.columns:
-        df_column: pd.Series = df_copy[col]
+        # The runtime contract of this normalizer assumes unique DataFrame
+        # columns. Pandas' type stubs must also account for duplicate columns,
+        # so ``df[col]`` is typed as ``Series | DataFrame``.
+        df_column = cast(pd.Series, df_copy[col])
 
-        numeric: Series = pd.to_numeric(df_column, errors="coerce")
+        numeric = cast(Series, pd.to_numeric(df_column, errors="coerce"))
         # Handle datetime dtype first (before numeric, since datetime64 is numeric-castable)
         if pd.api.types.is_datetime64_any_dtype(df_column):
             df_copy[col] = df_column.dt.strftime("%Y-%m-%d")
@@ -133,8 +137,9 @@ def normalize_dataframe_values(df: pd.DataFrame) -> pd.DataFrame:
         else:
             # Try datetime (for string columns like "2023-01-01")
             try:
-                datetime: Series = pd.to_datetime(
-                    df_column, errors="coerce", format="mixed"
+                datetime = cast(
+                    Series,
+                    pd.to_datetime(df_column, errors="coerce", format="mixed"),
                 )
                 if datetime.notna().all() and not df_column.isna().all():
                     df_copy[col] = datetime.map(lambda x: x.strftime("%Y-%m-%d"))

@@ -63,7 +63,7 @@ class Graph(StateGraph):
         """Return a copy of the internal agent registry."""
         return self._agents.copy()
 
-    def add_conditional_edges(
+    def add_conditional_edges(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         source: Agent | str,
         path: Callable[..., Hashable | Sequence[Hashable]]

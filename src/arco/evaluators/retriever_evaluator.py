@@ -1,5 +1,6 @@
 import logging
 from io import StringIO
+from typing import cast
 
 import pandas as pd
 
@@ -80,11 +81,14 @@ def _compare_dataframes_iou(
     return matched / total if total > 0 else 0.0
 
 
-def _apply_gt_alignment(answer: Answer, canonic_cols: list):
+def _apply_gt_alignment(answer: Answer, canonic_cols: list[str]):
     """Rename and reorder df columns to match canonical_cols without LLM."""
     if answer is None or "data_df" not in answer.agent_output:
-        raise AgentException(missing_dependencies_from="Retriever")
-    df_to_align: pd.DataFrame = answer.agent_output["data_df"]
+        raise AgentException(missing_dependencies_from=AgentType("Retriever"))
+    raw_df = answer.agent_output.get("data_df")
+    if not isinstance(raw_df, pd.DataFrame):
+        raise AgentException(missing_dependencies_from=AgentType("Retriever"))
+    df_to_align = raw_df
     current_cols = list(df_to_align.columns)
     if len(current_cols) == len(canonic_cols):
         # Case-insensitive rename
@@ -103,8 +107,10 @@ def _apply_gt_alignment(answer: Answer, canonic_cols: list):
             df_to_align.columns = canonic_cols
     # Reorder to canonical order if all columns present
     if set(canonic_cols).issubset(set(df_to_align.columns)):
-        # pyrefly: ignore [bad-assignment]
-        df_to_align = df_to_align[canonic_cols]
+        # A list-column selection is a DataFrame at runtime. Pandas' stubs
+        # retain a Series possibility because duplicate-column selection is
+        # also supported.
+        df_to_align = cast(pd.DataFrame, df_to_align[canonic_cols])
 
     # Normalize
     normalized_df: pd.DataFrame = normalize_dataframe_values(df_to_align)
@@ -146,19 +152,24 @@ class RetrieverEvaluator(Evaluator):
         if len(answers) == 1:
             return [Evaluation(score=1.0)]
 
-        dfs = [a.agent_output["data_df"] for a in answers if a is not None]
+        dfs: list[pd.DataFrame | None] = []
+        for answer in answers:
+            if answer is None:
+                continue
+            data_df = answer.agent_output.get("data_df")
+            dfs.append(data_df if isinstance(data_df, pd.DataFrame) else None)
 
         evaluations = []
-        for i in range(len(dfs)):
-            if dfs[i] is None:
+        for i, df in enumerate(dfs):
+            if df is None:
                 evaluations.append(Evaluation(score=0.0))
                 continue
             total = 0.0
             count = 0
-            for j in range(len(dfs)):
-                if i == j or dfs[j] is None:
+            for j, other_df in enumerate(dfs):
+                if i == j or other_df is None:
                     continue
-                total += _compare_dataframes_iou(dfs[i], dfs[j])
+                total += _compare_dataframes_iou(df, other_df)
                 count += 1
             evaluations.append(Evaluation(score=total / count if count > 0 else 0.0))
 

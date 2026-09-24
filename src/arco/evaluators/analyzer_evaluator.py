@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from arco.core import Answer, Evaluation, Evaluator, State, get_llm
+from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
@@ -122,23 +122,34 @@ class AnalyzerEvaluator(Evaluator):
         judge_model: str,
         llm_accumulator=None,
     ) -> Evaluation:
-        last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
-        analysis = last_analyzer_answer.agent_output.get("analysis", None)
-        if not analysis:
+        last_analyzer_answer: Answer | None = state.get_last_answer(
+            AgentType("Analyzer")
+        )
+        if not last_analyzer_answer:
             return Evaluation(score=0)
 
-        llm = get_llm(
-            provider=judge_provider,
-            model=judge_model,
-            llm_accumulator=llm_accumulator,
-        )
+        analysis_value = last_analyzer_answer.agent_output.get("analysis")
+        if not isinstance(analysis_value, str) or not analysis_value:
+            return Evaluation(score=0)
+        analysis = analysis_value
+
+        extra_args = {}
+        if llm_accumulator:
+            extra_args.update({"llm_accumulator": llm_accumulator})
+        llm = get_llm(provider=judge_provider, model=judge_model, **extra_args)
 
         prompt = state.prompt
-        last_retriever_answer: Answer = state.get_last_answer("Retriever")
-        last_analyzer_answer: Answer = state.get_last_answer("Analyzer")
-        sql_query: str = last_retriever_answer.agent_output["sql_query"]
-        data: str = last_retriever_answer.agent_output["data_str"]
-        analysis: str = last_analyzer_answer.agent_output["analysis"]
+        last_retriever_answer: Answer | None = state.get_last_answer(
+            AgentType("Retriever")
+        )
+        if not last_retriever_answer:
+            return Evaluation(score=0)
+        sql_query_value = last_retriever_answer.agent_output.get("sql_query")
+        data_value = last_retriever_answer.agent_output.get("data_str")
+        if not isinstance(sql_query_value, str) or not isinstance(data_value, str):
+            return Evaluation(score=0)
+        sql_query = sql_query_value
+        data = data_value
 
         truncated_data = data[:2000] if len(data) > 2000 else data
 

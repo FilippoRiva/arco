@@ -36,9 +36,7 @@ def print_benchmark_header(
         if isinstance(params, dict):
             first = True
             for param, value in params.items():
-                changes_table.add_row(
-                    agent_name if first else "", param, str(value)
-                )
+                changes_table.add_row(agent_name if first else "", param, str(value))
                 first = False
         else:
             changes_table.add_row(agent_name, "-", str(params))
@@ -57,8 +55,8 @@ PROFILE_FIELDS = [
 
 
 def _avg(values: list[float | None]) -> float:
-    values = [v for v in values if v is not None]
-    return mean(values) if values else 0.0
+    clean_values: list[float] = [v for v in values if v is not None]
+    return mean(clean_values) if clean_values else 0.0
 
 
 def print_benchmark_summary(summary: BenchmarkSummary):
@@ -165,9 +163,7 @@ def print_workflow_graph(workflow: Workflow):
     console.print(Text(str(workflow), style="cyan"))
 
 
-def print_run_overview(
-    config: Config, workflow: Workflow, verbose: bool | None = None
-):
+def print_run_overview(config: Config, workflow: Workflow, verbose: bool | None = None):
     """Print configuration and workflow side by side.
 
     This is deliberately borderless so the overview reads as one piece of

@@ -1,7 +1,7 @@
 import json
 from typing import TYPE_CHECKING, Any
 
-from arco.core import Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
+from arco.core import AgentType, Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
@@ -172,14 +172,22 @@ Return ONLY valid JSON:
         Uses an LLM judge to score chart quality based on data suitability,
         axis mapping, code quality, and goal alignment.
         """
+        extra_args = {}
+        if llm_accumulator:
+            extra_args.update({"llm_accumulator": llm_accumulator})
         llm = llm_tools.get_llm(
-            provider=judge_provider,
-            model=judge_model,
-            llm_accumulator=llm_accumulator,
+            provider=judge_provider, model=judge_model, **extra_args
         )
 
-        last_visualizer_answer: Answer = state.get_last_answer("Visualizer")
-        last_retriever_answer: Answer = state.get_last_answer("Retriever")
+        last_visualizer_answer: Answer | None = state.get_last_answer(
+            AgentType("Visualizer")
+        )
+        last_retriever_answer: Answer | None = state.get_last_answer(
+            AgentType("Retriever")
+        )
+        if not last_visualizer_answer or not last_retriever_answer:
+            return Evaluation(score=0)
+
         data_df = last_retriever_answer.agent_output["data_df"]
 
         if data_df is not None and hasattr(data_df, "columns"):
@@ -210,7 +218,7 @@ Return ONLY valid JSON:
         overall_score = compute_weighted_score(evaluation_dict, _NO_GT_WEIGHTS)
         return Evaluation(score=overall_score)
 
-    def _batch_eval(self, states: list[State]) -> list[Evaluation]:
+    def _batch_eval(self, states: list[State]) -> list[Evaluation] | None:
         return None
 
     def _gt_eval(self, answer: Answer, gt_data, judge_provider: str, judge_model: str):

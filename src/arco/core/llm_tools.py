@@ -299,9 +299,7 @@ class LLM:
         self, prompt: str, execution_error: str | None
     ) -> LLMAnswer:
         if self.last_answer is None:
-            raise ValueError(
-                "Iterative refinement requires a previous answer"
-            )
+            raise ValueError("Iterative refinement requires a previous answer")
         if execution_error:
             suffix = self._ITERATIVE_REFINEMENT_ERROR_SUFFIX.format(
                 previous_response=self.last_answer.text,
@@ -447,7 +445,7 @@ def get_llm(
         # Optional parameters are not uniformly supported by every routed
         # provider. Let OpenRouter choose a compatible endpoint instead of
         # rejecting the whole request when one provider lacks a parameter.
-        openrouter_extra_body = {
+        openrouter_extra_body: dict[str, Any] = {
             "provider": {
                 "require_parameters": False,
             }
@@ -465,7 +463,7 @@ def get_llm(
                 )
             # OpenRouter accepts either an effort level or a direct reasoning
             # token budget, but not both in the same request.
-            reasoning_config = {"enabled": True}
+            reasoning_config: dict[str, bool | int | str] = {"enabled": True}
             if reasoning_max_tokens is not None:
                 reasoning_config["max_tokens"] = reasoning_max_tokens
             else:
@@ -476,7 +474,7 @@ def get_llm(
             api_key=SecretStr(api_key),
             base_url=openrouter_url,
             temperature=temperature,
-            max_tokens=max_tokens,
+            max_completion_tokens=max_tokens,
             # ChatOpenAI drops OpenRouter reasoning fields from streaming
             # deltas. Use one non-streamed response when reasoning is enabled
             # so _create_chat_result can preserve the final reasoning field.

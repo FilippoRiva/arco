@@ -51,12 +51,6 @@ class Agent(ABC):
         """
         return None
 
-    @evaluator.setter
-    def evaluator(self, evaluator: Evaluator):
-        if isinstance(evaluator, Evaluator):
-            return evaluator
-        return self.evaluator
-
     @abstractmethod
     def core(self, state: State, llm: LLM) -> State:
         """Implement the agent's core logic.
