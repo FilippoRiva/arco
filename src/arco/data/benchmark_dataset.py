@@ -2,7 +2,7 @@ import json
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self
 
 from arco.core import AgentType
 from arco.core.profiling_data import ProfilingData
@@ -22,7 +22,7 @@ class BenchmarkSummary:
 @dataclass(frozen=True, slots=True)
 class TraceElement:
     agent_type: AgentType
-    data: dict[str, str | int | float | dict]
+    data: dict[str, Any]
 
     def to_dict(self) -> dict:
         return {
