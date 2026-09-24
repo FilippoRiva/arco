@@ -17,7 +17,15 @@ def initialize_workflow(
     if yaml_path:
         config = Config.from_yaml(yaml_path)
     elif workflow_name:
-        config = Config(workflow=workflow_name)
+        workflow_cls = WorkflowFactory.all()[workflow_name]
+        default_config_path = getattr(workflow_cls, "default_config_path", None)
+        if default_config_path:
+            config = Config.from_yaml(default_config_path)
+            # The workflow selection remains authoritative if the config file
+            # has a stale or omitted workflow value.
+            config = config.set(workflow=workflow_name)
+        else:
+            config = Config(workflow=workflow_name)
     else:
         config = Config(workflow=get_workflow_list()[0])
     workflow = WorkflowFactory.get(config=config)

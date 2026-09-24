@@ -5,7 +5,7 @@ def load_workflows() -> list[str]:
     from arco.core import WorkflowFactory
 
     # Silent load of library defined workflows (it loads everything if dependencies are available)
-    library_workflows_modules: list[str] = ["sales", "research"]
+    library_workflows_modules: list[str] = ["sales", "research", "arco"]
     for module in library_workflows_modules:
         try:
             importlib.import_module(f".{module}", package="arco.workflows")

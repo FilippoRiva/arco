@@ -37,6 +37,9 @@ class Workflow(ABC):
     """
 
     description: ClassVar[str] = "No description available."
+    # Optional config loaded when this workflow is selected without an
+    # explicit --config path. Explicit user config always takes precedence.
+    default_config_path: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs):
         """Register concrete subclasses in the WorkflowFactory registry.
