@@ -22,6 +22,71 @@ from arco.core.graph import END
 logger = logging.getLogger(__name__)
 
 
+class _ReadablePageParser(HTMLParser):
+    """Extract readable text from an HTML page while skipping boilerplate code."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.title = ""
+        self._skip_depth = 0
+        self._in_title = False
+        self._SKIP_TAGS = {"script", "style", "noscript", "template", "svg"}
+        self._BLOCK_TAGS = {
+            "address",
+            "article",
+            "br",
+            "dd",
+            "div",
+            "dl",
+            "dt",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "li",
+            "main",
+            "p",
+            "pre",
+            "section",
+            "table",
+            "td",
+            "th",
+            "tr",
+            "ul",
+        }
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        tag = tag.lower()
+        if tag in self._SKIP_TAGS:
+            self._skip_depth += 1
+        elif tag == "title" and self._skip_depth == 0:
+            self._in_title = True
+        elif tag in self._BLOCK_TAGS and self._skip_depth == 0:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        tag = tag.lower()
+        if tag in self._SKIP_TAGS and self._skip_depth:
+            self._skip_depth -= 1
+        elif tag == "title":
+            self._in_title = False
+        elif tag in self._BLOCK_TAGS and self._skip_depth == 0:
+            self.parts.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth:
+            return
+        text = " ".join(data.split())
+        if not text:
+            return
+        if self._in_title:
+            self.title += f" {text}"
+        self.parts.append(text)
+
+
 class _DuckDuckGoParser(HTMLParser):
     """Extract titles, links, and snippets from DuckDuckGo HTML results."""
 
@@ -103,6 +168,60 @@ def web_search(query: str, max_results: int = 5) -> str:
     )
 
 
+@tool
+def fetch_web_page(url: str, max_chars: int = 12000) -> str:
+    """Fetch a web page and return its readable text for detailed analysis.
+
+    Use this after ``web_search`` when exact page content is needed instead of
+    relying only on a search-result snippet. HTML markup, scripts, and styles
+    are removed. The result is truncated to keep the context manageable.
+    """
+    parsed = urlparse(url.strip())
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return "Page fetch failed: URL must use http or https."
+
+    max_chars = max(1000, min(max_chars, 30000))
+    try:
+        response = requests.get(
+            url,
+            headers={
+                "User-Agent": "arco-research/0.1 (web page reader)",
+                "Accept": "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1",
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        logger.warning("Page fetch failed for %s: %s", url, exc)
+        return f"Page fetch failed for {url!r}: {exc}"
+
+    content_type = response.headers.get("content-type", "").lower()
+    if "html" not in content_type and "text/plain" not in content_type:
+        return (
+            f"Page fetch skipped for {url!r}: unsupported content type "
+            f"{content_type or 'unknown'}."
+        )
+
+    parser = _ReadablePageParser()
+    try:
+        parser.feed(response.text)
+        parser.close()
+    except (AssertionError, ValueError) as exc:
+        logger.warning("Could not parse page %s: %s", url, exc)
+        return f"Page fetch failed for {url!r}: could not parse HTML"
+
+    text = " ".join(" ".join(parser.parts).split())
+    if not text:
+        return f"No readable text found at {url!r}."
+
+    title = " ".join(parser.title.split())
+    prefix = f"Title: {title}\n" if title else ""
+    truncated = len(text) > max_chars
+    content = text[:max_chars]
+    suffix = "\n… <page content truncated>" if truncated else ""
+    return f"URL: {url}\n{prefix}Content:\n{content}{suffix}"
+
+
 class WebSearchResearcher(Workflow):
     """Route a request through web research, summarization, or knowledge."""
 
@@ -143,22 +262,27 @@ class WebSearchResearcher(Workflow):
             agent_name="ResearchRouter",
             role="""You are the routing agent for a web-research workflow.
 The workflow contains three specialist agents:
-- WebSearch: can search the public web and should be used for current or source-based questions.
+- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.
 - Summary: has no tools and synthesizes the web-search results already in the workflow context.
 - CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.
 
 Choose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.
-Return ONLY JSON: {"route": "WebSearch"}, {"route": "Summary"}, or {"route": "CommonKnowledge"}.""",
+
+You are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:
+{"route": "WebSearch"}
+{"route": "Summary"}
+{"route": "CommonKnowledge"}""",
             tools=[],
         )
         researcher = ToolUseAgent(
             agent_name="WebSearch",
-            role="""You are the web-search specialist.
-Help answer the user's request by searching the public web with the web_search tool. 
+            role="""You are the web and academic research specialist.
+Use web_search for current facts, official documentation, news, and broad public-web research.
+Use fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.
 Search multiple times when different queries or source types are needed.
-Prefer authoritative and recent sources, preserve URLs and useful snippets, and do not invent facts. 
+Prefer primary and authoritative sources, preserve stable URLs, and do not invent facts.
 Once enough evidence has been collected, provide a concise research result with the sources for the Summary agent.""",
-            tools=[web_search],
+            tools=[web_search, fetch_web_page],
         )
         summary = ToolUseAgent(
             agent_name="Summary",
@@ -196,4 +320,8 @@ Do not pretend to have performed web research.""",
         graph.add_agent_edge(common_knowledge, END)
 
 
-__all__ = ["WebSearchResearcher", "web_search"]
+__all__ = [
+    "WebSearchResearcher",
+    "fetch_web_page",
+    "web_search",
+]
