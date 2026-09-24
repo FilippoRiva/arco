@@ -5,6 +5,7 @@
 # Test for the storage functionality
 
 global:
+  run_id: "test_storage"
   workflow: "planned_sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
   enable_storage: true

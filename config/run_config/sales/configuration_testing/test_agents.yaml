@@ -5,6 +5,7 @@
 # Test for the agents section
 
 global:
+  run_id: "test_agents"
   workflow: "planned_sales"
   prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
   default_provider: openai
