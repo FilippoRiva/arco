@@ -37,8 +37,9 @@ class ToolUseAgent(Agent):
     The agent sends ``role`` as its system instruction and uses the workflow
     prompt as the user message. When the model emits tool calls, each call is
     executed and its result is appended as a ``ToolMessage`` before the model
-    is invoked again. The loop ends when the model returns a normal response
-    or ``max_tool_iterations`` is reached.
+    is invoked again. The loop ends when the model returns a normal response.
+    If ``max_tool_iterations`` is reached, the model is reprompted without
+    tools to analyze the tool calls and results collected so far.
 
     Tools may be LangChain ``BaseTool`` instances (including tools created
     with ``@langchain_core.tools.tool``) or ordinary callables. The same tool
@@ -150,9 +151,27 @@ class ToolUseAgent(Agent):
                     )
                 )
         else:
-            raise RuntimeError(
-                f"Tool-use loop exceeded {self.max_tool_iterations} iterations"
+            # The model used all available tool iterations. Give it one final
+            # chance to synthesize the results already collected instead of
+            # failing the whole agent execution. Binding an empty tool list
+            # prevents this final analysis from starting another tool loop.
+            messages.append(
+                HumanMessage(
+                    content=(
+                        "The maximum number of tool calls has been reached. "
+                        "Do not call any more tools. Analyze the tool calls and "
+                        "their results already executed above, then provide the "
+                        "best final answer to the user's request."
+                    )
+                )
             )
+            analysis_llm = llm.bind_tools([])
+            response = analysis_llm.invoke(messages)
+            if not isinstance(response, AIMessage):
+                raise TypeError(
+                    f"Tool-use model returned {type(response).__name__}, expected AIMessage"
+                )
+            final_response = response
 
         if final_response is None:
             raise RuntimeError("Tool-use agent did not receive a model response")
