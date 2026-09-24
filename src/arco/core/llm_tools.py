@@ -416,6 +416,12 @@ def get_llm(
                 openai_kwargs["top_p"] = top_p
             if enable_logprobs:
                 openai_kwargs["logprobs"] = True
+            # Some OpenAI reasoning models reject function tools on Chat
+            # Completions unless reasoning_effort is explicitly set to
+            # "none". Forward an explicitly configured value even when
+            # provider-native reasoning is disabled.
+            if reasoning_effort is not None:
+                openai_kwargs["reasoning_effort"] = reasoning_effort
         if enable_reasoning:
             if enable_logprobs:
                 logger.debug(

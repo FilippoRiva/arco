@@ -1,4 +1,7 @@
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+from rich.text import Text
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace, _SubParsersAction
@@ -41,8 +44,19 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     console.print()
     try:
         analyze_benchmark(benchmark_dir)
+        dashboard_path = (
+            Path(benchmark_dir).expanduser().resolve()
+            / "analysis"
+            / "dashboard.html"
+        )
         console.print()
         console.print("[bold green]✓ Analysis complete[/bold green]")
+        console.print(
+            Text(
+                f"  Open dashboard  {dashboard_path}",
+                style=f"bold cyan underline link {dashboard_path.as_uri()}",
+            )
+        )
     except Exception as e:
         console.print(f"[bold red]✗ Analysis failed[/bold red]  {e}")
         raise

@@ -252,9 +252,10 @@ class Config:
 
             for agent in changes:
                 agent_type = AgentType(agent)
-                new_configs[agent_type] = new_configs[agent_type].update(
-                    changes.get(agent)
+                base_config = new_configs.get(
+                    agent_type, new_configs[AgentType("__default__")]
                 )
+                new_configs[agent_type] = base_config.update(changes.get(agent))
 
             run_config = replace(
                 run_config, agent_configs=MappingProxyType(new_configs)

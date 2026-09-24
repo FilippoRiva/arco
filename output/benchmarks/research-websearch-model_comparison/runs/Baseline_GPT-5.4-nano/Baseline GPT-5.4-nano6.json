@@ -1,0 +1,6643 @@
+{
+  "prompt": "What are the main differences between PostgreSQL 17 and PostgreSQL 18?",
+  "run_id": "Baseline GPT-5.4-nano6",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.1444091796875e-05
+        ],
+        [
+          "route",
+          -2.86102294921875e-06
+        ],
+        [
+          "\":\"",
+          -4.1961669921875e-05
+        ],
+        [
+          "Web",
+          -0.00016689300537109375
+        ],
+        [
+          "Search",
+          -5.7220458984375e-06
+        ],
+        [
+          "\"}",
+          3.814697265625e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000375118933322,
+      "profiling_data": {
+        "total_time": 3.1744163690000278,
+        "llm_time": 1.636134361000586,
+        "energy_consumed_kwh": 6.840203288365748e-06,
+        "cpu_energy_kwh": 8.934939105870855e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.946709377778663e-06,
+        "emissions_kg_co2": 2.2621783511217437e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "Here are the main user-visible differences between **PostgreSQL 17** and **PostgreSQL 18**, based on the official PostgreSQL release notes.\n\n## Major new capabilities in PostgreSQL 18\n- **Asynchronous I/O (AIO) subsystem** to improve performance for operations like sequential scans, bitmap heap scans, VACUUM, etc. (enabled/controlled via new server settings such as `io_method`, `io_combine_limit`, `io_max_combine_limit`).  \n- **`pg_upgrade` retains optimizer statistics**, reducing the need to redo work after upgrade.\n- **\u201cSkip scan\u201d support for multicolumn B-tree lookups** (uses multicolumn indexes in more cases than before).\n- **New `uuidv7()`** function for generating timestamp-ordered UUIDs.\n- **Virtual generated columns**: generated values are computed during read; this is now the default behavior for generated columns.\n- **OAuth authentication support** (new auth method support).\n- **SQL \u201cRETURNING\u201d enhancements**: updated support for OLD/NEW return targets in `INSERT`, `UPDATE`, `DELETE`, and `MERGE`.\n\n## Notable compatibility / behavior changes when moving from 17 \u2192 18\n- **`initdb` default enables data checksums** (can be disabled with `--no-data-checksums`). `pg_upgrade` requires matching checksum settings.\n- **Time zone abbreviation handling changed**: the system now favors the *current session\u2019s* time zone abbreviations before checking `timezone_abbreviations`.\n- **MD5 password auth is deprecated**: MD5 password support will be removed in a future major version; setting it now emits deprecation warnings (configurable via `md5_password_warnings`).\n- **VACUUM/ANALYZE change with inheritance**: they now process inheritance children; the old behavior is available via `ONLY`.\n- **COPY/\\\\., EOF handling change for CSV**: `\\\\.` handling is tightened to avoid accidental end-of-file behavior.\n- **Other restrictions/behavior tweaks**, e.g. disallowing creation of **unlogged partitioned tables**, and changes to how certain trigger execution roles behave, plus removal of non-functional rule-privilege support.\n\n## What\u2019s \u201cdifferent\u201d at a glance (17 \u2192 18)\n- PostgreSQL 18\u2019s headline themes are **performance/IO improvements (AIO)**, **more capable indexing (skip scans)**, **new built-in SQL/feature support (uuidv7, virtual generated columns, OAuth, RETURNING enhancements)**, plus several **setup/auth/behavior compatibility changes**.\n\n## Sources (official)\n- PostgreSQL 18 Release Notes (Appendix E.6) \u2014 overview + migration incompatibilities and change sections: https://www.postgresql.org/docs/release/18/  \n- PostgreSQL 17 Release Notes (Appendix E.12) \u2014 overview of 17\u2019s major features for context: https://www.postgresql.org/docs/release/17/  \n\nIf you tell me your use case (e.g., logical replication, heavy VACUUM/partitioning, indexing patterns, auth method), I can highlight the most relevant 17\u219218 changes for your environment.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Here",
+          -0.8137178421020508
+        ],
+        [
+          " are",
+          -2.47955322265625e-05
+        ],
+        [
+          " the",
+          -5.7220458984375e-06
+        ],
+        [
+          " main",
+          -0.02694988250732422
+        ],
+        [
+          " user",
+          -0.20781326293945312
+        ],
+        [
+          "-visible",
+          -0.002353668212890625
+        ],
+        [
+          " differences",
+          -0.0020351409912109375
+        ],
+        [
+          " between",
+          -0.25826263427734375
+        ],
+        [
+          " **",
+          -0.019313812255859375
+        ],
+        [
+          "Post",
+          2.86102294921875e-06
+        ],
+        [
+          "gre",
+          -2.86102294921875e-06
+        ],
+        [
+          "SQL",
+          -1.430511474609375e-05
+        ],
+        [
+          " ",
+          1.049041748046875e-05
+        ],
+        [
+          "17",
+          -0.00034046173095703125
+        ],
+        [
+          "**",
+          -0.0018024444580078125
+        ],
+        [
+          " and",
+          -3.814697265625e-06
+        ],
+        [
+          " **",
+          -1.52587890625e-05
+        ],
+        [
+          "Post",
+          -2.47955322265625e-05
+        ],
+        [
+          "gre",
+          -1.9073486328125e-06
+        ],
+        [
+          "SQL",
+          1.1444091796875e-05
+        ],
+        [
+          " ",
+          7.62939453125e-06
+        ],
+        [
+          "18",
+          1.1444091796875e-05
+        ],
+        [
+          "**,",
+          -0.2383575439453125
+        ],
+        [
+          " based",
+          -0.005153656005859375
+        ],
+        [
+          " on",
+          -0.0037250518798828125
+        ],
+        [
+          " the",
+          -0.028476715087890625
+        ],
+        [
+          " official",
+          -0.0032930374145507812
+        ],
+        [
+          " Postgre",
+          -0.16475486755371094
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " release",
+          -0.11606788635253906
+        ],
+        [
+          " notes",
+          -0.0006322860717773438
+        ],
+        [
+          ".\n\n",
+          -0.0917510986328125
+        ],
+        [
+          "##",
+          -0.00022125244140625
+        ],
+        [
+          " Major",
+          -0.80291748046875
+        ],
+        [
+          " new",
+          -0.25034523010253906
+        ],
+        [
+          " capabilities",
+          -0.4132537841796875
+        ],
+        [
+          " in",
+          -0.029732704162597656
+        ],
+        [
+          " Postgre",
+          -6.67572021484375e-06
+        ],
+        [
+          "SQL",
+          5.7220458984375e-06
+        ],
+        [
+          " ",
+          -5.7220458984375e-06
+        ],
+        [
+          "18",
+          -1.239776611328125e-05
+        ],
+        [
+          "\n",
+          -1.4750251770019531
+        ],
+        [
+          "-",
+          -0.007907867431640625
+        ],
+        [
+          " **",
+          -3.814697265625e-06
+        ],
+        [
+          "As",
+          -0.0021791458129882812
+        ],
+        [
+          "ynchronous",
+          -1.049041748046875e-05
+        ],
+        [
+          " I",
+          3.814697265625e-06
+        ],
+        [
+          "/O",
+          -1.239776611328125e-05
+        ],
+        [
+          " (",
+          -0.004378318786621094
+        ],
+        [
+          "A",
+          1.430511474609375e-05
+        ],
+        [
+          "IO",
+          0.0
+        ],
+        [
+          ")",
+          -0.00021648406982421875
+        ],
+        [
+          " subsystem",
+          -0.0003604888916015625
+        ],
+        [
+          "**",
+          -0.0072879791259765625
+        ],
+        [
+          " to",
+          -0.3567485809326172
+        ],
+        [
+          " improve",
+          -0.003955841064453125
+        ],
+        [
+          " performance",
+          -0.0014858245849609375
+        ],
+        [
+          " for",
+          -0.47449398040771484
+        ],
+        [
+          " operations",
+          -0.8430576324462891
+        ],
+        [
+          " like",
+          -0.09727001190185547
+        ],
+        [
+          " sequential",
+          -1.1121644973754883
+        ],
+        [
+          " scans",
+          -0.00032138824462890625
+        ],
+        [
+          ",",
+          -0.0033721923828125
+        ],
+        [
+          " bitmap",
+          2.86102294921875e-06
+        ],
+        [
+          " heap",
+          -3.0517578125e-05
+        ],
+        [
+          " scans",
+          -7.62939453125e-06
+        ],
+        [
+          ",",
+          -1.71661376953125e-05
+        ],
+        [
+          " VAC",
+          -0.46541595458984375
+        ],
+        [
+          "U",
+          -1.52587890625e-05
+        ],
+        [
+          "UM",
+          6.67572021484375e-06
+        ],
+        [
+          ",",
+          -0.007571220397949219
+        ],
+        [
+          " etc",
+          -0.015091896057128906
+        ],
+        [
+          ".",
+          -0.012220382690429688
+        ],
+        [
+          " (",
+          -0.02830219268798828
+        ],
+        [
+          "enabled",
+          -1.889073371887207
+        ],
+        [
+          "/",
+          -0.9483737945556641
+        ],
+        [
+          "controlled",
+          -0.0016908645629882812
+        ],
+        [
+          " via",
+          -0.10667896270751953
+        ],
+        [
+          " new",
+          -0.4889507293701172
+        ],
+        [
+          " server",
+          -0.20835494995117188
+        ],
+        [
+          " settings",
+          -1.6757526397705078
+        ],
+        [
+          " such",
+          -0.39904308319091797
+        ],
+        [
+          " as",
+          -1.71661376953125e-05
+        ],
+        [
+          " `",
+          -0.0002002716064453125
+        ],
+        [
+          "io",
+          -1.621246337890625e-05
+        ],
+        [
+          "_method",
+          1.9073486328125e-06
+        ],
+        [
+          "`,",
+          -0.42664432525634766
+        ],
+        [
+          " `",
+          -0.2348957061767578
+        ],
+        [
+          "io",
+          -0.0005941390991210938
+        ],
+        [
+          "_com",
+          -0.008970260620117188
+        ],
+        [
+          "bine",
+          1.33514404296875e-05
+        ],
+        [
+          "_limit",
+          -1.9073486328125e-06
+        ],
+        [
+          "`,",
+          -4.76837158203125e-05
+        ],
+        [
+          " `",
+          -0.033260345458984375
+        ],
+        [
+          "io",
+          -8.96453857421875e-05
+        ],
+        [
+          "_max",
+          3.814697265625e-06
+        ],
+        [
+          "_com",
+          -0.00019168853759765625
+        ],
+        [
+          "bine",
+          4.76837158203125e-06
+        ],
+        [
+          "_limit",
+          4.76837158203125e-06
+        ],
+        [
+          "`).",
+          -0.49259281158447266
+        ],
+        [
+          "  \n",
+          -0.015364646911621094
+        ],
+        [
+          "-",
+          -0.2519359588623047
+        ],
+        [
+          " **",
+          -0.0009918212890625
+        ],
+        [
+          "`",
+          -0.37046241760253906
+        ],
+        [
+          "pg",
+          -0.04098987579345703
+        ],
+        [
+          "_upgrade",
+          -3.0517578125e-05
+        ],
+        [
+          "`",
+          -3.24249267578125e-05
+        ],
+        [
+          " retains",
+          -0.4100189208984375
+        ],
+        [
+          " optimizer",
+          -0.0024852752685546875
+        ],
+        [
+          " statistics",
+          -0.00019073486328125
+        ],
+        [
+          "**,",
+          -3.29339599609375
+        ],
+        [
+          " reducing",
+          -0.6901073455810547
+        ],
+        [
+          " the",
+          -0.6717844009399414
+        ],
+        [
+          " need",
+          -0.029581069946289062
+        ],
+        [
+          " to",
+          -0.2393045425415039
+        ],
+        [
+          " redo",
+          -2.9860029220581055
+        ],
+        [
+          " work",
+          -2.48551082611084
+        ],
+        [
+          " after",
+          -0.05402851104736328
+        ],
+        [
+          " upgrade",
+          -0.2551603317260742
+        ],
+        [
+          ".\n",
+          -0.5252590179443359
+        ],
+        [
+          "-",
+          -9.5367431640625e-06
+        ],
+        [
+          " **",
+          -0.00312042236328125
+        ],
+        [
+          "\u201c",
+          -0.4364795684814453
+        ],
+        [
+          "Skip",
+          -0.0022439956665039062
+        ],
+        [
+          " scan",
+          -0.0005121231079101562
+        ],
+        [
+          "\u201d",
+          -7.62939453125e-06
+        ],
+        [
+          " support",
+          -0.5935277938842773
+        ],
+        [
+          " for",
+          -0.06672191619873047
+        ],
+        [
+          " mult",
+          -0.11081790924072266
+        ],
+        [
+          "icol",
+          3.814697265625e-06
+        ],
+        [
+          "umn",
+          5.7220458984375e-06
+        ],
+        [
+          " B",
+          -0.07567119598388672
+        ],
+        [
+          "-tree",
+          -7.152557373046875e-05
+        ],
+        [
+          " look",
+          -2.5261173248291016
+        ],
+        [
+          "ups",
+          -1.33514404296875e-05
+        ],
+        [
+          "**",
+          -0.9754858016967773
+        ],
+        [
+          " (",
+          -0.4493694305419922
+        ],
+        [
+          "uses",
+          -1.5867671966552734
+        ],
+        [
+          " mult",
+          -0.1740884780883789
+        ],
+        [
+          "icol",
+          1.430511474609375e-05
+        ],
+        [
+          "umn",
+          9.5367431640625e-07
+        ],
+        [
+          " indexes",
+          -0.7020635604858398
+        ],
+        [
+          " in",
+          -0.009716033935546875
+        ],
+        [
+          " more",
+          -0.0073699951171875
+        ],
+        [
+          " cases",
+          -0.02884197235107422
+        ],
+        [
+          " than",
+          -1.5320262908935547
+        ],
+        [
+          " before",
+          -0.043079376220703125
+        ],
+        [
+          ").\n",
+          -0.004338264465332031
+        ],
+        [
+          "-",
+          -1.71661376953125e-05
+        ],
+        [
+          " **",
+          -0.00881195068359375
+        ],
+        [
+          "New",
+          -2.69708251953125
+        ],
+        [
+          " `",
+          -0.044379234313964844
+        ],
+        [
+          "uuid",
+          -2.384185791015625e-06
+        ],
+        [
+          "v",
+          -1.52587890625e-05
+        ],
+        [
+          "7",
+          5.7220458984375e-06
+        ],
+        [
+          "()`",
+          -4.76837158203125e-06
+        ],
+        [
+          "**",
+          -2.871522903442383
+        ],
+        [
+          " function",
+          -0.2866096496582031
+        ],
+        [
+          " for",
+          -0.3385162353515625
+        ],
+        [
+          " generating",
+          -0.20954322814941406
+        ],
+        [
+          " timestamp",
+          -0.3134918212890625
+        ],
+        [
+          "-",
+          1.430511474609375e-05
+        ],
+        [
+          "ordered",
+          -7.62939453125e-06
+        ],
+        [
+          " UUID",
+          -0.0011167526245117188
+        ],
+        [
+          "s",
+          -0.0005273818969726562
+        ],
+        [
+          ".\n",
+          -0.0002346038818359375
+        ],
+        [
+          "-",
+          1.71661376953125e-05
+        ],
+        [
+          " **",
+          -2.6702880859375e-05
+        ],
+        [
+          "Virtual",
+          -0.0060253143310546875
+        ],
+        [
+          " generated",
+          -9.918212890625e-05
+        ],
+        [
+          " columns",
+          -6.67572021484375e-06
+        ],
+        [
+          "**",
+          -0.34203052520751953
+        ],
+        [
+          ":",
+          -0.4647541046142578
+        ],
+        [
+          " generated",
+          -0.06283283233642578
+        ],
+        [
+          " values",
+          -2.1006851196289062
+        ],
+        [
+          " are",
+          -0.31226634979248047
+        ],
+        [
+          " computed",
+          -0.022629737854003906
+        ],
+        [
+          " during",
+          -0.2175426483154297
+        ],
+        [
+          " read",
+          -1.3945512771606445
+        ],
+        [
+          ";",
+          -1.7997674942016602
+        ],
+        [
+          " this",
+          -0.1340188980102539
+        ],
+        [
+          " is",
+          -0.029863357543945312
+        ],
+        [
+          " now",
+          -0.17907428741455078
+        ],
+        [
+          " the",
+          -0.0044384002685546875
+        ],
+        [
+          " default",
+          -0.12978553771972656
+        ],
+        [
+          " behavior",
+          -0.3828897476196289
+        ],
+        [
+          " for",
+          -0.0008068084716796875
+        ],
+        [
+          " generated",
+          -0.0006761550903320312
+        ],
+        [
+          " columns",
+          -7.62939453125e-06
+        ],
+        [
+          ".\n",
+          -0.019804954528808594
+        ],
+        [
+          "-",
+          7.62939453125e-06
+        ],
+        [
+          " **",
+          -5.7220458984375e-05
+        ],
+        [
+          "OAuth",
+          -0.0010423660278320312
+        ],
+        [
+          " authentication",
+          -3.0517578125e-05
+        ],
+        [
+          " support",
+          -0.00031375885009765625
+        ],
+        [
+          "**",
+          -0.03697681427001953
+        ],
+        [
+          " (",
+          -1.370081901550293
+        ],
+        [
+          "new",
+          -0.11854934692382812
+        ],
+        [
+          " auth",
+          -1.1234722137451172
+        ],
+        [
+          " method",
+          -1.4115686416625977
+        ],
+        [
+          " support",
+          -0.8086585998535156
+        ],
+        [
+          ").\n",
+          -0.05589103698730469
+        ],
+        [
+          "-",
+          -1.52587890625e-05
+        ],
+        [
+          " **",
+          -0.049239158630371094
+        ],
+        [
+          "SQL",
+          -3.109403610229492
+        ],
+        [
+          " \u201c",
+          -5.10279655456543
+        ],
+        [
+          "RETURN",
+          -0.24683761596679688
+        ],
+        [
+          "ING",
+          5.7220458984375e-06
+        ],
+        [
+          "\u201d",
+          -0.025112152099609375
+        ],
+        [
+          " enhancements",
+          -2.045595169067383
+        ],
+        [
+          "**",
+          -0.07473564147949219
+        ],
+        [
+          ":",
+          -0.1041555404663086
+        ],
+        [
+          " updated",
+          -2.7693119049072266
+        ],
+        [
+          " support",
+          -1.1451301574707031
+        ],
+        [
+          " for",
+          -0.11962318420410156
+        ],
+        [
+          " OLD",
+          -1.3658828735351562
+        ],
+        [
+          "/",
+          -0.021430015563964844
+        ],
+        [
+          "NEW",
+          -2.384185791015625e-05
+        ],
+        [
+          " return",
+          -4.132867813110352
+        ],
+        [
+          " targets",
+          -5.880200386047363
+        ],
+        [
+          " in",
+          -0.7149076461791992
+        ],
+        [
+          " `",
+          -0.0019063949584960938
+        ],
+        [
+          "INSERT",
+          -0.20144081115722656
+        ],
+        [
+          "`,",
+          -0.3087282180786133
+        ],
+        [
+          " `",
+          5.7220458984375e-06
+        ],
+        [
+          "UPDATE",
+          -8.58306884765625e-06
+        ],
+        [
+          "`,",
+          -5.7220458984375e-06
+        ],
+        [
+          " `",
+          -6.771087646484375e-05
+        ],
+        [
+          "DELETE",
+          1.9073486328125e-06
+        ],
+        [
+          "`,",
+          -0.000263214111328125
+        ],
+        [
+          " and",
+          -0.0017614364624023438
+        ],
+        [
+          " `",
+          -0.0005025863647460938
+        ],
+        [
+          "MER",
+          0.0
+        ],
+        [
+          "GE",
+          -8.58306884765625e-06
+        ],
+        [
+          "`.\n\n",
+          -2.415268898010254
+        ],
+        [
+          "##",
+          -0.31957149505615234
+        ],
+        [
+          " Not",
+          -0.6738367080688477
+        ],
+        [
+          "able",
+          -7.343292236328125e-05
+        ],
+        [
+          " compatibility",
+          -0.7296266555786133
+        ],
+        [
+          " /",
+          -0.07704830169677734
+        ],
+        [
+          " behavior",
+          -0.27143096923828125
+        ],
+        [
+          " changes",
+          -0.006646156311035156
+        ],
+        [
+          " when",
+          -0.9831380844116211
+        ],
+        [
+          " moving",
+          -0.6102094650268555
+        ],
+        [
+          " from",
+          -2.3180112838745117
+        ],
+        [
+          " ",
+          -0.0045986175537109375
+        ],
+        [
+          "17",
+          -3.62396240234375e-05
+        ],
+        [
+          " \u2192",
+          -0.009232521057128906
+        ],
+        [
+          " ",
+          -1.049041748046875e-05
+        ],
+        [
+          "18",
+          7.62939453125e-06
+        ],
+        [
+          "\n",
+          -0.0024662017822265625
+        ],
+        [
+          "-",
+          -0.13879966735839844
+        ],
+        [
+          " **",
+          -0.004200935363769531
+        ],
+        [
+          "`",
+          -0.12484550476074219
+        ],
+        [
+          "init",
+          -7.2479248046875e-05
+        ],
+        [
+          "db",
+          -5.7220458984375e-06
+        ],
+        [
+          "`",
+          -0.00017452239990234375
+        ],
+        [
+          " default",
+          -0.21848773956298828
+        ],
+        [
+          " enables",
+          -1.1687698364257812
+        ],
+        [
+          " data",
+          -0.0005292892456054688
+        ],
+        [
+          " checks",
+          -7.62939453125e-06
+        ],
+        [
+          "ums",
+          -8.58306884765625e-06
+        ],
+        [
+          "**",
+          -0.070465087890625
+        ],
+        [
+          " (",
+          -0.2806062698364258
+        ],
+        [
+          "can",
+          -0.8488683700561523
+        ],
+        [
+          " be",
+          -0.009271621704101562
+        ],
+        [
+          " disabled",
+          -0.007817268371582031
+        ],
+        [
+          " with",
+          -0.062164306640625
+        ],
+        [
+          " `",
+          -0.08567142486572266
+        ],
+        [
+          "--",
+          -0.019304275512695312
+        ],
+        [
+          "no",
+          -5.7220458984375e-06
+        ],
+        [
+          "-data",
+          0.0
+        ],
+        [
+          "-check",
+          -1.049041748046875e-05
+        ],
+        [
+          "s",
+          -1.049041748046875e-05
+        ],
+        [
+          "ums",
+          -8.58306884765625e-06
+        ],
+        [
+          "`).",
+          -2.1384153366088867
+        ],
+        [
+          " `",
+          -0.8396940231323242
+        ],
+        [
+          "pg",
+          -1.049041748046875e-05
+        ],
+        [
+          "_upgrade",
+          -9.5367431640625e-06
+        ],
+        [
+          "`",
+          5.7220458984375e-06
+        ],
+        [
+          " requires",
+          -0.14011287689208984
+        ],
+        [
+          " matching",
+          -0.04761314392089844
+        ],
+        [
+          " checksum",
+          -0.0040531158447265625
+        ],
+        [
+          " settings",
+          -0.0067234039306640625
+        ],
+        [
+          ".\n",
+          -0.03270244598388672
+        ],
+        [
+          "-",
+          -3.814697265625e-06
+        ],
+        [
+          " **",
+          -0.0045948028564453125
+        ],
+        [
+          "Time",
+          -0.07781505584716797
+        ],
+        [
+          " zone",
+          -6.008148193359375e-05
+        ],
+        [
+          " abbreviation",
+          -5.14984130859375e-05
+        ],
+        [
+          " handling",
+          -0.012060165405273438
+        ],
+        [
+          " changed",
+          -0.4468545913696289
+        ],
+        [
+          "**",
+          -0.0016574859619140625
+        ],
+        [
+          ":",
+          -0.2356252670288086
+        ],
+        [
+          " the",
+          -1.1274986267089844
+        ],
+        [
+          " system",
+          -0.13876628875732422
+        ],
+        [
+          " now",
+          -0.11272144317626953
+        ],
+        [
+          " favors",
+          -0.3442544937133789
+        ],
+        [
+          " the",
+          -0.0789642333984375
+        ],
+        [
+          " *",
+          -1.534210205078125
+        ],
+        [
+          "current",
+          -0.09443283081054688
+        ],
+        [
+          " session",
+          1.9073486328125e-06
+        ],
+        [
+          "\u2019s",
+          -0.20223331451416016
+        ],
+        [
+          "*",
+          -0.0020465850830078125
+        ],
+        [
+          " time",
+          -0.7297906875610352
+        ],
+        [
+          " zone",
+          -0.00028324127197265625
+        ],
+        [
+          " abbrevi",
+          -0.004675865173339844
+        ],
+        [
+          "ations",
+          0.0
+        ],
+        [
+          " before",
+          -0.13112735748291016
+        ],
+        [
+          " checking",
+          -0.10087299346923828
+        ],
+        [
+          " `",
+          -0.2344827651977539
+        ],
+        [
+          "timezone",
+          -0.0009002685546875
+        ],
+        [
+          "_ab",
+          -8.58306884765625e-06
+        ],
+        [
+          "brevi",
+          -5.245208740234375e-06
+        ],
+        [
+          "ations",
+          0.0
+        ],
+        [
+          "`.\n",
+          -0.0019865036010742188
+        ],
+        [
+          "-",
+          1.1444091796875e-05
+        ],
+        [
+          " **",
+          -2.288818359375e-05
+        ],
+        [
+          "MD",
+          -0.07961750030517578
+        ],
+        [
+          "5",
+          0.0
+        ],
+        [
+          " password",
+          -0.004080772399902344
+        ],
+        [
+          " auth",
+          -0.861750602722168
+        ],
+        [
+          " is",
+          -0.3090238571166992
+        ],
+        [
+          " deprecated",
+          -0.04737281799316406
+        ],
+        [
+          "**",
+          -0.0007505416870117188
+        ],
+        [
+          ":",
+          -0.8207254409790039
+        ],
+        [
+          " MD",
+          -0.8030529022216797
+        ],
+        [
+          "5",
+          -2.86102294921875e-06
+        ],
+        [
+          " password",
+          -1.6422405242919922
+        ],
+        [
+          " support",
+          -0.04139232635498047
+        ],
+        [
+          " will",
+          -0.4401531219482422
+        ],
+        [
+          " be",
+          -0.00014781951904296875
+        ],
+        [
+          " removed",
+          9.5367431640625e-07
+        ],
+        [
+          " in",
+          -0.016040802001953125
+        ],
+        [
+          " a",
+          -1.71661376953125e-05
+        ],
+        [
+          " future",
+          -3.528594970703125e-05
+        ],
+        [
+          " major",
+          -0.005496025085449219
+        ],
+        [
+          " version",
+          -0.4510164260864258
+        ],
+        [
+          ";",
+          -0.062381744384765625
+        ],
+        [
+          " setting",
+          -2.114398956298828
+        ],
+        [
+          " it",
+          -3.5723533630371094
+        ],
+        [
+          " now",
+          -1.028752326965332
+        ],
+        [
+          " emits",
+          -0.09508800506591797
+        ],
+        [
+          " de",
+          -0.006926536560058594
+        ],
+        [
+          "precation",
+          -6.67572021484375e-06
+        ],
+        [
+          " warnings",
+          -6.4849853515625e-05
+        ],
+        [
+          " (",
+          -0.7121477127075195
+        ],
+        [
+          "config",
+          -0.32924842834472656
+        ],
+        [
+          "urable",
+          -0.0021448135375976562
+        ],
+        [
+          " via",
+          -1.3327102661132812
+        ],
+        [
+          " `",
+          -0.00022602081298828125
+        ],
+        [
+          "md",
+          -5.7220458984375e-06
+        ],
+        [
+          "5",
+          -8.58306884765625e-06
+        ],
+        [
+          "_password",
+          1.049041748046875e-05
+        ],
+        [
+          "_w",
+          0.0
+        ],
+        [
+          "arnings",
+          0.0
+        ],
+        [
+          "`",
+          -0.00028896331787109375
+        ],
+        [
+          ").\n",
+          -0.00327301025390625
+        ],
+        [
+          "-",
+          1.1444091796875e-05
+        ],
+        [
+          " **",
+          -0.3126792907714844
+        ],
+        [
+          "VAC",
+          -0.07099342346191406
+        ],
+        [
+          "U",
+          5.7220458984375e-06
+        ],
+        [
+          "UM",
+          8.58306884765625e-06
+        ],
+        [
+          "/",
+          -0.11510181427001953
+        ],
+        [
+          "AN",
+          -0.00010156631469726562
+        ],
+        [
+          "AL",
+          2.86102294921875e-06
+        ],
+        [
+          "Y",
+          2.86102294921875e-06
+        ],
+        [
+          "ZE",
+          1.9073486328125e-06
+        ],
+        [
+          " change",
+          -3.338597297668457
+        ],
+        [
+          " with",
+          -3.223287582397461
+        ],
+        [
+          " inheritance",
+          -0.011510848999023438
+        ],
+        [
+          "**",
+          -0.5315084457397461
+        ],
+        [
+          ":",
+          -0.0008001327514648438
+        ],
+        [
+          " they",
+          -1.5520343780517578
+        ],
+        [
+          " now",
+          -0.013195991516113281
+        ],
+        [
+          " process",
+          -0.030737876892089844
+        ],
+        [
+          " inheritance",
+          -0.0012350082397460938
+        ],
+        [
+          " children",
+          -0.031871795654296875
+        ],
+        [
+          ";",
+          -1.5079584121704102
+        ],
+        [
+          " the",
+          -0.4688873291015625
+        ],
+        [
+          " old",
+          -0.6887149810791016
+        ],
+        [
+          " behavior",
+          -0.0010652542114257812
+        ],
+        [
+          " is",
+          -0.4380779266357422
+        ],
+        [
+          " available",
+          -0.02108287811279297
+        ],
+        [
+          " via",
+          -0.6206626892089844
+        ],
+        [
+          " `",
+          -0.13867855072021484
+        ],
+        [
+          "ONLY",
+          -7.82012939453125e-05
+        ],
+        [
+          "`.\n",
+          -0.0146484375
+        ],
+        [
+          "-",
+          -3.0517578125e-05
+        ],
+        [
+          " **",
+          -0.08666610717773438
+        ],
+        [
+          "COPY",
+          -0.08045578002929688
+        ],
+        [
+          "/",
+          -1.2308721542358398
+        ],
+        [
+          "\\\\",
+          -3.50058650970459
+        ],
+        [
+          ".,",
+          -6.491806983947754
+        ],
+        [
+          " EOF",
+          -3.2767906188964844
+        ],
+        [
+          " handling",
+          -0.4489259719848633
+        ],
+        [
+          " change",
+          -2.0651302337646484
+        ],
+        [
+          " for",
+          -0.9343690872192383
+        ],
+        [
+          " CSV",
+          -0.05480480194091797
+        ],
+        [
+          "**",
+          -0.1403665542602539
+        ],
+        [
+          ":",
+          -0.17944622039794922
+        ],
+        [
+          " `",
+          -0.7415876388549805
+        ],
+        [
+          "\\\\",
+          -0.5467844009399414
+        ],
+        [
+          ".`",
+          -0.00038623809814453125
+        ],
+        [
+          " handling",
+          -0.9868669509887695
+        ],
+        [
+          " is",
+          -0.3495960235595703
+        ],
+        [
+          " tightened",
+          -0.6110191345214844
+        ],
+        [
+          " to",
+          -1.7561655044555664
+        ],
+        [
+          " avoid",
+          -0.1755361557006836
+        ],
+        [
+          " accidental",
+          -3.201247215270996
+        ],
+        [
+          " end",
+          -0.49878883361816406
+        ],
+        [
+          "-of",
+          -0.000217437744140625
+        ],
+        [
+          "-file",
+          -0.008254051208496094
+        ],
+        [
+          " behavior",
+          -0.9970340728759766
+        ],
+        [
+          ".\n",
+          -3.0061416625976562
+        ],
+        [
+          "-",
+          -0.0004482269287109375
+        ],
+        [
+          " **",
+          -0.09440898895263672
+        ],
+        [
+          "Other",
+          -3.941220283508301
+        ],
+        [
+          " restrictions",
+          -3.4057998657226562
+        ],
+        [
+          "/",
+          -0.06830692291259766
+        ],
+        [
+          "behavior",
+          -0.10358524322509766
+        ],
+        [
+          " tweaks",
+          -1.8672685623168945
+        ],
+        [
+          "**,",
+          -1.359933853149414
+        ],
+        [
+          " e",
+          -0.4017143249511719
+        ],
+        [
+          ".g",
+          0.0
+        ],
+        [
+          ".",
+          -0.5490789413452148
+        ],
+        [
+          " dis",
+          -0.10362815856933594
+        ],
+        [
+          "allow",
+          -0.00010967254638671875
+        ],
+        [
+          "ing",
+          -0.2161712646484375
+        ],
+        [
+          " creation",
+          -1.6206579208374023
+        ],
+        [
+          " of",
+          -0.010886192321777344
+        ],
+        [
+          " **",
+          -0.15276527404785156
+        ],
+        [
+          "un",
+          -0.0002880096435546875
+        ],
+        [
+          "logged",
+          -7.152557373046875e-06
+        ],
+        [
+          " partition",
+          -1.52587890625e-05
+        ],
+        [
+          "ed",
+          5.7220458984375e-06
+        ],
+        [
+          " tables",
+          -0.00018215179443359375
+        ],
+        [
+          "**,",
+          -0.23836231231689453
+        ],
+        [
+          " and",
+          -0.41235828399658203
+        ],
+        [
+          " changes",
+          -0.43879127502441406
+        ],
+        [
+          " to",
+          -0.5611696243286133
+        ],
+        [
+          " how",
+          -0.6536111831665039
+        ],
+        [
+          " certain",
+          -0.591975212097168
+        ],
+        [
+          " trigger",
+          -2.3245439529418945
+        ],
+        [
+          " execution",
+          -0.7375812530517578
+        ],
+        [
+          " roles",
+          -0.03802204132080078
+        ],
+        [
+          " behave",
+          -1.6713495254516602
+        ],
+        [
+          ",",
+          -4.846086502075195
+        ],
+        [
+          " plus",
+          -0.19781112670898438
+        ],
+        [
+          " removal",
+          -0.8360872268676758
+        ],
+        [
+          " of",
+          -0.01749134063720703
+        ],
+        [
+          " non",
+          -2.067681312561035
+        ],
+        [
+          "-functional",
+          -0.00084686279296875
+        ],
+        [
+          " rule",
+          -0.19245338439941406
+        ],
+        [
+          "-",
+          -1.285630226135254
+        ],
+        [
+          "priv",
+          -0.000118255615234375
+        ],
+        [
+          "ilege",
+          -0.014422416687011719
+        ],
+        [
+          " support",
+          -0.3248615264892578
+        ],
+        [
+          ".\n\n",
+          -0.1782236099243164
+        ],
+        [
+          "##",
+          -0.002788543701171875
+        ],
+        [
+          " What",
+          -0.4330425262451172
+        ],
+        [
+          "\u2019s",
+          -1.4917325973510742
+        ],
+        [
+          " \u201c",
+          -0.9245996475219727
+        ],
+        [
+          "different",
+          -1.1548852920532227
+        ],
+        [
+          "\u201d",
+          -0.10769176483154297
+        ],
+        [
+          " at",
+          -2.1529483795166016
+        ],
+        [
+          " a",
+          -0.07983684539794922
+        ],
+        [
+          " glance",
+          -1.0614748001098633
+        ],
+        [
+          " (",
+          -0.42520618438720703
+        ],
+        [
+          "17",
+          -0.0847482681274414
+        ],
+        [
+          " \u2192",
+          -2.5750532150268555
+        ],
+        [
+          " ",
+          -0.0008783340454101562
+        ],
+        [
+          "18",
+          -2.47955322265625e-05
+        ],
+        [
+          ")\n",
+          -0.0734701156616211
+        ],
+        [
+          "-",
+          -0.19913101196289062
+        ],
+        [
+          " Postgre",
+          -0.18627643585205078
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          -0.3132505416870117
+        ],
+        [
+          "18",
+          -1.8047513961791992
+        ],
+        [
+          "\u2019s",
+          -1.217484474182129
+        ],
+        [
+          " headline",
+          -0.38862133026123047
+        ],
+        [
+          " themes",
+          -0.804905891418457
+        ],
+        [
+          " are",
+          -0.025633811950683594
+        ],
+        [
+          " **",
+          -0.027991294860839844
+        ],
+        [
+          "performance",
+          -0.6721391677856445
+        ],
+        [
+          "/",
+          -0.7465667724609375
+        ],
+        [
+          "IO",
+          -0.029165267944335938
+        ],
+        [
+          " improvements",
+          -0.1792774200439453
+        ],
+        [
+          " (",
+          -0.32742786407470703
+        ],
+        [
+          "A",
+          -0.012671470642089844
+        ],
+        [
+          "IO",
+          -2.86102294921875e-06
+        ],
+        [
+          ")**",
+          -0.29738712310791016
+        ],
+        [
+          ",",
+          -0.12451171875
+        ],
+        [
+          " **",
+          -0.0048694610595703125
+        ],
+        [
+          "more",
+          -1.1270380020141602
+        ],
+        [
+          " capable",
+          -0.9543886184692383
+        ],
+        [
+          " indexing",
+          -0.37337589263916016
+        ],
+        [
+          " (",
+          -0.14515304565429688
+        ],
+        [
+          "skip",
+          -0.000335693359375
+        ],
+        [
+          " scans",
+          -0.6043052673339844
+        ],
+        [
+          ")**",
+          -0.0007524490356445312
+        ],
+        [
+          ",",
+          -2.86102294921875e-05
+        ],
+        [
+          " **",
+          -0.7660322189331055
+        ],
+        [
+          "new",
+          -0.17832183837890625
+        ],
+        [
+          " built",
+          -3.3714475631713867
+        ],
+        [
+          "-in",
+          -0.11990642547607422
+        ],
+        [
+          " SQL",
+          -1.385599136352539
+        ],
+        [
+          "/",
+          -2.081637382507324
+        ],
+        [
+          "feature",
+          -1.3711357116699219
+        ],
+        [
+          " support",
+          -0.7062177658081055
+        ],
+        [
+          " (",
+          -0.30771827697753906
+        ],
+        [
+          "uuid",
+          -0.2407827377319336
+        ],
+        [
+          "v",
+          -0.0005397796630859375
+        ],
+        [
+          "7",
+          7.62939453125e-06
+        ],
+        [
+          ",",
+          -0.0001220703125
+        ],
+        [
+          " virtual",
+          -0.16038227081298828
+        ],
+        [
+          " generated",
+          -0.00031375885009765625
+        ],
+        [
+          " columns",
+          -0.04049396514892578
+        ],
+        [
+          ",",
+          -0.018192291259765625
+        ],
+        [
+          " OAuth",
+          -0.004174232482910156
+        ],
+        [
+          ",",
+          -0.33265113830566406
+        ],
+        [
+          " RETURN",
+          -0.6934061050415039
+        ],
+        [
+          "ING",
+          -6.67572021484375e-06
+        ],
+        [
+          " enhancements",
+          -2.223355293273926
+        ],
+        [
+          ")**",
+          -0.0005178451538085938
+        ],
+        [
+          ",",
+          -0.22992324829101562
+        ],
+        [
+          " plus",
+          -0.1719198226928711
+        ],
+        [
+          " several",
+          -0.45658111572265625
+        ],
+        [
+          " **",
+          -0.00514984130859375
+        ],
+        [
+          "setup",
+          -5.579108238220215
+        ],
+        [
+          "/auth",
+          -0.7632770538330078
+        ],
+        [
+          "/",
+          -0.09778404235839844
+        ],
+        [
+          "behavior",
+          -0.43708324432373047
+        ],
+        [
+          " compatibility",
+          -0.20669937133789062
+        ],
+        [
+          " changes",
+          -0.11287784576416016
+        ],
+        [
+          "**",
+          -9.5367431640625e-07
+        ],
+        [
+          ".\n\n",
+          -0.7189607620239258
+        ],
+        [
+          "##",
+          -0.4607505798339844
+        ],
+        [
+          " Sources",
+          -0.0028839111328125
+        ],
+        [
+          " (",
+          -1.550851821899414
+        ],
+        [
+          "official",
+          -7.43865966796875e-05
+        ],
+        [
+          ")\n",
+          -0.029260635375976562
+        ],
+        [
+          "-",
+          -1.9073486328125e-06
+        ],
+        [
+          " Postgre",
+          -0.0005016326904296875
+        ],
+        [
+          "SQL",
+          8.58306884765625e-06
+        ],
+        [
+          " ",
+          -0.10039234161376953
+        ],
+        [
+          "18",
+          -9.822845458984375e-05
+        ],
+        [
+          " Release",
+          -0.6385669708251953
+        ],
+        [
+          " Notes",
+          -0.0017690658569335938
+        ],
+        [
+          " (",
+          -0.017208099365234375
+        ],
+        [
+          "Append",
+          -0.4910306930541992
+        ],
+        [
+          "ix",
+          0.0
+        ],
+        [
+          " E",
+          -0.0005083084106445312
+        ],
+        [
+          ".",
+          -0.2897481918334961
+        ],
+        [
+          "6",
+          -0.018294334411621094
+        ],
+        [
+          ")",
+          -2.1677379608154297
+        ],
+        [
+          " \u2014",
+          -0.1864938735961914
+        ],
+        [
+          " overview",
+          -0.4312705993652344
+        ],
+        [
+          " +",
+          -1.148752212524414
+        ],
+        [
+          " migration",
+          -0.49402618408203125
+        ],
+        [
+          " incompat",
+          -1.677840232849121
+        ],
+        [
+          "ibilities",
+          -8.58306884765625e-06
+        ],
+        [
+          " and",
+          -1.4270849227905273
+        ],
+        [
+          " change",
+          -1.7060117721557617
+        ],
+        [
+          " sections",
+          -4.351594924926758
+        ],
+        [
+          ":",
+          -0.0017490386962890625
+        ],
+        [
+          " https",
+          -0.07889366149902344
+        ],
+        [
+          "://",
+          1.621246337890625e-05
+        ],
+        [
+          "www",
+          5.7220458984375e-06
+        ],
+        [
+          ".post",
+          0.0
+        ],
+        [
+          "gresql",
+          -2.86102294921875e-06
+        ],
+        [
+          ".org",
+          -8.58306884765625e-06
+        ],
+        [
+          "/docs",
+          5.7220458984375e-06
+        ],
+        [
+          "/re",
+          -0.00025272369384765625
+        ],
+        [
+          "lease",
+          -1.52587890625e-05
+        ],
+        [
+          "/",
+          -1.621246337890625e-05
+        ],
+        [
+          "18",
+          7.62939453125e-06
+        ],
+        [
+          "/",
+          -0.49817562103271484
+        ],
+        [
+          "  \n",
+          -0.00030231475830078125
+        ],
+        [
+          "-",
+          -0.0007724761962890625
+        ],
+        [
+          " Postgre",
+          -0.004216194152832031
+        ],
+        [
+          "SQL",
+          -5.7220458984375e-06
+        ],
+        [
+          " ",
+          -1.71661376953125e-05
+        ],
+        [
+          "17",
+          -0.0017213821411132812
+        ],
+        [
+          " Release",
+          -2.193450927734375e-05
+        ],
+        [
+          " Notes",
+          4.76837158203125e-06
+        ],
+        [
+          " (",
+          -0.00046062469482421875
+        ],
+        [
+          "Append",
+          -0.0010671615600585938
+        ],
+        [
+          "ix",
+          7.62939453125e-06
+        ],
+        [
+          " E",
+          -2.002716064453125e-05
+        ],
+        [
+          ".",
+          -0.00018405914306640625
+        ],
+        [
+          "12",
+          -1.621246337890625e-05
+        ],
+        [
+          ")",
+          -0.00437164306640625
+        ],
+        [
+          " \u2014",
+          -0.003330230712890625
+        ],
+        [
+          " overview",
+          -1.7993030548095703
+        ],
+        [
+          " of",
+          -1.3929414749145508
+        ],
+        [
+          " ",
+          -1.5272655487060547
+        ],
+        [
+          "17",
+          -1.049041748046875e-05
+        ],
+        [
+          "\u2019s",
+          -0.029382705688476562
+        ],
+        [
+          " major",
+          -0.5478706359863281
+        ],
+        [
+          " features",
+          -0.5749893188476562
+        ],
+        [
+          " for",
+          -0.5508251190185547
+        ],
+        [
+          " context",
+          -2.028883934020996
+        ],
+        [
+          ":",
+          -0.06718730926513672
+        ],
+        [
+          " https",
+          -1.33514404296875e-05
+        ],
+        [
+          "://",
+          2.86102294921875e-06
+        ],
+        [
+          "www",
+          8.58306884765625e-06
+        ],
+        [
+          ".post",
+          -2.86102294921875e-06
+        ],
+        [
+          "gresql",
+          -1.9073486328125e-06
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/docs",
+          -4.76837158203125e-06
+        ],
+        [
+          "/re",
+          -1.621246337890625e-05
+        ],
+        [
+          "lease",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.239776611328125e-05
+        ],
+        [
+          "17",
+          0.0
+        ],
+        [
+          "/",
+          -0.0081024169921875
+        ],
+        [
+          "  \n\n",
+          -1.407449722290039
+        ],
+        [
+          "If",
+          -1.52587890625e-05
+        ],
+        [
+          " you",
+          2.86102294921875e-06
+        ],
+        [
+          " tell",
+          -0.33055877685546875
+        ],
+        [
+          " me",
+          -1.239776611328125e-05
+        ],
+        [
+          " your",
+          -0.16054439544677734
+        ],
+        [
+          " use",
+          -1.4155635833740234
+        ],
+        [
+          " case",
+          -0.010504722595214844
+        ],
+        [
+          " (",
+          0.0
+        ],
+        [
+          "e",
+          -0.22072792053222656
+        ],
+        [
+          ".g",
+          -1.52587890625e-05
+        ],
+        [
+          ".,",
+          0.0
+        ],
+        [
+          " logical",
+          -1.5243968963623047
+        ],
+        [
+          " replication",
+          -0.0002040863037109375
+        ],
+        [
+          ",",
+          -0.003665924072265625
+        ],
+        [
+          " heavy",
+          -0.30310535430908203
+        ],
+        [
+          " VAC",
+          -0.013205528259277344
+        ],
+        [
+          "U",
+          -6.67572021484375e-06
+        ],
+        [
+          "UM",
+          -1.430511474609375e-05
+        ],
+        [
+          "/",
+          -1.8044824600219727
+        ],
+        [
+          "partition",
+          -1.2464494705200195
+        ],
+        [
+          "ing",
+          -0.044617652893066406
+        ],
+        [
+          ",",
+          -0.005152702331542969
+        ],
+        [
+          " indexing",
+          -1.8265066146850586
+        ],
+        [
+          " patterns",
+          -0.043852806091308594
+        ],
+        [
+          ",",
+          -0.023285865783691406
+        ],
+        [
+          " auth",
+          -0.7714319229125977
+        ],
+        [
+          " method",
+          -0.2823677062988281
+        ],
+        [
+          "),",
+          -0.13779544830322266
+        ],
+        [
+          " I",
+          2.86102294921875e-06
+        ],
+        [
+          " can",
+          -1.239776611328125e-05
+        ],
+        [
+          " highlight",
+          -1.2868566513061523
+        ],
+        [
+          " the",
+          -0.26908016204833984
+        ],
+        [
+          " most",
+          -0.5345563888549805
+        ],
+        [
+          " relevant",
+          -0.019594192504882812
+        ],
+        [
+          " ",
+          -0.0899820327758789
+        ],
+        [
+          "17",
+          -0.007152557373046875
+        ],
+        [
+          "\u2192",
+          -0.0005044937133789062
+        ],
+        [
+          "18",
+          7.62939453125e-06
+        ],
+        [
+          " changes",
+          -0.1606283187866211
+        ],
+        [
+          " for",
+          -0.2765016555786133
+        ],
+        [
+          " your",
+          -2.791623115539551
+        ],
+        [
+          " environment",
+          -1.6931257247924805
+        ],
+        [
+          ".",
+          -0.039974212646484375
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "Here are the main user-visible differences between **PostgreSQL 17** and **PostgreSQL 18**, based on the official PostgreSQL release notes.\n\n## Major new capabilities in PostgreSQL 18\n- **Asynchronous I/O (AIO) subsystem** to improve performance for operations like sequential scans, bitmap heap scans, VACUUM, etc. (enabled/controlled via new server settings such as `io_method`, `io_combine_limit`, `io_max_combine_limit`).  \n- **`pg_upgrade` retains optimizer statistics**, reducing the need to redo work after upgrade.\n- **\u201cSkip scan\u201d support for multicolumn B-tree lookups** (uses multicolumn indexes in more cases than before).\n- **New `uuidv7()`** function for generating timestamp-ordered UUIDs.\n- **Virtual generated columns**: generated values are computed during read; this is now the default behavior for generated columns.\n- **OAuth authentication support** (new auth method support).\n- **SQL \u201cRETURNING\u201d enhancements**: updated support for OLD/NEW return targets in `INSERT`, `UPDATE`, `DELETE`, and `MERGE`.\n\n## Notable compatibility / behavior changes when moving from 17 \u2192 18\n- **`initdb` default enables data checksums** (can be disabled with `--no-data-checksums`). `pg_upgrade` requires matching checksum settings.\n- **Time zone abbreviation handling changed**: the system now favors the *current session\u2019s* time zone abbreviations before checking `timezone_abbreviations`.\n- **MD5 password auth is deprecated**: MD5 password support will be removed in a future major version; setting it now emits deprecation warnings (configurable via `md5_password_warnings`).\n- **VACUUM/ANALYZE change with inheritance**: they now process inheritance children; the old behavior is available via `ONLY`.\n- **COPY/\\\\., EOF handling change for CSV**: `\\\\.` handling is tightened to avoid accidental end-of-file behavior.\n- **Other restrictions/behavior tweaks**, e.g. disallowing creation of **unlogged partitioned tables**, and changes to how certain trigger execution roles behave, plus removal of non-functional rule-privilege support.\n\n## What\u2019s \u201cdifferent\u201d at a glance (17 \u2192 18)\n- PostgreSQL 18\u2019s headline themes are **performance/IO improvements (AIO)**, **more capable indexing (skip scans)**, **new built-in SQL/feature support (uuidv7, virtual generated columns, OAuth, RETURNING enhancements)**, plus several **setup/auth/behavior compatibility changes**.\n\n## Sources (official)\n- PostgreSQL 18 Release Notes (Appendix E.6) \u2014 overview + migration incompatibilities and change sections: https://www.postgresql.org/docs/release/18/  \n- PostgreSQL 17 Release Notes (Appendix E.12) \u2014 overview of 17\u2019s major features for context: https://www.postgresql.org/docs/release/17/  \n\nIf you tell me your use case (e.g., logical replication, heavy VACUUM/partitioning, indexing patterns, auth method), I can highlight the most relevant 17\u219218 changes for your environment.",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_VzkdYFa84LyRonw25ClyZQ30",
+            "name": "web_search",
+            "args": {
+              "query": "PostgreSQL 18 release notes main changes",
+              "max_results": 5
+            },
+            "result": "[1] Release Notes - PostgreSQL\nURL: https://www.postgresql.org/docs/release/18/\nSnippet: Below you will find a detailed account of the changes between PostgreSQL 18 and the previous major release.\n\n[2] PostgreSQL: Documentation: 18: E.6. Release 18\nURL: https://www.postgresql.org/docs/current/release-18.html\nSnippet: The above items and other new features of PostgreSQL 18 are explained in more detail in the sections below.\n\n[3] PostgreSQL : Documentation: 18: Appendix E. Release Notes\nURL: https://postgrespro.com/docs/postgresql/current/release\nSnippet: The release notes contain the significant changes in each PostgreSQL release, with major features and migration issues listed at the top. The release notes do not contain changes that affect only a few users or changes that are internal and therefore not user-visible. For example, the optimizer is improved in almost every release, but the improvements are usually observed by users as simply ...\n\n[4] Appendix E. Release Notes - access.crunchydata.com\nURL: https://access.crunchydata.com/documentation/postgresql18/latest/release.html\nSnippet: The release notes contain the significant changes in each PostgreSQL release, with major features and migration issues listed at the top. The release notes do not contain changes that affect only a few users or changes that are internal and therefore not user-visible. For example, the optimizer is improved in almost every release, but the improvements are usually observed by users as simply ...\n\n[5] PostgreSQL 18 features and upgrade notes \u00b7 PostgreSQL Field Guide\nURL: https://pg.edu.rich/en/docs/reference/postgresql-18\nSnippet: PostgreSQL 18 reached GA on 2025-09-25 and is supported until 2030-11-14. As of this review date the current minor is 18.4; see the version and support policy for the live support snapshot. Every feature claim below is checked against the PostgreSQL 18 release notes.",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_c88u6SDohnUFSOQYMfBMwORx",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.postgresql.org/docs/release/18/",
+              "max_chars": 12000
+            },
+            "result": "URL: https://www.postgresql.org/docs/release/18/\nTitle: PostgreSQL: Release Notes\nContent:\nPostgreSQL: Release Notes Home About Download Documentation Community Developers Support Donate Your account September 24, 2026: PostgreSQL 19 Beta 4 Released! Quick Links Documentation Manuals Archive Release Notes Books Tutorials & Other Resources FAQ Wiki Release Notes PostgreSQL 18.0 E.6. Release 18 Prev Up Appendix E. Release Notes Home Next E.6. Release 18 # E.6.1. Overview E.6.2. Migration to Version 18 E.6.3. Changes E.6.4. Acknowledgments Release date: 2025-09-25 E.6.1. Overview # PostgreSQL 18 contains many new features and enhancements, including: An asynchronous I/O (AIO) subsystem that can improve performance of sequential scans, bitmap heap scans, vacuums, and other operations. pg_upgrade now retains optimizer statistics. Support for \"skip scan\" lookups that allow using multicolumn B-tree indexes in more cases. uuidv7() function for generating timestamp-ordered UUIDs . Virtual generated columns that compute their values during read operations. This is now the default for generated columns. OAuth authentication support. OLD and NEW support for RETURNING clauses in INSERT , UPDATE , DELETE , and MERGE commands. Temporal constraints, or constraints over ranges, for PRIMARY KEY , UNIQUE , and FOREIGN KEY constraints. The above items and other new features of PostgreSQL 18 are explained in more detail in the sections below. E.6.2. Migration to Version 18 # A dump/restore using pg_dumpall or use of pg_upgrade or logical replication is required for those wishing to migrate data from any previous release. See Section 18.6 for general information on migrating to new major releases. Version 18 contains a number of changes that may affect compatibility with previous releases. Observe the following incompatibilities: Change initdb default to enable data checksums (Greg Sabino Mullane) \u00a7 Checksums can be disabled with the new initdb option --no-data-checksums . pg_upgrade requires matching cluster checksum settings, so this new option can be useful to upgrade non-checksum old clusters. Change time zone abbreviation handling (Tom Lane) \u00a7 The system will now favor the current session's time zone abbreviations before checking the server variable timezone_abbreviations . Previously timezone_abbreviations was checked first. Deprecate MD5 password authentication (Nathan Bossart) \u00a7 Support for MD5 passwords will be removed in a future major version release. CREATE ROLE and ALTER ROLE now emit deprecation warnings when setting MD5 passwords. These warnings can be disabled by setting the md5_password_warnings parameter to off . Change VACUUM and ANALYZE to process the inheritance children of a parent (Michael Harris) \u00a7 The previous behavior can be performed by using the new ONLY option. Prevent COPY FROM from treating \\. as an end-of-file marker when reading CSV files (Daniel V\u00e9rit\u00e9, Tom Lane) \u00a7 \u00a7 psql will still treat \\. as an end-of-file marker when reading CSV files from STDIN . Older psql clients connecting to PostgreSQL 18 servers might experience \\copy problems. This release also enforces that \\. must appear alone on a line. Disallow unlogged partitioned tables (Michael Paquier) \u00a7 Previously ALTER TABLE SET [UN]LOGGED did nothing, and the creation of an unlogged partitioned table did not cause its children to be unlogged. Execute AFTER triggers as the role that was active when trigger events were queued (Laurenz Albe) \u00a7 Previously such triggers were run as the role that was active at trigger execution time (e.g., at COMMIT ). This is significant for cases where the role is changed between queue time and transaction commit. Remove non-functional support for rule privileges in GRANT / REVOKE (Fujii Masao) \u00a7 These have been non-functional since PostgreSQL 8.2. Remove column pg_backend_memory_contexts . parent (Melih Mutlu) \u00a7 This is no longer needed since pg_backend_memory_contexts . path was added. Change pg_backend_memory_contexts . level and pg_log_backend_memory_contexts() to be one-based (Melih Mutlu, Atsushi Torikoshi, David Rowley, Fujii Masao) \u00a7 \u00a7 \u00a7 These were previously zero-based. Change full text search to use the default collation provider of the cluster to read configuration files and dictionaries, rather than always using libc (Peter Eisentraut) \u00a7 Clusters that default to non-libc collation providers (e.g., ICU, builtin) that behave differently than libc for characters processed by LC_CTYPE could observe changes in behavior of some full-text search functions, as well as the pg_trgm extension. When upgrading such clusters using pg_upgrade , it is recommended to reindex all indexes related to full-text search and pg_trgm after the upgrade. E.6.3. Changes # Below you will find a detailed account of the changes between PostgreSQL 18 and the previous major release. E.6.3.1. Server # E.6.3.1.1. Optimizer # Automatically remove some unnecessary table self-joins (Andrey Lepikhov, Alexander Kuzmenkov, Alexander Korotkov, Alena Rybakina) \u00a7 This optimization can be disabled using server variable enable_self_join_elimination . Convert some IN (VALUES ...) to x = ANY ... for better optimizer statistics (Alena Rybakina, Andrei Lepikhov) \u00a7 Allow transforming OR -clauses to arrays for faster index processing (Alexander Korotkov, Andrey Lepikhov) \u00a7 Speed up the processing of INTERSECT , EXCEPT , window aggregates , and view column aliases (Tom Lane, David Rowley) \u00a7 \u00a7 \u00a7 \u00a7 Allow the keys of SELECT DISTINCT to be internally reordered to avoid sorting (Richard Guo) \u00a7 This optimization can be disabled using enable_distinct_reordering . Ignore GROUP BY columns that are functionally dependent on other columns (Zhang Mingli, Jian He, David Rowley) \u00a7 If a GROUP BY clause includes all columns of a unique index, as well as other columns of the same table, those other columns are redundant and can be dropped from the grouping. This was already true for non-deferred primary keys. Allow some HAVING clauses on GROUPING SETS to be pushed to WHERE clauses (Richard Guo) \u00a7 \u00a7 \u00a7 \u00a7 This allows earlier row filtering. This release also fixes some GROUPING SETS queries that used to return incorrect results. Improve row estimates for generate_series() using numeric and timestamp values (David Rowley, Song Jinzhou) \u00a7 \u00a7 Allow the optimizer to use Right Semi Join plans (Richard Guo) \u00a7 Semi-joins are used when needing to find if there is at least one match. Allow merge joins to use incremental sorts (Richard Guo) \u00a7 Improve the efficiency of planning queries accessing many partitions (Ashutosh Bapat, Yuya Watari, David Rowley) \u00a7 \u00a7 Allow partitionwise joins in more cases, and reduce its memory usage (Richard Guo, Tom Lane, Ashutosh Bapat) \u00a7 \u00a7 Improve cost estimates of partition queries (Nikita Malakhov, Andrei Lepikhov) \u00a7 Improve SQL -language function plan caching (Alexander Pyhalov, Tom Lane) \u00a7 \u00a7 Improve handling of disabled optimizer features (Robert Haas) \u00a7 E.6.3.1.2. Indexes # Allow skip scans of btree indexes (Peter Geoghegan) \u00a7 \u00a7 This allows multi-column btree indexes to be used in more cases such as when there are no restrictions on the first or early indexed columns (or there are non-equality ones), and there are useful restrictions on later indexed columns. Allow non-btree unique indexes to be used as partition keys and in materialized views (Mark Dilger) \u00a7 \u00a7 The index type must still support equality. Allow GIN indexes to be created in parallel (Tomas Vondra, Matthias van de Meent) \u00a7 Allow values to be sorted to speed range-type GiST and btree index builds (Bernd Helmle) \u00a7 E.6.3.1.3. General Performance # Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavuz, Melanie Plageman) \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, vacuums, etc. This is enabled by server variable io_method , with server variables io_combine_limit and io_max_combine_limit added to control it. This also enables effective_io_concurrency and maintenance_io_concurrency values greater than zero for systems without fadvise() support. The new system view pg_aios shows the file handles being used for asynchronous I/O. Improve the locking performance of queries that access many relations (Tomas Vondra) \u00a7 Improve the performance and reduce memory usage of hash joins and GROUP BY (David Rowley, Jeff Davis) \u00a7 \u00a7 \u00a7 \u00a7 \u00a7 This also improves hash set operations used by EXCEPT , and hash lookups of subplan values. Allow normal vacuums to freeze some pages, even though they are all-visible (Melanie Plageman) \u00a7 \u00a7 This reduces the overhead of later full-relation freezing. The aggressiveness of this can be controlled by server variable and per-table setting vacuum_max_eager_freeze_failure_rate . Previously vacuum never processed all-visible pages until freezing was required. Add server variable vacuum_truncate to control file truncation during VACUUM (Nathan Bossart, Gurjeet Singh) \u00a7 A storage-level parameter with the same name and behavior already existed. Increase server variables effective_io_concurrency 's and maintenance_io_concurrency 's default values to 16 (Melanie Plageman) \u00a7 \u00a7 This more accurately reflects modern hardware. E.6.3.1.4. Monitoring # Increase the logging granularity of server variable log_connections (Melanie Plageman) \u00a7 This server variable was previously only boolean, which is still supported. Add log_connections option to report the duration of connection stages (Melanie Plageman) \u00a7 Add log_line_prefix escape %L to output the client IP address (Greg Sabino Mullane) \u00a7 Add server variable log_lock_failures to log lock acquisition failures (Yuki Seino, Fujii Masao) \u00a7 \u00a7 Specifically it reports SELECT ... NOWAIT lock failures. Modify pg_stat_all_tables and its variants to report the time spent in VACUUM , ANALYZE , and their automatic variants (Sami Imseih) \u00a7 The new columns are total_vacuum_time , total_autovacuum_time , total_analyze_time , and total_autoanalyze_time . Add delay time reporting to VACUUM and ANALYZE (Bertrand Drouvot, Nathan Bossart) \u00a7 \u00a7 This information appears in the server log, the system views pg_stat_progress_vacuum and pg_stat_progress_analyze , and the output of VACUUM and ANALYZE when in VERBOSE mode; tracking must be enabled with the server variable track_cost_delay_timing . Add WAL , CPU , and average read statistics output to ANALYZE VERBOSE (Anthonin Bonnefoy) \u00a7 \u00a7 Add full WAL buffer count to VACUUM / ANALYZE (VERBOSE) and autovacuum log output (Bertrand Drouvot) \u00a7 Add per-backend I/O statistics reporting (Bertrand Drouvot) \u00a7 \u00a7 The statistics are accessed via pg_stat_get_backend_io() . Per-backend I/O statistics can be cleared via pg_stat_reset_backend_stats() . Add pg_stat_io columns to report I/O activity in bytes (Nazir Bilal Yavuz) \u00a7 The new columns are read_bytes , write_bytes , and extend_bytes . The op_bytes column, which always equaled BLCKSZ , has been removed. Add WAL I/O activity rows to pg_stat_io (Nazir Bilal Yavuz, Bertrand Drouvot, Michael Paquier) \u00a7 \u00a7 \u00a7 This includes WAL receiver activity and a wait event for such writes. Change server variable track_wal_io_timing to control tracking WAL timing in pg_stat_io instead of pg_stat_wal (Bertrand Drouvot) \u00a7 Remove read/sync columns from pg_stat_wal (Bertrand Drouvot) \u00a7 \u00a7 This removes columns wal_write , wal_sync , wal_write_time , and wal_sync_time . Add function pg_stat_get_backend_wal() to return per-backend WAL statistics (Bertrand Drouvot) \u00a7 Per-backend WAL statistics can be cleared via pg_stat_reset_backend_stats() . Add function pg_ls_summariesdir() to specifically list the contents of PGDATA / pg_wal/summaries (Yushi Ogiwara) \u00a7 Add column pg_stat_checkpointer . num_done to report the number of completed checkpoints (Anton A. Melnikov) \u00a7 Columns num_timed and num_requested count both completed and skipped checkpoints. Add column pg_stat_checkpointer . slru_written to report SLRU buffers written (Nitin Jadhav) \u00a7 Also, modify the checkpoint server log message to report separate shared buffer and SLRU b\n\u2026 <page content truncated>",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_y1n5e7Ze1ofoy60rYO97sdOj",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.postgresql.org/docs/release/17/",
+              "max_chars": 12000
+            },
+            "result": "URL: https://www.postgresql.org/docs/release/17/\nTitle: PostgreSQL: Release Notes\nContent:\nPostgreSQL: Release Notes Home About Download Documentation Community Developers Support Donate Your account September 24, 2026: PostgreSQL 19 Beta 4 Released! Quick Links Documentation Manuals Archive Release Notes Books Tutorials & Other Resources FAQ Wiki Release Notes PostgreSQL 17.0 E.12. Release 17 Prev Up Appendix E. Release Notes Home Next E.12. Release 17 # E.12.1. Overview E.12.2. Migration to Version 17 E.12.3. Changes E.12.4. Acknowledgments Release date: 2024-09-26 E.12.1. Overview # PostgreSQL 17 contains many new features and enhancements, including: New memory management system for VACUUM , which reduces memory consumption and can improve overall vacuuming performance. New SQL/JSON capabilities, including constructors, identity functions, and the JSON_TABLE() function, which converts JSON data into a table representation. Various query performance improvements, including for sequential reads using streaming I/O, write throughput under high concurrency, and searches over multiple values in a btree index. Logical replication enhancements, including: Failover control pg_createsubscriber , a utility that creates logical replicas from physical standbys pg_upgrade now preserves logical replication slots on publishers and full subscription state on subscribers. This will allow upgrades to future major versions to continue logical replication without requiring copy to resynchronize. New client-side connection option, sslnegotiation=direct , that performs a direct TLS handshake to avoid a round-trip negotiation. pg_basebackup now supports incremental backup. COPY adds a new option, ON_ERROR ignore , that allows a copy operation to continue in the event of an error. The above items and other new features of PostgreSQL 17 are explained in more detail in the sections below. E.12.2. Migration to Version 17 # A dump/restore using pg_dumpall or use of pg_upgrade or logical replication is required for those wishing to migrate data from any previous release. See Section 18.6 for general information on migrating to new major releases. Version 17 contains a number of changes that may affect compatibility with previous releases. Observe the following incompatibilities: Change functions to use a safe search_path during maintenance operations (Jeff Davis) \u00a7 \u00a7 This prevents maintenance operations ( ANALYZE , CLUSTER , CREATE INDEX , CREATE MATERIALIZED VIEW , REFRESH MATERIALIZED VIEW , REINDEX , or VACUUM ) from performing unsafe access. Functions used by expression indexes and materialized views that need to reference non-default schemas must specify a search path during function creation. Restrict ago to only appear at the end in interval values (Joseph Koshakow) \u00a7 \u00a7 Also, prevent empty interval units from appearing multiple times. Remove server variable old_snapshot_threshold (Thomas Munro) \u00a7 This variable allowed vacuum to remove rows that potentially could be still visible to running transactions, causing \"snapshot too old\" errors later if accessed. This feature might be re-added to PostgreSQL later if an improved implementation is found. Change SET SESSION AUTHORIZATION handling of the initial session user's superuser status (Joseph Koshakow) \u00a7 The new behavior is based on the session user's superuser status at the time the SET SESSION AUTHORIZATION command is issued, rather than their superuser status at connection time. Remove feature which simulated per-database users (Nathan Bossart) \u00a7 The feature, db_user_namespace , was rarely used. Remove adminpack contrib extension (Daniel Gustafsson) \u00a7 This was used by now end-of-life pgAdmin III . Remove wal_sync_method value fsync_writethrough on Windows (Thomas Munro) \u00a7 This value was the same as fsync on Windows . Change file boundary handling of two WAL file name functions (Kyotaro Horiguchi, Andres Freund, Bruce Momjian) \u00a7 The functions pg_walfile_name() and pg_walfile_name_offset() used to report the previous LSN segment number when the LSN was on a file segment boundary; it now returns the current LSN segment. Remove server variable trace_recovery_messages since it is no longer needed (Bharath Rupireddy) \u00a7 Remove information schema column element_types . domain_default (Peter Eisentraut) \u00a7 Change pgrowlocks lock mode output labels (Bruce Momjian) \u00a7 Remove buffers_backend and buffers_backend_fsync from pg_stat_bgwriter (Bharath Rupireddy) \u00a7 These fields are considered redundant to similar columns in pg_stat_io . Rename I/O block read/write timing statistics columns of pg_stat_statements (Nazir Bilal Yavuz) \u00a7 This renames blk_read_time to shared_blk_read_time , and blk_write_time to shared_blk_write_time . Change pg_attribute . attstattarget and pg_statistic_ext . stxstattarget to represent the default statistics target as NULL (Peter Eisentraut) \u00a7 \u00a7 Rename pg_collation . colliculocale to colllocale and pg_database . daticulocale to datlocale (Jeff Davis) \u00a7 Rename pg_stat_progress_vacuum column max_dead_tuples to max_dead_tuple_bytes , rename num_dead_tuples to num_dead_item_ids , and add dead_tuple_bytes (Masahiko Sawada) \u00a7 \u00a7 Rename SLRU columns in system view pg_stat_slru (Alvaro Herrera) \u00a7 The column names accepted by pg_stat_reset_slru() are also changed. E.12.3. Changes # Below you will find a detailed account of the changes between PostgreSQL 17 and the previous major release. E.12.3.1. Server # E.12.3.1.1. Optimizer # Allow the optimizer to improve CTE plans by considering the statistics and sort order of columns referenced in earlier row output clauses (Jian Guo, Richard Guo, Tom Lane) \u00a7 \u00a7 Improve optimization of IS NOT NULL and IS NULL query restrictions (David Rowley, Richard Guo, Andy Fan) \u00a7 \u00a7 Remove IS NOT NULL restrictions from queries on NOT NULL columns and eliminate scans on NOT NULL columns if IS NULL is specified. Allow partition pruning on boolean columns on IS [NOT] UNKNOWN conditionals (David Rowley) \u00a7 Improve optimization of range values when using containment operators <@ and @> (Kim Johan Andersson, Jian He) \u00a7 Allow correlated IN subqueries to be transformed into joins (Andy Fan, Tom Lane) \u00a7 Improve optimization of the LIMIT clause on partitioned tables, inheritance parents, and UNION ALL queries (Andy Fan, David Rowley) \u00a7 Allow query nodes to be run in parallel in more cases (Tom Lane) \u00a7 Allow GROUP BY columns to be internally ordered to match ORDER BY (Andrei Lepikhov, Teodor Sigaev) \u00a7 This can be disabled using server variable enable_group_by_reordering . Allow UNION (without ALL ) to use MergeAppend (David Rowley) \u00a7 Fix MergeAppend plans to more accurately compute the number of rows that need to be sorted (Alexander Kuzmenkov) \u00a7 Allow GiST and SP-GiST indexes to be part of incremental sorts (Miroslav Bendik) \u00a7 This is particularly useful for ORDER BY clauses where the first column has a GiST and SP-GiST index, and other columns do not. Add columns to pg_stats to report range-type histogram information (Egor Rogov, Soumyadeep Chakraborty) \u00a7 E.12.3.1.2. Indexes # Allow btree indexes to more efficiently find a set of values, such as those supplied by IN clauses using constants (Peter Geoghegan, Matthias van de Meent) \u00a7 Allow BRIN indexes to be created using parallel workers (Tomas Vondra, Matthias van de Meent) \u00a7 E.12.3.1.3. General Performance # Allow vacuum to more efficiently remove and freeze tuples (Melanie Plageman, Heikki Linnakangas) \u00a7 WAL traffic caused by vacuum is also more compact. Allow vacuum to more efficiently store tuple references (Masahiko Sawada, John Naylor) \u00a7 \u00a7 \u00a7 \u00a7 Additionally, vacuum is no longer silently limited to one gigabyte of memory when maintenance_work_mem or autovacuum_work_mem are higher. Optimize vacuuming of relations with no indexes (Melanie Plageman) \u00a7 Increase default vacuum_buffer_usage_limit to 2MB (Thomas Munro) \u00a7 Improve performance when checking roles with many memberships (Nathan Bossart) \u00a7 Improve performance of heavily-contended WAL writes (Bharath Rupireddy) \u00a7 Improve performance when transferring large blocks of data to a client (Melih Mutlu) \u00a7 Allow the grouping of file system reads with the new system variable io_combine_limit (Thomas Munro, Andres Freund, Melanie Plageman, Nazir Bilal Yavuz) \u00a7 \u00a7 \u00a7 E.12.3.1.4. Monitoring # Create system view pg_stat_checkpointer (Bharath Rupireddy, Anton A. Melnikov, Alexander Korotkov) \u00a7 \u00a7 \u00a7 Relevant columns have been removed from pg_stat_bgwriter and added to this new system view. Improve control over resetting statistics (Atsushi Torikoshi, Bharath Rupireddy) \u00a7 \u00a7 \u00a7 Allow pg_stat_reset_shared() (with no arguments) and pg_stat_reset_shared( NULL ) to reset all shared statistics. Allow pg_stat_reset_shared('slru') and pg_stat_reset_slru() (with no arguments) to reset SLRU statistics, which was already possible with pg_stat_reset_slru(NULL). Add log messages related to WAL recovery from backups (Andres Freund) \u00a7 Add log_connections log line for trust connections (Jacob Champion) \u00a7 Add log message to report walsender acquisition and release of replication slots (Bharath Rupireddy) \u00a7 This is enabled by the server variable log_replication_commands . Add system view pg_wait_events that reports wait event types (Bertrand Drouvot) \u00a7 This is useful for adding descriptions to wait events reported in pg_stat_activity . Add wait events for checkpoint delays (Thomas Munro) \u00a7 Allow vacuum to report the progress of index processing (Sami Imseih) \u00a7 This appears in system view pg_stat_progress_vacuum columns indexes_total and indexes_processed . E.12.3.1.5. Privileges # Allow granting the right to perform maintenance operations (Nathan Bossart) \u00a7 The permission can be granted on a per-table basis using the MAINTAIN privilege and on a per-role basis via the pg_maintain predefined role. Permitted operations are VACUUM , ANALYZE , REINDEX , REFRESH MATERIALIZED VIEW , CLUSTER , and LOCK TABLE . Allow roles with pg_monitor membership to execute pg_current_logfile() (Pavlo Golub, Nathan Bossart) \u00a7 E.12.3.1.6. Server Configuration # Add system variable allow_alter_system to disallow ALTER SYSTEM (Jelte Fennema-Nio, Gabriele Bartolini) \u00a7 Allow ALTER SYSTEM to set unrecognized custom server variables (Tom Lane) \u00a7 This is also possible with GRANT ON PARAMETER . Add server variable transaction_timeout to restrict the duration of transactions (Andrey Borodin, Japin Li, Junwang Zhao, Alexander Korotkov) \u00a7 \u00a7 \u00a7 Add a builtin platform-independent collation provider (Jeff Davis) \u00a7 \u00a7 \u00a7 \u00a7 This supports C and C.UTF-8 collations. Add server variable huge_pages_status to report the use of huge pages by Postgres (Justin Pryzby) \u00a7 This is useful when huge_pages is set to try . Add server variable to disable event triggers (Daniel Gustafsson) \u00a7 The setting, event_triggers , allows for the temporary disabling of event triggers for debugging. Allow the SLRU cache sizes to be configured (Andrey Borodin, Dilip Kumar, Alvaro Herrera) \u00a7 The new server variables are commit_timestamp_buffers , multixact_member_buffers , multixact_offset_buffers , notify_buffers , serializable_buffers , subtransaction_buffers , and transaction_buffers . commit_timestamp_buffers , transaction_buffers , and subtransaction_buffers scale up automatically with shared_buffers . E.12.3.1.7. Streaming Replication and Recovery # Add support for incremental file system backup (Robert Haas, Jakub Wartak, Tomas Vondra) \u00a7 \u00a7 Incremental backups can be created using pg_basebackup 's new --incremental option. The new application pg_combinebackup allows manipulation of base and incremental file system backups. Allow the creation of WAL summarization files (Robert Haas, Nathan Bossart, Hubert Depesz Lubaczewski) \u00a7 \u00a7 \u00a7 \u00a7 These files record the block numbers that have changed within an LSN range and are useful for incremental file system backups. This is controlled by the server variables summarize_wal and wal_summary_keep_time , and introspected with pg_available_wal_summaries() , pg_wal_summary_contents() , and pg_get_wal_summarizer_state() . Add the system identifier to file system backup manife\n\u2026 <page content truncated>",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.82,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.5371908626848565,
+      "profiling_data": {
+        "total_time": 10.428481588000068,
+        "llm_time": 6.742921537001166,
+        "energy_consumed_kwh": 1.872374112211808e-05,
+        "cpu_energy_kwh": 2.4524828304420563e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.6271258291676025e-05,
+        "emissions_kg_co2": 6.192278216424647e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.049041748046875e-05
+        ],
+        [
+          "route",
+          -5.7220458984375e-06
+        ],
+        [
+          "\":\"",
+          -7.915496826171875e-05
+        ],
+        [
+          "Summary",
+          -0.004029273986816406
+        ],
+        [
+          "\"}",
+          0.0
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.000825268630609,
+      "profiling_data": {
+        "total_time": 2.9659467630008294,
+        "llm_time": 1.3859296240007097,
+        "energy_consumed_kwh": 1.4039508538663408e-05,
+        "cpu_energy_kwh": 1.8332891803298776e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.2206219358333531e-05,
+        "emissions_kg_co2": 4.643118184889685e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "Main differences between **PostgreSQL 17** and **PostgreSQL 18** (from the PostgreSQL 18 release notes):\n\n## Major new capabilities in PostgreSQL 18\n- **Asynchronous I/O (AIO) subsystem**: Designed to improve performance for operations such as **sequential scans, bitmap heap scans, VACUUM**, etc., controlled by new settings (e.g., `io_method`, `io_combine_limit`, `io_max_combine_limit`).  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **`pg_upgrade` retains optimizer statistics**: reduces the amount of follow-up work after upgrade.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **\u201cSkip scan\u201d for multicolumn B-tree lookups**: allows multicolumn B-tree indexes to be used in more cases.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview; also E.6.3.1.2 Indexes)\n\n- **New `uuidv7()` function**: generates **timestamp-ordered UUIDv7** values.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **Virtual generated columns**: generated values computed during **read**; this is now the default behavior for generated columns.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **OAuth authentication support**: adds support for OAuth-based authentication.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **`RETURNING` enhancements**: improved/extended support for **OLD and NEW targets** in `INSERT`, `UPDATE`, `DELETE`, and `MERGE`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n## Notable 17 \u2192 18 behavior / compatibility changes\n- **`initdb` default enables data checksums** (can be disabled with `--no-data-checksums`); `pg_upgrade` requires matching checksum settings.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **Time zone abbreviation handling changed**: PostgreSQL now favors the **current session\u2019s** abbreviations before checking `timezone_abbreviations`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **MD5 password authentication deprecated**: setting MD5 passwords now emits deprecation warnings; removal is planned for a future major version.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **VACUUM / ANALYZE with inheritance**: now processes inheritance children; old behavior is available via `ONLY`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **COPY/psql CSV end-of-file marker behavior**: prevents `\\.` from being treated as EOF in some COPY cases; also notes psql `\\copy`/STDIN compatibility considerations.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **Other migration incompatibilities/tweaks**, including:\n  - Disallow creation of **unlogged partitioned tables**\n  - Change role used to execute certain **AFTER triggers**\n  - Remove non-functional **rule privileges** support in `GRANT`/`REVOKE`\n  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n### References (official)\n- PostgreSQL 18 Release Notes (overview + migration incompatibilities): https://www.postgresql.org/docs/release/18/\n- PostgreSQL 17 Release Notes (for baseline context): https://www.postgresql.org/docs/release/17/",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Main",
+          -2.164048194885254
+        ],
+        [
+          " differences",
+          -0.18346691131591797
+        ],
+        [
+          " between",
+          -0.05711555480957031
+        ],
+        [
+          " **",
+          -0.0025548934936523438
+        ],
+        [
+          "Post",
+          -5.7220458984375e-06
+        ],
+        [
+          "gre",
+          -8.58306884765625e-06
+        ],
+        [
+          "SQL",
+          1.1444091796875e-05
+        ],
+        [
+          " ",
+          1.33514404296875e-05
+        ],
+        [
+          "17",
+          -8.58306884765625e-06
+        ],
+        [
+          "**",
+          -0.0012178421020507812
+        ],
+        [
+          " and",
+          -1.52587890625e-05
+        ],
+        [
+          " **",
+          7.62939453125e-06
+        ],
+        [
+          "Post",
+          -4.863739013671875e-05
+        ],
+        [
+          "gre",
+          -1.9073486328125e-06
+        ],
+        [
+          "SQL",
+          -5.7220458984375e-06
+        ],
+        [
+          " ",
+          -3.814697265625e-06
+        ],
+        [
+          "18",
+          5.7220458984375e-06
+        ],
+        [
+          "**",
+          -0.000347137451171875
+        ],
+        [
+          " (",
+          -0.0023603439331054688
+        ],
+        [
+          "from",
+          -1.5266084671020508
+        ],
+        [
+          " the",
+          -0.1354990005493164
+        ],
+        [
+          " Postgre",
+          -1.809046745300293
+        ],
+        [
+          "SQL",
+          -8.58306884765625e-06
+        ],
+        [
+          " ",
+          -0.018865585327148438
+        ],
+        [
+          "18",
+          -7.05718994140625e-05
+        ],
+        [
+          " release",
+          -0.02651214599609375
+        ],
+        [
+          " notes",
+          -0.0002651214599609375
+        ],
+        [
+          "):\n\n",
+          -0.6854619979858398
+        ],
+        [
+          "##",
+          -0.0080108642578125
+        ],
+        [
+          " Major",
+          -1.470280647277832
+        ],
+        [
+          " new",
+          -0.08836650848388672
+        ],
+        [
+          " capabilities",
+          -0.25278663635253906
+        ],
+        [
+          " in",
+          -0.02530670166015625
+        ],
+        [
+          " Postgre",
+          -0.00016021728515625
+        ],
+        [
+          "SQL",
+          6.67572021484375e-06
+        ],
+        [
+          " ",
+          1.621246337890625e-05
+        ],
+        [
+          "18",
+          7.62939453125e-06
+        ],
+        [
+          "\n",
+          -0.015116691589355469
+        ],
+        [
+          "-",
+          -0.0067081451416015625
+        ],
+        [
+          " **",
+          -1.430511474609375e-05
+        ],
+        [
+          "As",
+          -0.00024127960205078125
+        ],
+        [
+          "ynchronous",
+          -1.049041748046875e-05
+        ],
+        [
+          " I",
+          0.0
+        ],
+        [
+          "/O",
+          0.0
+        ],
+        [
+          " (",
+          -5.14984130859375e-05
+        ],
+        [
+          "A",
+          -6.67572021484375e-06
+        ],
+        [
+          "IO",
+          0.0
+        ],
+        [
+          ")",
+          -0.0028886795043945312
+        ],
+        [
+          " subsystem",
+          -9.5367431640625e-05
+        ],
+        [
+          "**",
+          -0.0007476806640625
+        ],
+        [
+          ":",
+          -0.9137535095214844
+        ],
+        [
+          " Designed",
+          -4.7070112228393555
+        ],
+        [
+          " to",
+          -5.7220458984375e-06
+        ],
+        [
+          " improve",
+          -0.0015201568603515625
+        ],
+        [
+          " performance",
+          -0.0014820098876953125
+        ],
+        [
+          " for",
+          -0.1347341537475586
+        ],
+        [
+          " operations",
+          -0.17527484893798828
+        ],
+        [
+          " such",
+          -0.7629966735839844
+        ],
+        [
+          " as",
+          7.62939453125e-06
+        ],
+        [
+          " **",
+          -0.2382354736328125
+        ],
+        [
+          "se",
+          -9.5367431640625e-07
+        ],
+        [
+          "quential",
+          -5.7220458984375e-06
+        ],
+        [
+          " scans",
+          -1.33514404296875e-05
+        ],
+        [
+          ",",
+          -0.28116798400878906
+        ],
+        [
+          " bitmap",
+          7.62939453125e-06
+        ],
+        [
+          " heap",
+          -1.239776611328125e-05
+        ],
+        [
+          " scans",
+          3.814697265625e-06
+        ],
+        [
+          ",",
+          -2.86102294921875e-05
+        ],
+        [
+          " VAC",
+          -0.1637859344482422
+        ],
+        [
+          "U",
+          -1.239776611328125e-05
+        ],
+        [
+          "UM",
+          -1.52587890625e-05
+        ],
+        [
+          "**,",
+          -0.05887889862060547
+        ],
+        [
+          " etc",
+          -0.019327163696289062
+        ],
+        [
+          ".,",
+          -0.26697444915771484
+        ],
+        [
+          " controlled",
+          -0.10455513000488281
+        ],
+        [
+          " by",
+          -0.43025779724121094
+        ],
+        [
+          " new",
+          -0.09476852416992188
+        ],
+        [
+          " settings",
+          -0.9282655715942383
+        ],
+        [
+          " (",
+          -2.0352869033813477
+        ],
+        [
+          "e",
+          -0.05583381652832031
+        ],
+        [
+          ".g",
+          5.7220458984375e-06
+        ],
+        [
+          ".,",
+          -0.003818511962890625
+        ],
+        [
+          " `",
+          -0.0025577545166015625
+        ],
+        [
+          "io",
+          7.62939453125e-06
+        ],
+        [
+          "_method",
+          5.7220458984375e-06
+        ],
+        [
+          "`,",
+          -0.00028324127197265625
+        ],
+        [
+          " `",
+          -0.0008907318115234375
+        ],
+        [
+          "io",
+          -3.814697265625e-06
+        ],
+        [
+          "_com",
+          3.814697265625e-06
+        ],
+        [
+          "bine",
+          1.049041748046875e-05
+        ],
+        [
+          "_limit",
+          -4.76837158203125e-06
+        ],
+        [
+          "`,",
+          -2.47955322265625e-05
+        ],
+        [
+          " `",
+          -1.1444091796875e-05
+        ],
+        [
+          "io",
+          -1.52587890625e-05
+        ],
+        [
+          "_max",
+          5.7220458984375e-06
+        ],
+        [
+          "_com",
+          5.7220458984375e-06
+        ],
+        [
+          "bine",
+          4.76837158203125e-06
+        ],
+        [
+          "_limit",
+          5.7220458984375e-06
+        ],
+        [
+          "`).",
+          -0.0482025146484375
+        ],
+        [
+          "  \n",
+          -0.046006202697753906
+        ],
+        [
+          " ",
+          -1.963719367980957
+        ],
+        [
+          " Source",
+          -0.14619827270507812
+        ],
+        [
+          ":",
+          -3.62396240234375e-05
+        ],
+        [
+          " https",
+          -1.33514404296875e-05
+        ],
+        [
+          "://",
+          -1.52587890625e-05
+        ],
+        [
+          "www",
+          -1.621246337890625e-05
+        ],
+        [
+          ".post",
+          1.1444091796875e-05
+        ],
+        [
+          "gresql",
+          -2.86102294921875e-06
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/docs",
+          5.7220458984375e-06
+        ],
+        [
+          "/re",
+          -0.000217437744140625
+        ],
+        [
+          "lease",
+          1.621246337890625e-05
+        ],
+        [
+          "/",
+          7.62939453125e-06
+        ],
+        [
+          "18",
+          4.76837158203125e-06
+        ],
+        [
+          "/",
+          -1.278219223022461
+        ],
+        [
+          " (",
+          -0.060647010803222656
+        ],
+        [
+          "E",
+          -0.035798072814941406
+        ],
+        [
+          ".",
+          1.1444091796875e-05
+        ],
+        [
+          "6",
+          -5.7220458984375e-06
+        ],
+        [
+          ".",
+          -0.006397247314453125
+        ],
+        [
+          "1",
+          -0.0005369186401367188
+        ],
+        [
+          " Overview",
+          -0.8560657501220703
+        ],
+        [
+          ")\n\n",
+          -3.7986536026000977
+        ],
+        [
+          "-",
+          5.7220458984375e-06
+        ],
+        [
+          " **",
+          9.5367431640625e-06
+        ],
+        [
+          "`",
+          -0.010727882385253906
+        ],
+        [
+          "pg",
+          9.5367431640625e-07
+        ],
+        [
+          "_upgrade",
+          -1.9073486328125e-06
+        ],
+        [
+          "`",
+          -1.71661376953125e-05
+        ],
+        [
+          " retains",
+          -0.03699016571044922
+        ],
+        [
+          " optimizer",
+          -2.193450927734375e-05
+        ],
+        [
+          " statistics",
+          -0.0008296966552734375
+        ],
+        [
+          "**",
+          -0.0001888275146484375
+        ],
+        [
+          ":",
+          -0.3604087829589844
+        ],
+        [
+          " reduces",
+          -2.9452285766601562
+        ],
+        [
+          " the",
+          -0.2258167266845703
+        ],
+        [
+          " amount",
+          -1.4117650985717773
+        ],
+        [
+          " of",
+          -0.00021457672119140625
+        ],
+        [
+          " follow",
+          -3.4021081924438477
+        ],
+        [
+          "-up",
+          -0.00014209747314453125
+        ],
+        [
+          " work",
+          -0.016724586486816406
+        ],
+        [
+          " after",
+          -0.12605762481689453
+        ],
+        [
+          " upgrade",
+          -0.6840724945068359
+        ],
+        [
+          ".",
+          -0.016004562377929688
+        ],
+        [
+          "  \n",
+          -1.430511474609375e-05
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          " Source",
+          -8.392333984375e-05
+        ],
+        [
+          ":",
+          7.62939453125e-06
+        ],
+        [
+          " https",
+          -4.38690185546875e-05
+        ],
+        [
+          "://",
+          -9.5367431640625e-06
+        ],
+        [
+          "www",
+          -1.52587890625e-05
+        ],
+        [
+          ".post",
+          1.52587890625e-05
+        ],
+        [
+          "gresql",
+          9.5367431640625e-07
+        ],
+        [
+          ".org",
+          1.1444091796875e-05
+        ],
+        [
+          "/docs",
+          -4.76837158203125e-06
+        ],
+        [
+          "/re",
+          9.5367431640625e-07
+        ],
+        [
+          "lease",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          -0.006730079650878906
+        ],
+        [
+          " (",
+          1.9073486328125e-06
+        ],
+        [
+          "E",
+          7.62939453125e-06
+        ],
+        [
+          ".",
+          5.7220458984375e-06
+        ],
+        [
+          "6",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          -3.814697265625e-06
+        ],
+        [
+          "1",
+          4.76837158203125e-06
+        ],
+        [
+          " Overview",
+          -0.0004405975341796875
+        ],
+        [
+          ")\n\n",
+          -0.002109527587890625
+        ],
+        [
+          "-",
+          -9.5367431640625e-06
+        ],
+        [
+          " **",
+          -1.1444091796875e-05
+        ],
+        [
+          "\u201c",
+          -0.06458091735839844
+        ],
+        [
+          "Skip",
+          -9.632110595703125e-05
+        ],
+        [
+          " scan",
+          -0.00022029876708984375
+        ],
+        [
+          "\u201d",
+          1.33514404296875e-05
+        ],
+        [
+          " for",
+          -0.42473697662353516
+        ],
+        [
+          " mult",
+          -0.011549949645996094
+        ],
+        [
+          "icol",
+          4.76837158203125e-06
+        ],
+        [
+          "umn",
+          -2.86102294921875e-06
+        ],
+        [
+          " B",
+          -0.19053363800048828
+        ],
+        [
+          "-tree",
+          -5.817413330078125e-05
+        ],
+        [
+          " look",
+          -0.29748058319091797
+        ],
+        [
+          "ups",
+          -1.1444091796875e-05
+        ],
+        [
+          "**",
+          -5.14984130859375e-05
+        ],
+        [
+          ":",
+          -0.00022411346435546875
+        ],
+        [
+          " allows",
+          -0.2913322448730469
+        ],
+        [
+          " mult",
+          -0.21319580078125
+        ],
+        [
+          "icol",
+          -1.9073486328125e-06
+        ],
+        [
+          "umn",
+          2.86102294921875e-06
+        ],
+        [
+          " B",
+          -0.0888681411743164
+        ],
+        [
+          "-tree",
+          -3.62396240234375e-05
+        ],
+        [
+          " indexes",
+          -0.007867813110351562
+        ],
+        [
+          " to",
+          -0.00014400482177734375
+        ],
+        [
+          " be",
+          -6.29425048828125e-05
+        ],
+        [
+          " used",
+          -0.014210700988769531
+        ],
+        [
+          " in",
+          -0.0007791519165039062
+        ],
+        [
+          " more",
+          -0.0076885223388671875
+        ],
+        [
+          " cases",
+          -0.09252357482910156
+        ],
+        [
+          ".",
+          -0.04564189910888672
+        ],
+        [
+          "  \n",
+          -4.291534423828125e-05
+        ],
+        [
+          " ",
+          -1.1444091796875e-05
+        ],
+        [
+          " Source",
+          -0.024732589721679688
+        ],
+        [
+          ":",
+          -3.4332275390625e-05
+        ],
+        [
+          " https",
+          1.52587890625e-05
+        ],
+        [
+          "://",
+          1.1444091796875e-05
+        ],
+        [
+          "www",
+          -8.58306884765625e-06
+        ],
+        [
+          ".post",
+          -1.430511474609375e-05
+        ],
+        [
+          "gresql",
+          1.9073486328125e-06
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/docs",
+          1.9073486328125e-06
+        ],
+        [
+          "/re",
+          -2.86102294921875e-06
+        ],
+        [
+          "lease",
+          0.0
+        ],
+        [
+          "/",
+          -1.049041748046875e-05
+        ],
+        [
+          "18",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          -0.00016307830810546875
+        ],
+        [
+          " (",
+          -2.384185791015625e-05
+        ],
+        [
+          "E",
+          -7.724761962890625e-05
+        ],
+        [
+          ".",
+          8.58306884765625e-06
+        ],
+        [
+          "6",
+          -1.239776611328125e-05
+        ],
+        [
+          ".",
+          -9.5367431640625e-06
+        ],
+        [
+          "1",
+          -2.002716064453125e-05
+        ],
+        [
+          " Overview",
+          -0.0014429092407226562
+        ],
+        [
+          ";",
+          -0.37248992919921875
+        ],
+        [
+          " also",
+          -0.43077564239501953
+        ],
+        [
+          " E",
+          -0.17695903778076172
+        ],
+        [
+          ".",
+          1.1444091796875e-05
+        ],
+        [
+          "6",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          -1.239776611328125e-05
+        ],
+        [
+          "3",
+          -2.47955322265625e-05
+        ],
+        [
+          ".",
+          -0.00279998779296875
+        ],
+        [
+          "1",
+          0.0
+        ],
+        [
+          ".",
+          -0.000213623046875
+        ],
+        [
+          "2",
+          -0.0008096694946289062
+        ],
+        [
+          " Index",
+          -0.09053421020507812
+        ],
+        [
+          "es",
+          -9.5367431640625e-07
+        ],
+        [
+          ")\n\n",
+          -0.03816986083984375
+        ],
+        [
+          "-",
+          -7.43865966796875e-05
+        ],
+        [
+          " **",
+          -0.0005016326904296875
+        ],
+        [
+          "New",
+          -0.04863739013671875
+        ],
+        [
+          " `",
+          -0.5136480331420898
+        ],
+        [
+          "uuid",
+          -2.86102294921875e-06
+        ],
+        [
+          "v",
+          -5.7220458984375e-06
+        ],
+        [
+          "7",
+          8.58306884765625e-06
+        ],
+        [
+          "()`",
+          -5.7220458984375e-06
+        ],
+        [
+          " function",
+          -0.0048961639404296875
+        ],
+        [
+          "**",
+          -2.288818359375e-05
+        ],
+        [
+          ":",
+          -0.19505977630615234
+        ],
+        [
+          " generates",
+          -0.09565162658691406
+        ],
+        [
+          " **",
+          -1.601567268371582
+        ],
+        [
+          "timestamp",
+          -0.0010271072387695312
+        ],
+        [
+          "-",
+          1.52587890625e-05
+        ],
+        [
+          "ordered",
+          0.0
+        ],
+        [
+          " UUID",
+          -0.0033445358276367188
+        ],
+        [
+          "v",
+          -3.4103832244873047
+        ],
+        [
+          "7",
+          -1.239776611328125e-05
+        ],
+        [
+          "**",
+          -0.0002841949462890625
+        ],
+        [
+          " values",
+          -0.33089733123779297
+        ],
+        [
+          ".",
+          -0.00015926361083984375
+        ],
+        [
+          "  \n",
+          1.52587890625e-05
+        ],
+        [
+          " ",
+          1.9073486328125e-06
+        ],
+        [
+          " Source",
+          -9.5367431640625e-07
+        ],
+        [
+          ":",
+          -1.52587890625e-05
+        ],
+        [
+          " https",
+          -1.1444091796875e-05
+        ],
+        [
+          "://",
+          -9.5367431640625e-06
+        ],
+        [
+          "www",
+          -1.239776611328125e-05
+        ],
+        [
+          ".post",
+          -5.7220458984375e-06
+        ],
+        [
+          "gresql",
+          -1.430511474609375e-06
+        ],
+        [
+          ".org",
+          8.58306884765625e-06
+        ],
+        [
+          "/docs",
+          6.67572021484375e-06
+        ],
+        [
+          "/re",
+          1.049041748046875e-05
+        ],
+        [
+          "lease",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          1.621246337890625e-05
+        ],
+        [
+          "/",
+          -5.340576171875e-05
+        ],
+        [
+          " (",
+          -9.5367431640625e-06
+        ],
+        [
+          "E",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          7.62939453125e-06
+        ],
+        [
+          "6",
+          1.1444091796875e-05
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "1",
+          -9.5367431640625e-07
+        ],
+        [
+          " Overview",
+          -4.76837158203125e-06
+        ],
+        [
+          ")\n\n",
+          -0.00017261505126953125
+        ],
+        [
+          "-",
+          -1.33514404296875e-05
+        ],
+        [
+          " **",
+          6.67572021484375e-06
+        ],
+        [
+          "Virtual",
+          -0.0001201629638671875
+        ],
+        [
+          " generated",
+          3.814697265625e-06
+        ],
+        [
+          " columns",
+          -1.52587890625e-05
+        ],
+        [
+          "**",
+          -0.2861623764038086
+        ],
+        [
+          ":",
+          -0.009396553039550781
+        ],
+        [
+          " generated",
+          -0.008526802062988281
+        ],
+        [
+          " values",
+          -0.06599617004394531
+        ],
+        [
+          " computed",
+          -3.846552848815918
+        ],
+        [
+          " during",
+          -0.34359073638916016
+        ],
+        [
+          " **",
+          -0.08684921264648438
+        ],
+        [
+          "read",
+          -0.005866050720214844
+        ],
+        [
+          "**",
+          -0.16309356689453125
+        ],
+        [
+          ";",
+          -0.0683746337890625
+        ],
+        [
+          " this",
+          -0.10134220123291016
+        ],
+        [
+          " is",
+          -0.040307044982910156
+        ],
+        [
+          " now",
+          -0.11103248596191406
+        ],
+        [
+          " the",
+          -0.00333404541015625
+        ],
+        [
+          " default",
+          -0.36753082275390625
+        ],
+        [
+          " behavior",
+          -0.10813713073730469
+        ],
+        [
+          " for",
+          -0.11974143981933594
+        ],
+        [
+          " generated",
+          -2.384185791015625e-05
+        ],
+        [
+          " columns",
+          -9.5367431640625e-07
+        ],
+        [
+          ".",
+          -0.000324249267578125
+        ],
+        [
+          "  \n",
+          9.5367431640625e-07
+        ],
+        [
+          " ",
+          -9.5367431640625e-06
+        ],
+        [
+          " Source",
+          -8.106231689453125e-05
+        ],
+        [
+          ":",
+          5.7220458984375e-06
+        ],
+        [
+          " https",
+          -1.430511474609375e-05
+        ],
+        [
+          "://",
+          1.1444091796875e-05
+        ],
+        [
+          "www",
+          2.86102294921875e-06
+        ],
+        [
+          ".post",
+          6.67572021484375e-06
+        ],
+        [
+          "gresql",
+          0.0
+        ],
+        [
+          ".org",
+          -1.430511474609375e-05
+        ],
+        [
+          "/docs",
+          -9.5367431640625e-06
+        ],
+        [
+          "/re",
+          -8.58306884765625e-06
+        ],
+        [
+          "lease",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          -9.5367431640625e-06
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "/",
+          -3.814697265625e-06
+        ],
+        [
+          " (",
+          6.67572021484375e-06
+        ],
+        [
+          "E",
+          -1.239776611328125e-05
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "6",
+          -8.58306884765625e-06
+        ],
+        [
+          ".",
+          8.58306884765625e-06
+        ],
+        [
+          "1",
+          -3.814697265625e-06
+        ],
+        [
+          " Overview",
+          -3.814697265625e-06
+        ],
+        [
+          ")\n\n",
+          -0.0002689361572265625
+        ],
+        [
+          "-",
+          -5.7220458984375e-05
+        ],
+        [
+          " **",
+          0.0
+        ],
+        [
+          "OAuth",
+          -4.9591064453125e-05
+        ],
+        [
+          " authentication",
+          -4.76837158203125e-06
+        ],
+        [
+          " support",
+          1.1444091796875e-05
+        ],
+        [
+          "**",
+          6.67572021484375e-06
+        ],
+        [
+          ":",
+          -0.38194942474365234
+        ],
+        [
+          " adds",
+          -0.25476551055908203
+        ],
+        [
+          " support",
+          -1.1002197265625
+        ],
+        [
+          " for",
+          -0.00039196014404296875
+        ],
+        [
+          " OAuth",
+          -0.1560649871826172
+        ],
+        [
+          "-based",
+          -0.4073219299316406
+        ],
+        [
+          " authentication",
+          -0.08468914031982422
+        ],
+        [
+          ".",
+          -0.26160621643066406
+        ],
+        [
+          "  \n",
+          -3.0517578125e-05
+        ],
+        [
+          " ",
+          -1.9073486328125e-06
+        ],
+        [
+          " Source",
+          -3.814697265625e-06
+        ],
+        [
+          ":",
+          1.33514404296875e-05
+        ],
+        [
+          " https",
+          -2.86102294921875e-06
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "www",
+          -8.58306884765625e-06
+        ],
+        [
+          ".post",
+          -8.58306884765625e-06
+        ],
+        [
+          "gresql",
+          1.9073486328125e-06
+        ],
+        [
+          ".org",
+          -8.58306884765625e-06
+        ],
+        [
+          "/docs",
+          1.239776611328125e-05
+        ],
+        [
+          "/re",
+          1.52587890625e-05
+        ],
+        [
+          "lease",
+          -2.86102294921875e-06
+        ],
+        [
+          "/",
+          -5.7220458984375e-06
+        ],
+        [
+          "18",
+          -2.86102294921875e-06
+        ],
+        [
+          "/",
+          -1.239776611328125e-05
+        ],
+        [
+          " (",
+          -1.239776611328125e-05
+        ],
+        [
+          "E",
+          1.621246337890625e-05
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "6",
+          -5.7220458984375e-06
+        ],
+        [
+          ".",
+          -8.58306884765625e-06
+        ],
+        [
+          "1",
+          1.239776611328125e-05
+        ],
+        [
+          " Overview",
+          4.76837158203125e-06
+        ],
+        [
+          ")\n\n",
+          -0.0016202926635742188
+        ],
+        [
+          "-",
+          -9.5367431640625e-06
+        ],
+        [
+          " **",
+          -2.86102294921875e-06
+        ],
+        [
+          "`",
+          -0.08480644226074219
+        ],
+        [
+          "RETURN",
+          -4.863739013671875e-05
+        ],
+        [
+          "ING",
+          -5.7220458984375e-06
+        ],
+        [
+          "`",
+          3.814697265625e-06
+        ],
+        [
+          " enhancements",
+          -0.0672149658203125
+        ],
+        [
+          "**",
+          -0.08977699279785156
+        ],
+        [
+          ":",
+          -0.05730247497558594
+        ],
+        [
+          " improved",
+          -0.5117864608764648
+        ],
+        [
+          "/",
+          -0.4429740905761719
+        ],
+        [
+          "extended",
+          -0.47794628143310547
+        ],
+        [
+          " support",
+          -0.2305755615234375
+        ],
+        [
+          " for",
+          -0.0034008026123046875
+        ],
+        [
+          " **",
+          -0.3501262664794922
+        ],
+        [
+          "OLD",
+          -0.007563591003417969
+        ],
+        [
+          " and",
+          -2.1365880966186523
+        ],
+        [
+          " NEW",
+          9.5367431640625e-07
+        ],
+        [
+          " targets",
+          -1.5060300827026367
+        ],
+        [
+          "**",
+          -6.771087646484375e-05
+        ],
+        [
+          " in",
+          -0.10509300231933594
+        ],
+        [
+          " `",
+          -0.0020961761474609375
+        ],
+        [
+          "INSERT",
+          -0.02184581756591797
+        ],
+        [
+          "`,",
+          -0.00045490264892578125
+        ],
+        [
+          " `",
+          6.67572021484375e-06
+        ],
+        [
+          "UPDATE",
+          -1.430511474609375e-05
+        ],
+        [
+          "`,",
+          -5.7220458984375e-06
+        ],
+        [
+          " `",
+          -5.7220458984375e-06
+        ],
+        [
+          "DELETE",
+          -2.86102294921875e-06
+        ],
+        [
+          "`,",
+          -1.811981201171875e-05
+        ],
+        [
+          " and",
+          -3.24249267578125e-05
+        ],
+        [
+          " `",
+          -0.0010271072387695312
+        ],
+        [
+          "MER",
+          5.7220458984375e-06
+        ],
+        [
+          "GE",
+          5.7220458984375e-06
+        ],
+        [
+          "`.",
+          -0.03655242919921875
+        ],
+        [
+          "  \n",
+          -1.239776611328125e-05
+        ],
+        [
+          " ",
+          -5.7220458984375e-06
+        ],
+        [
+          " Source",
+          -1.049041748046875e-05
+        ],
+        [
+          ":",
+          5.7220458984375e-06
+        ],
+        [
+          " https",
+          -1.1444091796875e-05
+        ],
+        [
+          "://",
+          -5.7220458984375e-06
+        ],
+        [
+          "www",
+          -5.7220458984375e-06
+        ],
+        [
+          ".post",
+          2.86102294921875e-06
+        ],
+        [
+          "gresql",
+          0.0
+        ],
+        [
+          ".org",
+          6.67572021484375e-06
+        ],
+        [
+          "/docs",
+          -1.9073486328125e-06
+        ],
+        [
+          "/re",
+          -8.58306884765625e-06
+        ],
+        [
+          "lease",
+          -1.239776611328125e-05
+        ],
+        [
+          "/",
+          1.33514404296875e-05
+        ],
+        [
+          "18",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          8.58306884765625e-06
+        ],
+        [
+          " (",
+          -2.86102294921875e-06
+        ],
+        [
+          "E",
+          -3.814697265625e-06
+        ],
+        [
+          ".",
+          1.33514404296875e-05
+        ],
+        [
+          "6",
+          1.621246337890625e-05
+        ],
+        [
+          ".",
+          -8.58306884765625e-06
+        ],
+        [
+          "1",
+          -1.71661376953125e-05
+        ],
+        [
+          " Overview",
+          -4.76837158203125e-07
+        ],
+        [
+          ")\n\n",
+          -0.0027561187744140625
+        ],
+        [
+          "##",
+          -0.3319873809814453
+        ],
+        [
+          " Not",
+          -0.19399642944335938
+        ],
+        [
+          "able",
+          -2.384185791015625e-05
+        ],
+        [
+          " ",
+          -3.8411874771118164
+        ],
+        [
+          "17",
+          -2.765655517578125e-05
+        ],
+        [
+          " \u2192",
+          -0.000148773193359375
+        ],
+        [
+          " ",
+          -2.86102294921875e-06
+        ],
+        [
+          "18",
+          -5.7220458984375e-06
+        ],
+        [
+          " behavior",
+          -0.8917055130004883
+        ],
+        [
+          " /",
+          -0.09381294250488281
+        ],
+        [
+          " compatibility",
+          -0.008434295654296875
+        ],
+        [
+          " changes",
+          -0.0018758773803710938
+        ],
+        [
+          "\n",
+          -0.015552520751953125
+        ],
+        [
+          "-",
+          -0.001178741455078125
+        ],
+        [
+          " **",
+          -6.67572021484375e-06
+        ],
+        [
+          "`",
+          -0.0033044815063476562
+        ],
+        [
+          "init",
+          5.7220458984375e-06
+        ],
+        [
+          "db",
+          1.1444091796875e-05
+        ],
+        [
+          "`",
+          -0.0004730224609375
+        ],
+        [
+          " default",
+          -0.4559669494628906
+        ],
+        [
+          " enables",
+          -0.03286266326904297
+        ],
+        [
+          " data",
+          -0.00042057037353515625
+        ],
+        [
+          " checks",
+          -2.86102294921875e-06
+        ],
+        [
+          "ums",
+          0.0
+        ],
+        [
+          "**",
+          -0.00028228759765625
+        ],
+        [
+          " (",
+          -0.16538715362548828
+        ],
+        [
+          "can",
+          -0.1370983123779297
+        ],
+        [
+          " be",
+          -0.04050636291503906
+        ],
+        [
+          " disabled",
+          -0.005425453186035156
+        ],
+        [
+          " with",
+          -0.0500335693359375
+        ],
+        [
+          " `",
+          -0.0001621246337890625
+        ],
+        [
+          "--",
+          -4.291534423828125e-05
+        ],
+        [
+          "no",
+          0.0
+        ],
+        [
+          "-data",
+          4.76837158203125e-06
+        ],
+        [
+          "-check",
+          -1.239776611328125e-05
+        ],
+        [
+          "s",
+          -2.86102294921875e-06
+        ],
+        [
+          "ums",
+          0.0
+        ],
+        [
+          "`",
+          -0.050581932067871094
+        ],
+        [
+          ");",
+          -0.18376827239990234
+        ],
+        [
+          " `",
+          -0.16849613189697266
+        ],
+        [
+          "pg",
+          -1.52587890625e-05
+        ],
+        [
+          "_upgrade",
+          -9.5367431640625e-07
+        ],
+        [
+          "`",
+          -5.7220458984375e-06
+        ],
+        [
+          " requires",
+          -0.009562492370605469
+        ],
+        [
+          " matching",
+          -0.030597686767578125
+        ],
+        [
+          " checksum",
+          -0.002056121826171875
+        ],
+        [
+          " settings",
+          -0.006962776184082031
+        ],
+        [
+          ".",
+          -0.015149116516113281
+        ],
+        [
+          "  \n",
+          -1.52587890625e-05
+        ],
+        [
+          " ",
+          -7.62939453125e-06
+        ],
+        [
+          " Source",
+          -8.678436279296875e-05
+        ],
+        [
+          ":",
+          5.7220458984375e-06
+        ],
+        [
+          " https",
+          0.0
+        ],
+        [
+          "://",
+          8.58306884765625e-06
+        ],
+        [
+          "www",
+          -1.239776611328125e-05
+        ],
+        [
+          ".post",
+          8.58306884765625e-06
+        ],
+        [
+          "gresql",
+          9.5367431640625e-07
+        ],
+        [
+          ".org",
+          5.7220458984375e-06
+        ],
+        [
+          "/docs",
+          -1.1444091796875e-05
+        ],
+        [
+          "/re",
+          -1.621246337890625e-05
+        ],
+        [
+          "lease",
+          8.58306884765625e-06
+        ],
+        [
+          "/",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          -9.5367431640625e-06
+        ],
+        [
+          "/",
+          -0.00020503997802734375
+        ],
+        [
+          " (",
+          1.049041748046875e-05
+        ],
+        [
+          "E",
+          -0.00019741058349609375
+        ],
+        [
+          ".",
+          -5.7220458984375e-06
+        ],
+        [
+          "6",
+          5.7220458984375e-06
+        ],
+        [
+          ".",
+          1.1444091796875e-05
+        ],
+        [
+          "2",
+          -6.67572021484375e-06
+        ],
+        [
+          " Migration",
+          -0.0031251907348632812
+        ],
+        [
+          " to",
+          -0.0014696121215820312
+        ],
+        [
+          " Version",
+          -1.9073486328125e-05
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          -8.58306884765625e-06
+        ],
+        [
+          ")\n\n",
+          -0.009411811828613281
+        ],
+        [
+          "-",
+          1.1444091796875e-05
+        ],
+        [
+          " **",
+          7.62939453125e-06
+        ],
+        [
+          "Time",
+          -0.0009527206420898438
+        ],
+        [
+          " zone",
+          -0.00012111663818359375
+        ],
+        [
+          " abbreviation",
+          -9.918212890625e-05
+        ],
+        [
+          " handling",
+          -0.17927169799804688
+        ],
+        [
+          " changed",
+          -0.15045642852783203
+        ],
+        [
+          "**",
+          -2.86102294921875e-06
+        ],
+        [
+          ":",
+          -6.008148193359375e-05
+        ],
+        [
+          " Postgre",
+          -0.3256254196166992
+        ],
+        [
+          "SQL",
+          5.7220458984375e-06
+        ],
+        [
+          " now",
+          -0.2639179229736328
+        ],
+        [
+          " favors",
+          -0.188201904296875
+        ],
+        [
+          " the",
+          -0.04663848876953125
+        ],
+        [
+          " **",
+          -0.026189804077148438
+        ],
+        [
+          "current",
+          -0.004215240478515625
+        ],
+        [
+          " session",
+          1.9073486328125e-06
+        ],
+        [
+          "\u2019s",
+          -0.014449119567871094
+        ],
+        [
+          "**",
+          -0.03138542175292969
+        ],
+        [
+          " abbrevi",
+          -2.5910491943359375
+        ],
+        [
+          "ations",
+          -8.58306884765625e-06
+        ],
+        [
+          " before",
+          -0.0028867721557617188
+        ],
+        [
+          " checking",
+          -0.17777252197265625
+        ],
+        [
+          " `",
+          -0.05658912658691406
+        ],
+        [
+          "timezone",
+          -6.67572021484375e-06
+        ],
+        [
+          "_ab",
+          0.0
+        ],
+        [
+          "brevi",
+          0.0
+        ],
+        [
+          "ations",
+          -8.58306884765625e-06
+        ],
+        [
+          "`.",
+          -0.2813148498535156
+        ],
+        [
+          "  \n",
+          -0.0001354217529296875
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " Source",
+          -1.9073486328125e-06
+        ],
+        [
+          ":",
+          1.33514404296875e-05
+        ],
+        [
+          " https",
+          -8.58306884765625e-06
+        ],
+        [
+          "://",
+          7.62939453125e-06
+        ],
+        [
+          "www",
+          7.62939453125e-06
+        ],
+        [
+          ".post",
+          -5.7220458984375e-06
+        ],
+        [
+          "gresql",
+          1.9073486328125e-06
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/docs",
+          -4.76837158203125e-06
+        ],
+        [
+          "/re",
+          5.7220458984375e-06
+        ],
+        [
+          "lease",
+          -1.52587890625e-05
+        ],
+        [
+          "/",
+          1.33514404296875e-05
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "/",
+          3.814697265625e-06
+        ],
+        [
+          " (",
+          -4.76837158203125e-06
+        ],
+        [
+          "E",
+          -6.580352783203125e-05
+        ],
+        [
+          ".",
+          -2.86102294921875e-06
+        ],
+        [
+          "6",
+          1.1444091796875e-05
+        ],
+        [
+          ".",
+          -1.52587890625e-05
+        ],
+        [
+          "2",
+          -1.52587890625e-05
+        ],
+        [
+          " Migration",
+          -0.7581653594970703
+        ],
+        [
+          " to",
+          -0.0013828277587890625
+        ],
+        [
+          " Version",
+          0.0
+        ],
+        [
+          " ",
+          -9.5367431640625e-06
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          ")\n\n",
+          -2.384185791015625e-05
+        ],
+        [
+          "-",
+          1.33514404296875e-05
+        ],
+        [
+          " **",
+          -8.58306884765625e-06
+        ],
+        [
+          "MD",
+          -0.010506629943847656
+        ],
+        [
+          "5",
+          -1.52587890625e-05
+        ],
+        [
+          " password",
+          -0.000492095947265625
+        ],
+        [
+          " authentication",
+          -0.10636711120605469
+        ],
+        [
+          " deprecated",
+          -0.19149208068847656
+        ],
+        [
+          "**",
+          -3.0517578125e-05
+        ],
+        [
+          ":",
+          -0.0016870498657226562
+        ],
+        [
+          " setting",
+          -0.7197170257568359
+        ],
+        [
+          " MD",
+          -0.02620410919189453
+        ],
+        [
+          "5",
+          0.0
+        ],
+        [
+          " passwords",
+          -0.34253787994384766
+        ],
+        [
+          " now",
+          -0.34809207916259766
+        ],
+        [
+          " emits",
+          -0.007409095764160156
+        ],
+        [
+          " de",
+          -0.019646644592285156
+        ],
+        [
+          "precation",
+          -3.814697265625e-06
+        ],
+        [
+          " warnings",
+          9.5367431640625e-07
+        ],
+        [
+          ";",
+          -0.6201457977294922
+        ],
+        [
+          " removal",
+          -1.3481464385986328
+        ],
+        [
+          " is",
+          -0.09675216674804688
+        ],
+        [
+          " planned",
+          -0.05606365203857422
+        ],
+        [
+          " for",
+          -0.017223358154296875
+        ],
+        [
+          " a",
+          -6.389617919921875e-05
+        ],
+        [
+          " future",
+          -3.62396240234375e-05
+        ],
+        [
+          " major",
+          -7.915496826171875e-05
+        ],
+        [
+          " version",
+          -0.1797504425048828
+        ],
+        [
+          ".",
+          -0.07229232788085938
+        ],
+        [
+          "  \n",
+          -2.6702880859375e-05
+        ],
+        [
+          " ",
+          1.621246337890625e-05
+        ],
+        [
+          " Source",
+          -1.33514404296875e-05
+        ],
+        [
+          ":",
+          -3.814697265625e-06
+        ],
+        [
+          " https",
+          -8.58306884765625e-06
+        ],
+        [
+          "://",
+          1.621246337890625e-05
+        ],
+        [
+          "www",
+          1.621246337890625e-05
+        ],
+        [
+          ".post",
+          0.0
+        ],
+        [
+          "gresql",
+          -2.86102294921875e-06
+        ],
+        [
+          ".org",
+          2.86102294921875e-06
+        ],
+        [
+          "/docs",
+          -1.9073486328125e-06
+        ],
+        [
+          "/re",
+          0.0
+        ],
+        [
+          "lease",
+          0.0
+        ],
+        [
+          "/",
+          -8.58306884765625e-06
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "/",
+          -9.5367431640625e-06
+        ],
+        [
+          " (",
+          8.58306884765625e-06
+        ],
+        [
+          "E",
+          1.049041748046875e-05
+        ],
+        [
+          ".",
+          -2.86102294921875e-06
+        ],
+        [
+          "6",
+          7.62939453125e-06
+        ],
+        [
+          ".",
+          -5.7220458984375e-06
+        ],
+        [
+          "2",
+          -3.814697265625e-06
+        ],
+        [
+          " Migration",
+          -0.0016126632690429688
+        ],
+        [
+          " to",
+          -2.002716064453125e-05
+        ],
+        [
+          " Version",
+          -2.86102294921875e-06
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          1.1444091796875e-05
+        ],
+        [
+          ")\n\n",
+          -0.00012302398681640625
+        ],
+        [
+          "-",
+          -2.288818359375e-05
+        ],
+        [
+          " **",
+          -1.430511474609375e-05
+        ],
+        [
+          "VAC",
+          -0.17986011505126953
+        ],
+        [
+          "U",
+          -9.5367431640625e-06
+        ],
+        [
+          "UM",
+          -1.430511474609375e-05
+        ],
+        [
+          " /",
+          -1.2750425338745117
+        ],
+        [
+          " ANAL",
+          -1.52587890625e-05
+        ],
+        [
+          "Y",
+          -1.52587890625e-05
+        ],
+        [
+          "ZE",
+          0.0
+        ],
+        [
+          " with",
+          -0.6132030487060547
+        ],
+        [
+          " inheritance",
+          -0.005886077880859375
+        ],
+        [
+          "**",
+          -0.25481224060058594
+        ],
+        [
+          ":",
+          -0.000820159912109375
+        ],
+        [
+          " now",
+          -0.27260684967041016
+        ],
+        [
+          " processes",
+          -0.15757083892822266
+        ],
+        [
+          " inheritance",
+          -0.38792896270751953
+        ],
+        [
+          " children",
+          -0.036655426025390625
+        ],
+        [
+          ";",
+          -0.2659902572631836
+        ],
+        [
+          " old",
+          -2.2453346252441406
+        ],
+        [
+          " behavior",
+          -0.00032806396484375
+        ],
+        [
+          " is",
+          -0.7326841354370117
+        ],
+        [
+          " available",
+          -0.012520790100097656
+        ],
+        [
+          " via",
+          -0.521881103515625
+        ],
+        [
+          " `",
+          -0.04211711883544922
+        ],
+        [
+          "ONLY",
+          3.814697265625e-06
+        ],
+        [
+          "`.",
+          -0.00016880035400390625
+        ],
+        [
+          "  \n",
+          6.67572021484375e-06
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          " Source",
+          -3.719329833984375e-05
+        ],
+        [
+          ":",
+          1.430511474609375e-05
+        ],
+        [
+          " https",
+          -8.58306884765625e-06
+        ],
+        [
+          "://",
+          -1.239776611328125e-05
+        ],
+        [
+          "www",
+          1.33514404296875e-05
+        ],
+        [
+          ".post",
+          -5.7220458984375e-06
+        ],
+        [
+          "gresql",
+          0.0
+        ],
+        [
+          ".org",
+          -1.430511474609375e-05
+        ],
+        [
+          "/docs",
+          8.58306884765625e-06
+        ],
+        [
+          "/re",
+          5.7220458984375e-06
+        ],
+        [
+          "lease",
+          0.0
+        ],
+        [
+          "/",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          8.58306884765625e-06
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          " (",
+          1.621246337890625e-05
+        ],
+        [
+          "E",
+          1.1444091796875e-05
+        ],
+        [
+          ".",
+          2.86102294921875e-06
+        ],
+        [
+          "6",
+          -5.7220458984375e-06
+        ],
+        [
+          ".",
+          -1.52587890625e-05
+        ],
+        [
+          "2",
+          -3.814697265625e-06
+        ],
+        [
+          " Migration",
+          -0.00031375885009765625
+        ],
+        [
+          " to",
+          9.5367431640625e-07
+        ],
+        [
+          " Version",
+          -2.86102294921875e-06
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          ")\n\n",
+          -0.00014781951904296875
+        ],
+        [
+          "-",
+          -0.000301361083984375
+        ],
+        [
+          " **",
+          -1.33514404296875e-05
+        ],
+        [
+          "COPY",
+          -0.696934700012207
+        ],
+        [
+          "/",
+          -0.2894296646118164
+        ],
+        [
+          "ps",
+          -1.2269525527954102
+        ],
+        [
+          "ql",
+          1.1920928955078125e-06
+        ],
+        [
+          " CSV",
+          -0.36030006408691406
+        ],
+        [
+          " end",
+          -3.302896499633789
+        ],
+        [
+          "-of",
+          -0.00016689300537109375
+        ],
+        [
+          "-file",
+          -0.0066776275634765625
+        ],
+        [
+          " marker",
+          -2.246204376220703
+        ],
+        [
+          " behavior",
+          -1.5755195617675781
+        ],
+        [
+          "**",
+          -1.7495479583740234
+        ],
+        [
+          ":",
+          -0.018868446350097656
+        ],
+        [
+          " prevents",
+          -0.9054937362670898
+        ],
+        [
+          " `",
+          -0.21373939514160156
+        ],
+        [
+          "\\",
+          -0.10971832275390625
+        ],
+        [
+          ".`",
+          -0.0005431175231933594
+        ],
+        [
+          " from",
+          -0.06972312927246094
+        ],
+        [
+          " being",
+          -0.010162353515625
+        ],
+        [
+          " treated",
+          -0.0024051666259765625
+        ],
+        [
+          " as",
+          -0.0124359130859375
+        ],
+        [
+          " EOF",
+          -0.2533540725708008
+        ],
+        [
+          " in",
+          -0.5068340301513672
+        ],
+        [
+          " some",
+          -1.950155258178711
+        ],
+        [
+          " COPY",
+          -1.210698127746582
+        ],
+        [
+          " cases",
+          -2.527385711669922
+        ],
+        [
+          ";",
+          -0.16071510314941406
+        ],
+        [
+          " also",
+          -0.9138345718383789
+        ],
+        [
+          " notes",
+          -2.78955078125
+        ],
+        [
+          " p",
+          -4.869013786315918
+        ],
+        [
+          "sql",
+          -1.0013580322265625e-05
+        ],
+        [
+          " `",
+          -0.6022195816040039
+        ],
+        [
+          "\\",
+          -0.029233932495117188
+        ],
+        [
+          "copy",
+          -0.0002498626708984375
+        ],
+        [
+          "`",
+          -0.0004119873046875
+        ],
+        [
+          "/",
+          -1.1194238662719727
+        ],
+        [
+          "STD",
+          -1.4450702667236328
+        ],
+        [
+          "IN",
+          -4.76837158203125e-06
+        ],
+        [
+          " compatibility",
+          -2.454132080078125
+        ],
+        [
+          " considerations",
+          -1.019850730895996
+        ],
+        [
+          ".",
+          -0.21247482299804688
+        ],
+        [
+          "  \n",
+          -0.0001201629638671875
+        ],
+        [
+          " ",
+          1.9073486328125e-06
+        ],
+        [
+          " Source",
+          -3.24249267578125e-05
+        ],
+        [
+          ":",
+          0.0
+        ],
+        [
+          " https",
+          4.76837158203125e-06
+        ],
+        [
+          "://",
+          -8.58306884765625e-06
+        ],
+        [
+          "www",
+          2.86102294921875e-06
+        ],
+        [
+          ".post",
+          5.7220458984375e-06
+        ],
+        [
+          "gresql",
+          0.0
+        ],
+        [
+          ".org",
+          8.58306884765625e-06
+        ],
+        [
+          "/docs",
+          4.76837158203125e-06
+        ],
+        [
+          "/re",
+          -8.58306884765625e-06
+        ],
+        [
+          "lease",
+          -8.58306884765625e-06
+        ],
+        [
+          "/",
+          8.58306884765625e-06
+        ],
+        [
+          "18",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.52587890625e-05
+        ],
+        [
+          " (",
+          6.67572021484375e-06
+        ],
+        [
+          "E",
+          1.1444091796875e-05
+        ],
+        [
+          ".",
+          5.7220458984375e-06
+        ],
+        [
+          "6",
+          0.0
+        ],
+        [
+          ".",
+          7.62939453125e-06
+        ],
+        [
+          "2",
+          -3.814697265625e-06
+        ],
+        [
+          " Migration",
+          4.76837158203125e-06
+        ],
+        [
+          " to",
+          -1.239776611328125e-05
+        ],
+        [
+          " Version",
+          -2.86102294921875e-06
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          -1.52587890625e-05
+        ],
+        [
+          ")\n\n",
+          -0.0005140304565429688
+        ],
+        [
+          "-",
+          -0.04713630676269531
+        ],
+        [
+          " **",
+          -0.003314971923828125
+        ],
+        [
+          "Other",
+          -0.9779062271118164
+        ],
+        [
+          " migration",
+          -1.083573341369629
+        ],
+        [
+          " incompat",
+          -4.067707061767578
+        ],
+        [
+          "ibilities",
+          -0.0010576248168945312
+        ],
+        [
+          "/t",
+          -1.9115972518920898
+        ],
+        [
+          "we",
+          -0.06682777404785156
+        ],
+        [
+          "aks",
+          0.0
+        ],
+        [
+          "**,",
+          -1.6206703186035156
+        ],
+        [
+          " including",
+          -0.20142364501953125
+        ],
+        [
+          ":\n",
+          -0.4353141784667969
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          " -",
+          -9.5367431640625e-07
+        ],
+        [
+          " Dis",
+          -1.7323083877563477
+        ],
+        [
+          "allow",
+          -0.0010089874267578125
+        ],
+        [
+          " creation",
+          -1.6639623641967773
+        ],
+        [
+          " of",
+          -0.0002841949462890625
+        ],
+        [
+          " **",
+          -0.00019359588623046875
+        ],
+        [
+          "un",
+          -3.528594970703125e-05
+        ],
+        [
+          "logged",
+          1.9073486328125e-06
+        ],
+        [
+          " partition",
+          -5.7220458984375e-06
+        ],
+        [
+          "ed",
+          -1.52587890625e-05
+        ],
+        [
+          " tables",
+          -4.57763671875e-05
+        ],
+        [
+          "**\n",
+          -0.03365802764892578
+        ],
+        [
+          " ",
+          -1.9073486328125e-05
+        ],
+        [
+          " -",
+          -0.0004730224609375
+        ],
+        [
+          " Change",
+          -2.203812599182129
+        ],
+        [
+          " role",
+          -2.903201103210449
+        ],
+        [
+          " used",
+          -0.35553741455078125
+        ],
+        [
+          " to",
+          -2.3853206634521484
+        ],
+        [
+          " execute",
+          -0.019921302795410156
+        ],
+        [
+          " certain",
+          -0.711665153503418
+        ],
+        [
+          " **",
+          -0.098907470703125
+        ],
+        [
+          "AF",
+          -0.001323699951171875
+        ],
+        [
+          "TER",
+          -1.9073486328125e-06
+        ],
+        [
+          " triggers",
+          -0.01805591583251953
+        ],
+        [
+          "**\n",
+          -1.3781986236572266
+        ],
+        [
+          " ",
+          5.7220458984375e-06
+        ],
+        [
+          " -",
+          -0.000644683837890625
+        ],
+        [
+          " Remove",
+          -0.05571174621582031
+        ],
+        [
+          " non",
+          -0.2181243896484375
+        ],
+        [
+          "-functional",
+          -6.67572021484375e-06
+        ],
+        [
+          " **",
+          -1.0329904556274414
+        ],
+        [
+          "rule",
+          -0.00043201446533203125
+        ],
+        [
+          " privileges",
+          -0.9148006439208984
+        ],
+        [
+          "**",
+          -0.0029153823852539062
+        ],
+        [
+          " support",
+          -0.07053375244140625
+        ],
+        [
+          " in",
+          -0.0736074447631836
+        ],
+        [
+          " `",
+          -0.051650047302246094
+        ],
+        [
+          "GR",
+          3.814697265625e-06
+        ],
+        [
+          "ANT",
+          -1.430511474609375e-05
+        ],
+        [
+          "`",
+          -0.17063236236572266
+        ],
+        [
+          "/",
+          -0.011755943298339844
+        ],
+        [
+          "`",
+          0.0
+        ],
+        [
+          "RE",
+          0.0
+        ],
+        [
+          "VOK",
+          0.0
+        ],
+        [
+          "E",
+          -8.58306884765625e-06
+        ],
+        [
+          "`\n",
+          -0.4150686264038086
+        ],
+        [
+          "  \n",
+          -1.453695297241211
+        ],
+        [
+          " ",
+          -7.62939453125e-06
+        ],
+        [
+          " Source",
+          -0.0022535324096679688
+        ],
+        [
+          ":",
+          -0.0033626556396484375
+        ],
+        [
+          " https",
+          -0.0003795623779296875
+        ],
+        [
+          "://",
+          -1.621246337890625e-05
+        ],
+        [
+          "www",
+          2.86102294921875e-06
+        ],
+        [
+          ".post",
+          0.0
+        ],
+        [
+          "gresql",
+          1.9073486328125e-06
+        ],
+        [
+          ".org",
+          6.67572021484375e-06
+        ],
+        [
+          "/docs",
+          -4.76837158203125e-06
+        ],
+        [
+          "/re",
+          0.0
+        ],
+        [
+          "lease",
+          -1.52587890625e-05
+        ],
+        [
+          "/",
+          1.33514404296875e-05
+        ],
+        [
+          "18",
+          5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.239776611328125e-05
+        ],
+        [
+          " (",
+          5.7220458984375e-06
+        ],
+        [
+          "E",
+          -3.528594970703125e-05
+        ],
+        [
+          ".",
+          -8.58306884765625e-06
+        ],
+        [
+          "6",
+          -1.239776611328125e-05
+        ],
+        [
+          ".",
+          -1.52587890625e-05
+        ],
+        [
+          "2",
+          1.52587890625e-05
+        ],
+        [
+          " Migration",
+          -0.000240325927734375
+        ],
+        [
+          " to",
+          -1.52587890625e-05
+        ],
+        [
+          " Version",
+          6.67572021484375e-06
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "18",
+          7.62939453125e-06
+        ],
+        [
+          ")\n\n",
+          -0.00043582916259765625
+        ],
+        [
+          "###",
+          -1.8146066665649414
+        ],
+        [
+          " References",
+          -2.291240692138672
+        ],
+        [
+          " (",
+          -1.2243385314941406
+        ],
+        [
+          "official",
+          -0.010619163513183594
+        ],
+        [
+          ")\n",
+          -0.020552635192871094
+        ],
+        [
+          "-",
+          -1.52587890625e-05
+        ],
+        [
+          " Postgre",
+          -0.0026416778564453125
+        ],
+        [
+          "SQL",
+          1.52587890625e-05
+        ],
+        [
+          " ",
+          -0.0336456298828125
+        ],
+        [
+          "18",
+          -1.1444091796875e-05
+        ],
+        [
+          " Release",
+          -0.18019485473632812
+        ],
+        [
+          " Notes",
+          -0.00022220611572265625
+        ],
+        [
+          " (",
+          -0.2832822799682617
+        ],
+        [
+          "overview",
+          -1.2039289474487305
+        ],
+        [
+          " +",
+          -0.05957984924316406
+        ],
+        [
+          " migration",
+          -0.040656089782714844
+        ],
+        [
+          " incompat",
+          -1.264841079711914
+        ],
+        [
+          "ibilities",
+          -1.239776611328125e-05
+        ],
+        [
+          "):",
+          -0.11931228637695312
+        ],
+        [
+          " https",
+          -0.00060272216796875
+        ],
+        [
+          "://",
+          -1.239776611328125e-05
+        ],
+        [
+          "www",
+          -8.58306884765625e-06
+        ],
+        [
+          ".post",
+          5.7220458984375e-06
+        ],
+        [
+          "gresql",
+          0.0
+        ],
+        [
+          ".org",
+          -1.430511474609375e-05
+        ],
+        [
+          "/docs",
+          -1.1444091796875e-05
+        ],
+        [
+          "/re",
+          -9.5367431640625e-06
+        ],
+        [
+          "lease",
+          0.0
+        ],
+        [
+          "/",
+          2.86102294921875e-06
+        ],
+        [
+          "18",
+          -5.7220458984375e-06
+        ],
+        [
+          "/\n",
+          -1.6533756256103516
+        ],
+        [
+          "-",
+          -0.0001049041748046875
+        ],
+        [
+          " Postgre",
+          -0.034461021423339844
+        ],
+        [
+          "SQL",
+          -1.430511474609375e-05
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "17",
+          -0.00213623046875
+        ],
+        [
+          " Release",
+          -9.5367431640625e-06
+        ],
+        [
+          " Notes",
+          -1.430511474609375e-05
+        ],
+        [
+          " (",
+          -0.009949684143066406
+        ],
+        [
+          "for",
+          -1.0510663986206055
+        ],
+        [
+          " baseline",
+          -1.209214210510254
+        ],
+        [
+          " context",
+          -0.0078067779541015625
+        ],
+        [
+          "):",
+          -0.023952484130859375
+        ],
+        [
+          " https",
+          7.62939453125e-06
+        ],
+        [
+          "://",
+          5.7220458984375e-06
+        ],
+        [
+          "www",
+          -1.239776611328125e-05
+        ],
+        [
+          ".post",
+          6.67572021484375e-06
+        ],
+        [
+          "gresql",
+          1.9073486328125e-06
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/docs",
+          8.58306884765625e-06
+        ],
+        [
+          "/re",
+          1.430511474609375e-05
+        ],
+        [
+          "lease",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          -1.239776611328125e-05
+        ],
+        [
+          "17",
+          1.1444091796875e-05
+        ],
+        [
+          "/",
+          -1.2236013412475586
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "Main differences between **PostgreSQL 17** and **PostgreSQL 18** (from the PostgreSQL 18 release notes):\n\n## Major new capabilities in PostgreSQL 18\n- **Asynchronous I/O (AIO) subsystem**: Designed to improve performance for operations such as **sequential scans, bitmap heap scans, VACUUM**, etc., controlled by new settings (e.g., `io_method`, `io_combine_limit`, `io_max_combine_limit`).  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **`pg_upgrade` retains optimizer statistics**: reduces the amount of follow-up work after upgrade.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **\u201cSkip scan\u201d for multicolumn B-tree lookups**: allows multicolumn B-tree indexes to be used in more cases.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview; also E.6.3.1.2 Indexes)\n\n- **New `uuidv7()` function**: generates **timestamp-ordered UUIDv7** values.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **Virtual generated columns**: generated values computed during **read**; this is now the default behavior for generated columns.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **OAuth authentication support**: adds support for OAuth-based authentication.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n- **`RETURNING` enhancements**: improved/extended support for **OLD and NEW targets** in `INSERT`, `UPDATE`, `DELETE`, and `MERGE`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.1 Overview)\n\n## Notable 17 \u2192 18 behavior / compatibility changes\n- **`initdb` default enables data checksums** (can be disabled with `--no-data-checksums`); `pg_upgrade` requires matching checksum settings.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **Time zone abbreviation handling changed**: PostgreSQL now favors the **current session\u2019s** abbreviations before checking `timezone_abbreviations`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **MD5 password authentication deprecated**: setting MD5 passwords now emits deprecation warnings; removal is planned for a future major version.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **VACUUM / ANALYZE with inheritance**: now processes inheritance children; old behavior is available via `ONLY`.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **COPY/psql CSV end-of-file marker behavior**: prevents `\\.` from being treated as EOF in some COPY cases; also notes psql `\\copy`/STDIN compatibility considerations.  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n- **Other migration incompatibilities/tweaks**, including:\n  - Disallow creation of **unlogged partitioned tables**\n  - Change role used to execute certain **AFTER triggers**\n  - Remove non-functional **rule privileges** support in `GRANT`/`REVOKE`\n  \n  Source: https://www.postgresql.org/docs/release/18/ (E.6.2 Migration to Version 18)\n\n### References (official)\n- PostgreSQL 18 Release Notes (overview + migration incompatibilities): https://www.postgresql.org/docs/release/18/\n- PostgreSQL 17 Release Notes (for baseline context): https://www.postgresql.org/docs/release/17/",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.78,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.200306831764285,
+      "profiling_data": {
+        "total_time": 7.566887451999719,
+        "llm_time": 6.020220383001288,
+        "energy_consumed_kwh": 1.5805510519189205e-05,
+        "cpu_energy_kwh": 1.8878539136251685e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.3917656605564037e-05,
+        "emissions_kg_co2": 5.227166827885215e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 24.135732172000644,
+    "llm_time": 15.78520590500375,
+    "energy_consumed_kwh": 5.540896346833644e-05,
+    "cpu_energy_kwh": 7.067119834984187e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 4.8341843633352253e-05,
+    "emissions_kg_co2": 1.832474158032129e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 6.140363132000857,
+      "llm_time": 3.022063985001296,
+      "energy_consumed_kwh": 2.0879711827029156e-05,
+      "cpu_energy_kwh": 2.7267830909169633e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 1.8152928736112194e-05,
+      "emissions_kg_co2": 6.905296536011428e-06
+    },
+    "WebSearch": {
+      "total_time": 10.428481588000068,
+      "llm_time": 6.742921537001166,
+      "energy_consumed_kwh": 1.872374112211808e-05,
+      "cpu_energy_kwh": 2.4524828304420563e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.6271258291676025e-05,
+      "emissions_kg_co2": 6.192278216424647e-06
+    },
+    "Summary": {
+      "total_time": 7.566887451999719,
+      "llm_time": 6.020220383001288,
+      "energy_consumed_kwh": 1.5805510519189205e-05,
+      "cpu_energy_kwh": 1.8878539136251685e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.3917656605564037e-05,
+      "emissions_kg_co2": 5.227166827885215e-06
+    }
+  }
+}

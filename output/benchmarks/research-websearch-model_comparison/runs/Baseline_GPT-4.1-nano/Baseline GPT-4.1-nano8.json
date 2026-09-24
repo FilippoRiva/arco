@@ -1,0 +1,1908 @@
+{
+  "prompt": "Search for information about prompt injection attacks and summarize the most authoritative sources.",
+  "run_id": "Baseline GPT-4.1-nano8",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -9.627176768844947e-05
+        ],
+        [
+          "route",
+          0.0
+        ],
+        [
+          "\":",
+          -9.014684110297821e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Web",
+          -1.5048530030981055e-06
+        ],
+        [
+          "Search",
+          -4.961759259458631e-06
+        ],
+        [
+          "\"}",
+          -2.2200749754119897e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000162820095557,
+      "profiling_data": {
+        "total_time": 2.468009621999954,
+        "llm_time": 0.8940211959998123,
+        "energy_consumed_kwh": 6.062265115668113e-06,
+        "cpu_energy_kwh": 7.920218406667897e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.270243275001323e-06,
+        "emissions_kg_co2": 2.004900194523527e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "{\n  \"route\": \"Summary\"\n}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\n",
+          -0.053546786308288574
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " \"",
+          -2.1054253011243418e-05
+        ],
+        [
+          "route",
+          -3.8889261304575484e-06
+        ],
+        [
+          "\":",
+          -6.704273118884885e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Summary",
+          -7.052377623040229e-05
+        ],
+        [
+          "\"\n",
+          -0.0011715330183506012
+        ],
+        [
+          "}",
+          -3.750436007976532e-05
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "{\n  \"route\": \"Summary\"\n}",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_hNC3nk6fIeedWBJMA2Uvs7SX",
+            "name": "web_search",
+            "args": {
+              "query": "prompt injection attacks authoritative sources"
+            },
+            "result": "[1] 2. Prompt Injection (Direct / Indirect) | Microsoft Learn\nURL: https://learn.microsoft.com/en-us/security/zero-trust/catalog-ai-attack-techniques/prompt-injection\nSnippet: Describes direct and indirect prompt injection attacks against LLMs, why they succeed, and the controls needed to treat untrusted content as adversarial.\n\n[2] Prompt Injection Attacks: Examples and Defences\nURL: https://blog.cyberdesserts.com/prompt-injection-attacks/\nSnippet: 17 prompt injection examples with real attack payloads. Learn how direct and indirect attacks work plus defence strategies that reduce risk\n\n[3] Prompt Injection Attacks: Types, Examples & Defenses\nURL: https://aisecurityandsafety.org/en/guides/prompt-injection/\nSnippet: A comprehensive guide to prompt injection attacks \u2014 how they work, the different types, real-world examples, and defense strategies for securing LLM applications.\n\n[4] Prompt Injection Attacks on Large Language Models: A Survey of Attack ...\nURL: https://www.sciencedirect.com/org/science/article/pii/S1546221826001384\nSnippet: Defense against prompt injection attacks, in particular, plays a crucial role throughout the entire AI system lifecycle. Prompt injection attack research aims to identify and defend against malicious input manipulation targeting large language models.\n\n[5] Prompt Injection Report \u2014 Attacks, Detection, Testing\nURL: https://promptinjection.report/\nSnippet: Prompt injection explained: attack taxonomy, indirect injection channels, detection techniques and bypasses, testing method, and layered defenses.",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.05,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0061132725840762,
+      "profiling_data": {
+        "total_time": 4.066326174999631,
+        "llm_time": 1.7141308709997247,
+        "energy_consumed_kwh": 8.062840565960867e-06,
+        "cpu_energy_kwh": 1.0535944215211594e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 7.009246144439709e-06,
+        "emissions_kg_co2": 2.666526506293446e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.2113979209971149e-05
+        ],
+        [
+          "route",
+          -1.9361264946837764e-07
+        ],
+        [
+          "\":",
+          -6.704273118884885e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Summary",
+          -1.4974866644479334e-05
+        ],
+        [
+          "\"}",
+          -9.088346359931165e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000048102983115,
+      "profiling_data": {
+        "total_time": 2.757053098999677,
+        "llm_time": 1.1722405670006992,
+        "energy_consumed_kwh": 1.2454995054068153e-05,
+        "cpu_energy_kwh": 8.359878040679313e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.1619007250000222e-05,
+        "emissions_kg_co2": 4.119091054291312e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "Prompt injection attacks are a security concern involving malicious inputs designed to manipulate large language models (LLMs) into producing unintended or harmful outputs. Authoritative sources describe these attacks as either direct or indirect, where attackers craft prompts that influence the model's behavior or output in undesirable ways. \n\nKey points from the sources include:\n- **Types of Prompt Injection**: Direct injections involve explicitly crafted prompts, while indirect injections exploit vulnerabilities through context or external inputs.\n- **Attack Techniques**: Attackers may embed malicious instructions within prompts, manipulate context, or exploit model training data.\n- **Defense Strategies**: These include input validation, prompt filtering, context sanitization, and layered security measures to detect and mitigate such attacks.\n- **Research and Practical Guidance**: Several sources, including Microsoft Learn, cybersecurity blogs, and academic surveys, provide detailed examples, attack payloads, and defense mechanisms.\n\nSources for further reading:\n- Microsoft Learn: [Prompt Injection](https://learn.microsoft.com/en-us/security/zero-trust/catalog-ai-attack-techniques/prompt-injection)\n- CyberDesserts Blog: [Prompt Injection Attacks: Examples and Defences](https://blog.cyberdesserts.com/prompt-injection-attacks/)\n- AI Security Guide: [Prompt Injection Attacks: Types, Examples & Defenses](https://aisecurityandsafety.org/en/guides/prompt-injection/)\n- Scientific Survey: [Prompt Injection Attacks on Large Language Models](https://www.sciencedirect.com/org/science/article/pii/S1546221826001384)\n- Prompt Injection Report: [Attacks, Detection, Testing](https://promptinjection.report/)\n\nThese sources collectively provide a comprehensive understanding of prompt injection vulnerabilities, attack methods, and mitigation strategies.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Prompt",
+          -0.001304522156715393
+        ],
+        [
+          " injection",
+          -1.0280383548888494e-06
+        ],
+        [
+          " attacks",
+          -0.0001669485354796052
+        ],
+        [
+          " are",
+          -0.05624968558549881
+        ],
+        [
+          " a",
+          -0.37918299436569214
+        ],
+        [
+          " security",
+          -0.5328751802444458
+        ],
+        [
+          " concern",
+          -0.6902854442596436
+        ],
+        [
+          " involving",
+          -0.5124673843383789
+        ],
+        [
+          " malicious",
+          -0.2196039855480194
+        ],
+        [
+          " inputs",
+          -0.3010592460632324
+        ],
+        [
+          " designed",
+          -0.4312497079372406
+        ],
+        [
+          " to",
+          -4.320199877838604e-07
+        ],
+        [
+          " manipulate",
+          -0.0034301967825740576
+        ],
+        [
+          " large",
+          -0.892673671245575
+        ],
+        [
+          " language",
+          -4.4849443838757e-06
+        ],
+        [
+          " models",
+          -0.00017970333283301443
+        ],
+        [
+          " (",
+          -2.081584716506768e-05
+        ],
+        [
+          "LL",
+          -2.696889623621246e-06
+        ],
+        [
+          "Ms",
+          0.0
+        ],
+        [
+          ")",
+          -0.43032991886138916
+        ],
+        [
+          " into",
+          -0.587986409664154
+        ],
+        [
+          " producing",
+          -0.2966848611831665
+        ],
+        [
+          " unintended",
+          -0.03164907544851303
+        ],
+        [
+          " or",
+          -0.0342034250497818
+        ],
+        [
+          " harmful",
+          -0.00496962433680892
+        ],
+        [
+          " outputs",
+          -0.00788330752402544
+        ],
+        [
+          ".",
+          -5.200166469876422e-06
+        ],
+        [
+          " Author",
+          -0.899170994758606
+        ],
+        [
+          "itative",
+          -1.9361264946837764e-07
+        ],
+        [
+          " sources",
+          -6.749814019713085e-06
+        ],
+        [
+          " describe",
+          -0.566493809223175
+        ],
+        [
+          " these",
+          -0.9138243794441223
+        ],
+        [
+          " attacks",
+          -0.001579374773427844
+        ],
+        [
+          " as",
+          -0.034440137445926666
+        ],
+        [
+          " either",
+          -1.3465839624404907
+        ],
+        [
+          " direct",
+          -0.00043794067460112274
+        ],
+        [
+          " or",
+          -0.0042889961041510105
+        ],
+        [
+          " indirect",
+          -3.128163257315464e-07
+        ],
+        [
+          ",",
+          -0.7471345663070679
+        ],
+        [
+          " where",
+          -1.0972241163253784
+        ],
+        [
+          " attackers",
+          -0.8045714497566223
+        ],
+        [
+          " craft",
+          -0.12058844417333603
+        ],
+        [
+          " prompts",
+          -0.4089304208755493
+        ],
+        [
+          " that",
+          -0.3653692901134491
+        ],
+        [
+          " influence",
+          -0.776918888092041
+        ],
+        [
+          " the",
+          -0.020871177315711975
+        ],
+        [
+          " model",
+          -0.28922945261001587
+        ],
+        [
+          "'s",
+          -0.19763720035552979
+        ],
+        [
+          " behavior",
+          -0.20626604557037354
+        ],
+        [
+          " or",
+          -0.956575334072113
+        ],
+        [
+          " output",
+          -0.537851095199585
+        ],
+        [
+          " in",
+          -0.4658176600933075
+        ],
+        [
+          " undesirable",
+          -1.0488381385803223
+        ],
+        [
+          " ways",
+          -4.008129963040119e-06
+        ],
+        [
+          ".",
+          -0.39211270213127136
+        ],
+        [
+          " \n\n",
+          -0.44856953620910645
+        ],
+        [
+          "Key",
+          -0.016041524708271027
+        ],
+        [
+          " points",
+          -0.07710041850805283
+        ],
+        [
+          " from",
+          -0.28399667143821716
+        ],
+        [
+          " the",
+          -0.408417671918869
+        ],
+        [
+          " sources",
+          -0.5656814575195312
+        ],
+        [
+          " include",
+          -0.046217530965805054
+        ],
+        [
+          ":\n",
+          -0.14457502961158752
+        ],
+        [
+          "-",
+          -0.00012356207298580557
+        ],
+        [
+          " **",
+          -0.46575143933296204
+        ],
+        [
+          "Types",
+          -0.23056787252426147
+        ],
+        [
+          " of",
+          -0.11339134722948074
+        ],
+        [
+          " Prompt",
+          -0.6448684334754944
+        ],
+        [
+          " Injection",
+          -0.005333608947694302
+        ],
+        [
+          "**",
+          -0.7750853300094604
+        ],
+        [
+          ":",
+          -0.000627610192168504
+        ],
+        [
+          " Direct",
+          -0.49099957942962646
+        ],
+        [
+          " injections",
+          -0.8235335946083069
+        ],
+        [
+          " involve",
+          -0.04228959232568741
+        ],
+        [
+          " explicitly",
+          -1.0101029872894287
+        ],
+        [
+          " crafted",
+          -0.02584048919379711
+        ],
+        [
+          " prompts",
+          -0.1603030264377594
+        ],
+        [
+          ",",
+          -0.6424853205680847
+        ],
+        [
+          " while",
+          -0.016175365075469017
+        ],
+        [
+          " indirect",
+          -6.704273118884885e-07
+        ],
+        [
+          " injections",
+          -0.025546308606863022
+        ],
+        [
+          " exploit",
+          -0.46576428413391113
+        ],
+        [
+          " vulnerabilities",
+          -0.360063374042511
+        ],
+        [
+          " through",
+          -0.642763078212738
+        ],
+        [
+          " context",
+          -1.0178000926971436
+        ],
+        [
+          " or",
+          -0.36658552289009094
+        ],
+        [
+          " external",
+          -1.7189977169036865
+        ],
+        [
+          " inputs",
+          -0.5828994512557983
+        ],
+        [
+          ".\n",
+          -0.5764601230621338
+        ],
+        [
+          "-",
+          -5.512236498361744e-07
+        ],
+        [
+          " **",
+          -4.5014188799541444e-05
+        ],
+        [
+          "Attack",
+          -0.8634756803512573
+        ],
+        [
+          " Techniques",
+          -0.14617574214935303
+        ],
+        [
+          "**",
+          -0.05566691607236862
+        ],
+        [
+          ":",
+          -1.2664456789934775e-06
+        ],
+        [
+          " Attack",
+          -0.10805299133062363
+        ],
+        [
+          "ers",
+          -0.38839292526245117
+        ],
+        [
+          " may",
+          -0.6402900218963623
+        ],
+        [
+          " embed",
+          -0.4992879331111908
+        ],
+        [
+          " malicious",
+          -0.10001124441623688
+        ],
+        [
+          " instructions",
+          -0.3036065697669983
+        ],
+        [
+          " within",
+          -0.24475324153900146
+        ],
+        [
+          " prompts",
+          -0.9474221467971802
+        ],
+        [
+          ",",
+          -0.7401977181434631
+        ],
+        [
+          " manipulate",
+          -0.4580411911010742
+        ],
+        [
+          " context",
+          -0.4372657835483551
+        ],
+        [
+          ",",
+          -0.10572506487369537
+        ],
+        [
+          " or",
+          -2.696889623621246e-06
+        ],
+        [
+          " exploit",
+          -0.3229787051677704
+        ],
+        [
+          " model",
+          -1.4034185409545898
+        ],
+        [
+          " training",
+          -1.1029744148254395
+        ],
+        [
+          " data",
+          -0.48931974172592163
+        ],
+        [
+          ".\n",
+          -0.046707186847925186
+        ],
+        [
+          "-",
+          -3.128163257315464e-07
+        ],
+        [
+          " **",
+          -3.128163257315464e-07
+        ],
+        [
+          "Defense",
+          -0.466549277305603
+        ],
+        [
+          " Strategies",
+          -0.0002932750794570893
+        ],
+        [
+          "**",
+          -9.088346359931165e-07
+        ],
+        [
+          ":",
+          -0.0004691610229201615
+        ],
+        [
+          " These",
+          -1.2274048328399658
+        ],
+        [
+          " include",
+          -0.012431479059159756
+        ],
+        [
+          " input",
+          -0.15986748039722443
+        ],
+        [
+          " validation",
+          -0.1777077615261078
+        ],
+        [
+          ",",
+          -0.0006323783891275525
+        ],
+        [
+          " prompt",
+          -0.8995262980461121
+        ],
+        [
+          " filtering",
+          -0.11876045167446136
+        ],
+        [
+          ",",
+          -4.7755875129951164e-05
+        ],
+        [
+          " context",
+          -1.0049837827682495
+        ],
+        [
+          " sanit",
+          -0.9959136247634888
+        ],
+        [
+          "ization",
+          -6.392202976712724e-06
+        ],
+        [
+          ",",
+          -1.7432603272027336e-06
+        ],
+        [
+          " and",
+          -0.16472388803958893
+        ],
+        [
+          " layered",
+          -0.3585079610347748
+        ],
+        [
+          " security",
+          -0.2100408524274826
+        ],
+        [
+          " measures",
+          -0.4926677644252777
+        ],
+        [
+          " to",
+          -0.7106831669807434
+        ],
+        [
+          " detect",
+          -0.40810272097587585
+        ],
+        [
+          " and",
+          -0.01770394667983055
+        ],
+        [
+          " mitigate",
+          -0.3235795795917511
+        ],
+        [
+          " such",
+          -0.3874182105064392
+        ],
+        [
+          " attacks",
+          -0.03708495572209358
+        ],
+        [
+          ".\n",
+          -0.7377610206604004
+        ],
+        [
+          "-",
+          -0.0025162079837173223
+        ],
+        [
+          " **",
+          -0.0006702631362713873
+        ],
+        [
+          "Research",
+          -0.36187589168548584
+        ],
+        [
+          " and",
+          -0.08888614177703857
+        ],
+        [
+          " Practical",
+          -1.5951099395751953
+        ],
+        [
+          " Guidance",
+          -0.7872109413146973
+        ],
+        [
+          "**",
+          -4.584861744660884e-05
+        ],
+        [
+          ":",
+          -1.2664456789934775e-06
+        ],
+        [
+          " Several",
+          -1.1844381093978882
+        ],
+        [
+          " sources",
+          -0.43666860461235046
+        ],
+        [
+          ",",
+          -0.6619853377342224
+        ],
+        [
+          " including",
+          -0.6872093081474304
+        ],
+        [
+          " Microsoft",
+          -0.08229991793632507
+        ],
+        [
+          " Learn",
+          -0.2389327734708786
+        ],
+        [
+          ",",
+          -0.2722832262516022
+        ],
+        [
+          " cybersecurity",
+          -0.1420041173696518
+        ],
+        [
+          " blogs",
+          -0.0005068036844022572
+        ],
+        [
+          ",",
+          -0.00012654215970542282
+        ],
+        [
+          " and",
+          -0.020956052467226982
+        ],
+        [
+          " academic",
+          -0.07650153338909149
+        ],
+        [
+          " surveys",
+          -0.22187381982803345
+        ],
+        [
+          ",",
+          -0.00031949623371474445
+        ],
+        [
+          " provide",
+          -0.3060932755470276
+        ],
+        [
+          " detailed",
+          -0.2803938686847687
+        ],
+        [
+          " examples",
+          -0.10426650941371918
+        ],
+        [
+          ",",
+          -0.08959829062223434
+        ],
+        [
+          " attack",
+          -0.13086667656898499
+        ],
+        [
+          " payload",
+          -0.42453134059906006
+        ],
+        [
+          "s",
+          -4.692145012086257e-05
+        ],
+        [
+          ",",
+          -4.320199877838604e-07
+        ],
+        [
+          " and",
+          -0.04991587996482849
+        ],
+        [
+          " defense",
+          -0.4826064705848694
+        ],
+        [
+          " mechanisms",
+          -0.37248724699020386
+        ],
+        [
+          ".\n\n",
+          -0.27334585785865784
+        ],
+        [
+          "Sources",
+          -0.6701034903526306
+        ],
+        [
+          " for",
+          -0.6018590331077576
+        ],
+        [
+          " further",
+          -0.35010915994644165
+        ],
+        [
+          " reading",
+          -0.49426665902137756
+        ],
+        [
+          ":\n",
+          -0.19521354138851166
+        ],
+        [
+          "-",
+          -0.42872098088264465
+        ],
+        [
+          " Microsoft",
+          -0.2026749849319458
+        ],
+        [
+          " Learn",
+          -0.008708763867616653
+        ],
+        [
+          ":",
+          -0.13179564476013184
+        ],
+        [
+          " [",
+          -0.0360095351934433
+        ],
+        [
+          "Prompt",
+          -0.0070269848220050335
+        ],
+        [
+          " Injection",
+          -0.004083385691046715
+        ],
+        [
+          "](",
+          -0.7501669526100159
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "learn",
+          -4.320199877838604e-07
+        ],
+        [
+          ".microsoft",
+          -5.512236498361744e-07
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/en",
+          0.0
+        ],
+        [
+          "-us",
+          -4.842555426876061e-06
+        ],
+        [
+          "/security",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "zero",
+          -1.2664456789934775e-06
+        ],
+        [
+          "-tr",
+          0.0
+        ],
+        [
+          "ust",
+          0.0
+        ],
+        [
+          "/catalog",
+          -1.9361264946837764e-07
+        ],
+        [
+          "-ai",
+          -3.128163257315464e-07
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "attack",
+          0.0
+        ],
+        [
+          "-tech",
+          -0.000363590574124828
+        ],
+        [
+          "niques",
+          0.0
+        ],
+        [
+          "/p",
+          0.0
+        ],
+        [
+          "rompt",
+          0.0
+        ],
+        [
+          "-in",
+          0.0
+        ],
+        [
+          "jection",
+          -2.165027217415627e-05
+        ],
+        [
+          ")\n",
+          -0.0012079726438969374
+        ],
+        [
+          "-",
+          -1.9361264946837764e-07
+        ],
+        [
+          " Cyber",
+          -8.41129949549213e-05
+        ],
+        [
+          "Dess",
+          -0.3538168668746948
+        ],
+        [
+          "erts",
+          -0.000627014203928411
+        ],
+        [
+          " Blog",
+          -0.030335471034049988
+        ],
+        [
+          ":",
+          -0.0009413579828105867
+        ],
+        [
+          " [",
+          -1.282920129597187e-05
+        ],
+        [
+          "Prompt",
+          -6.539801688631997e-05
+        ],
+        [
+          " Injection",
+          -3.2378600735682994e-05
+        ],
+        [
+          " Att",
+          -7.016616291366518e-05
+        ],
+        [
+          "acks",
+          0.0
+        ],
+        [
+          ":",
+          -0.006806910037994385
+        ],
+        [
+          " Examples",
+          -4.320199877838604e-07
+        ],
+        [
+          " and",
+          -5.319370302458992e-06
+        ],
+        [
+          " Def",
+          -2.534558552724775e-05
+        ],
+        [
+          "ences",
+          -0.05488443002104759
+        ],
+        [
+          "](",
+          -3.128163257315464e-07
+        ],
+        [
+          "https",
+          -1.9361264946837764e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "blog",
+          -1.9361264946837764e-07
+        ],
+        [
+          ".cy",
+          0.0
+        ],
+        [
+          "ber",
+          0.0
+        ],
+        [
+          "dess",
+          -1.8670179997570813e-05
+        ],
+        [
+          "erts",
+          0.0
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/p",
+          -1.9361264946837764e-07
+        ],
+        [
+          "rompt",
+          0.0
+        ],
+        [
+          "-in",
+          0.0
+        ],
+        [
+          "jection",
+          -2.2603901015827432e-05
+        ],
+        [
+          "-att",
+          -1.8624639324116288e-06
+        ],
+        [
+          "acks",
+          -5.512236498361744e-07
+        ],
+        [
+          "/)\n",
+          -0.00044711565715260804
+        ],
+        [
+          "-",
+          -1.9361264946837764e-07
+        ],
+        [
+          " AI",
+          -0.06309287995100021
+        ],
+        [
+          " Security",
+          -0.008902430534362793
+        ],
+        [
+          " Guide",
+          -0.1856774538755417
+        ],
+        [
+          ":",
+          -7.703443770878948e-06
+        ],
+        [
+          " [",
+          -1.2664456789934775e-06
+        ],
+        [
+          "Prompt",
+          -0.00017743845819495618
+        ],
+        [
+          " Injection",
+          -1.4259644558478612e-05
+        ],
+        [
+          " Att",
+          -0.0022237682715058327
+        ],
+        [
+          "acks",
+          0.0
+        ],
+        [
+          ":",
+          -0.010486225597560406
+        ],
+        [
+          " Types",
+          -2.339278580620885e-06
+        ],
+        [
+          ",",
+          -2.935296834039036e-06
+        ],
+        [
+          " Examples",
+          -1.2664456789934775e-06
+        ],
+        [
+          " &",
+          -7.5649528298527e-05
+        ],
+        [
+          " Def",
+          -2.951771421066951e-05
+        ],
+        [
+          "enses",
+          -6.704273118884885e-07
+        ],
+        [
+          "](",
+          -1.9361264946837764e-07
+        ],
+        [
+          "https",
+          0.0
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "ais",
+          -1.2664456789934775e-06
+        ],
+        [
+          "ecurity",
+          -1.0921942703134846e-05
+        ],
+        [
+          "ands",
+          -8.537868779967539e-06
+        ],
+        [
+          "afety",
+          -1.1472419600977446e-06
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/en",
+          -1.9361264946837764e-07
+        ],
+        [
+          "/g",
+          0.0
+        ],
+        [
+          "uid",
+          -7.896309739408025e-07
+        ],
+        [
+          "es",
+          0.0
+        ],
+        [
+          "/p",
+          0.0
+        ],
+        [
+          "rompt",
+          0.0
+        ],
+        [
+          "-in",
+          0.0
+        ],
+        [
+          "jection",
+          -2.4987974029500037e-05
+        ],
+        [
+          "/)\n",
+          -9.555654105497524e-05
+        ],
+        [
+          "-",
+          -1.9361264946837764e-07
+        ],
+        [
+          " Scientific",
+          -1.0309687852859497
+        ],
+        [
+          " Survey",
+          -1.2127081155776978
+        ],
+        [
+          ":",
+          -0.00178429891820997
+        ],
+        [
+          " [",
+          -0.0002158146962756291
+        ],
+        [
+          "Prompt",
+          -0.00022606621496379375
+        ],
+        [
+          " Injection",
+          -7.541112427134067e-05
+        ],
+        [
+          " Att",
+          -0.02325700782239437
+        ],
+        [
+          "acks",
+          -1.9361264946837764e-07
+        ],
+        [
+          " on",
+          -0.6945335268974304
+        ],
+        [
+          " Large",
+          -0.014368579722940922
+        ],
+        [
+          " Language",
+          -9.014684110297821e-06
+        ],
+        [
+          " Models",
+          -3.128163257315464e-07
+        ],
+        [
+          "](",
+          -0.0384039469063282
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "www",
+          -2.45848218582978e-06
+        ],
+        [
+          ".sc",
+          -4.320199877838604e-07
+        ],
+        [
+          "ienced",
+          -2.696889623621246e-06
+        ],
+        [
+          "irect",
+          -1.9361264946837764e-07
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/org",
+          -5.621933451038785e-05
+        ],
+        [
+          "/sc",
+          -1.9361264946837764e-07
+        ],
+        [
+          "ience",
+          0.0
+        ],
+        [
+          "/article",
+          0.0
+        ],
+        [
+          "/pi",
+          -3.128163257315464e-07
+        ],
+        [
+          "i",
+          -0.0005562512087635696
+        ],
+        [
+          "/S",
+          0.0
+        ],
+        [
+          "154",
+          0.0
+        ],
+        [
+          "622",
+          0.0
+        ],
+        [
+          "182",
+          0.0
+        ],
+        [
+          "600",
+          0.0
+        ],
+        [
+          "138",
+          0.0
+        ],
+        [
+          "4",
+          0.0
+        ],
+        [
+          ")\n",
+          -7.171581091824919e-05
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          " Prompt",
+          -0.5420958995819092
+        ],
+        [
+          " Injection",
+          -0.10209543257951736
+        ],
+        [
+          " Report",
+          -0.0012215361930429935
+        ],
+        [
+          ":",
+          -9.9728669738397e-05
+        ],
+        [
+          " [",
+          -0.0010367410723119974
+        ],
+        [
+          "Att",
+          -0.37489375472068787
+        ],
+        [
+          "acks",
+          -4.320199877838604e-07
+        ],
+        [
+          ",",
+          -1.4974866644479334e-05
+        ],
+        [
+          " Detection",
+          -2.7014437364414334e-05
+        ],
+        [
+          ",",
+          -7.896309739408025e-07
+        ],
+        [
+          " Testing",
+          -0.0004329341172706336
+        ],
+        [
+          "](",
+          -4.11996734328568e-05
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "prompt",
+          -1.9361264946837764e-07
+        ],
+        [
+          "in",
+          -1.9361264946837764e-07
+        ],
+        [
+          "jection",
+          -1.2664456789934775e-06
+        ],
+        [
+          ".report",
+          0.0
+        ],
+        [
+          "/",
+          -0.2822239100933075
+        ],
+        [
+          ")\n\n",
+          -0.005133896600455046
+        ],
+        [
+          "These",
+          -0.2376226782798767
+        ],
+        [
+          " sources",
+          -0.38954028487205505
+        ],
+        [
+          " collectively",
+          -0.6447449326515198
+        ],
+        [
+          " provide",
+          -0.6496388912200928
+        ],
+        [
+          " a",
+          -0.29484012722969055
+        ],
+        [
+          " comprehensive",
+          -0.009022831916809082
+        ],
+        [
+          " understanding",
+          -0.29169464111328125
+        ],
+        [
+          " of",
+          -0.0008588159107603133
+        ],
+        [
+          " prompt",
+          -0.4387490451335907
+        ],
+        [
+          " injection",
+          -0.0004898841143585742
+        ],
+        [
+          " vulnerabilities",
+          -0.8632164001464844
+        ],
+        [
+          ",",
+          -0.69367516040802
+        ],
+        [
+          " attack",
+          -0.21197593212127686
+        ],
+        [
+          " methods",
+          -0.5178216695785522
+        ],
+        [
+          ",",
+          -9.088346359931165e-07
+        ],
+        [
+          " and",
+          -0.0010706812608987093
+        ],
+        [
+          " mitigation",
+          -1.1766955852508545
+        ],
+        [
+          " strategies",
+          -0.7416533827781677
+        ],
+        [
+          ".",
+          -0.00326077314093709
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "Prompt injection attacks are a security concern involving malicious inputs designed to manipulate large language models (LLMs) into producing unintended or harmful outputs. Authoritative sources describe these attacks as either direct or indirect, where attackers craft prompts that influence the model's behavior or output in undesirable ways. \n\nKey points from the sources include:\n- **Types of Prompt Injection**: Direct injections involve explicitly crafted prompts, while indirect injections exploit vulnerabilities through context or external inputs.\n- **Attack Techniques**: Attackers may embed malicious instructions within prompts, manipulate context, or exploit model training data.\n- **Defense Strategies**: These include input validation, prompt filtering, context sanitization, and layered security measures to detect and mitigate such attacks.\n- **Research and Practical Guidance**: Several sources, including Microsoft Learn, cybersecurity blogs, and academic surveys, provide detailed examples, attack payloads, and defense mechanisms.\n\nSources for further reading:\n- Microsoft Learn: [Prompt Injection](https://learn.microsoft.com/en-us/security/zero-trust/catalog-ai-attack-techniques/prompt-injection)\n- CyberDesserts Blog: [Prompt Injection Attacks: Examples and Defences](https://blog.cyberdesserts.com/prompt-injection-attacks/)\n- AI Security Guide: [Prompt Injection Attacks: Types, Examples & Defenses](https://aisecurityandsafety.org/en/guides/prompt-injection/)\n- Scientific Survey: [Prompt Injection Attacks on Large Language Models](https://www.sciencedirect.com/org/science/article/pii/S1546221826001384)\n- Prompt Injection Report: [Attacks, Detection, Testing](https://promptinjection.report/)\n\nThese sources collectively provide a comprehensive understanding of prompt injection vulnerabilities, attack methods, and mitigation strategies.",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.28,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.2353216251023666,
+      "profiling_data": {
+        "total_time": 6.16390011600015,
+        "llm_time": 4.582662390999758,
+        "energy_consumed_kwh": 1.1433700661836236e-05,
+        "cpu_energy_kwh": 1.4975789118420114e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 9.936121749994226e-06,
+        "emissions_kg_co2": 3.7813306154811565e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 15.455289011999412,
+    "llm_time": 8.363055024999994,
+    "energy_consumed_kwh": 3.8013801397533367e-05,
+    "cpu_energy_kwh": 4.179182978097892e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.383461841943548e-05,
+    "emissions_kg_co2": 1.2571848370589442e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 5.225062720999631,
+      "llm_time": 2.0662617630005116,
+      "energy_consumed_kwh": 1.8517260169736265e-05,
+      "cpu_energy_kwh": 1.628009644734721e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 1.6889250525001545e-05,
+      "emissions_kg_co2": 6.123991248814839e-06
+    },
+    "WebSearch": {
+      "total_time": 4.066326174999631,
+      "llm_time": 1.7141308709997247,
+      "energy_consumed_kwh": 8.062840565960867e-06,
+      "cpu_energy_kwh": 1.0535944215211594e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 7.009246144439709e-06,
+      "emissions_kg_co2": 2.666526506293446e-06
+    },
+    "Summary": {
+      "total_time": 6.16390011600015,
+      "llm_time": 4.582662390999758,
+      "energy_consumed_kwh": 1.1433700661836236e-05,
+      "cpu_energy_kwh": 1.4975789118420114e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 9.936121749994226e-06,
+      "emissions_kg_co2": 3.7813306154811565e-06
+    }
+  }
+}

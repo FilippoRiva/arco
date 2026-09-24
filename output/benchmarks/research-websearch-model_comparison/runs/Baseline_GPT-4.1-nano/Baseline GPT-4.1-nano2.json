@@ -1,0 +1,1580 @@
+{
+  "prompt": "What does the Python 3.14 documentation say about asyncio.TaskGroup?",
+  "run_id": "Baseline GPT-4.1-nano2",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.9385402993066236e-05
+        ],
+        [
+          "route",
+          -4.320199877838604e-07
+        ],
+        [
+          "\":",
+          -6.392202976712724e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Web",
+          -9.088346359931165e-07
+        ],
+        [
+          "Search",
+          -2.935296834039036e-06
+        ],
+        [
+          "\"}",
+          -5.512236498361744e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000043721497118,
+      "profiling_data": {
+        "total_time": 2.6314598900007695,
+        "llm_time": 1.0567685939986404,
+        "energy_consumed_kwh": 1.2990929412082219e-05,
+        "cpu_energy_kwh": 1.6979695620814731e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.1292959850000747e-05,
+        "emissions_kg_co2": 4.296334193305008e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "The Python 3.14 documentation indicates that `asyncio.TaskGroup` is a feature introduced as a new alternative leveraging structural concurrency. It allows for waiting on a group of related tasks with strong safety guarantees. Specifically, the `asyncio.TaskGroup.create_task()` method is highlighted as a key component of this feature.\n\nFor more detailed information, you can refer to the official documentation:\n- [Coroutines and tasks \u2014 Python 3.14.7 documentation](https://docs.python.org/3/library/asyncio-task.html)\n\nWould you like a more detailed explanation or examples of how to use `asyncio.TaskGroup`?",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.13553713262081146
+        ],
+        [
+          " Python",
+          -0.004244842566549778
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "14",
+          0.0
+        ],
+        [
+          " documentation",
+          -0.0020161904394626617
+        ],
+        [
+          " indicates",
+          -0.983635425567627
+        ],
+        [
+          " that",
+          -9.088346359931165e-07
+        ],
+        [
+          " `",
+          -0.0013772567035630345
+        ],
+        [
+          "async",
+          0.0
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          ".Task",
+          -5.8961017202818766e-05
+        ],
+        [
+          "Group",
+          -1.981667537620524e-06
+        ],
+        [
+          "`",
+          -0.12728798389434814
+        ],
+        [
+          " is",
+          -0.15475031733512878
+        ],
+        [
+          " a",
+          -0.023939533159136772
+        ],
+        [
+          " feature",
+          -0.6509119868278503
+        ],
+        [
+          " introduced",
+          -0.34959420561790466
+        ],
+        [
+          " as",
+          -0.27694571018218994
+        ],
+        [
+          " a",
+          -0.42945078015327454
+        ],
+        [
+          " new",
+          -0.01903327740728855
+        ],
+        [
+          " alternative",
+          -0.20344191789627075
+        ],
+        [
+          " leveraging",
+          -0.1178581491112709
+        ],
+        [
+          " structural",
+          -0.00047964724944904447
+        ],
+        [
+          " concurrency",
+          -2.1008713702030946e-06
+        ],
+        [
+          ".",
+          -0.08623051643371582
+        ],
+        [
+          " It",
+          -0.430838942527771
+        ],
+        [
+          " allows",
+          -0.04708004370331764
+        ],
+        [
+          " for",
+          -0.15742866694927216
+        ],
+        [
+          " waiting",
+          -0.03536156937479973
+        ],
+        [
+          " on",
+          -0.22547055780887604
+        ],
+        [
+          " a",
+          -0.0006900362786836922
+        ],
+        [
+          " group",
+          -0.0029249449726194143
+        ],
+        [
+          " of",
+          0.0
+        ],
+        [
+          " related",
+          -4.127333340875339e-06
+        ],
+        [
+          " tasks",
+          -0.0986243337392807
+        ],
+        [
+          " with",
+          -0.003950048238039017
+        ],
+        [
+          " strong",
+          -7.76759916334413e-05
+        ],
+        [
+          " safety",
+          -7.896309739408025e-07
+        ],
+        [
+          " guarantees",
+          -7.896309739408025e-07
+        ],
+        [
+          ".",
+          -0.3232083320617676
+        ],
+        [
+          " Specifically",
+          -0.2592153549194336
+        ],
+        [
+          ",",
+          -0.0003013809327967465
+        ],
+        [
+          " the",
+          -0.649128794670105
+        ],
+        [
+          " `",
+          -0.5964186191558838
+        ],
+        [
+          "async",
+          -0.16045108437538147
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          ".Task",
+          -1.580929347255733e-05
+        ],
+        [
+          "Group",
+          -9.088346359931165e-07
+        ],
+        [
+          ".create",
+          -2.236549335066229e-05
+        ],
+        [
+          "_task",
+          -1.9361264946837764e-07
+        ],
+        [
+          "()`",
+          -0.00015979631280060858
+        ],
+        [
+          " method",
+          -0.0017851332668215036
+        ],
+        [
+          " is",
+          -0.14150609076023102
+        ],
+        [
+          " highlighted",
+          -0.07746919244527817
+        ],
+        [
+          " as",
+          -0.0063107931055128574
+        ],
+        [
+          " a",
+          -0.4808661937713623
+        ],
+        [
+          " key",
+          -0.16359005868434906
+        ],
+        [
+          " component",
+          -0.5248875021934509
+        ],
+        [
+          " of",
+          -0.6428900361061096
+        ],
+        [
+          " this",
+          -0.004376836586743593
+        ],
+        [
+          " feature",
+          -0.2711273431777954
+        ],
+        [
+          ".\n\n",
+          -0.9167207479476929
+        ],
+        [
+          "For",
+          -0.3857916295528412
+        ],
+        [
+          " more",
+          -0.2720380425453186
+        ],
+        [
+          " detailed",
+          -0.3240077495574951
+        ],
+        [
+          " information",
+          -0.04246223717927933
+        ],
+        [
+          ",",
+          -0.0015456913970410824
+        ],
+        [
+          " you",
+          -0.4277767837047577
+        ],
+        [
+          " can",
+          -0.0040952586568892
+        ],
+        [
+          " refer",
+          -0.013608135282993317
+        ],
+        [
+          " to",
+          -0.0031825865153223276
+        ],
+        [
+          " the",
+          -0.006813169457018375
+        ],
+        [
+          " official",
+          -0.7676980495452881
+        ],
+        [
+          " documentation",
+          -0.16596883535385132
+        ],
+        [
+          ":\n",
+          -0.2905869483947754
+        ],
+        [
+          "-",
+          -0.08317940682172775
+        ],
+        [
+          " [",
+          -0.12786321341991425
+        ],
+        [
+          "Cor",
+          -0.004516869783401489
+        ],
+        [
+          "outines",
+          -7.896309739408025e-07
+        ],
+        [
+          " and",
+          -5.908022285439074e-05
+        ],
+        [
+          " tasks",
+          -0.0067201098427176476
+        ],
+        [
+          " \u2014",
+          -0.35992610454559326
+        ],
+        [
+          " Python",
+          -0.00021021578868385404
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          ".",
+          -3.128163257315464e-07
+        ],
+        [
+          "14",
+          0.0
+        ],
+        [
+          ".",
+          -0.050147537142038345
+        ],
+        [
+          "7",
+          -6.704273118884885e-07
+        ],
+        [
+          " documentation",
+          -0.47549161314964294
+        ],
+        [
+          "](",
+          -0.0029365792870521545
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "docs",
+          -4.179569077678025e-05
+        ],
+        [
+          ".python",
+          0.0
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "3",
+          -3.128163257315464e-07
+        ],
+        [
+          "/library",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "async",
+          -2.696889623621246e-06
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          "-task",
+          -3.173704271830502e-06
+        ],
+        [
+          ".html",
+          0.0
+        ],
+        [
+          ")\n\n",
+          -0.5935134887695312
+        ],
+        [
+          "Would",
+          -0.3232582211494446
+        ],
+        [
+          " you",
+          -3.173704271830502e-06
+        ],
+        [
+          " like",
+          -1.2664456789934775e-06
+        ],
+        [
+          " a",
+          -0.054278723895549774
+        ],
+        [
+          " more",
+          -0.14689500629901886
+        ],
+        [
+          " detailed",
+          -0.036691103130578995
+        ],
+        [
+          " explanation",
+          -0.08550892025232315
+        ],
+        [
+          " or",
+          -0.2061922252178192
+        ],
+        [
+          " examples",
+          -1.6257816553115845
+        ],
+        [
+          " of",
+          -0.34503644704818726
+        ],
+        [
+          " how",
+          -0.08104750514030457
+        ],
+        [
+          " to",
+          -0.47411099076271057
+        ],
+        [
+          " use",
+          -1.3544423381972592e-05
+        ],
+        [
+          " `",
+          -0.00010008628305513412
+        ],
+        [
+          "async",
+          -4.572941179503687e-05
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          ".Task",
+          -4.127333340875339e-06
+        ],
+        [
+          "Group",
+          -5.512236498361744e-07
+        ],
+        [
+          "`",
+          -4.842555426876061e-06
+        ],
+        [
+          "?",
+          -0.011374473571777344
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "The Python 3.14 documentation indicates that `asyncio.TaskGroup` is a feature introduced as a new alternative leveraging structural concurrency. It allows for waiting on a group of related tasks with strong safety guarantees. Specifically, the `asyncio.TaskGroup.create_task()` method is highlighted as a key component of this feature.\n\nFor more detailed information, you can refer to the official documentation:\n- [Coroutines and tasks \u2014 Python 3.14.7 documentation](https://docs.python.org/3/library/asyncio-task.html)\n\nWould you like a more detailed explanation or examples of how to use `asyncio.TaskGroup`?",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_yJASRkx3qvkzdK0kNayliAv5",
+            "name": "web_search",
+            "args": {
+              "query": "Python 3.14 asyncio.TaskGroup documentation"
+            },
+            "result": "[1] Coroutines and tasks \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-task.html\nSnippet: Note asyncio.TaskGroup.create_task () is a new alternative leveraging structural concurrency; it allows for waiting for a group of related tasks with strong safety guarantees.\n\n[2] asyncio \u2014 Asynchronous I/O \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio.html\nSnippet: asyncio is a library to write concurrent code using the async/await syntax. asyncio is used as a foundation for multiple Python asynchronous frameworks that provide high-performance network and web-servers, database connection libraries, distributed task queues, etc.\n\n[3] High-level API Index \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3.14/library/asyncio-api-index.html\nSnippet: High-level API Index \u00b6 This page lists all high-level async/await enabled asyncio APIs. Tasks \u00b6 Utilities to run asyncio programs, create Tasks, and await on multiple things with timeouts.\n\n[4] asyncio and free-threaded Python \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-threading.html\nSnippet: Since Python 3.14, asyncio has first-class support for free-threaded Python, and the implementation of asyncio is safe to use in a multi-threaded environment. A single event loop on one core can handle many connections concurrently, but the Python code that runs to handle each one still executes serially.\n\n[5] Queues \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-queue.html\nSnippet: Source code: Lib/asyncio/queues.py asyncio queues are designed to be similar to classes of the queue module. Although asyncio queues are not thread-safe, they are designed to be used specifically i...",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.36,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.1485563912299177,
+      "profiling_data": {
+        "total_time": 5.480942012000014,
+        "llm_time": 2.8664712440004223,
+        "energy_consumed_kwh": 1.0846555942802486e-05,
+        "cpu_energy_kwh": 1.4192087983558015e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 9.427347144446686e-06,
+        "emissions_kg_co2": 3.5871512882917525e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.5213274309644476e-05
+        ],
+        [
+          "route",
+          -3.128163257315464e-07
+        ],
+        [
+          "\":",
+          -5.512236498361744e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Summary",
+          -5.8961017202818766e-05
+        ],
+        [
+          "\"}",
+          -1.8624639324116288e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000128168813722,
+      "profiling_data": {
+        "total_time": 2.5952521639992483,
+        "llm_time": 1.012599608000528,
+        "energy_consumed_kwh": 1.28526972914462e-05,
+        "cpu_energy_kwh": 1.6793643997791129e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.1173332891667087e-05,
+        "emissions_kg_co2": 4.250618342832505e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "The Python 3.14 documentation states that `asyncio.TaskGroup` is a new feature that provides an alternative approach to managing concurrent tasks using structural concurrency. It allows for waiting on a group of related tasks with strong safety guarantees. The `asyncio.TaskGroup.create_task()` method is a key component of this feature, enabling the creation of tasks within the group. This addition enhances the asyncio library by offering a more structured and safe way to handle multiple asynchronous tasks simultaneously.\n\nFor detailed information, you can refer to the official documentation:\n- [Coroutines and tasks \u2014 Python 3.14.7 documentation](https://docs.python.org/3/library/asyncio-task.html)\n\nThis source provides comprehensive details about `asyncio.TaskGroup` and its usage.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.07512322068214417
+        ],
+        [
+          " Python",
+          -0.006421309430152178
+        ],
+        [
+          " ",
+          -4.320199877838604e-07
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          "14",
+          -4.320199877838604e-07
+        ],
+        [
+          " documentation",
+          -0.0006937315920367837
+        ],
+        [
+          " states",
+          -0.2238345593214035
+        ],
+        [
+          " that",
+          -5.512236498361744e-07
+        ],
+        [
+          " `",
+          -0.0006298751104623079
+        ],
+        [
+          "async",
+          -1.9361264946837764e-07
+        ],
+        [
+          "io",
+          -1.9361264946837764e-07
+        ],
+        [
+          ".Task",
+          -3.054500666621607e-06
+        ],
+        [
+          "Group",
+          -1.3856492842023727e-06
+        ],
+        [
+          "`",
+          -1.7432603272027336e-06
+        ],
+        [
+          " is",
+          -0.0019138805801048875
+        ],
+        [
+          " a",
+          -0.019633226096630096
+        ],
+        [
+          " new",
+          -0.0022879987955093384
+        ],
+        [
+          " feature",
+          -0.003292851848527789
+        ],
+        [
+          " that",
+          -0.3446879982948303
+        ],
+        [
+          " provides",
+          -0.42708244919776917
+        ],
+        [
+          " an",
+          -0.12890054285526276
+        ],
+        [
+          " alternative",
+          -0.00026753442944027483
+        ],
+        [
+          " approach",
+          -0.7754383087158203
+        ],
+        [
+          " to",
+          -0.7620284557342529
+        ],
+        [
+          " managing",
+          -0.052527956664562225
+        ],
+        [
+          " concurrent",
+          -0.45721399784088135
+        ],
+        [
+          " tasks",
+          -0.009371517226099968
+        ],
+        [
+          " using",
+          -1.0147929191589355
+        ],
+        [
+          " structural",
+          -0.0011109242914244533
+        ],
+        [
+          " concurrency",
+          -1.2664456789934775e-06
+        ],
+        [
+          ".",
+          -0.00036655968870036304
+        ],
+        [
+          " It",
+          -0.0003488129877950996
+        ],
+        [
+          " allows",
+          -0.2844249904155731
+        ],
+        [
+          " for",
+          -0.807222306728363
+        ],
+        [
+          " waiting",
+          -0.5796137452125549
+        ],
+        [
+          " on",
+          -0.00030590701499022543
+        ],
+        [
+          " a",
+          -0.004486258141696453
+        ],
+        [
+          " group",
+          -0.019333364441990852
+        ],
+        [
+          " of",
+          0.0
+        ],
+        [
+          " related",
+          -7.97024549683556e-05
+        ],
+        [
+          " tasks",
+          -0.09805894643068314
+        ],
+        [
+          " with",
+          -0.010541079565882683
+        ],
+        [
+          " strong",
+          -0.004433559253811836
+        ],
+        [
+          " safety",
+          -1.1160349458805285e-05
+        ],
+        [
+          " guarantees",
+          -7.600714161526412e-05
+        ],
+        [
+          ".",
+          -0.11410406231880188
+        ],
+        [
+          " The",
+          -0.08946794271469116
+        ],
+        [
+          " `",
+          -0.6456918716430664
+        ],
+        [
+          "async",
+          -0.07900071889162064
+        ],
+        [
+          "io",
+          -1.9361264946837764e-07
+        ],
+        [
+          ".Task",
+          -1.6166903151315637e-05
+        ],
+        [
+          "Group",
+          -1.6240566083070007e-06
+        ],
+        [
+          ".create",
+          -1.3544423381972592e-05
+        ],
+        [
+          "_task",
+          0.0
+        ],
+        [
+          "()`",
+          0.0
+        ],
+        [
+          " method",
+          -1.981667537620524e-06
+        ],
+        [
+          " is",
+          -0.0008965740562416613
+        ],
+        [
+          " a",
+          -0.35218703746795654
+        ],
+        [
+          " key",
+          -0.01612398959696293
+        ],
+        [
+          " component",
+          -0.22882519662380219
+        ],
+        [
+          " of",
+          -0.11488121002912521
+        ],
+        [
+          " this",
+          -3.976922744186595e-05
+        ],
+        [
+          " feature",
+          -0.0042961155995726585
+        ],
+        [
+          ",",
+          -0.2117360532283783
+        ],
+        [
+          " enabling",
+          -0.17223621904850006
+        ],
+        [
+          " the",
+          -0.0422467403113842
+        ],
+        [
+          " creation",
+          -0.0013617821969091892
+        ],
+        [
+          " of",
+          -0.08894316852092743
+        ],
+        [
+          " tasks",
+          -0.09827323257923126
+        ],
+        [
+          " within",
+          -0.005255456548184156
+        ],
+        [
+          " the",
+          -0.3135967552661896
+        ],
+        [
+          " group",
+          -0.055404383689165115
+        ],
+        [
+          ".",
+          -0.4966012239456177
+        ],
+        [
+          " This",
+          -0.0855284035205841
+        ],
+        [
+          " addition",
+          -0.13144996762275696
+        ],
+        [
+          " enhances",
+          -0.8543828725814819
+        ],
+        [
+          " the",
+          -0.16741573810577393
+        ],
+        [
+          " asyncio",
+          -1.0559576749801636
+        ],
+        [
+          " library",
+          -0.007448321674019098
+        ],
+        [
+          " by",
+          -0.29561200737953186
+        ],
+        [
+          " offering",
+          -0.7417272925376892
+        ],
+        [
+          " a",
+          -0.07998743653297424
+        ],
+        [
+          " more",
+          -0.5040448307991028
+        ],
+        [
+          " structured",
+          -0.2552899122238159
+        ],
+        [
+          " and",
+          -0.3165341913700104
+        ],
+        [
+          " safe",
+          -0.7669323682785034
+        ],
+        [
+          " way",
+          -0.005987335927784443
+        ],
+        [
+          " to",
+          -0.0002964935847558081
+        ],
+        [
+          " handle",
+          -0.02037685737013817
+        ],
+        [
+          " multiple",
+          -0.01498411688953638
+        ],
+        [
+          " asynchronous",
+          -0.09962253272533417
+        ],
+        [
+          " tasks",
+          -0.02055228315293789
+        ],
+        [
+          " simultaneously",
+          -0.7269716262817383
+        ],
+        [
+          ".\n\n",
+          -0.10289463400840759
+        ],
+        [
+          "For",
+          -0.21567615866661072
+        ],
+        [
+          " detailed",
+          -0.5261671543121338
+        ],
+        [
+          " information",
+          -0.025662735104560852
+        ],
+        [
+          ",",
+          -0.00864282064139843
+        ],
+        [
+          " you",
+          -0.09724923223257065
+        ],
+        [
+          " can",
+          -5.3120038501219824e-05
+        ],
+        [
+          " refer",
+          -0.0712493360042572
+        ],
+        [
+          " to",
+          -0.0005533903022296727
+        ],
+        [
+          " the",
+          -8.470901229884475e-05
+        ],
+        [
+          " official",
+          -0.002533452119678259
+        ],
+        [
+          " documentation",
+          -0.06274419277906418
+        ],
+        [
+          ":\n",
+          -0.16854847967624664
+        ],
+        [
+          "-",
+          -0.00017314712749794126
+        ],
+        [
+          " [",
+          -0.00010354319238103926
+        ],
+        [
+          "Cor",
+          -0.001659589703194797
+        ],
+        [
+          "outines",
+          -9.088346359931165e-07
+        ],
+        [
+          " and",
+          -1.2664456789934775e-06
+        ],
+        [
+          " tasks",
+          -0.00043794067460112274
+        ],
+        [
+          " \u2014",
+          -4.167648876318708e-05
+        ],
+        [
+          " Python",
+          -3.128163257315464e-07
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          ".",
+          -1.9361264946837764e-07
+        ],
+        [
+          "14",
+          0.0
+        ],
+        [
+          ".",
+          -3.7697225252486533e-06
+        ],
+        [
+          "7",
+          -6.704273118884885e-07
+        ],
+        [
+          " documentation",
+          -0.0004665385349653661
+        ],
+        [
+          "](",
+          -9.17420256882906e-05
+        ],
+        [
+          "https",
+          -1.9361264946837764e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "docs",
+          -7.465036105713807e-06
+        ],
+        [
+          ".python",
+          0.0
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "3",
+          0.0
+        ],
+        [
+          "/library",
+          -1.9361264946837764e-07
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "async",
+          -3.173704271830502e-06
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          "-task",
+          -9.13388703338569e-06
+        ],
+        [
+          ".html",
+          0.0
+        ],
+        [
+          ")\n\n",
+          -0.6457450985908508
+        ],
+        [
+          "This",
+          -0.49117884039878845
+        ],
+        [
+          " source",
+          -0.4257640838623047
+        ],
+        [
+          " provides",
+          -0.8056252002716064
+        ],
+        [
+          " comprehensive",
+          -0.1187560111284256
+        ],
+        [
+          " details",
+          -0.9167686104774475
+        ],
+        [
+          " about",
+          -0.8826355934143066
+        ],
+        [
+          " `",
+          -0.43610039353370667
+        ],
+        [
+          "async",
+          -0.0002631238894537091
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          ".Task",
+          -1.5048530030981055e-06
+        ],
+        [
+          "Group",
+          -5.512236498361744e-07
+        ],
+        [
+          "`",
+          -0.2584531605243683
+        ],
+        [
+          " and",
+          -0.0017766845412552357
+        ],
+        [
+          " its",
+          -0.07821005582809448
+        ],
+        [
+          " usage",
+          -0.04425220564007759
+        ],
+        [
+          ".",
+          -0.35669323801994324
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "The Python 3.14 documentation states that `asyncio.TaskGroup` is a new feature that provides an alternative approach to managing concurrent tasks using structural concurrency. It allows for waiting on a group of related tasks with strong safety guarantees. The `asyncio.TaskGroup.create_task()` method is a key component of this feature, enabling the creation of tasks within the group. This addition enhances the asyncio library by offering a more structured and safe way to handle multiple asynchronous tasks simultaneously.\n\nFor detailed information, you can refer to the official documentation:\n- [Coroutines and tasks \u2014 Python 3.14.7 documentation](https://docs.python.org/3/library/asyncio-task.html)\n\nThis source provides comprehensive details about `asyncio.TaskGroup` and its usage.",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.35,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.1557461050815554,
+      "profiling_data": {
+        "total_time": 3.9101221040000382,
+        "llm_time": 2.3661774170013814,
+        "energy_consumed_kwh": 9.697383981420476e-06,
+        "cpu_energy_kwh": 9.984644397541479e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 8.698919541666329e-06,
+        "emissions_kg_co2": 3.207099435567417e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 14.61777617000007,
+    "llm_time": 7.302016863000972,
+    "energy_consumed_kwh": 4.638756662775138e-05,
+    "cpu_energy_kwh": 5.795007199970535e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 4.0592559427780854e-05,
+    "emissions_kg_co2": 1.534120325999668e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 5.226712054000018,
+      "llm_time": 2.0693682019991684,
+      "energy_consumed_kwh": 2.5843626703528417e-05,
+      "cpu_energy_kwh": 3.377333961860586e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 2.2466292741667832e-05,
+      "emissions_kg_co2": 8.546952536137514e-06
+    },
+    "WebSearch": {
+      "total_time": 5.480942012000014,
+      "llm_time": 2.8664712440004223,
+      "energy_consumed_kwh": 1.0846555942802486e-05,
+      "cpu_energy_kwh": 1.4192087983558015e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 9.427347144446686e-06,
+      "emissions_kg_co2": 3.5871512882917525e-06
+    },
+    "Summary": {
+      "total_time": 3.9101221040000382,
+      "llm_time": 2.3661774170013814,
+      "energy_consumed_kwh": 9.697383981420476e-06,
+      "cpu_energy_kwh": 9.984644397541479e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 8.698919541666329e-06,
+      "emissions_kg_co2": 3.207099435567417e-06
+    }
+  }
+}

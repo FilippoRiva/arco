@@ -1,0 +1,812 @@
+{
+  "prompt": "When was Coca-Cola invented, who created it, and why?",
+  "run_id": "Baseline GPT-5.4-nano3",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"CommonKnowledge\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          1.52587890625e-05
+        ],
+        [
+          "route",
+          2.86102294921875e-06
+        ],
+        [
+          "\":\"",
+          -8.487701416015625e-05
+        ],
+        [
+          "Common",
+          -0.09948062896728516
+        ],
+        [
+          "Knowledge",
+          -2.384185791015625e-06
+        ],
+        [
+          "\"}",
+          -2.86102294921875e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"CommonKnowledge\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0167305186714966,
+      "profiling_data": {
+        "total_time": 2.3610767199988913,
+        "llm_time": 0.7851579179987311,
+        "energy_consumed_kwh": 5.723779757033223e-06,
+        "cpu_energy_kwh": 7.474414209185491e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.976338336114673e-06,
+        "emissions_kg_co2": 1.8929569936865133e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "CommonKnowledge",
+      "message": "Coca\u2011Cola was invented in **1886** by **John Stith Pemberton** (a pharmacist) in **Atlanta, Georgia**. The drink was first sold as a **medicinal tonic**\u2014marketed for its supposed benefits (notably in relation to headaches and general wellness)\u2014and later grew into a popular soft drink.\n\n**Why it was created:** Pemberton formulated it as a **patent-medicine style syrup** to be sold for health purposes, reflecting the late\u201119th\u2011century trend of treating beverages as remedy/tonics before modern \u201csoft drink\u201d branding took over.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "C",
+          -0.048064231872558594
+        ],
+        [
+          "oca",
+          -0.00010776519775390625
+        ],
+        [
+          "\u2011",
+          -0.15568828582763672
+        ],
+        [
+          "Col",
+          4.76837158203125e-06
+        ],
+        [
+          "a",
+          4.76837158203125e-07
+        ],
+        [
+          " was",
+          -0.0005350112915039062
+        ],
+        [
+          " invented",
+          -0.3087301254272461
+        ],
+        [
+          " in",
+          -0.0033063888549804688
+        ],
+        [
+          " **",
+          -0.003772735595703125
+        ],
+        [
+          "188",
+          -6.961822509765625e-05
+        ],
+        [
+          "6",
+          -0.00012683868408203125
+        ],
+        [
+          "**",
+          -0.038143157958984375
+        ],
+        [
+          " by",
+          -0.8801679611206055
+        ],
+        [
+          " **",
+          -0.010601043701171875
+        ],
+        [
+          "John",
+          -0.07323932647705078
+        ],
+        [
+          " St",
+          -0.0033121109008789062
+        ],
+        [
+          "ith",
+          -0.00022983551025390625
+        ],
+        [
+          " P",
+          -0.0008640289306640625
+        ],
+        [
+          "ember",
+          2.6226043701171875e-06
+        ],
+        [
+          "ton",
+          -7.152557373046875e-07
+        ],
+        [
+          "**",
+          -0.2663393020629883
+        ],
+        [
+          " (",
+          -0.6017303466796875
+        ],
+        [
+          "a",
+          -0.5713958740234375
+        ],
+        [
+          " pharmacist",
+          -0.0035266876220703125
+        ],
+        [
+          ")",
+          -0.8231592178344727
+        ],
+        [
+          " in",
+          -0.0035886764526367188
+        ],
+        [
+          " **",
+          -0.02154541015625
+        ],
+        [
+          "Atlanta",
+          -0.019329547882080078
+        ],
+        [
+          ",",
+          -0.00014781951904296875
+        ],
+        [
+          " Georgia",
+          1.9073486328125e-06
+        ],
+        [
+          "**",
+          -0.241424560546875
+        ],
+        [
+          ".",
+          -0.2590456008911133
+        ],
+        [
+          " The",
+          -0.6016902923583984
+        ],
+        [
+          " drink",
+          -0.8097286224365234
+        ],
+        [
+          " was",
+          -0.05802726745605469
+        ],
+        [
+          " first",
+          -1.2731037139892578
+        ],
+        [
+          " sold",
+          -0.48700618743896484
+        ],
+        [
+          " as",
+          -0.29282379150390625
+        ],
+        [
+          " a",
+          -0.06707477569580078
+        ],
+        [
+          " **",
+          -0.1809091567993164
+        ],
+        [
+          "med",
+          -0.6060218811035156
+        ],
+        [
+          "ic",
+          -0.0005350112915039062
+        ],
+        [
+          "inal",
+          -1.239776611328125e-05
+        ],
+        [
+          " tonic",
+          -0.7346630096435547
+        ],
+        [
+          "**",
+          -0.0960245132446289
+        ],
+        [
+          "\u2014",
+          -0.13082504272460938
+        ],
+        [
+          "market",
+          -0.9237861633300781
+        ],
+        [
+          "ed",
+          6.67572021484375e-06
+        ],
+        [
+          " for",
+          -0.3480348587036133
+        ],
+        [
+          " its",
+          -0.05361175537109375
+        ],
+        [
+          " supposed",
+          -0.9798402786254883
+        ],
+        [
+          " benefits",
+          -1.82794189453125
+        ],
+        [
+          " (",
+          -1.0207557678222656
+        ],
+        [
+          "not",
+          -1.4105148315429688
+        ],
+        [
+          "ably",
+          -0.0009145736694335938
+        ],
+        [
+          " in",
+          -3.8426284790039062
+        ],
+        [
+          " relation",
+          -0.7844657897949219
+        ],
+        [
+          " to",
+          -8.58306884765625e-06
+        ],
+        [
+          " headaches",
+          -0.5449190139770508
+        ],
+        [
+          " and",
+          -0.08617019653320312
+        ],
+        [
+          " general",
+          -2.278921127319336
+        ],
+        [
+          " wellness",
+          -3.1228485107421875
+        ],
+        [
+          ")\u2014",
+          -0.2670717239379883
+        ],
+        [
+          "and",
+          -0.3108243942260742
+        ],
+        [
+          " later",
+          -0.8890314102172852
+        ],
+        [
+          " grew",
+          -4.250443458557129
+        ],
+        [
+          " into",
+          -0.037941932678222656
+        ],
+        [
+          " a",
+          -0.2973318099975586
+        ],
+        [
+          " popular",
+          -0.7122373580932617
+        ],
+        [
+          " soft",
+          -0.2180185317993164
+        ],
+        [
+          " drink",
+          -3.814697265625e-05
+        ],
+        [
+          ".\n\n",
+          -0.6479978561401367
+        ],
+        [
+          "**",
+          -0.2931537628173828
+        ],
+        [
+          "Why",
+          -0.824152946472168
+        ],
+        [
+          " it",
+          -1.148397445678711
+        ],
+        [
+          " was",
+          -0.00103759765625
+        ],
+        [
+          " created",
+          -0.00775146484375
+        ],
+        [
+          ":**",
+          -0.0742330551147461
+        ],
+        [
+          " P",
+          -0.06036949157714844
+        ],
+        [
+          "ember",
+          -5.7220458984375e-06
+        ],
+        [
+          "ton",
+          0.0
+        ],
+        [
+          " formulated",
+          -0.547419548034668
+        ],
+        [
+          " it",
+          -0.11836624145507812
+        ],
+        [
+          " as",
+          -0.17670059204101562
+        ],
+        [
+          " a",
+          -0.009344100952148438
+        ],
+        [
+          " **",
+          -0.25670623779296875
+        ],
+        [
+          "pat",
+          -1.4220495223999023
+        ],
+        [
+          "ent",
+          -0.002048015594482422
+        ],
+        [
+          "-m",
+          -0.4089851379394531
+        ],
+        [
+          "edicine",
+          -0.0012540817260742188
+        ],
+        [
+          " style",
+          -0.6003456115722656
+        ],
+        [
+          " syrup",
+          -0.788691520690918
+        ],
+        [
+          "**",
+          -0.2686891555786133
+        ],
+        [
+          " to",
+          -1.5421562194824219
+        ],
+        [
+          " be",
+          -0.09310340881347656
+        ],
+        [
+          " sold",
+          -0.10746479034423828
+        ],
+        [
+          " for",
+          -0.9061470031738281
+        ],
+        [
+          " health",
+          -0.029102325439453125
+        ],
+        [
+          " purposes",
+          -0.559809684753418
+        ],
+        [
+          ",",
+          -0.3202381134033203
+        ],
+        [
+          " reflecting",
+          -2.9106178283691406
+        ],
+        [
+          " the",
+          -0.15204620361328125
+        ],
+        [
+          " late",
+          -0.2673501968383789
+        ],
+        [
+          "\u2011",
+          -0.5566444396972656
+        ],
+        [
+          "19",
+          -0.0015392303466796875
+        ],
+        [
+          "th",
+          1.621246337890625e-05
+        ],
+        [
+          "\u2011",
+          -0.008999824523925781
+        ],
+        [
+          "cent",
+          -8.58306884765625e-06
+        ],
+        [
+          "ury",
+          -4.76837158203125e-06
+        ],
+        [
+          " trend",
+          -0.1333475112915039
+        ],
+        [
+          " of",
+          -0.000522613525390625
+        ],
+        [
+          " treating",
+          -2.860067367553711
+        ],
+        [
+          " beverages",
+          -0.9024925231933594
+        ],
+        [
+          " as",
+          -0.04719066619873047
+        ],
+        [
+          " remedy",
+          -5.733054161071777
+        ],
+        [
+          "/",
+          -1.4495353698730469
+        ],
+        [
+          "ton",
+          -0.0014524459838867188
+        ],
+        [
+          "ics",
+          -0.7576103210449219
+        ],
+        [
+          " before",
+          -1.082122802734375
+        ],
+        [
+          " modern",
+          -3.886610984802246
+        ],
+        [
+          " \u201c",
+          -2.237335205078125
+        ],
+        [
+          "soft",
+          -0.9503574371337891
+        ],
+        [
+          " drink",
+          -0.0013875961303710938
+        ],
+        [
+          "\u201d",
+          -0.0022144317626953125
+        ],
+        [
+          " branding",
+          -0.14800643920898438
+        ],
+        [
+          " took",
+          -0.11286163330078125
+        ],
+        [
+          " over",
+          -0.009305953979492188
+        ],
+        [
+          ".",
+          -0.008235931396484375
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the common-knowledge and architecture specialist. \nYou have no tools. Answer stable questions from your knowled. \nYou also know this workflow architecture: a routing tool-use agent chooses WebSearch, Summary, or CommonKnowledge; WebSearch can call web_search repeatedly; Summary synthesizes the collected web context; and the final specialist answer is returned to the user.\nExplain that architecture when the user asks about it.\nDo not pretend to have performed web research.",
+        "response": "Coca\u2011Cola was invented in **1886** by **John Stith Pemberton** (a pharmacist) in **Atlanta, Georgia**. The drink was first sold as a **medicinal tonic**\u2014marketed for its supposed benefits (notably in relation to headaches and general wellness)\u2014and later grew into a popular soft drink.\n\n**Why it was created:** Pemberton formulated it as a **patent-medicine style syrup** to be sold for health purposes, reflecting the late\u201119th\u2011century trend of treating beverages as remedy/tonics before modern \u201csoft drink\u201d branding took over.",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.86,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.7187110168739317,
+      "profiling_data": {
+        "total_time": 2.9174348970009305,
+        "llm_time": 1.3720601969998825,
+        "energy_consumed_kwh": 1.4008752134560561e-05,
+        "cpu_energy_kwh": 1.8353199956720322e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.217343213888853e-05,
+        "emissions_kg_co2": 4.6329464884375995e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 5.278511616999822,
+    "llm_time": 2.1572181149986136,
+    "energy_consumed_kwh": 1.9732531891593785e-05,
+    "cpu_energy_kwh": 2.5827614165905813e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 1.7149770475003203e-05,
+    "emissions_kg_co2": 6.5259034821241126e-06
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 2.3610767199988913,
+      "llm_time": 0.7851579179987311,
+      "energy_consumed_kwh": 5.723779757033223e-06,
+      "cpu_energy_kwh": 7.474414209185491e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 4.976338336114673e-06,
+      "emissions_kg_co2": 1.8929569936865133e-06
+    },
+    "CommonKnowledge": {
+      "total_time": 2.9174348970009305,
+      "llm_time": 1.3720601969998825,
+      "energy_consumed_kwh": 1.4008752134560561e-05,
+      "cpu_energy_kwh": 1.8353199956720322e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.217343213888853e-05,
+      "emissions_kg_co2": 4.6329464884375995e-06
+    }
+  }
+}

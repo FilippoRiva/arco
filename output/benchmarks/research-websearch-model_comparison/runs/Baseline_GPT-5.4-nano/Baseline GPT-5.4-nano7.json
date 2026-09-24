@@ -1,0 +1,2088 @@
+{
+  "prompt": "What year was Coca-Cola invented, who created it, and what were Coca-Cola Company's sales last year?",
+  "run_id": "Baseline GPT-5.4-nano7",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.239776611328125e-05
+        ],
+        [
+          "route",
+          -2.86102294921875e-06
+        ],
+        [
+          "\":\"",
+          -5.054473876953125e-05
+        ],
+        [
+          "Web",
+          -1.71661376953125e-05
+        ],
+        [
+          "Search",
+          -8.58306884765625e-06
+        ],
+        [
+          "\"}",
+          4.76837158203125e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000144641650706,
+      "profiling_data": {
+        "total_time": 2.3245964029993047,
+        "llm_time": 0.7422994560001825,
+        "energy_consumed_kwh": 5.5880021447233634e-06,
+        "cpu_energy_kwh": 7.299463336135569e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.858055811109807e-06,
+        "emissions_kg_co2": 1.8480528932986213e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "- **Year Coca\u2011Cola was invented:** **1886** (born May 8, 1886).  \n- **Creator:** **Dr. John Stith Pemberton** (with **Frank M. Robinson** credited with penning the \u201cCoca\u2011Cola\u201d name/trademark; Coca\u2011Cola\u2019s own history page credits Pemberton as the producer of the syrup and inventor context).  \n- **Coca\u2011Cola Company sales last year:** In its \u201c**full year 2024 results**\u201d release, The Coca\u2011Cola Company reports **net revenues of $47.1 billion** for the year (i.e., **sales/\u201cnet revenues\u201d for 2024**).  \n\n**Sources:**  \n- Coca\u2011Cola history (invented date, creator, and early sales): https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea  \n- Coca\u2011Cola net revenues for full year 2024: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "-",
+          -0.01864910125732422
+        ],
+        [
+          " **",
+          7.62939453125e-06
+        ],
+        [
+          "Year",
+          -0.0363922119140625
+        ],
+        [
+          " Coca",
+          -0.02361297607421875
+        ],
+        [
+          "\u2011",
+          -1.7014570236206055
+        ],
+        [
+          "Col",
+          5.7220458984375e-06
+        ],
+        [
+          "a",
+          -2.86102294921875e-06
+        ],
+        [
+          " was",
+          -0.0001316070556640625
+        ],
+        [
+          " invented",
+          -0.019509315490722656
+        ],
+        [
+          ":**",
+          -0.039139747619628906
+        ],
+        [
+          " **",
+          1.049041748046875e-05
+        ],
+        [
+          "188",
+          -0.0002269744873046875
+        ],
+        [
+          "6",
+          -1.621246337890625e-05
+        ],
+        [
+          "**",
+          -0.00138092041015625
+        ],
+        [
+          " (",
+          -0.08224773406982422
+        ],
+        [
+          "born",
+          -0.5756950378417969
+        ],
+        [
+          " May",
+          -0.6936588287353516
+        ],
+        [
+          " ",
+          -0.0170745849609375
+        ],
+        [
+          "8",
+          7.62939453125e-06
+        ],
+        [
+          ",",
+          -1.049041748046875e-05
+        ],
+        [
+          " ",
+          -0.0013189315795898438
+        ],
+        [
+          "188",
+          1.52587890625e-05
+        ],
+        [
+          "6",
+          8.58306884765625e-06
+        ],
+        [
+          ").",
+          -0.4235353469848633
+        ],
+        [
+          "  \n",
+          -0.0132904052734375
+        ],
+        [
+          "-",
+          -0.035770416259765625
+        ],
+        [
+          " **",
+          -2.86102294921875e-06
+        ],
+        [
+          "Creator",
+          -0.5491294860839844
+        ],
+        [
+          ":**",
+          -0.00678253173828125
+        ],
+        [
+          " **",
+          -0.0004558563232421875
+        ],
+        [
+          "Dr",
+          8.58306884765625e-06
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          " John",
+          3.814697265625e-06
+        ],
+        [
+          " St",
+          7.62939453125e-06
+        ],
+        [
+          "ith",
+          -9.5367431640625e-07
+        ],
+        [
+          " P",
+          -4.291534423828125e-05
+        ],
+        [
+          "ember",
+          5.7220458984375e-06
+        ],
+        [
+          "ton",
+          2.86102294921875e-06
+        ],
+        [
+          "**",
+          -0.0046176910400390625
+        ],
+        [
+          " (",
+          -0.031195640563964844
+        ],
+        [
+          "with",
+          -0.2880086898803711
+        ],
+        [
+          " **",
+          -0.18918609619140625
+        ],
+        [
+          "Frank",
+          -0.00029468536376953125
+        ],
+        [
+          " M",
+          -1.239776611328125e-05
+        ],
+        [
+          ".",
+          1.9073486328125e-06
+        ],
+        [
+          " Robinson",
+          -7.62939453125e-06
+        ],
+        [
+          "**",
+          -0.00041103363037109375
+        ],
+        [
+          " credited",
+          -0.5791025161743164
+        ],
+        [
+          " with",
+          -0.3443174362182617
+        ],
+        [
+          " pen",
+          -2.3657026290893555
+        ],
+        [
+          "ning",
+          -8.58306884765625e-06
+        ],
+        [
+          " the",
+          -0.0016498565673828125
+        ],
+        [
+          " \u201c",
+          -0.14990997314453125
+        ],
+        [
+          "C",
+          -7.915496826171875e-05
+        ],
+        [
+          "oca",
+          -9.5367431640625e-06
+        ],
+        [
+          "\u2011",
+          -5.91278076171875e-05
+        ],
+        [
+          "Col",
+          2.86102294921875e-06
+        ],
+        [
+          "a",
+          -9.5367431640625e-07
+        ],
+        [
+          "\u201d",
+          -3.814697265625e-06
+        ],
+        [
+          " name",
+          -0.19072341918945312
+        ],
+        [
+          "/tr",
+          -1.5340566635131836
+        ],
+        [
+          "ademark",
+          -4.57763671875e-05
+        ],
+        [
+          ";",
+          -1.4203834533691406
+        ],
+        [
+          " Coca",
+          -1.3724098205566406
+        ],
+        [
+          "\u2011",
+          -0.0003833770751953125
+        ],
+        [
+          "Col",
+          1.9073486328125e-06
+        ],
+        [
+          "a",
+          -1.1444091796875e-05
+        ],
+        [
+          "\u2019s",
+          -0.5139274597167969
+        ],
+        [
+          " own",
+          -3.0596542358398438
+        ],
+        [
+          " history",
+          -0.013220787048339844
+        ],
+        [
+          " page",
+          -0.6137876510620117
+        ],
+        [
+          " credits",
+          -1.5097999572753906
+        ],
+        [
+          " P",
+          -0.16623973846435547
+        ],
+        [
+          "ember",
+          2.86102294921875e-06
+        ],
+        [
+          "ton",
+          -1.9073486328125e-06
+        ],
+        [
+          " as",
+          -0.6736965179443359
+        ],
+        [
+          " the",
+          -1.0968847274780273
+        ],
+        [
+          " producer",
+          -1.2019939422607422
+        ],
+        [
+          " of",
+          -0.21788311004638672
+        ],
+        [
+          " the",
+          5.7220458984375e-06
+        ],
+        [
+          " syrup",
+          -0.0009260177612304688
+        ],
+        [
+          " and",
+          -1.1001882553100586
+        ],
+        [
+          " inventor",
+          -1.9580698013305664
+        ],
+        [
+          " context",
+          -3.3811750411987305
+        ],
+        [
+          ").",
+          -0.015217781066894531
+        ],
+        [
+          "  \n",
+          -0.0182647705078125
+        ],
+        [
+          "-",
+          -0.09483909606933594
+        ],
+        [
+          " **",
+          -4.863739013671875e-05
+        ],
+        [
+          "C",
+          -0.054241180419921875
+        ],
+        [
+          "oca",
+          -1.811981201171875e-05
+        ],
+        [
+          "\u2011",
+          -1.430511474609375e-05
+        ],
+        [
+          "Col",
+          -2.86102294921875e-06
+        ],
+        [
+          "a",
+          -5.7220458984375e-06
+        ],
+        [
+          " Company",
+          -0.000583648681640625
+        ],
+        [
+          " sales",
+          -0.04279899597167969
+        ],
+        [
+          " last",
+          -0.05126380920410156
+        ],
+        [
+          " year",
+          -1.621246337890625e-05
+        ],
+        [
+          ":**",
+          -0.038252830505371094
+        ],
+        [
+          " In",
+          -1.3690872192382812
+        ],
+        [
+          " its",
+          -0.5375280380249023
+        ],
+        [
+          " \u201c",
+          -4.6792144775390625
+        ],
+        [
+          "**",
+          -1.0994634628295898
+        ],
+        [
+          "full",
+          -0.36794376373291016
+        ],
+        [
+          " year",
+          -0.0034122467041015625
+        ],
+        [
+          " ",
+          -0.00016021728515625
+        ],
+        [
+          "202",
+          1.33514404296875e-05
+        ],
+        [
+          "4",
+          -4.76837158203125e-06
+        ],
+        [
+          " results",
+          -0.10020256042480469
+        ],
+        [
+          "**",
+          -0.00031757354736328125
+        ],
+        [
+          "\u201d",
+          -0.03170585632324219
+        ],
+        [
+          " release",
+          -0.3839740753173828
+        ],
+        [
+          ",",
+          -0.5528068542480469
+        ],
+        [
+          " The",
+          -0.04398918151855469
+        ],
+        [
+          " Coca",
+          -0.0013647079467773438
+        ],
+        [
+          "\u2011",
+          -2.09808349609375e-05
+        ],
+        [
+          "Col",
+          0.0
+        ],
+        [
+          "a",
+          -1.52587890625e-05
+        ],
+        [
+          " Company",
+          -1.430511474609375e-05
+        ],
+        [
+          " reports",
+          -0.19161510467529297
+        ],
+        [
+          " **",
+          -0.005045890808105469
+        ],
+        [
+          "net",
+          -0.014344215393066406
+        ],
+        [
+          " revenues",
+          -0.0001468658447265625
+        ],
+        [
+          " of",
+          -0.25539493560791016
+        ],
+        [
+          " $",
+          -0.0002002716064453125
+        ],
+        [
+          "47",
+          -1.71661376953125e-05
+        ],
+        [
+          ".",
+          -1.52587890625e-05
+        ],
+        [
+          "1",
+          1.621246337890625e-05
+        ],
+        [
+          " billion",
+          -4.76837158203125e-06
+        ],
+        [
+          "**",
+          -0.6627559661865234
+        ],
+        [
+          " for",
+          -0.0069828033447265625
+        ],
+        [
+          " the",
+          -0.5596494674682617
+        ],
+        [
+          " year",
+          -3.248711585998535
+        ],
+        [
+          " (",
+          -0.6113662719726562
+        ],
+        [
+          "i",
+          -0.16322898864746094
+        ],
+        [
+          ".e",
+          -1.52587890625e-05
+        ],
+        [
+          ".,",
+          7.62939453125e-06
+        ],
+        [
+          " **",
+          -2.3734607696533203
+        ],
+        [
+          "sales",
+          -1.8460493087768555
+        ],
+        [
+          "/",
+          -0.8711404800415039
+        ],
+        [
+          "\u201c",
+          -0.4371504783630371
+        ],
+        [
+          "net",
+          -0.01773834228515625
+        ],
+        [
+          " revenues",
+          -0.00019741058349609375
+        ],
+        [
+          "\u201d",
+          -0.000225067138671875
+        ],
+        [
+          " for",
+          -0.7123680114746094
+        ],
+        [
+          " ",
+          -0.5299997329711914
+        ],
+        [
+          "202",
+          -6.67572021484375e-06
+        ],
+        [
+          "4",
+          -1.9073486328125e-06
+        ],
+        [
+          "**",
+          -0.36919593811035156
+        ],
+        [
+          ").",
+          -0.21529674530029297
+        ],
+        [
+          "  \n\n",
+          -0.03334236145019531
+        ],
+        [
+          "**",
+          -0.005442619323730469
+        ],
+        [
+          "Sources",
+          -8.58306884765625e-06
+        ],
+        [
+          ":**",
+          -0.15670394897460938
+        ],
+        [
+          "  \n",
+          -0.000446319580078125
+        ],
+        [
+          "-",
+          -0.1511993408203125
+        ],
+        [
+          " Coca",
+          -0.09521770477294922
+        ],
+        [
+          "\u2011",
+          -0.00010395050048828125
+        ],
+        [
+          "Col",
+          0.0
+        ],
+        [
+          "a",
+          -9.5367431640625e-06
+        ],
+        [
+          " history",
+          -1.719186782836914
+        ],
+        [
+          " (",
+          -1.426539421081543
+        ],
+        [
+          "invent",
+          -1.151041030883789
+        ],
+        [
+          "ed",
+          -0.00142669677734375
+        ],
+        [
+          " date",
+          -2.2121973037719727
+        ],
+        [
+          ",",
+          -0.7017765045166016
+        ],
+        [
+          " creator",
+          -0.7124347686767578
+        ],
+        [
+          ",",
+          -0.200408935546875
+        ],
+        [
+          " and",
+          -1.7627782821655273
+        ],
+        [
+          " early",
+          -0.38315486907958984
+        ],
+        [
+          " sales",
+          -0.844609260559082
+        ],
+        [
+          "):",
+          -0.657984733581543
+        ],
+        [
+          " https",
+          -0.0012617111206054688
+        ],
+        [
+          "://",
+          -9.5367431640625e-06
+        ],
+        [
+          "www",
+          8.58306884765625e-06
+        ],
+        [
+          ".c",
+          0.0
+        ],
+        [
+          "oca",
+          -6.198883056640625e-06
+        ],
+        [
+          "-col",
+          -7.62939453125e-06
+        ],
+        [
+          "ac",
+          -1.52587890625e-05
+        ],
+        [
+          "omp",
+          -6.198883056640625e-06
+        ],
+        [
+          "any",
+          2.86102294921875e-06
+        ],
+        [
+          ".com",
+          -8.58306884765625e-06
+        ],
+        [
+          "/about",
+          9.5367431640625e-06
+        ],
+        [
+          "-us",
+          -4.76837158203125e-06
+        ],
+        [
+          "/history",
+          -4.76837158203125e-07
+        ],
+        [
+          "/the",
+          6.67572021484375e-06
+        ],
+        [
+          "-b",
+          5.7220458984375e-06
+        ],
+        [
+          "irth",
+          0.0
+        ],
+        [
+          "-of",
+          1.52587890625e-05
+        ],
+        [
+          "-a",
+          8.58306884765625e-06
+        ],
+        [
+          "-refresh",
+          -9.5367431640625e-07
+        ],
+        [
+          "ing",
+          -5.7220458984375e-06
+        ],
+        [
+          "-",
+          8.58306884765625e-06
+        ],
+        [
+          "idea",
+          -2.86102294921875e-06
+        ],
+        [
+          "  \n",
+          -1.71661376953125e-05
+        ],
+        [
+          "-",
+          -6.4849853515625e-05
+        ],
+        [
+          " Coca",
+          -0.06932544708251953
+        ],
+        [
+          "\u2011",
+          -1.1444091796875e-05
+        ],
+        [
+          "Col",
+          8.58306884765625e-06
+        ],
+        [
+          "a",
+          1.1444091796875e-05
+        ],
+        [
+          " net",
+          -3.632786750793457
+        ],
+        [
+          " revenues",
+          -0.001804351806640625
+        ],
+        [
+          " for",
+          -0.669830322265625
+        ],
+        [
+          " full",
+          -0.07474613189697266
+        ],
+        [
+          " year",
+          -0.04862499237060547
+        ],
+        [
+          " ",
+          -0.00180816650390625
+        ],
+        [
+          "202",
+          -1.239776611328125e-05
+        ],
+        [
+          "4",
+          2.86102294921875e-06
+        ],
+        [
+          ":",
+          -0.7110986709594727
+        ],
+        [
+          " https",
+          -1.33514404296875e-05
+        ],
+        [
+          "://",
+          5.7220458984375e-06
+        ],
+        [
+          "www",
+          2.86102294921875e-06
+        ],
+        [
+          ".c",
+          1.621246337890625e-05
+        ],
+        [
+          "oca",
+          -9.5367431640625e-07
+        ],
+        [
+          "-col",
+          4.76837158203125e-06
+        ],
+        [
+          "ac",
+          -1.049041748046875e-05
+        ],
+        [
+          "omp",
+          -2.384185791015625e-06
+        ],
+        [
+          "any",
+          -2.86102294921875e-06
+        ],
+        [
+          ".com",
+          -2.86102294921875e-06
+        ],
+        [
+          "/media",
+          2.86102294921875e-06
+        ],
+        [
+          "-center",
+          -2.86102294921875e-06
+        ],
+        [
+          "/c",
+          -5.7220458984375e-06
+        ],
+        [
+          "oca",
+          -8.58306884765625e-06
+        ],
+        [
+          "-col",
+          -2.86102294921875e-06
+        ],
+        [
+          "a",
+          7.62939453125e-06
+        ],
+        [
+          "-re",
+          3.814697265625e-06
+        ],
+        [
+          "ports",
+          4.291534423828125e-06
+        ],
+        [
+          "-four",
+          -3.814697265625e-06
+        ],
+        [
+          "th",
+          0.0
+        ],
+        [
+          "-quarter",
+          0.0
+        ],
+        [
+          "-and",
+          -9.5367431640625e-07
+        ],
+        [
+          "-full",
+          -2.193450927734375e-05
+        ],
+        [
+          "-year",
+          -1.430511474609375e-05
+        ],
+        [
+          "-",
+          8.58306884765625e-06
+        ],
+        [
+          "202",
+          -1.52587890625e-05
+        ],
+        [
+          "4",
+          -2.86102294921875e-06
+        ],
+        [
+          "-results",
+          0.0
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "- **Year Coca\u2011Cola was invented:** **1886** (born May 8, 1886).  \n- **Creator:** **Dr. John Stith Pemberton** (with **Frank M. Robinson** credited with penning the \u201cCoca\u2011Cola\u201d name/trademark; Coca\u2011Cola\u2019s own history page credits Pemberton as the producer of the syrup and inventor context).  \n- **Coca\u2011Cola Company sales last year:** In its \u201c**full year 2024 results**\u201d release, The Coca\u2011Cola Company reports **net revenues of $47.1 billion** for the year (i.e., **sales/\u201cnet revenues\u201d for 2024**).  \n\n**Sources:**  \n- Coca\u2011Cola history (invented date, creator, and early sales): https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea  \n- Coca\u2011Cola net revenues for full year 2024: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_UsGKwx4cWr023HRTmLSdhnrX",
+            "name": "web_search",
+            "args": {
+              "query": "Coca-Cola invented year who created it John Pemberton when was Coca-Cola first sold 1886",
+              "max_results": 5
+            },
+            "result": "[1] John Stith Pemberton - Wikipedia\nURL: https://en.wikipedia.org/wiki/John_Stith_Pemberton\nSnippet: John Stith Pemberton (July 8, 1831 - August 16, 1888) was an American pharmacist, chemist, and Confederate States Army officer who is best known as the inventor of Coca-Cola. On May 8, 1886, he developed an early version of a beverage that would later become Coca-Cola, but sold the rights to Asa Griggs Candler for roughly $2300 (equivalent to $82,417 in 2025) shortly before his death in 1888 ...\n\n[2] The Birth of a Refreshing Idea - The Coca-Cola Company\nURL: https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea\nSnippet: Coca\u2011Cola History The product that has given the world its best-known taste was born in Atlanta, Georgia, on May 8, 1886. Dr. John Stith Pemberton, a local pharmacist, produced the syrup for Coca\u2011Cola, and carried a jug of the new product down the street to Jacobs' Pharmacy, where it was sampled, pronounced \"excellent\" and placed on sale for five cents a glass as a soda fountain drink ...\n\n[3] World's First Coca-Cola was Served - This Month in Business History ...\nURL: https://guides.loc.gov/this-month-in-business-history/may/first-coca-cola-served\nSnippet: The Pemberton Chemical Company, later renamed Coca-Cola, was established to market and sell the product. When it was first sold, Coca-Cola was in syrup form and mixed on premise; the bottling came later.\n\n[4] Coca-Cola - Wikipedia\nURL: https://en.wikipedia.org/wiki/Coca-Cola\nSnippet: Coca-Cola has been sold outside the United States since as early as the turn of the 20th century, as the drink was first sold in Britain on 31 August 1900 and the Cuba Libre (a mix between Coca-Cola and rum) was created in Havana shortly after the Spanish-American War of 1898.\n\n[5] The History of Coca Cola - John Pemberton\nURL: https://www.theinventors.org/library/inventors/blcocacola.htm\nSnippet: In May, 1886, Coca Cola was invented by Doctor John Pemberton a pharmacist from Atlanta, Georgia. John Pemberton concocted the Coca Cola formula in a three legged brass kettle in his backyard.",
+            "success": true
+          },
+          {
+            "iteration": 1,
+            "id": "call_o34CVg87f8MOzLVOiIVKXNdi",
+            "name": "web_search",
+            "args": {
+              "query": "Coca-Cola Company sales last year total net operating revenues 2023 2024 'last year'",
+              "max_results": 5
+            },
+            "result": "[1] PDF Coca-Cola Reports Fourth Quarter and Full Year 2024 Results\nURL: https://www.coca-colacompany.com/content/dam/corporate/us/en/media-center/Coca-Cola 2024 Q4 Earnings Release_Full Release_2.11.25.pdf\nSnippet: For the Bottling Investments operating segment for the fourth quarter, this represents the percent change in net revenues attributable to the increase (decrease) in unit case volume computed based on total sales (rather than average daily sales) in each of the corresponding periods after considering the impact of structural changes, if any.\n\n[2] Coca-Cola Reports Fourth Quarter and Full-Year 2023 Results\nURL: https://investors.coca-colacompany.com/news-events/press-releases/detail/1101/coca-cola-reports-fourth-quarter-and-full-year-2023-results\nSnippet: Company Provides 2024 Financial Outlook ATLANTA-- (BUSINESS WIRE)-- The Coca-Cola Company today reported fourth quarter and full-year 2023 results. \"During the year, our people and partners rose to meet new challenges, allowing us to excel globally and deliver in a dynamic world,\" said James Quincey, Chairman and CEO of The Coca-Cola Company.\n\n[3] Coca\u2011Cola Reports Fourth Quarter and Full Year 2024 Results\nURL: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results\nSnippet: The Coca-Cola Company today reported strong fourth quarter and full year 2024 results. Read this press release from The Coca-Cola Company.\n\n[4] Coca-Cola Q4 2024 \u00b7 Earnings - Captide\nURL: https://www.captide.ai/insights/coca-cola-q4-2024\nSnippet: Coca-Cola's (KO) Q4 2024 earnings report highlights a strong performance in net operating revenues, which reached $47.061 billion, marking a 2.9% increase from $45.754 billion in 2023.\n\n[5] Coca Cola Co (KO) 10-K Annual Report February 2024\nURL: https://last10k.com/sec-filings/ko/0000021344-24-000009.htm\nSnippet: ATLANTA, Feb. 13, 2024 - The Coca-Cola Company today reported fourth quarter and full-year 2023 results. \"During the year, our people and partners rose to meet new challenges, allowing us to excel globally and deliver in a dynamic world,\" said James Quincey, Chairman and CEO of The Coca-Cola Company.",
+            "success": true
+          },
+          {
+            "iteration": 1,
+            "id": "call_0Pmdkq6sgGDMY45z7PlTLA10",
+            "name": "web_search",
+            "args": {
+              "query": "Coca-Cola Company 2024 annual report net operating revenues 2023 2024",
+              "max_results": 5
+            },
+            "result": "[1] PDF Coca-Cola Reports Fourth Quarter and Full Year 2024 Results\nURL: https://www.coca-colacompany.com/content/dam/corporate/us/en/media-center/Coca-Cola 2024 Q4 Earnings Release_Full Release_2.11.25.pdf\nSnippet: Company Provides 2025 Financial Outlook ATLANTA, Feb. 11, 2025 - The Coca-Cola Company today reported fourth quarter and full year 2024 results. \"Our all-weather strategy is working, and we continue to demonstrate our ability to lead through dynamic external environments,\" said James Quincey, Chairman and CEO of The Coca-Cola Company.\n\n[2] Annual Publications :: The Coca-Cola Company (KO)\nURL: https://investors.coca-colacompany.com/filings-reports/annual-publications\nSnippet: 2026 Proxy Statement 2025 Proxy Statement 2024 Proxy Statement 2022 Annual Report 2023 Proxy Statement 2022 Proxy Statement 2021 Proxy Statement 2020 Proxy Statement\n\n[3] Coca\u2011Cola Reports Fourth Quarter and Full Year 2024 Results\nURL: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results\nSnippet: The Coca-Cola Company today reported strong fourth quarter and full year 2024 results. Read this press release from The Coca-Cola Company.\n\n[4] Coca-Cola Reports Fourth Quarter and Full Year 2024 Results\nURL: https://investors.coca-colacompany.com/news-events/press-releases/detail/1128/coca-cola-reports-fourth-quarter-and-full-year-2024-results\nSnippet: Company Provides 2025 Financial Outlook ATLANTA-- (BUSINESS WIRE)-- The Coca-Cola Company today reported fourth quarter and full year 2024 results. \"Our all-weather strategy is working, and we continue to demonstrate our ability to lead through dynamic external environments,\" said James Quincey, Chairman and CEO of The Coca-Cola Company.\n\n[5] ko-20241231\nURL: https://www.sec.gov/Archives/edgar/data/21344/000002134425000011/ko-20241231.htm\nSnippet: The Coca-Cola system sold 33.7 billion and 33.3 billion unit cases of our products in 2024 and 2023, respectively. Sparkling soft drinks represented 69% of our worldwide unit case volume in both 2024 and 2023.",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_SGZAUUlXxJbrnOAVXourhDY8",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea",
+              "max_chars": 6000
+            },
+            "result": "URL: https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea\nTitle: The Birth of a Refreshing Idea\nContent:\nThe Birth of a Refreshing Idea Company Brands Careers News Investors Logo Our company Our brands Careers Newst Investors Search Language Reciteme Our Company Company The Coca\u00e2\u0080\u0091Cola Company has been refreshing the world and making a difference for 140 years. Explore our Purpose & Vision, History and more. Learn more Our Vision & Purpose The Coca\u2011Cola System Leadership Our Board of Directors Sustainability Sustainability Overview Environment People & Communities The Coca\u2011Cola Foundation Coca\u2011Cola History Coca\u2011Cola History Overview Our Timeline Our Origins Our First Bottle Sports & Entertainment Sports & Entertainment Overview The Coca\u00e2\u0080\u0091Cola Company and FIFA World Cup 2026\u00e2\u0084\u00a2 Partnership FIFA World Cup\u00e2\u0084\u00a2 Trophy Tour by Coca\u00e2\u0080\u0091Cola Brands Brands We meet you at any point in your day with the drinks you love. Learn more Sparkling Sparkling Overview Coca\u2011Cola Diet Coke Fanta Sprite View all brands Hydration Hydration Overview BODYARMOR Dasani Powerade smartwater Topo Chico View all brands Coffee & Tea Coffee & Tea Overview Costa Coffee FUZE Gold Peak Tea Peace Tea View all brands Juices, Dairy & Plant-Based Juices, Dairy & Plant-Based Overview fairlife innocent Minute Maid Simply View all brands Alcohol Ready-to-Drink Alcohol Ready-to-Drink Overview Fresca Mixed Jack Daniel's & Coca\u2011Cola Simply Spiked Topo Chico Hard View all brands Careers Careers We believe working at The Coca\u00e2\u0080\u0091Cola Company is an opportunity to build a meaningful career while helping us make a real difference on a global scale. Learn more Life at Coca\u2011Cola Life at Coca\u2011Cola Overview Culture Benefits Career Development Work With Us Career Areas Career Areas Overview Experienced Professionals Military Accessible Workplace Early Careers Hiring Process Hiring Process Overview Application Process Interview Offers Job Search Job Search Overview Coca\u2011Cola Company Jobs Coca\u2011Cola System Jobs Find what you need Close search panel Click to search History of Coca\u2011Cola Sustainability Job Search Quarterly Earnings Home Our Company Coca\u2011Cola History Our Origins Back to Our History The Birth of a Refreshing Idea Coca\u00e2\u0080\u0091Cola History The product that has given the world its best-known taste was born in Atlanta, Georgia, on May 8, 1886. Dr. John Stith Pemberton, a local pharmacist, produced the syrup for Coca\u2011Cola, and carried a jug of the new product down the street to Jacobs' Pharmacy, where it was sampled, pronounced \"excellent\" and placed on sale for five cents a glass as a soda fountain drink. Carbonated water was teamed with the new syrup to produce a drink that was at once\u00c2 \"Delicious and Refreshing,\" a theme that continues to echo today wherever Coca\u2011Cola is enjoyed. Dr. John Stith Pemberton, a local pharmacist, produced the syrup for\u00c2 Coca\u2011Cola, and carried a jug of the new product down the street to Jacobs' Pharmacy, where it was sampled, pronounced \"excellent\" and placed on sale for five cents a glass as a soda fountain drink. Thinking that \"the two Cs would look well in advertising,\" Dr. Pemberton's partner and bookkeeper, Frank M. Robinson, suggested the name and penned the now famous trademark \"Coca\u2011Cola\" in his unique script. The first newspaper ad for Coca\u2011Cola soon appeared in The Atlanta Journal, inviting thirsty citizens to try \"the new and popular soda fountain drink.\" Hand-painted oilcloth signs reading \"Coca\u2011Cola\" appeared on store awnings, with the suggestion \"Drink\" added to inform passersby that the new beverage was for soda fountain refreshment. During the first year, sales averaged a modest nine drinks per day. Dr. Pemberton never realized the potential of the beverage he created. He gradually sold portions of his business to various partners and, just prior to his death in 1888, sold his remaining interest in Coca\u2011Cola to Asa G. Candler. An Atlantan with great business acumen, Mr. Candler proceeded to buy additional rights and acquire complete control. \u00c2 We\u00e2\u0080\u0099re here to help Close search panel Click to search History of Coca\u2011Cola Sustainability Job Search Quarterly Earnings ABOUT US Our Company Our Brands Investors Policies, Practices & Reports Careers Need Help? FAQ Contact Us International Useful links Privacy Policy Cookies Policy Cookies Settings Notice at Collection Do Not Sell or Share My Personal Information Terms of Service Facebook LinkedIn Instagram Youtube Follow us \u00c2\u00a9 2026 The Coca\u00e2\u0080\u0091Cola Company. All rights reserved. United States | English Privacy Policy \u00c2 Notice at Collection Terms of Service",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_MnlQKWm8lkiQTJeRDy2H6HFy",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results",
+              "max_chars": 6000
+            },
+            "result": "URL: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results\nTitle: Coca-Cola Reports Fourth Quarter and Full Year 2024 Results\nContent:\nCoca-Cola Reports Fourth Quarter and Full Year 2024 Results Company Brands Careers News Investors Logo Our company Our brands Careers Newst Investors Search Language Reciteme Our Company Company The Coca\u00e2\u0080\u0091Cola Company has been refreshing the world and making a difference for 140 years. Explore our Purpose & Vision, History and more. Learn more Our Vision & Purpose The Coca\u2011Cola System Leadership Our Board of Directors Sustainability Sustainability Overview Environment People & Communities The Coca\u2011Cola Foundation Coca\u2011Cola History Coca\u2011Cola History Overview Our Timeline Our Origins Our First Bottle Sports & Entertainment Sports & Entertainment Overview The Coca\u00e2\u0080\u0091Cola Company and FIFA World Cup 2026\u00e2\u0084\u00a2 Partnership FIFA World Cup\u00e2\u0084\u00a2 Trophy Tour by Coca\u00e2\u0080\u0091Cola Brands Brands We meet you at any point in your day with the drinks you love. Learn more Sparkling Sparkling Overview Coca\u2011Cola Diet Coke Fanta Sprite View all brands Hydration Hydration Overview BODYARMOR Dasani Powerade smartwater Topo Chico View all brands Coffee & Tea Coffee & Tea Overview Costa Coffee FUZE Gold Peak Tea Peace Tea View all brands Juices, Dairy & Plant-Based Juices, Dairy & Plant-Based Overview fairlife innocent Minute Maid Simply View all brands Alcohol Ready-to-Drink Alcohol Ready-to-Drink Overview Fresca Mixed Jack Daniel's & Coca\u2011Cola Simply Spiked Topo Chico Hard View all brands Careers Careers We believe working at The Coca\u00e2\u0080\u0091Cola Company is an opportunity to build a meaningful career while helping us make a real difference on a global scale. Learn more Life at Coca\u2011Cola Life at Coca\u2011Cola Overview Culture Benefits Career Development Work With Us Career Areas Career Areas Overview Experienced Professionals Military Accessible Workplace Early Careers Hiring Process Hiring Process Overview Application Process Interview Offers Job Search Job Search Overview Coca\u2011Cola Company Jobs Coca\u2011Cola System Jobs Find what you need Close search panel Click to search History of Coca\u2011Cola Sustainability Job Search Quarterly Earnings Home Media Center Coca\u2011Cola Reports Fourth Quarter and Full Year 2024 Results Coca\u2011Cola Reports Fourth Quarter and Full Year 2024 Results 02-11-2025 Share Facebook LinkedIn X.com Global Unit Case Volume Grew 2% for the Quarter and 1% for the Full Year Net Revenues Grew 6% for the Quarter and 3% for the Full Year; Organic Revenues (Non-GAAP) Grew 14% for the Quarter and 12% for the Full Year Operating Income Grew 19% for the Quarter and Declined 12% for the Full Year; Comparable Currency Neutral Operating Income (Non-GAAP) Grew 22% for the Quarter and 16% for the Full Year Fourth Quarter EPS Grew 12% to $0.51; Comparable EPS (Non-GAAP) Grew 12% to $0.55; Full Year EPS Declined Slightly to $2.46; Comparable EPS (Non-GAAP) Grew 7% to $2.88 Cash Flow from Operations was $6.8 Billion for the Full Year, Down 41%; Free Cash Flow (Non-GAAP) was $4.7 Billion for the Full Year, Down 51%; Free Cash Flow Excluding the IRS Tax Litigation Deposit (Non-GAAP) was $10.8 Billion for the Full Year, Up 11% Company Provides 2025 Financial Outlook ATLANTA, Feb. 11, 2025 \u00e2\u0080\u0093 The Coca\u2011Cola Company today reported fourth quarter and full year 2024 results. \u00e2\u0080\u009cOur all-weather strategy is working, and we continue to demonstrate our ability to lead through dynamic external environments,\u00e2\u0080\u009d said James Quincey, Chairman and CEO of The Coca\u2011Cola Company. \u00e2\u0080\u009cOur global scale, coupled with local-market expertise and the unwavering dedication of our people and our system, uniquely position us to capture the vast opportunities ahead.\u00e2\u0080\u009d Highlights Quarterly/Full Year Performance - Revenues :\u00c2 For the quarter, net revenues increased 6% to $11.5 billion, and organic revenues (non-GAAP) grew 14%, driven by 9% growth in price/mix and a 5% increase in concentrate sales. Concentrate sales were 3 points ahead of unit case volume, primarily driven by two additional days and the timing of concentrate shipments. For the full year, net revenues grew 3% to $47.1 billion, and organic revenues (non-GAAP) grew 12%, driven by 11% growth in price/mix and 2% growth in concentrate sales. Concentrate sales were 1 point ahead of unit case volume, primarily due to the timing of concentrate shipments. - Operating margin :\u00c2 For the quarter, operating margin was 23.5% versus 21.0% in the prior year, while comparable operating margin (non-GAAP) was 24.0% versus 23.1% in the prior year. For the full year, operating margin was 21.2% versus 24.7% in the prior year, while comparable operating margin (non-GAAP) was 30.0% versus 29.1% in the prior year. For both the quarter and the full year, operating margin performance included items impacting comparability, as well as currency headwinds. Full year operating margin included a charge of $3.1 billion related to the remeasurement of the contingent consideration liability to fair value in conjunction with the acquisition of fairlife, LLC (\u00e2\u0080\u009cfairlife\u00e2\u0080\u009d) in 2020. For both the quarter and the full year, comparable operating margin (non-GAAP) expansion was primarily driven by strong organic revenue (non-GAAP) growth and the impact of refranchising bottling operations, partially offset by higher input costs, higher operating expenses and currency headwinds. - Earnings per share :\u00c2 For the quarter, EPS grew 12% to $0.51, while comparable EPS (non-GAAP) grew 12% to $0.55. EPS performance included the impact of a 1-point currency headwind, while comparable EPS (non-GAAP) performance included the impact of an 11-point currency headwind. For the full year, EPS declined slightly to $2.46, while comparable EPS (non-GAAP) grew 7% to $2.88. EPS and comparable EPS (non-GAAP) performance both included the impact of a 9-point currency headwind. - Market share :\u00c2 For both the quarter and the full year, the company gained value share in total nonalcoholic ready-to-drink (\u00e2\u0080\u009cNARTD\u00e2\u0080\u009d) beverages. - Cash flow :\u00c2 For the full year, cash flow from operations and free cash flow (non-GAAP) were $6.8 billion and $4.7\u00c2 billion, respectively.\n\u2026 <page content truncated>",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_8uxfZ6m6mK7dGOBkKPuntoEh",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.coca-colacompany.com/content/dam/corporate/us/en/media-center/Coca-Cola 2024 Q4 Earnings Release_Full Release_2.11.25.pdf",
+              "max_chars": 6000
+            },
+            "result": "Page fetch skipped for 'https://www.coca-colacompany.com/content/dam/corporate/us/en/media-center/Coca-Cola 2024 Q4 Earnings Release_Full Release_2.11.25.pdf': unsupported content type application/pdf.",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.68,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.3352161856879656,
+      "profiling_data": {
+        "total_time": 11.33534725699974,
+        "llm_time": 5.176240453998616,
+        "energy_consumed_kwh": 1.9953557628237985e-05,
+        "cpu_energy_kwh": 2.610042739354716e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.734351488888327e-05,
+        "emissions_kg_co2": 6.59900067169561e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.71661376953125e-05
+        ],
+        [
+          "route",
+          -5.7220458984375e-06
+        ],
+        [
+          "\":\"",
+          -0.00011348724365234375
+        ],
+        [
+          "Summary",
+          -0.00043201446533203125
+        ],
+        [
+          "\"}",
+          -9.5367431640625e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.000113875196667,
+      "profiling_data": {
+        "total_time": 2.2875086099993496,
+        "llm_time": 0.7429407519994129,
+        "energy_consumed_kwh": 5.592537789998416e-06,
+        "cpu_energy_kwh": 7.30477898329463e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.8620598916689535e-06,
+        "emissions_kg_co2": 1.8495529128326964e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "Coca-Cola was first invented in **1886** and the creator was **Dr. John Stith Pemberton** (with **Frank M. Robinson** credited by Coca-Cola\u2019s history page with suggesting the \u201cCoca-Cola\u201d name/trademark).  \n\nFor \u201clast year,\u201d The Coca-Cola Company\u2019s **full year 2024** results report **net revenues (sales) of $47.1 billion**.  \n\n**Sources (official):**\n- Coca-Cola invention/creator: https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea  \n- 2024 sales/net revenues: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "C",
+          -0.014072418212890625
+        ],
+        [
+          "oca",
+          -0.000141143798828125
+        ],
+        [
+          "-Cola",
+          -0.21319198608398438
+        ],
+        [
+          " was",
+          -0.005995750427246094
+        ],
+        [
+          " first",
+          -1.7443437576293945
+        ],
+        [
+          " invented",
+          -1.7031822204589844
+        ],
+        [
+          " in",
+          -0.5417814254760742
+        ],
+        [
+          " **",
+          1.9073486328125e-06
+        ],
+        [
+          "188",
+          -8.58306884765625e-06
+        ],
+        [
+          "6",
+          -1.239776611328125e-05
+        ],
+        [
+          "**",
+          -0.8615646362304688
+        ],
+        [
+          " and",
+          -1.4689960479736328
+        ],
+        [
+          " the",
+          -2.5315866470336914
+        ],
+        [
+          " creator",
+          -2.5757856369018555
+        ],
+        [
+          " was",
+          -0.25167083740234375
+        ],
+        [
+          " **",
+          -5.245208740234375e-05
+        ],
+        [
+          "Dr",
+          -3.719329833984375e-05
+        ],
+        [
+          ".",
+          0.0
+        ],
+        [
+          " John",
+          -6.67572021484375e-06
+        ],
+        [
+          " St",
+          2.86102294921875e-06
+        ],
+        [
+          "ith",
+          -6.198883056640625e-06
+        ],
+        [
+          " P",
+          -3.4332275390625e-05
+        ],
+        [
+          "ember",
+          2.86102294921875e-06
+        ],
+        [
+          "ton",
+          0.0
+        ],
+        [
+          "**",
+          -2.193450927734375e-05
+        ],
+        [
+          " (",
+          -0.15510272979736328
+        ],
+        [
+          "with",
+          -0.11784839630126953
+        ],
+        [
+          " **",
+          -0.011411666870117188
+        ],
+        [
+          "Frank",
+          -1.239776611328125e-05
+        ],
+        [
+          " M",
+          7.62939453125e-06
+        ],
+        [
+          ".",
+          -5.7220458984375e-06
+        ],
+        [
+          " Robinson",
+          -1.1444091796875e-05
+        ],
+        [
+          "**",
+          -9.5367431640625e-06
+        ],
+        [
+          " credited",
+          -0.04775714874267578
+        ],
+        [
+          " by",
+          -2.0128231048583984
+        ],
+        [
+          " Coca",
+          -0.33138084411621094
+        ],
+        [
+          "-Cola",
+          -0.2254486083984375
+        ],
+        [
+          "\u2019s",
+          -0.8884897232055664
+        ],
+        [
+          " history",
+          -0.10662460327148438
+        ],
+        [
+          " page",
+          -0.7174005508422852
+        ],
+        [
+          " with",
+          -2.02578067779541
+        ],
+        [
+          " suggesting",
+          -0.09401226043701172
+        ],
+        [
+          " the",
+          -0.09020233154296875
+        ],
+        [
+          " \u201c",
+          -0.3719215393066406
+        ],
+        [
+          "C",
+          -2.002716064453125e-05
+        ],
+        [
+          "oca",
+          -9.5367431640625e-06
+        ],
+        [
+          "-Cola",
+          -1.3243141174316406
+        ],
+        [
+          "\u201d",
+          1.049041748046875e-05
+        ],
+        [
+          " name",
+          -0.00019168853759765625
+        ],
+        [
+          "/tr",
+          -0.8297853469848633
+        ],
+        [
+          "ademark",
+          -5.054473876953125e-05
+        ],
+        [
+          ").",
+          -0.12502670288085938
+        ],
+        [
+          "  \n\n",
+          -0.26598167419433594
+        ],
+        [
+          "For",
+          -0.14218616485595703
+        ],
+        [
+          " \u201c",
+          -0.16463375091552734
+        ],
+        [
+          "last",
+          -0.31001758575439453
+        ],
+        [
+          " year",
+          4.76837158203125e-06
+        ],
+        [
+          ",\u201d",
+          -1.0972681045532227
+        ],
+        [
+          " The",
+          -0.1901264190673828
+        ],
+        [
+          " Coca",
+          -0.0013189315795898438
+        ],
+        [
+          "-Cola",
+          -0.015074729919433594
+        ],
+        [
+          " Company",
+          -6.67572021484375e-06
+        ],
+        [
+          "\u2019s",
+          -0.06702327728271484
+        ],
+        [
+          " **",
+          -0.7702054977416992
+        ],
+        [
+          "full",
+          -0.015783309936523438
+        ],
+        [
+          " year",
+          -0.9741077423095703
+        ],
+        [
+          " ",
+          -5.53131103515625e-05
+        ],
+        [
+          "202",
+          -9.5367431640625e-06
+        ],
+        [
+          "4",
+          -9.5367431640625e-06
+        ],
+        [
+          "**",
+          -0.27323150634765625
+        ],
+        [
+          " results",
+          -0.009618759155273438
+        ],
+        [
+          " report",
+          -0.052992820739746094
+        ],
+        [
+          " **",
+          -0.00010395050048828125
+        ],
+        [
+          "net",
+          -4.100799560546875e-05
+        ],
+        [
+          " revenues",
+          -1.430511474609375e-05
+        ],
+        [
+          " (",
+          -0.8820104598999023
+        ],
+        [
+          "sales",
+          -0.1583690643310547
+        ],
+        [
+          ")",
+          -0.1451263427734375
+        ],
+        [
+          " of",
+          -2.002716064453125e-05
+        ],
+        [
+          " $",
+          -0.00030994415283203125
+        ],
+        [
+          "47",
+          5.7220458984375e-06
+        ],
+        [
+          ".",
+          5.7220458984375e-06
+        ],
+        [
+          "1",
+          -8.58306884765625e-06
+        ],
+        [
+          " billion",
+          -6.67572021484375e-06
+        ],
+        [
+          "**",
+          -8.487701416015625e-05
+        ],
+        [
+          ".",
+          -0.18985557556152344
+        ],
+        [
+          "  \n\n",
+          -0.019086837768554688
+        ],
+        [
+          "**",
+          -0.00766754150390625
+        ],
+        [
+          "Sources",
+          -3.4332275390625e-05
+        ],
+        [
+          " (",
+          -1.6678752899169922
+        ],
+        [
+          "official",
+          -0.015338897705078125
+        ],
+        [
+          "):",
+          -0.48046016693115234
+        ],
+        [
+          "**\n",
+          -1.4061460494995117
+        ],
+        [
+          "-",
+          1.33514404296875e-05
+        ],
+        [
+          " Coca",
+          -0.3551778793334961
+        ],
+        [
+          "-Cola",
+          -0.018152236938476562
+        ],
+        [
+          " invention",
+          -0.664830207824707
+        ],
+        [
+          "/",
+          -0.6282672882080078
+        ],
+        [
+          "creator",
+          -0.00035762786865234375
+        ],
+        [
+          ":",
+          -0.19809627532958984
+        ],
+        [
+          " https",
+          -1.239776611328125e-05
+        ],
+        [
+          "://",
+          1.1444091796875e-05
+        ],
+        [
+          "www",
+          0.0
+        ],
+        [
+          ".c",
+          5.7220458984375e-06
+        ],
+        [
+          "oca",
+          -7.605552673339844e-05
+        ],
+        [
+          "-col",
+          -1.049041748046875e-05
+        ],
+        [
+          "ac",
+          -8.58306884765625e-06
+        ],
+        [
+          "omp",
+          0.0
+        ],
+        [
+          "any",
+          -3.337860107421875e-06
+        ],
+        [
+          ".com",
+          -2.86102294921875e-06
+        ],
+        [
+          "/about",
+          -8.58306884765625e-06
+        ],
+        [
+          "-us",
+          -6.67572021484375e-06
+        ],
+        [
+          "/history",
+          0.0
+        ],
+        [
+          "/the",
+          -4.76837158203125e-06
+        ],
+        [
+          "-b",
+          -2.86102294921875e-06
+        ],
+        [
+          "irth",
+          0.0
+        ],
+        [
+          "-of",
+          -1.1444091796875e-05
+        ],
+        [
+          "-a",
+          8.58306884765625e-06
+        ],
+        [
+          "-refresh",
+          0.0
+        ],
+        [
+          "ing",
+          -2.86102294921875e-06
+        ],
+        [
+          "-",
+          1.621246337890625e-05
+        ],
+        [
+          "idea",
+          -2.384185791015625e-06
+        ],
+        [
+          "  \n",
+          -2.193450927734375e-05
+        ],
+        [
+          "-",
+          1.9073486328125e-06
+        ],
+        [
+          " ",
+          -3.62530517578125
+        ],
+        [
+          "202",
+          0.0
+        ],
+        [
+          "4",
+          -1.71661376953125e-05
+        ],
+        [
+          " sales",
+          -0.8611974716186523
+        ],
+        [
+          "/net",
+          -1.4929580688476562
+        ],
+        [
+          " revenues",
+          -0.000225067138671875
+        ],
+        [
+          ":",
+          -0.10408592224121094
+        ],
+        [
+          " https",
+          -1.430511474609375e-05
+        ],
+        [
+          "://",
+          -2.86102294921875e-06
+        ],
+        [
+          "www",
+          -8.58306884765625e-06
+        ],
+        [
+          ".c",
+          -5.7220458984375e-06
+        ],
+        [
+          "oca",
+          9.5367431640625e-07
+        ],
+        [
+          "-col",
+          4.76837158203125e-06
+        ],
+        [
+          "ac",
+          -9.059906005859375e-06
+        ],
+        [
+          "omp",
+          2.384185791015625e-06
+        ],
+        [
+          "any",
+          2.86102294921875e-06
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/media",
+          7.62939453125e-06
+        ],
+        [
+          "-center",
+          6.67572021484375e-06
+        ],
+        [
+          "/c",
+          -1.52587890625e-05
+        ],
+        [
+          "oca",
+          -5.7220458984375e-06
+        ],
+        [
+          "-col",
+          -7.62939453125e-06
+        ],
+        [
+          "a",
+          5.7220458984375e-06
+        ],
+        [
+          "-re",
+          -8.58306884765625e-06
+        ],
+        [
+          "ports",
+          -4.291534423828125e-06
+        ],
+        [
+          "-four",
+          -5.7220458984375e-06
+        ],
+        [
+          "th",
+          -1.52587890625e-05
+        ],
+        [
+          "-quarter",
+          0.0
+        ],
+        [
+          "-and",
+          1.52587890625e-05
+        ],
+        [
+          "-full",
+          4.76837158203125e-06
+        ],
+        [
+          "-year",
+          -1.1444091796875e-05
+        ],
+        [
+          "-",
+          1.621246337890625e-05
+        ],
+        [
+          "202",
+          8.58306884765625e-06
+        ],
+        [
+          "4",
+          2.86102294921875e-06
+        ],
+        [
+          "-results",
+          9.5367431640625e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "Coca-Cola was first invented in **1886** and the creator was **Dr. John Stith Pemberton** (with **Frank M. Robinson** credited by Coca-Cola\u2019s history page with suggesting the \u201cCoca-Cola\u201d name/trademark).  \n\nFor \u201clast year,\u201d The Coca-Cola Company\u2019s **full year 2024** results report **net revenues (sales) of $47.1 billion**.  \n\n**Sources (official):**\n- Coca-Cola invention/creator: https://www.coca-colacompany.com/about-us/history/the-birth-of-a-refreshing-idea  \n- 2024 sales/net revenues: https://www.coca-colacompany.com/media-center/coca-cola-reports-fourth-quarter-and-full-year-2024-results",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.55,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.275246071833398,
+      "profiling_data": {
+        "total_time": 3.4391072939997684,
+        "llm_time": 1.8925681139990047,
+        "energy_consumed_kwh": 7.671410591478136e-06,
+        "cpu_energy_kwh": 1.005831683143653e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 6.665578908334484e-06,
+        "emissions_kg_co2": 2.5370735679924666e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 19.386559563998162,
+    "llm_time": 8.554048775997217,
+    "energy_consumed_kwh": 3.88055081544379e-05,
+    "cpu_energy_kwh": 5.076298654441389e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.3729209499996515e-05,
+    "emissions_kg_co2": 1.2833680045819394e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 4.612105012998654,
+      "llm_time": 1.4852402079995954,
+      "energy_consumed_kwh": 1.118053993472178e-05,
+      "cpu_energy_kwh": 1.46042423194302e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 9.72011570277876e-06,
+      "emissions_kg_co2": 3.6976058061313177e-06
+    },
+    "WebSearch": {
+      "total_time": 11.33534725699974,
+      "llm_time": 5.176240453998616,
+      "energy_consumed_kwh": 1.9953557628237985e-05,
+      "cpu_energy_kwh": 2.610042739354716e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.734351488888327e-05,
+      "emissions_kg_co2": 6.59900067169561e-06
+    },
+    "Summary": {
+      "total_time": 3.4391072939997684,
+      "llm_time": 1.8925681139990047,
+      "energy_consumed_kwh": 7.671410591478136e-06,
+      "cpu_energy_kwh": 1.005831683143653e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 6.665578908334484e-06,
+      "emissions_kg_co2": 2.5370735679924666e-06
+    }
+  }
+}

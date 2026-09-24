@@ -1,0 +1,3896 @@
+{
+  "prompt": "What does the Python 3.14 documentation say about asyncio.TaskGroup?",
+  "run_id": "Baseline GPT-5.4-nano2",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          6.67572021484375e-06
+        ],
+        [
+          "route",
+          8.58306884765625e-06
+        ],
+        [
+          "\":\"",
+          -0.000492095947265625
+        ],
+        [
+          "Web",
+          -7.43865966796875e-05
+        ],
+        [
+          "Search",
+          -5.7220458984375e-06
+        ],
+        [
+          "\"}",
+          3.814697265625e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000921927667445,
+      "profiling_data": {
+        "total_time": 3.2432641880004667,
+        "llm_time": 1.6670158660017478,
+        "energy_consumed_kwh": 6.937601929168377e-06,
+        "cpu_energy_kwh": 9.065199708318041e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 6.0310819583365725e-06,
+        "emissions_kg_co2": 2.2943898348107073e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "Python 3.14\u2019s asyncio documentation defines **`asyncio.TaskGroup`** as:\n\n- **\u201cAn asynchronous context manager holding a group of tasks.\u201d**  \n  You add tasks via `TaskGroup.create_task()`, and **all tasks are awaited when the context manager exits**. It is **added in Python 3.11**.  \n  Source: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup\n\nKey behavioral guarantees described in the docs:\n\n- **Tasks are created through the group**: `TaskGroup.create_task()` has a signature matching `asyncio.create_task()`.\n- **On exit, it waits for all tasks in the group to finish**, and after the last task finishes and the `async with` block is exited, **no new tasks may be added**.\n- **Failure handling (structural concurrency / \u201cstrong safety guarantees\u201d)**:  \n  - The **first task failure** with an exception other than `asyncio.CancelledError` triggers cancellation of the **remaining** tasks in the group.\n  - After all tasks finish, if any failed with exceptions other than `asyncio.CancelledError`, those exceptions are **combined into an `ExceptionGroup` or `BaseExceptionGroup` and raised**.\n- **KeyboardInterrupt/SystemExit special-cased**: if a task fails with `KeyboardInterrupt` or `SystemExit`, the group still cancels/waits remaining tasks, but then re-raises the original `KeyboardInterrupt`/`SystemExit` instead of an exception group.\n- **Activity checks**: if the task group is inactive (not yet entered, already finished, or shutting down), `create_task()` **closes the coroutine and raises `RuntimeError`** (with version notes about closing behavior).  \n  Source (same page): https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup\n\nThe docs also note that **`asyncio.TaskGroup.create_task()` is \u201ca new alternative leveraging structural concurrency\u201d** that lets you wait for related tasks with safety guarantees.  \nSource: https://docs.python.org/3/library/asyncio-task.html",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Python",
+          -0.07998466491699219
+        ],
+        [
+          " ",
+          -0.0022945404052734375
+        ],
+        [
+          "3",
+          1.621246337890625e-05
+        ],
+        [
+          ".",
+          5.7220458984375e-06
+        ],
+        [
+          "14",
+          -1.621246337890625e-05
+        ],
+        [
+          "\u2019s",
+          -0.5254287719726562
+        ],
+        [
+          " asyncio",
+          -0.06936073303222656
+        ],
+        [
+          " documentation",
+          -0.01415252685546875
+        ],
+        [
+          " defines",
+          -3.064419746398926
+        ],
+        [
+          " **",
+          -0.4296875
+        ],
+        [
+          "`",
+          -1.9073486328125e-06
+        ],
+        [
+          "async",
+          -9.5367431640625e-07
+        ],
+        [
+          "io",
+          -8.58306884765625e-06
+        ],
+        [
+          ".Task",
+          0.0
+        ],
+        [
+          "Group",
+          7.62939453125e-06
+        ],
+        [
+          "`",
+          -9.5367431640625e-07
+        ],
+        [
+          "**",
+          -2.47955322265625e-05
+        ],
+        [
+          " as",
+          -0.03221702575683594
+        ],
+        [
+          ":\n\n",
+          -0.3350095748901367
+        ],
+        [
+          "-",
+          -9.5367431640625e-06
+        ],
+        [
+          " **",
+          -0.09383678436279297
+        ],
+        [
+          "\u201c",
+          -0.3081016540527344
+        ],
+        [
+          "An",
+          -0.007997512817382812
+        ],
+        [
+          " asynchronous",
+          -2.47955322265625e-05
+        ],
+        [
+          " context",
+          5.7220458984375e-06
+        ],
+        [
+          " manager",
+          0.0
+        ],
+        [
+          " holding",
+          -1.52587890625e-05
+        ],
+        [
+          " a",
+          1.9073486328125e-06
+        ],
+        [
+          " group",
+          -5.7220458984375e-06
+        ],
+        [
+          " of",
+          3.814697265625e-06
+        ],
+        [
+          " tasks",
+          4.76837158203125e-06
+        ],
+        [
+          ".\u201d",
+          -0.11160564422607422
+        ],
+        [
+          "**",
+          -0.0038385391235351562
+        ],
+        [
+          "  \n",
+          -1.314194679260254
+        ],
+        [
+          " ",
+          -0.8259353637695312
+        ],
+        [
+          " You",
+          -2.620701789855957
+        ],
+        [
+          " add",
+          -0.014155387878417969
+        ],
+        [
+          " tasks",
+          -0.0007457733154296875
+        ],
+        [
+          " via",
+          -1.8569679260253906
+        ],
+        [
+          " `",
+          -1.7019014358520508
+        ],
+        [
+          "Task",
+          -0.07552623748779297
+        ],
+        [
+          "Group",
+          -1.52587890625e-05
+        ],
+        [
+          ".create",
+          -5.7220458984375e-06
+        ],
+        [
+          "_task",
+          0.0
+        ],
+        [
+          "()",
+          -0.018199920654296875
+        ],
+        [
+          "`,",
+          -0.04120922088623047
+        ],
+        [
+          " and",
+          -0.0015621185302734375
+        ],
+        [
+          " **",
+          -0.0009374618530273438
+        ],
+        [
+          "all",
+          -0.4870452880859375
+        ],
+        [
+          " tasks",
+          -5.91278076171875e-05
+        ],
+        [
+          " are",
+          -0.02083301544189453
+        ],
+        [
+          " awaited",
+          -5.626678466796875e-05
+        ],
+        [
+          " when",
+          -0.005265235900878906
+        ],
+        [
+          " the",
+          -0.00024890899658203125
+        ],
+        [
+          " context",
+          -0.047034263610839844
+        ],
+        [
+          " manager",
+          -0.0018224716186523438
+        ],
+        [
+          " exits",
+          -0.00024890899658203125
+        ],
+        [
+          "**",
+          -0.00069427490234375
+        ],
+        [
+          ".",
+          -0.011498451232910156
+        ],
+        [
+          " It",
+          -3.391803741455078
+        ],
+        [
+          " is",
+          -2.281661033630371
+        ],
+        [
+          " **",
+          -0.030832290649414062
+        ],
+        [
+          "added",
+          -0.30788135528564453
+        ],
+        [
+          " in",
+          -2.47955322265625e-05
+        ],
+        [
+          " Python",
+          -0.4314546585083008
+        ],
+        [
+          " ",
+          -1.621246337890625e-05
+        ],
+        [
+          "3",
+          2.86102294921875e-06
+        ],
+        [
+          ".",
+          1.1444091796875e-05
+        ],
+        [
+          "11",
+          1.621246337890625e-05
+        ],
+        [
+          "**",
+          -9.918212890625e-05
+        ],
+        [
+          ".",
+          -0.004195213317871094
+        ],
+        [
+          "  \n",
+          -0.052433013916015625
+        ],
+        [
+          " ",
+          -0.011751174926757812
+        ],
+        [
+          " Source",
+          -0.050574302673339844
+        ],
+        [
+          ":",
+          -7.534027099609375e-05
+        ],
+        [
+          " https",
+          -0.1630716323852539
+        ],
+        [
+          "://",
+          8.58306884765625e-06
+        ],
+        [
+          "docs",
+          -1.33514404296875e-05
+        ],
+        [
+          ".python",
+          -1.9073486328125e-06
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/",
+          -3.814697265625e-06
+        ],
+        [
+          "3",
+          -3.814697265625e-06
+        ],
+        [
+          "/library",
+          -0.011058807373046875
+        ],
+        [
+          "/",
+          8.58306884765625e-06
+        ],
+        [
+          "async",
+          6.67572021484375e-06
+        ],
+        [
+          "io",
+          -8.58306884765625e-06
+        ],
+        [
+          "-task",
+          7.62939453125e-06
+        ],
+        [
+          ".html",
+          -1.430511474609375e-05
+        ],
+        [
+          "#",
+          -1.7052650451660156
+        ],
+        [
+          "async",
+          -0.10471630096435547
+        ],
+        [
+          "io",
+          2.86102294921875e-06
+        ],
+        [
+          ".Task",
+          3.814697265625e-06
+        ],
+        [
+          "Group",
+          5.7220458984375e-06
+        ],
+        [
+          "\n\n",
+          -0.004650115966796875
+        ],
+        [
+          "Key",
+          -0.1696023941040039
+        ],
+        [
+          " behavioral",
+          -0.3383445739746094
+        ],
+        [
+          " guarantees",
+          -0.7808437347412109
+        ],
+        [
+          " described",
+          -0.24539470672607422
+        ],
+        [
+          " in",
+          -0.23213577270507812
+        ],
+        [
+          " the",
+          -0.0001163482666015625
+        ],
+        [
+          " docs",
+          -0.022565841674804688
+        ],
+        [
+          ":\n\n",
+          -0.06425189971923828
+        ],
+        [
+          "-",
+          -0.001232147216796875
+        ],
+        [
+          " **",
+          -0.30431652069091797
+        ],
+        [
+          "Tasks",
+          -3.0848522186279297
+        ],
+        [
+          " are",
+          -0.184844970703125
+        ],
+        [
+          " created",
+          -0.8800067901611328
+        ],
+        [
+          " through",
+          -1.1778068542480469
+        ],
+        [
+          " the",
+          -0.2689990997314453
+        ],
+        [
+          " group",
+          -0.27919864654541016
+        ],
+        [
+          "**",
+          -0.19328594207763672
+        ],
+        [
+          ":",
+          -0.6701774597167969
+        ],
+        [
+          " `",
+          -0.056410789489746094
+        ],
+        [
+          "Task",
+          -1.3025035858154297
+        ],
+        [
+          "Group",
+          -3.24249267578125e-05
+        ],
+        [
+          ".create",
+          -0.0022954940795898438
+        ],
+        [
+          "_task",
+          -2.86102294921875e-06
+        ],
+        [
+          "()`",
+          -0.2448873519897461
+        ],
+        [
+          " has",
+          -1.2586307525634766
+        ],
+        [
+          " a",
+          -0.975712776184082
+        ],
+        [
+          " signature",
+          -0.005995750427246094
+        ],
+        [
+          " matching",
+          -0.12080860137939453
+        ],
+        [
+          " `",
+          -2.288818359375e-05
+        ],
+        [
+          "async",
+          -1.33514404296875e-05
+        ],
+        [
+          "io",
+          1.1444091796875e-05
+        ],
+        [
+          ".create",
+          5.7220458984375e-06
+        ],
+        [
+          "_task",
+          2.86102294921875e-06
+        ],
+        [
+          "()",
+          -0.06206512451171875
+        ],
+        [
+          "`.\n",
+          -2.1602306365966797
+        ],
+        [
+          "-",
+          -0.04858112335205078
+        ],
+        [
+          " **",
+          -0.03969097137451172
+        ],
+        [
+          "On",
+          -4.070035934448242
+        ],
+        [
+          " exit",
+          -0.7162666320800781
+        ],
+        [
+          ",",
+          -0.14365577697753906
+        ],
+        [
+          " it",
+          -0.36272335052490234
+        ],
+        [
+          " waits",
+          -0.008325576782226562
+        ],
+        [
+          " for",
+          -0.001728057861328125
+        ],
+        [
+          " all",
+          -0.2581777572631836
+        ],
+        [
+          " tasks",
+          -0.012890815734863281
+        ],
+        [
+          " in",
+          -2.480282783508301
+        ],
+        [
+          " the",
+          -3.910064697265625e-05
+        ],
+        [
+          " group",
+          3.814697265625e-06
+        ],
+        [
+          " to",
+          -0.05625343322753906
+        ],
+        [
+          " finish",
+          -0.00045871734619140625
+        ],
+        [
+          "**,",
+          -0.946721076965332
+        ],
+        [
+          " and",
+          -0.03253746032714844
+        ],
+        [
+          " after",
+          -1.7748212814331055
+        ],
+        [
+          " the",
+          -0.07503414154052734
+        ],
+        [
+          " last",
+          -1.0848560333251953
+        ],
+        [
+          " task",
+          -0.0024738311767578125
+        ],
+        [
+          " finishes",
+          -0.1008453369140625
+        ],
+        [
+          " and",
+          -0.19399261474609375
+        ],
+        [
+          " the",
+          -0.058936119079589844
+        ],
+        [
+          " `",
+          -0.015013694763183594
+        ],
+        [
+          "async",
+          -2.47955322265625e-05
+        ],
+        [
+          " with",
+          -9.5367431640625e-07
+        ],
+        [
+          "`",
+          -0.000179290771484375
+        ],
+        [
+          " block",
+          -0.016048431396484375
+        ],
+        [
+          " is",
+          -0.21902084350585938
+        ],
+        [
+          " exited",
+          -0.0006656646728515625
+        ],
+        [
+          ",",
+          -0.005772590637207031
+        ],
+        [
+          " **",
+          -0.0011425018310546875
+        ],
+        [
+          "no",
+          -0.016054153442382812
+        ],
+        [
+          " new",
+          -0.0001735687255859375
+        ],
+        [
+          " tasks",
+          1.1444091796875e-05
+        ],
+        [
+          " may",
+          -0.02980804443359375
+        ],
+        [
+          " be",
+          3.814697265625e-06
+        ],
+        [
+          " added",
+          -1.1444091796875e-05
+        ],
+        [
+          "**",
+          -0.0026769638061523438
+        ],
+        [
+          ".\n",
+          -0.21059131622314453
+        ],
+        [
+          "-",
+          -0.02484130859375
+        ],
+        [
+          " **",
+          -0.0031795501708984375
+        ],
+        [
+          "Failure",
+          -0.18138504028320312
+        ],
+        [
+          " handling",
+          -0.13930416107177734
+        ],
+        [
+          " (",
+          -1.0029411315917969
+        ],
+        [
+          "struct",
+          -0.8286800384521484
+        ],
+        [
+          "ural",
+          -2.765655517578125e-05
+        ],
+        [
+          " concurrency",
+          -0.03421497344970703
+        ],
+        [
+          " /",
+          -1.1837472915649414
+        ],
+        [
+          " \u201c",
+          -2.7703800201416016
+        ],
+        [
+          "strong",
+          -0.7082710266113281
+        ],
+        [
+          " safety",
+          -8.20159912109375e-05
+        ],
+        [
+          " guarantees",
+          -0.12154293060302734
+        ],
+        [
+          "\u201d)",
+          -0.014312744140625
+        ],
+        [
+          "**",
+          -0.00023651123046875
+        ],
+        [
+          ":",
+          -0.6931667327880859
+        ],
+        [
+          "  \n",
+          -0.009114265441894531
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          " -",
+          -0.1328754425048828
+        ],
+        [
+          " The",
+          -0.061504364013671875
+        ],
+        [
+          " **",
+          -0.01016998291015625
+        ],
+        [
+          "first",
+          -1.9073486328125e-06
+        ],
+        [
+          " task",
+          -0.2460336685180664
+        ],
+        [
+          " failure",
+          -0.23248672485351562
+        ],
+        [
+          "**",
+          -0.07123374938964844
+        ],
+        [
+          " with",
+          -1.0875444412231445
+        ],
+        [
+          " an",
+          -8.58306884765625e-05
+        ],
+        [
+          " exception",
+          -9.918212890625e-05
+        ],
+        [
+          " other",
+          -0.5362949371337891
+        ],
+        [
+          " than",
+          0.0
+        ],
+        [
+          " `",
+          1.1444091796875e-05
+        ],
+        [
+          "async",
+          -3.147125244140625e-05
+        ],
+        [
+          "io",
+          5.7220458984375e-06
+        ],
+        [
+          ".Cancel",
+          1.9073486328125e-06
+        ],
+        [
+          "led",
+          5.7220458984375e-06
+        ],
+        [
+          "Error",
+          -1.52587890625e-05
+        ],
+        [
+          "`",
+          -2.956390380859375e-05
+        ],
+        [
+          " triggers",
+          -1.8563776016235352
+        ],
+        [
+          " cancellation",
+          -2.2412214279174805
+        ],
+        [
+          " of",
+          -3.147125244140625e-05
+        ],
+        [
+          " the",
+          -0.1198110580444336
+        ],
+        [
+          " **",
+          -0.05491828918457031
+        ],
+        [
+          "remaining",
+          -1.049041748046875e-05
+        ],
+        [
+          "**",
+          -2.9300575256347656
+        ],
+        [
+          " tasks",
+          -0.002437591552734375
+        ],
+        [
+          " in",
+          -2.4460697174072266
+        ],
+        [
+          " the",
+          -2.002716064453125e-05
+        ],
+        [
+          " group",
+          2.86102294921875e-06
+        ],
+        [
+          ".\n",
+          -1.1060104370117188
+        ],
+        [
+          " ",
+          -0.0005550384521484375
+        ],
+        [
+          " -",
+          -0.0001659393310546875
+        ],
+        [
+          " After",
+          -0.11703205108642578
+        ],
+        [
+          " all",
+          -0.07223224639892578
+        ],
+        [
+          " tasks",
+          -0.0010471343994140625
+        ],
+        [
+          " finish",
+          -0.1525440216064453
+        ],
+        [
+          ",",
+          -0.017650604248046875
+        ],
+        [
+          " if",
+          -0.5087699890136719
+        ],
+        [
+          " any",
+          -0.43915843963623047
+        ],
+        [
+          " failed",
+          -0.09255027770996094
+        ],
+        [
+          " with",
+          -2.1760120391845703
+        ],
+        [
+          " exceptions",
+          -1.5889263153076172
+        ],
+        [
+          " other",
+          -0.10031890869140625
+        ],
+        [
+          " than",
+          -1.52587890625e-05
+        ],
+        [
+          " `",
+          -0.051184654235839844
+        ],
+        [
+          "async",
+          -0.09443855285644531
+        ],
+        [
+          "io",
+          1.621246337890625e-05
+        ],
+        [
+          ".Cancel",
+          0.0
+        ],
+        [
+          "led",
+          -2.86102294921875e-06
+        ],
+        [
+          "Error",
+          5.7220458984375e-06
+        ],
+        [
+          "`,",
+          -7.62939453125e-06
+        ],
+        [
+          " those",
+          -0.5377206802368164
+        ],
+        [
+          " exceptions",
+          -0.04094123840332031
+        ],
+        [
+          " are",
+          -5.14984130859375e-05
+        ],
+        [
+          " **",
+          -0.043761253356933594
+        ],
+        [
+          "combined",
+          -0.00661468505859375
+        ],
+        [
+          " into",
+          -1.2883453369140625
+        ],
+        [
+          " an",
+          -3.147125244140625e-05
+        ],
+        [
+          " `",
+          -0.00036907196044921875
+        ],
+        [
+          "Exception",
+          -3.814697265625e-06
+        ],
+        [
+          "Group",
+          -1.239776611328125e-05
+        ],
+        [
+          "`",
+          1.1444091796875e-05
+        ],
+        [
+          " or",
+          -1.403451919555664
+        ],
+        [
+          " `",
+          -4.76837158203125e-06
+        ],
+        [
+          "Base",
+          6.67572021484375e-06
+        ],
+        [
+          "Exception",
+          0.0
+        ],
+        [
+          "Group",
+          8.58306884765625e-06
+        ],
+        [
+          "`",
+          -9.34600830078125e-05
+        ],
+        [
+          " and",
+          -0.23280715942382812
+        ],
+        [
+          " raised",
+          -0.005873680114746094
+        ],
+        [
+          "**",
+          -8.7738037109375e-05
+        ],
+        [
+          ".\n",
+          -0.037688255310058594
+        ],
+        [
+          "-",
+          -0.9356470108032227
+        ],
+        [
+          " **",
+          -0.032073974609375
+        ],
+        [
+          "Keyboard",
+          -2.712310791015625
+        ],
+        [
+          "Interrupt",
+          -0.000537872314453125
+        ],
+        [
+          "/System",
+          -0.3532552719116211
+        ],
+        [
+          "Exit",
+          4.76837158203125e-06
+        ],
+        [
+          " special",
+          -0.9626197814941406
+        ],
+        [
+          "-c",
+          -0.14404582977294922
+        ],
+        [
+          "ased",
+          -1.7030534744262695
+        ],
+        [
+          "**",
+          -8.20159912109375e-05
+        ],
+        [
+          ":",
+          -7.534027099609375e-05
+        ],
+        [
+          " if",
+          -0.23279857635498047
+        ],
+        [
+          " a",
+          -1.0379867553710938
+        ],
+        [
+          " task",
+          -0.00260162353515625
+        ],
+        [
+          " fails",
+          -0.013463020324707031
+        ],
+        [
+          " with",
+          -0.002960205078125
+        ],
+        [
+          " `",
+          -0.058300018310546875
+        ],
+        [
+          "Keyboard",
+          1.33514404296875e-05
+        ],
+        [
+          "Interrupt",
+          -5.7220458984375e-06
+        ],
+        [
+          "`",
+          5.7220458984375e-06
+        ],
+        [
+          " or",
+          -0.0003185272216796875
+        ],
+        [
+          " `",
+          1.33514404296875e-05
+        ],
+        [
+          "System",
+          1.1444091796875e-05
+        ],
+        [
+          "Exit",
+          -1.049041748046875e-05
+        ],
+        [
+          "`,",
+          1.239776611328125e-05
+        ],
+        [
+          " the",
+          -0.006306648254394531
+        ],
+        [
+          " group",
+          -0.0075283050537109375
+        ],
+        [
+          " still",
+          -0.04396533966064453
+        ],
+        [
+          " canc",
+          -0.0003376007080078125
+        ],
+        [
+          "els",
+          -9.5367431640625e-07
+        ],
+        [
+          "/w",
+          -1.0264253616333008
+        ],
+        [
+          "aits",
+          -3.814697265625e-06
+        ],
+        [
+          " remaining",
+          -0.8308353424072266
+        ],
+        [
+          " tasks",
+          -2.86102294921875e-06
+        ],
+        [
+          ",",
+          -0.009270668029785156
+        ],
+        [
+          " but",
+          -0.03104114532470703
+        ],
+        [
+          " then",
+          -0.208648681640625
+        ],
+        [
+          " re",
+          -2.888554573059082
+        ],
+        [
+          "-",
+          -0.00032329559326171875
+        ],
+        [
+          "raises",
+          -2.193450927734375e-05
+        ],
+        [
+          " the",
+          -0.013109207153320312
+        ],
+        [
+          " original",
+          -0.09587860107421875
+        ],
+        [
+          " `",
+          -0.007540702819824219
+        ],
+        [
+          "Keyboard",
+          -1.049041748046875e-05
+        ],
+        [
+          "Interrupt",
+          -6.198883056640625e-06
+        ],
+        [
+          "`",
+          -0.0002918243408203125
+        ],
+        [
+          "/",
+          -0.0035114288330078125
+        ],
+        [
+          "`",
+          2.86102294921875e-06
+        ],
+        [
+          "System",
+          -8.58306884765625e-06
+        ],
+        [
+          "Exit",
+          -1.33514404296875e-05
+        ],
+        [
+          "`",
+          -0.0003185272216796875
+        ],
+        [
+          " instead",
+          -0.3430624008178711
+        ],
+        [
+          " of",
+          -1.52587890625e-05
+        ],
+        [
+          " an",
+          -0.3962669372558594
+        ],
+        [
+          " exception",
+          -0.023136138916015625
+        ],
+        [
+          " group",
+          -0.0007266998291015625
+        ],
+        [
+          ".\n",
+          -0.2949533462524414
+        ],
+        [
+          "-",
+          -0.024971961975097656
+        ],
+        [
+          " **",
+          -0.10891532897949219
+        ],
+        [
+          "Activity",
+          -7.448404312133789
+        ],
+        [
+          " checks",
+          -3.0413026809692383
+        ],
+        [
+          "**",
+          -0.024394989013671875
+        ],
+        [
+          ":",
+          -0.00023365020751953125
+        ],
+        [
+          " if",
+          -0.037425994873046875
+        ],
+        [
+          " the",
+          -0.02019977569580078
+        ],
+        [
+          " task",
+          -0.02258586883544922
+        ],
+        [
+          " group",
+          -4.100799560546875e-05
+        ],
+        [
+          " is",
+          -0.004952430725097656
+        ],
+        [
+          " inactive",
+          -0.5025796890258789
+        ],
+        [
+          " (",
+          -0.0120086669921875
+        ],
+        [
+          "not",
+          -0.36834144592285156
+        ],
+        [
+          " yet",
+          -0.826319694519043
+        ],
+        [
+          " entered",
+          -4.482269287109375e-05
+        ],
+        [
+          ",",
+          -0.30918025970458984
+        ],
+        [
+          " already",
+          -0.4074420928955078
+        ],
+        [
+          " finished",
+          -8.392333984375e-05
+        ],
+        [
+          ",",
+          -2.09808349609375e-05
+        ],
+        [
+          " or",
+          -0.004740715026855469
+        ],
+        [
+          " shutting",
+          -0.0026264190673828125
+        ],
+        [
+          " down",
+          -2.86102294921875e-06
+        ],
+        [
+          "),",
+          -0.000431060791015625
+        ],
+        [
+          " `",
+          -0.10246658325195312
+        ],
+        [
+          "create",
+          -0.7914495468139648
+        ],
+        [
+          "_task",
+          -2.86102294921875e-06
+        ],
+        [
+          "()`",
+          -0.00023746490478515625
+        ],
+        [
+          " **",
+          -0.5407590866088867
+        ],
+        [
+          "cl",
+          -0.00217437744140625
+        ],
+        [
+          "oses",
+          3.814697265625e-06
+        ],
+        [
+          " the",
+          -3.0517578125e-05
+        ],
+        [
+          " coroutine",
+          -0.11362075805664062
+        ],
+        [
+          " and",
+          -0.30702686309814453
+        ],
+        [
+          " raises",
+          -1.1444091796875e-05
+        ],
+        [
+          " `",
+          -0.000453948974609375
+        ],
+        [
+          "Runtime",
+          6.67572021484375e-06
+        ],
+        [
+          "Error",
+          -1.239776611328125e-05
+        ],
+        [
+          "`",
+          -1.049041748046875e-05
+        ],
+        [
+          "**",
+          -0.000102996826171875
+        ],
+        [
+          " (",
+          -0.7494258880615234
+        ],
+        [
+          "with",
+          -0.9807281494140625
+        ],
+        [
+          " version",
+          -1.7108049392700195
+        ],
+        [
+          " notes",
+          -1.5771665573120117
+        ],
+        [
+          " about",
+          -2.522024154663086
+        ],
+        [
+          " closing",
+          -0.7409858703613281
+        ],
+        [
+          " behavior",
+          -0.048171043395996094
+        ],
+        [
+          ").",
+          -0.2743520736694336
+        ],
+        [
+          "  \n",
+          -0.08966255187988281
+        ],
+        [
+          " ",
+          -0.11448001861572266
+        ],
+        [
+          " Source",
+          -0.016576766967773438
+        ],
+        [
+          " (",
+          -2.029582977294922
+        ],
+        [
+          "same",
+          -0.11482620239257812
+        ],
+        [
+          " page",
+          -0.095123291015625
+        ],
+        [
+          "):",
+          -0.2222881317138672
+        ],
+        [
+          " https",
+          -6.008148193359375e-05
+        ],
+        [
+          "://",
+          -1.621246337890625e-05
+        ],
+        [
+          "docs",
+          4.76837158203125e-06
+        ],
+        [
+          ".python",
+          -1.9073486328125e-06
+        ],
+        [
+          ".org",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          1.621246337890625e-05
+        ],
+        [
+          "3",
+          8.58306884765625e-06
+        ],
+        [
+          "/library",
+          -8.58306884765625e-06
+        ],
+        [
+          "/",
+          1.621246337890625e-05
+        ],
+        [
+          "async",
+          5.7220458984375e-06
+        ],
+        [
+          "io",
+          0.0
+        ],
+        [
+          "-task",
+          5.7220458984375e-06
+        ],
+        [
+          ".html",
+          -1.430511474609375e-05
+        ],
+        [
+          "#",
+          -0.016584396362304688
+        ],
+        [
+          "async",
+          -0.1082000732421875
+        ],
+        [
+          "io",
+          -1.239776611328125e-05
+        ],
+        [
+          ".Task",
+          -7.62939453125e-05
+        ],
+        [
+          "Group",
+          -2.002716064453125e-05
+        ],
+        [
+          "\n\n",
+          -0.3003225326538086
+        ],
+        [
+          "The",
+          -1.1218070983886719
+        ],
+        [
+          " docs",
+          -0.03779411315917969
+        ],
+        [
+          " also",
+          -0.00070953369140625
+        ],
+        [
+          " note",
+          -1.342672348022461
+        ],
+        [
+          " that",
+          -0.41994571685791016
+        ],
+        [
+          " **",
+          -1.5858802795410156
+        ],
+        [
+          "`",
+          -0.009854316711425781
+        ],
+        [
+          "async",
+          -0.22671985626220703
+        ],
+        [
+          "io",
+          -0.0011320114135742188
+        ],
+        [
+          ".Task",
+          -0.0018262863159179688
+        ],
+        [
+          "Group",
+          -0.0007791519165039062
+        ],
+        [
+          ".create",
+          -0.1907978057861328
+        ],
+        [
+          "_task",
+          1.9073486328125e-06
+        ],
+        [
+          "()`",
+          -4.57763671875e-05
+        ],
+        [
+          " is",
+          -0.553837776184082
+        ],
+        [
+          " \u201c",
+          -2.13283634185791
+        ],
+        [
+          "a",
+          -0.000263214111328125
+        ],
+        [
+          " new",
+          -0.0027132034301757812
+        ],
+        [
+          " alternative",
+          -9.5367431640625e-06
+        ],
+        [
+          " leveraging",
+          -0.0062408447265625
+        ],
+        [
+          " structural",
+          3.814697265625e-06
+        ],
+        [
+          " concurrency",
+          0.0
+        ],
+        [
+          "\u201d",
+          -0.0850362777709961
+        ],
+        [
+          "**",
+          -0.055068016052246094
+        ],
+        [
+          " that",
+          -2.889346122741699
+        ],
+        [
+          " lets",
+          -0.6538276672363281
+        ],
+        [
+          " you",
+          -6.198883056640625e-05
+        ],
+        [
+          " wait",
+          -0.26517486572265625
+        ],
+        [
+          " for",
+          -0.05865001678466797
+        ],
+        [
+          " related",
+          -0.6017293930053711
+        ],
+        [
+          " tasks",
+          -0.0010271072387695312
+        ],
+        [
+          " with",
+          -0.2769031524658203
+        ],
+        [
+          " safety",
+          -1.1501693725585938
+        ],
+        [
+          " guarantees",
+          -0.00133514404296875
+        ],
+        [
+          ".",
+          -0.15042972564697266
+        ],
+        [
+          "  \n",
+          -0.0001621246337890625
+        ],
+        [
+          "Source",
+          -0.000568389892578125
+        ],
+        [
+          ":",
+          -0.011858940124511719
+        ],
+        [
+          " https",
+          -4.673004150390625e-05
+        ],
+        [
+          "://",
+          -4.76837158203125e-06
+        ],
+        [
+          "docs",
+          0.0
+        ],
+        [
+          ".python",
+          2.86102294921875e-06
+        ],
+        [
+          ".org",
+          0.0
+        ],
+        [
+          "/",
+          5.7220458984375e-06
+        ],
+        [
+          "3",
+          1.33514404296875e-05
+        ],
+        [
+          "/library",
+          2.86102294921875e-06
+        ],
+        [
+          "/",
+          1.33514404296875e-05
+        ],
+        [
+          "async",
+          -2.86102294921875e-06
+        ],
+        [
+          "io",
+          5.7220458984375e-06
+        ],
+        [
+          "-task",
+          -5.7220458984375e-06
+        ],
+        [
+          ".html",
+          8.58306884765625e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "Python 3.14\u2019s asyncio documentation defines **`asyncio.TaskGroup`** as:\n\n- **\u201cAn asynchronous context manager holding a group of tasks.\u201d**  \n  You add tasks via `TaskGroup.create_task()`, and **all tasks are awaited when the context manager exits**. It is **added in Python 3.11**.  \n  Source: https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup\n\nKey behavioral guarantees described in the docs:\n\n- **Tasks are created through the group**: `TaskGroup.create_task()` has a signature matching `asyncio.create_task()`.\n- **On exit, it waits for all tasks in the group to finish**, and after the last task finishes and the `async with` block is exited, **no new tasks may be added**.\n- **Failure handling (structural concurrency / \u201cstrong safety guarantees\u201d)**:  \n  - The **first task failure** with an exception other than `asyncio.CancelledError` triggers cancellation of the **remaining** tasks in the group.\n  - After all tasks finish, if any failed with exceptions other than `asyncio.CancelledError`, those exceptions are **combined into an `ExceptionGroup` or `BaseExceptionGroup` and raised**.\n- **KeyboardInterrupt/SystemExit special-cased**: if a task fails with `KeyboardInterrupt` or `SystemExit`, the group still cancels/waits remaining tasks, but then re-raises the original `KeyboardInterrupt`/`SystemExit` instead of an exception group.\n- **Activity checks**: if the task group is inactive (not yet entered, already finished, or shutting down), `create_task()` **closes the coroutine and raises `RuntimeError`** (with version notes about closing behavior).  \n  Source (same page): https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup\n\nThe docs also note that **`asyncio.TaskGroup.create_task()` is \u201ca new alternative leveraging structural concurrency\u201d** that lets you wait for related tasks with safety guarantees.  \nSource: https://docs.python.org/3/library/asyncio-task.html",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_3GsJ2hXuPIGy9nqNL1AYhzes",
+            "name": "web_search",
+            "args": {
+              "query": "Python 3.14 documentation asyncio.TaskGroup",
+              "max_results": 5
+            },
+            "result": "[1] Coroutines and tasks \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-task.html\nSnippet: Note asyncio.TaskGroup.create_task () is a new alternative leveraging structural concurrency; it allows for waiting for a group of related tasks with strong safety guarantees.\n\n[2] asyncio \u2014 Asynchronous I/O \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio.html\nSnippet: asyncio is a library to write concurrent code using the async/await syntax. asyncio is used as a foundation for multiple Python asynchronous frameworks that provide high-performance network and web-servers, database connection libraries, distributed task queues, etc.\n\n[3] High-level API Index \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3.14/library/asyncio-api-index.html\nSnippet: High-level API Index \u00b6 This page lists all high-level async/await enabled asyncio APIs. Tasks \u00b6 Utilities to run asyncio programs, create Tasks, and await on multiple things with timeouts.\n\n[4] asyncio and free-threaded Python \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-threading.html\nSnippet: Since Python 3.14, asyncio has first-class support for free-threaded Python, and the implementation of asyncio is safe to use in a multi-threaded environment. A single event loop on one core can handle many connections concurrently, but the Python code that runs to handle each one still executes serially.\n\n[5] Developing with asyncio \u2014 Python 3.14.7 documentation\nURL: https://docs.python.org/3/library/asyncio-dev.html\nSnippet: Asynchronous programming is different from classic \"sequential\" programming. This page lists common mistakes and traps and explains how to avoid them. Debug Mode: By default asyncio runs in product...",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_cKWwDLdnFUaGT4U8Ax7uMHXx",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://docs.python.org/3/library/asyncio-task.html",
+              "max_chars": 12000
+            },
+            "result": "URL: https://docs.python.org/3/library/asyncio-task.html\nTitle: Coroutines and tasks \u2014 Python 3.14.7 documentation\nContent:\nCoroutines and tasks \u2014 Python 3.14.7 documentation Theme Auto Light Dark Table of Contents Coroutines and tasks Coroutines Awaitables Creating tasks Task cancellation Task groups Terminating a task group Sleeping Running tasks concurrently Eager task factory Shielding from cancellation Timeouts Waiting primitives Running in threads Scheduling from other threads Introspection Task object Previous topic Runners Next topic Streams This page Report a bug Improve this page Show source Navigation index modules | next | previous | Python \u00bb 3.14.7 Documentation \u00bb The Python standard library \u00bb Networking and Interprocess Communication \u00bb asyncio \u00e2\u0080\u0094 Asynchronous I/O \u00bb Coroutines and tasks | Theme Auto Light Dark | Coroutines and tasks \u00c2\u00b6 This section outlines high-level asyncio APIs to work with coroutines and Tasks. Coroutines Awaitables Creating tasks Task cancellation Task groups Sleeping Running tasks concurrently Eager task factory Shielding from cancellation Timeouts Waiting primitives Running in threads Scheduling from other threads Introspection Task object Coroutines \u00c2\u00b6 Source code: Lib/asyncio/coroutines.py Coroutines declared with the async/await syntax is the preferred way of writing asyncio applications. For example, the following snippet of code prints \u00e2\u0080\u009chello\u00e2\u0080\u009d, waits 1 second, and then prints \u00e2\u0080\u009cworld\u00e2\u0080\u009d: >>> import asyncio >>> async def main (): ... print ( 'hello' ) ... await asyncio . sleep ( 1 ) ... print ( 'world' ) >>> asyncio . run ( main ()) hello world Note that simply calling a coroutine will not schedule it to be executed: >>> main () <coroutine object main at 0x1053bb7c8> To actually run a coroutine, asyncio provides the following mechanisms: The asyncio.run() function to run the top-level entry point \u00e2\u0080\u009cmain()\u00e2\u0080\u009d function (see the above example.) Awaiting on a coroutine. The following snippet of code will print \u00e2\u0080\u009chello\u00e2\u0080\u009d after waiting for 1 second, and then print \u00e2\u0080\u009cworld\u00e2\u0080\u009d after waiting for another 2 seconds: import asyncio import time async def say_after ( delay , what ): await asyncio . sleep ( delay ) print ( what ) async def main (): print ( f \"started at { time . strftime ( ' %X ' ) } \" ) await say_after ( 1 , 'hello' ) await say_after ( 2 , 'world' ) print ( f \"finished at { time . strftime ( ' %X ' ) } \" ) asyncio . run ( main ()) Expected output: started at 17 : 13 : 52 hello world finished at 17 : 13 : 55 The asyncio.create_task() function to run coroutines concurrently as asyncio Tasks . Let\u00e2\u0080\u0099s modify the above example and run two say_after coroutines concurrently : async def main (): task1 = asyncio . create_task ( say_after ( 1 , 'hello' )) task2 = asyncio . create_task ( say_after ( 2 , 'world' )) print ( f \"started at { time . strftime ( ' %X ' ) } \" ) # Wait until both tasks are completed (should take # around 2 seconds.) await task1 await task2 print ( f \"finished at { time . strftime ( ' %X ' ) } \" ) Note that expected output now shows that the snippet runs 1 second faster than before: started at 17 : 14 : 32 hello world finished at 17 : 14 : 34 The asyncio.TaskGroup class provides a more modern alternative to create_task() . Using this API, the last example becomes: async def main (): async with asyncio . TaskGroup () as tg : task1 = tg . create_task ( say_after ( 1 , 'hello' )) task2 = tg . create_task ( say_after ( 2 , 'world' )) print ( f \"started at { time . strftime ( ' %X ' ) } \" ) # The await is implicit when the context manager exits. print ( f \"finished at { time . strftime ( ' %X ' ) } \" ) The timing and output should be the same as for the previous version. Added in version 3.11: asyncio.TaskGroup . Awaitables \u00c2\u00b6 We say that an object is an awaitable object if it can be used in an await expression. Many asyncio APIs are designed to accept awaitables. There are three main types of awaitable objects: coroutines , Tasks , and Futures . Coroutines Python coroutines are awaitables and therefore can be awaited from other coroutines: import asyncio async def nested (): return 42 async def main (): # Nothing happens if we just call \"nested()\". # A coroutine object is created but not awaited, # so it *won't run at all*. nested () # will raise a \"RuntimeWarning\". # Let's do it differently now and await it: print ( await nested ()) # will print \"42\". asyncio . run ( main ()) Important In this documentation the term \u00e2\u0080\u009ccoroutine\u00e2\u0080\u009d can be used for two closely related concepts: a coroutine function : an async def function; a coroutine object : an object returned by calling a coroutine function . Tasks Tasks are used to schedule coroutines concurrently . When a coroutine is wrapped into a Task with functions like asyncio.create_task() the coroutine is automatically scheduled to run soon: import asyncio async def nested (): return 42 async def main (): # Schedule nested() to run soon concurrently # with \"main()\". task = asyncio . create_task ( nested ()) # \"task\" can now be used to cancel \"nested()\", or # can simply be awaited to wait until it is complete: await task asyncio . run ( main ()) Futures A Future is a special low-level awaitable object that represents an eventual result of an asynchronous operation. When a Future object is awaited it means that the coroutine will wait until the Future is resolved in some other place. Future objects in asyncio are needed to allow callback-based code to be used with async/await. Normally there is no need to create Future objects at the application level code. Future objects, sometimes exposed by libraries and some asyncio APIs, can be awaited: async def main (): await function_that_returns_a_future_object () # this is also valid: await asyncio . gather ( function_that_returns_a_future_object (), some_python_coroutine () ) A good example of a low-level function that returns a Future object is loop.run_in_executor() . Creating tasks \u00c2\u00b6 Source code: Lib/asyncio/tasks.py asyncio. create_task ( coro , * , name = None , context = None , eager_start = None , ** kwargs ) \u00c2\u00b6 Wrap the coro coroutine into a Task and schedule its execution. Return the Task object. The full function signature is largely the same as that of the Task constructor (or factory) - all of the keyword arguments to this function are passed through to that interface. An optional keyword-only context argument allows specifying a custom contextvars.Context for the coro to run in. The current context copy is created when no context is provided. An optional keyword-only eager_start argument allows specifying if the task should execute eagerly during the call to create_task, or be scheduled later. If eager_start is not passed the mode set by loop.set_task_factory() will be used. The task is executed in the loop returned by get_running_loop() , RuntimeError is raised if there is no running loop in current thread. Note asyncio.TaskGroup.create_task() is a new alternative leveraging structural concurrency; it allows for waiting for a group of related tasks with strong safety guarantees. Important Save a reference to the result of this function, to avoid a task disappearing mid-execution. The event loop only keeps weak references to tasks. A task that isn\u00e2\u0080\u0099t referenced elsewhere may get garbage collected at any time, even before it\u00e2\u0080\u0099s done. For reliable \u00e2\u0080\u009cfire-and-forget\u00e2\u0080\u009d background tasks, gather them in a collection: background_tasks = set () for i in range ( 10 ): task = asyncio . create_task ( some_coro ( param = i )) # Add task to the set. This creates a strong reference. background_tasks . add ( task ) # To prevent keeping references to finished tasks forever, # make each task remove its own reference from the set after # completion: task . add_done_callback ( background_tasks . discard ) Note that this approach never awaits the tasks, so if a task fails, its exception is never retrieved and asyncio logs a \u00e2\u0080\u009cTask exception was never retrieved\u00e2\u0080\u009d message when the task is garbage collected. To avoid this, use asyncio.TaskGroup which keeps a strong reference to each task, awaits them and propagates their exceptions: async with asyncio . TaskGroup () as tg : for i in range ( 10 ): tg . create_task ( some_coro ( param = i )) Added in version 3.7. Changed in version 3.8: Added the name parameter. Changed in version 3.11: Added the context parameter. Changed in version 3.14: Added the eager_start parameter by passing on all kwargs . Task cancellation \u00c2\u00b6 Tasks can easily and safely be cancelled. When a task is cancelled, asyncio.CancelledError will be raised in the task at the next opportunity. It is recommended that coroutines use try/finally blocks to robustly perform clean-up logic. In case asyncio.CancelledError is explicitly caught, it should generally be propagated when clean-up is complete. asyncio.CancelledError directly subclasses BaseException so most code will not need to be aware of it. The asyncio components that enable structured concurrency, like asyncio.TaskGroup and asyncio.timeout() , are implemented using cancellation internally and might misbehave if a coroutine swallows asyncio.CancelledError . Similarly, user code should not generally call uncancel . However, in cases when suppressing asyncio.CancelledError is truly desired, it is necessary to also call uncancel() to completely remove the cancellation state. Task groups \u00c2\u00b6 Task groups combine a task creation API with a convenient and reliable way to wait for all tasks in the group to finish. class asyncio. TaskGroup \u00c2\u00b6 An asynchronous context manager holding a group of tasks. Tasks can be added to the group using create_task() . All tasks are awaited when the context manager exits. Added in version 3.11. create_task ( coro , * , name = None , context = None , eager_start = None , ** kwargs ) \u00c2\u00b6 Create a task in this task group. The signature matches that of asyncio.create_task() . If the task group is inactive (e.g. not yet entered, already finished, or in the process of shutting down), we will close the given coro and raise RuntimeError . Changed in version 3.13: Close the given coroutine if the task group is not active. Changed in version 3.14: Passes on all kwargs to loop.create_task() Example: async def main (): async with asyncio . TaskGroup () as tg : task1 = tg . create_task ( some_coro ( ... )) task2 = tg . create_task ( another_coro ( ... )) print ( f \"Both tasks have completed now: { task1 . result () } , { task2 . result () } \" ) The async with statement will wait for all tasks in the group to finish. While waiting, new tasks may still be added to the group (for example, by passing tg into one of the coroutines and calling tg.create_task() in that coroutine). Once the last task has finished and the async with block is exited, no new tasks may be added to the group. The first time any of the tasks belonging to the group fails with an exception other than asyncio.CancelledError , the remaining tasks in the group are cancelled. No further tasks can then be added to the group. At this point, if the body of the async with statement is still active (i.e., __aexit__() hasn\u00e2\u0080\u0099t been called yet), the task directly containing the async with statement is also cancelled. The resulting asyncio.CancelledError will interrupt an await , but it will not bubble out of the containing async with statement. Once all tasks have finished, if any tasks have failed with an exception other than asyncio.CancelledError , those exceptions are combined in an ExceptionGroup or BaseExceptionGroup (as appropriate; see their documentation) which is then raised. Two base exceptions are treated specially: If any task fails with KeyboardInterrupt or SystemExit , the task group still cancels the remaining tasks and waits for them, but then the initial KeyboardInterrupt or SystemExit is re-raised instead of ExceptionGroup or BaseExceptionGroup . If the body of the async with statement exits with an exception (so __aexit__() is called with an exception set), this is treated the same as if one of the tasks failed: the remaining tasks are cancelled and then waited for, and non-cancellation e\n\u2026 <page content truncated>",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.91,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.3581421188542577,
+      "profiling_data": {
+        "total_time": 7.406487349000599,
+        "llm_time": 4.803259952001099,
+        "energy_consumed_kwh": 1.3819580171918685e-05,
+        "cpu_energy_kwh": 1.8097357608152007e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.2009844411103484e-05,
+        "emissions_kg_co2": 4.5703839152966035e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          1.33514404296875e-05
+        ],
+        [
+          "route",
+          1.1444091796875e-05
+        ],
+        [
+          "\":\"",
+          -6.580352783203125e-05
+        ],
+        [
+          "Summary",
+          -0.004039764404296875
+        ],
+        [
+          "\"}",
+          0.0
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0008164876246743,
+      "profiling_data": {
+        "total_time": 2.293510139999853,
+        "llm_time": 0.7139579560007405,
+        "energy_consumed_kwh": 5.500454985123996e-06,
+        "cpu_energy_kwh": 7.182951601226493e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.782159825001347e-06,
+        "emissions_kg_co2": 1.8190994717702377e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "Python 3.14\u2019s asyncio documentation describes **`asyncio.TaskGroup`** as **\u201cAn asynchronous context manager holding a group of tasks.\u201d** It was **added in Python 3.11**.\n\nKey points the docs state:\n\n- **Create tasks via the group:** Use **`TaskGroup.create_task()`** to add tasks to the group. Its signature **matches `asyncio.create_task()`**.  \n- **Awaiting is implicit on exit:** **All tasks in the group are awaited when the `async with` block exits**.\n- **When the group is inactive, `create_task()` fails:** If the task group is **inactive** (not yet entered, already finished, or shutting down), `create_task()` **closes the coroutine and raises `RuntimeError`** (noted as changed in 3.13/3.14).\n- **Structural concurrency / strong safety guarantees:**\n  - If the **first task fails** with an exception **other than `asyncio.CancelledError`**, the group **cancels the remaining tasks**.\n  - After all tasks finish, if any failed (with exceptions other than `CancelledError`), the failures are **combined into an `ExceptionGroup` or `BaseExceptionGroup` and raised**.\n  - If a task fails with **`KeyboardInterrupt` or `SystemExit`**, the group still cancels remaining tasks and waits, but then **re-raises the original `KeyboardInterrupt`/`SystemExit`** instead of raising an exception group.\n- **Task addition rules during the `async with`:**\n  - While awaiting, **new tasks may still be added** (e.g., from within a coroutine that receives the `TaskGroup` and calls `tg.create_task()`).\n  - Once the **last task has finished** and the **`async with` block is exited**, **no new tasks may be added**.\n\nSources:\n- https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Python",
+          -0.0066165924072265625
+        ],
+        [
+          " ",
+          -0.00012302398681640625
+        ],
+        [
+          "3",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          1.9073486328125e-06
+        ],
+        [
+          "14",
+          -9.5367431640625e-06
+        ],
+        [
+          "\u2019s",
+          -0.041477203369140625
+        ],
+        [
+          " asyncio",
+          -0.25959014892578125
+        ],
+        [
+          " documentation",
+          -0.005585670471191406
+        ],
+        [
+          " describes",
+          -0.05896568298339844
+        ],
+        [
+          " **",
+          -0.11967754364013672
+        ],
+        [
+          "`",
+          -1.52587890625e-05
+        ],
+        [
+          "async",
+          -5.7220458984375e-06
+        ],
+        [
+          "io",
+          1.621246337890625e-05
+        ],
+        [
+          ".Task",
+          8.58306884765625e-06
+        ],
+        [
+          "Group",
+          0.0
+        ],
+        [
+          "`",
+          -1.52587890625e-05
+        ],
+        [
+          "**",
+          -3.814697265625e-06
+        ],
+        [
+          " as",
+          -0.0028448104858398438
+        ],
+        [
+          " **",
+          -0.9574861526489258
+        ],
+        [
+          "\u201c",
+          -0.00035762786865234375
+        ],
+        [
+          "An",
+          -0.4742870330810547
+        ],
+        [
+          " asynchronous",
+          -8.58306884765625e-06
+        ],
+        [
+          " context",
+          5.7220458984375e-06
+        ],
+        [
+          " manager",
+          5.7220458984375e-06
+        ],
+        [
+          " holding",
+          -1.33514404296875e-05
+        ],
+        [
+          " a",
+          -9.5367431640625e-06
+        ],
+        [
+          " group",
+          7.62939453125e-06
+        ],
+        [
+          " of",
+          -1.52587890625e-05
+        ],
+        [
+          " tasks",
+          -1.1444091796875e-05
+        ],
+        [
+          ".\u201d",
+          -0.0006761550903320312
+        ],
+        [
+          "**",
+          -0.00177001953125
+        ],
+        [
+          " It",
+          -0.22363567352294922
+        ],
+        [
+          " was",
+          -0.4537649154663086
+        ],
+        [
+          " **",
+          -0.25206565856933594
+        ],
+        [
+          "added",
+          -0.00013828277587890625
+        ],
+        [
+          " in",
+          -9.5367431640625e-07
+        ],
+        [
+          " Python",
+          -0.00012493133544921875
+        ],
+        [
+          " ",
+          -2.86102294921875e-06
+        ],
+        [
+          "3",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          -9.5367431640625e-06
+        ],
+        [
+          "11",
+          1.1444091796875e-05
+        ],
+        [
+          "**",
+          -0.0017414093017578125
+        ],
+        [
+          ".\n\n",
+          -0.78424072265625
+        ],
+        [
+          "Key",
+          -0.07959365844726562
+        ],
+        [
+          " points",
+          -0.06724834442138672
+        ],
+        [
+          " the",
+          -0.1786489486694336
+        ],
+        [
+          " docs",
+          -0.0035371780395507812
+        ],
+        [
+          " state",
+          -0.06299495697021484
+        ],
+        [
+          ":\n\n",
+          -0.03436088562011719
+        ],
+        [
+          "-",
+          -1.52587890625e-05
+        ],
+        [
+          " **",
+          -0.026044845581054688
+        ],
+        [
+          "Create",
+          -2.5105953216552734
+        ],
+        [
+          " tasks",
+          -0.009354591369628906
+        ],
+        [
+          " via",
+          -0.11695671081542969
+        ],
+        [
+          " the",
+          -9.72747802734375e-05
+        ],
+        [
+          " group",
+          -7.43865966796875e-05
+        ],
+        [
+          ":**",
+          -0.03816413879394531
+        ],
+        [
+          " Use",
+          -2.9811153411865234
+        ],
+        [
+          " **",
+          -1.1368865966796875
+        ],
+        [
+          "`",
+          7.62939453125e-06
+        ],
+        [
+          "Task",
+          -0.11999702453613281
+        ],
+        [
+          "Group",
+          8.58306884765625e-06
+        ],
+        [
+          ".create",
+          5.7220458984375e-06
+        ],
+        [
+          "_task",
+          -5.7220458984375e-06
+        ],
+        [
+          "()`",
+          -0.00025272369384765625
+        ],
+        [
+          "**",
+          -0.011773109436035156
+        ],
+        [
+          " to",
+          -0.9270210266113281
+        ],
+        [
+          " add",
+          -0.007241249084472656
+        ],
+        [
+          " tasks",
+          -0.002956390380859375
+        ],
+        [
+          " to",
+          -0.24940109252929688
+        ],
+        [
+          " the",
+          -0.00023937225341796875
+        ],
+        [
+          " group",
+          2.86102294921875e-06
+        ],
+        [
+          ".",
+          -0.8910446166992188
+        ],
+        [
+          " Its",
+          -0.4564552307128906
+        ],
+        [
+          " signature",
+          -0.7937221527099609
+        ],
+        [
+          " **",
+          -1.9576539993286133
+        ],
+        [
+          "matches",
+          -0.0009098052978515625
+        ],
+        [
+          " `",
+          -0.054886817932128906
+        ],
+        [
+          "async",
+          5.7220458984375e-06
+        ],
+        [
+          "io",
+          7.62939453125e-06
+        ],
+        [
+          ".create",
+          2.86102294921875e-06
+        ],
+        [
+          "_task",
+          -1.33514404296875e-05
+        ],
+        [
+          "()`",
+          -7.2479248046875e-05
+        ],
+        [
+          "**",
+          -4.863739013671875e-05
+        ],
+        [
+          ".",
+          -0.4762296676635742
+        ],
+        [
+          "  \n",
+          -0.004361152648925781
+        ],
+        [
+          "-",
+          -0.3304615020751953
+        ],
+        [
+          " **",
+          -2.86102294921875e-06
+        ],
+        [
+          "Await",
+          -0.7016057968139648
+        ],
+        [
+          "ing",
+          -0.45308399200439453
+        ],
+        [
+          " is",
+          -2.5482406616210938
+        ],
+        [
+          " implicit",
+          -2.419682502746582
+        ],
+        [
+          " on",
+          -0.14027881622314453
+        ],
+        [
+          " exit",
+          -0.02364826202392578
+        ],
+        [
+          ":**",
+          -2.002716064453125e-05
+        ],
+        [
+          " **",
+          -0.08983135223388672
+        ],
+        [
+          "All",
+          -0.02660655975341797
+        ],
+        [
+          " tasks",
+          -8.869171142578125e-05
+        ],
+        [
+          " in",
+          -2.8712024688720703
+        ],
+        [
+          " the",
+          2.86102294921875e-06
+        ],
+        [
+          " group",
+          -1.621246337890625e-05
+        ],
+        [
+          " are",
+          -3.814697265625e-06
+        ],
+        [
+          " awaited",
+          -5.435943603515625e-05
+        ],
+        [
+          " when",
+          -0.0036916732788085938
+        ],
+        [
+          " the",
+          -0.003772735595703125
+        ],
+        [
+          " `",
+          -0.0013675689697265625
+        ],
+        [
+          "async",
+          1.239776611328125e-05
+        ],
+        [
+          " with",
+          1.430511474609375e-05
+        ],
+        [
+          "`",
+          -0.0027256011962890625
+        ],
+        [
+          " block",
+          -0.6933908462524414
+        ],
+        [
+          " exits",
+          -0.0004138946533203125
+        ],
+        [
+          "**",
+          -1.8671722412109375
+        ],
+        [
+          ".\n",
+          -0.5574483871459961
+        ],
+        [
+          "-",
+          -0.000125885009765625
+        ],
+        [
+          " **",
+          2.86102294921875e-06
+        ],
+        [
+          "When",
+          -2.005244255065918
+        ],
+        [
+          " the",
+          -1.5303068161010742
+        ],
+        [
+          " group",
+          -0.14738750457763672
+        ],
+        [
+          " is",
+          -0.21883487701416016
+        ],
+        [
+          " inactive",
+          -1.1848459243774414
+        ],
+        [
+          ",",
+          -0.056252479553222656
+        ],
+        [
+          " `",
+          -0.9789314270019531
+        ],
+        [
+          "create",
+          4.76837158203125e-06
+        ],
+        [
+          "_task",
+          1.430511474609375e-05
+        ],
+        [
+          "()`",
+          -0.010384559631347656
+        ],
+        [
+          " fails",
+          -0.300689697265625
+        ],
+        [
+          ":**",
+          -0.00046539306640625
+        ],
+        [
+          " If",
+          -4.863739013671875e-05
+        ],
+        [
+          " the",
+          -0.0026845932006835938
+        ],
+        [
+          " task",
+          -0.17699527740478516
+        ],
+        [
+          " group",
+          9.5367431640625e-06
+        ],
+        [
+          " is",
+          -0.001277923583984375
+        ],
+        [
+          " **",
+          -0.4413928985595703
+        ],
+        [
+          "inactive",
+          -1.650613784790039
+        ],
+        [
+          "**",
+          -0.0011339187622070312
+        ],
+        [
+          " (",
+          -2.86102294921875e-06
+        ],
+        [
+          "not",
+          -0.5494441986083984
+        ],
+        [
+          " yet",
+          -0.4509716033935547
+        ],
+        [
+          " entered",
+          -1.71661376953125e-05
+        ],
+        [
+          ",",
+          -0.008279800415039062
+        ],
+        [
+          " already",
+          -0.043007850646972656
+        ],
+        [
+          " finished",
+          -6.4849853515625e-05
+        ],
+        [
+          ",",
+          -3.814697265625e-05
+        ],
+        [
+          " or",
+          -4.57763671875e-05
+        ],
+        [
+          " shutting",
+          -0.001064300537109375
+        ],
+        [
+          " down",
+          -1.52587890625e-05
+        ],
+        [
+          "),",
+          -0.00025081634521484375
+        ],
+        [
+          " `",
+          -0.38664817810058594
+        ],
+        [
+          "create",
+          -0.000736236572265625
+        ],
+        [
+          "_task",
+          -1.33514404296875e-05
+        ],
+        [
+          "()`",
+          2.86102294921875e-06
+        ],
+        [
+          " **",
+          -0.238555908203125
+        ],
+        [
+          "cl",
+          -0.0002002716064453125
+        ],
+        [
+          "oses",
+          -9.5367431640625e-07
+        ],
+        [
+          " the",
+          -2.86102294921875e-05
+        ],
+        [
+          " coroutine",
+          -0.0989980697631836
+        ],
+        [
+          " and",
+          -0.11589717864990234
+        ],
+        [
+          " raises",
+          -5.7220458984375e-06
+        ],
+        [
+          " `",
+          9.5367431640625e-07
+        ],
+        [
+          "Runtime",
+          1.52587890625e-05
+        ],
+        [
+          "Error",
+          1.1444091796875e-05
+        ],
+        [
+          "`",
+          -5.7220458984375e-05
+        ],
+        [
+          "**",
+          0.0
+        ],
+        [
+          " (",
+          -0.7331781387329102
+        ],
+        [
+          "not",
+          -3.190981864929199
+        ],
+        [
+          "ed",
+          -0.08467960357666016
+        ],
+        [
+          " as",
+          -0.16843032836914062
+        ],
+        [
+          " changed",
+          -0.3838768005371094
+        ],
+        [
+          " in",
+          -0.1970663070678711
+        ],
+        [
+          " ",
+          -0.16553592681884766
+        ],
+        [
+          "3",
+          1.049041748046875e-05
+        ],
+        [
+          ".",
+          -9.5367431640625e-06
+        ],
+        [
+          "13",
+          -0.01711750030517578
+        ],
+        [
+          "/",
+          -0.2660560607910156
+        ],
+        [
+          "3",
+          -0.019495010375976562
+        ],
+        [
+          ".",
+          -3.814697265625e-06
+        ],
+        [
+          "14",
+          -6.67572021484375e-06
+        ],
+        [
+          ").\n",
+          -0.8232517242431641
+        ],
+        [
+          "-",
+          1.1444091796875e-05
+        ],
+        [
+          " **",
+          7.62939453125e-06
+        ],
+        [
+          "Structural",
+          -1.8627433776855469
+        ],
+        [
+          " concurrency",
+          -0.38921260833740234
+        ],
+        [
+          " /",
+          -0.02545166015625
+        ],
+        [
+          " strong",
+          -2.7314605712890625
+        ],
+        [
+          " safety",
+          -0.18295574188232422
+        ],
+        [
+          " guarantees",
+          -0.4035625457763672
+        ],
+        [
+          ":",
+          -0.13974475860595703
+        ],
+        [
+          "**\n",
+          -1.52587890625e-05
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          " -",
+          -1.621246337890625e-05
+        ],
+        [
+          " If",
+          -0.2691822052001953
+        ],
+        [
+          " the",
+          -0.74957275390625
+        ],
+        [
+          " **",
+          -0.0004520416259765625
+        ],
+        [
+          "first",
+          -6.67572021484375e-06
+        ],
+        [
+          " task",
+          -0.15639114379882812
+        ],
+        [
+          " fails",
+          -0.06921005249023438
+        ],
+        [
+          "**",
+          -0.34929943084716797
+        ],
+        [
+          " with",
+          -0.000965118408203125
+        ],
+        [
+          " an",
+          -0.0013914108276367188
+        ],
+        [
+          " exception",
+          -0.00017070770263671875
+        ],
+        [
+          " **",
+          -0.19039344787597656
+        ],
+        [
+          "other",
+          -0.00010204315185546875
+        ],
+        [
+          " than",
+          1.621246337890625e-05
+        ],
+        [
+          " `",
+          -0.0110321044921875
+        ],
+        [
+          "async",
+          4.76837158203125e-06
+        ],
+        [
+          "io",
+          -8.58306884765625e-06
+        ],
+        [
+          ".Cancel",
+          4.76837158203125e-06
+        ],
+        [
+          "led",
+          -6.198883056640625e-06
+        ],
+        [
+          "Error",
+          1.621246337890625e-05
+        ],
+        [
+          "`",
+          -1.52587890625e-05
+        ],
+        [
+          "**,",
+          -1.430511474609375e-05
+        ],
+        [
+          " the",
+          -0.0015869140625
+        ],
+        [
+          " group",
+          -0.6701030731201172
+        ],
+        [
+          " **",
+          -0.0034208297729492188
+        ],
+        [
+          "c",
+          8.58306884765625e-06
+        ],
+        [
+          "anc",
+          -2.86102294921875e-06
+        ],
+        [
+          "els",
+          5.7220458984375e-06
+        ],
+        [
+          " the",
+          -0.0031414031982421875
+        ],
+        [
+          " remaining",
+          -1.621246337890625e-05
+        ],
+        [
+          " tasks",
+          -6.771087646484375e-05
+        ],
+        [
+          "**",
+          -0.0013704299926757812
+        ],
+        [
+          ".\n",
+          -0.008074760437011719
+        ],
+        [
+          " ",
+          -3.24249267578125e-05
+        ],
+        [
+          " -",
+          1.621246337890625e-05
+        ],
+        [
+          " After",
+          -0.023034095764160156
+        ],
+        [
+          " all",
+          -0.2572135925292969
+        ],
+        [
+          " tasks",
+          -0.00036334991455078125
+        ],
+        [
+          " finish",
+          -0.024255752563476562
+        ],
+        [
+          ",",
+          -0.00021457672119140625
+        ],
+        [
+          " if",
+          -0.09360790252685547
+        ],
+        [
+          " any",
+          -0.013823509216308594
+        ],
+        [
+          " failed",
+          -0.0868825912475586
+        ],
+        [
+          " (",
+          -1.0979652404785156
+        ],
+        [
+          "with",
+          -0.6457910537719727
+        ],
+        [
+          " exceptions",
+          -0.1501922607421875
+        ],
+        [
+          " other",
+          -0.01209259033203125
+        ],
+        [
+          " than",
+          0.0
+        ],
+        [
+          " `",
+          -0.0008783340454101562
+        ],
+        [
+          "Cancelled",
+          -1.453683853149414
+        ],
+        [
+          "Error",
+          -1.239776611328125e-05
+        ],
+        [
+          "`",
+          -5.7220458984375e-06
+        ],
+        [
+          "),",
+          -6.771087646484375e-05
+        ],
+        [
+          " the",
+          -0.8247737884521484
+        ],
+        [
+          " failures",
+          -3.378617286682129
+        ],
+        [
+          " are",
+          -0.00034618377685546875
+        ],
+        [
+          " **",
+          -0.00133514404296875
+        ],
+        [
+          "combined",
+          -0.0006694793701171875
+        ],
+        [
+          " into",
+          -0.3895854949951172
+        ],
+        [
+          " an",
+          -4.100799560546875e-05
+        ],
+        [
+          " `",
+          -1.71661376953125e-05
+        ],
+        [
+          "Exception",
+          1.1444091796875e-05
+        ],
+        [
+          "Group",
+          -1.239776611328125e-05
+        ],
+        [
+          "`",
+          1.33514404296875e-05
+        ],
+        [
+          " or",
+          -0.34671592712402344
+        ],
+        [
+          " `",
+          4.76837158203125e-06
+        ],
+        [
+          "Base",
+          -2.86102294921875e-06
+        ],
+        [
+          "Exception",
+          -9.059906005859375e-06
+        ],
+        [
+          "Group",
+          1.621246337890625e-05
+        ],
+        [
+          "`",
+          -9.5367431640625e-07
+        ],
+        [
+          " and",
+          -0.003032684326171875
+        ],
+        [
+          " raised",
+          -4.100799560546875e-05
+        ],
+        [
+          "**",
+          -1.049041748046875e-05
+        ],
+        [
+          ".\n",
+          -0.0016927719116210938
+        ],
+        [
+          " ",
+          -0.2131023406982422
+        ],
+        [
+          " -",
+          5.7220458984375e-06
+        ],
+        [
+          " If",
+          -0.8186368942260742
+        ],
+        [
+          " a",
+          -0.8032798767089844
+        ],
+        [
+          " task",
+          -0.0014896392822265625
+        ],
+        [
+          " fails",
+          -0.00043773651123046875
+        ],
+        [
+          " with",
+          -0.00037479400634765625
+        ],
+        [
+          " **",
+          9.5367431640625e-07
+        ],
+        [
+          "`",
+          2.86102294921875e-06
+        ],
+        [
+          "Keyboard",
+          5.7220458984375e-06
+        ],
+        [
+          "Interrupt",
+          3.814697265625e-06
+        ],
+        [
+          "`",
+          -9.5367431640625e-06
+        ],
+        [
+          " or",
+          -0.01813507080078125
+        ],
+        [
+          " `",
+          5.7220458984375e-06
+        ],
+        [
+          "System",
+          -2.86102294921875e-06
+        ],
+        [
+          "Exit",
+          -5.7220458984375e-06
+        ],
+        [
+          "`",
+          -2.193450927734375e-05
+        ],
+        [
+          "**,",
+          -3.814697265625e-06
+        ],
+        [
+          " the",
+          -0.028263092041015625
+        ],
+        [
+          " group",
+          -0.01201629638671875
+        ],
+        [
+          " still",
+          -0.004107475280761719
+        ],
+        [
+          " canc",
+          -0.0015077590942382812
+        ],
+        [
+          "els",
+          -1.52587890625e-05
+        ],
+        [
+          " remaining",
+          -1.6935186386108398
+        ],
+        [
+          " tasks",
+          1.049041748046875e-05
+        ],
+        [
+          " and",
+          -0.04550647735595703
+        ],
+        [
+          " waits",
+          -0.004418373107910156
+        ],
+        [
+          ",",
+          -0.17065143585205078
+        ],
+        [
+          " but",
+          -0.0019884109497070312
+        ],
+        [
+          " then",
+          -0.07202911376953125
+        ],
+        [
+          " **",
+          -0.05915260314941406
+        ],
+        [
+          "re",
+          -0.00046634674072265625
+        ],
+        [
+          "-",
+          -2.47955322265625e-05
+        ],
+        [
+          "raises",
+          -2.86102294921875e-06
+        ],
+        [
+          " the",
+          -0.01881122589111328
+        ],
+        [
+          " original",
+          -0.008351325988769531
+        ],
+        [
+          " `",
+          -0.11332511901855469
+        ],
+        [
+          "Keyboard",
+          0.0
+        ],
+        [
+          "Interrupt",
+          3.814697265625e-06
+        ],
+        [
+          "`",
+          -0.00011920928955078125
+        ],
+        [
+          "/",
+          -0.0021028518676757812
+        ],
+        [
+          "`",
+          2.86102294921875e-06
+        ],
+        [
+          "System",
+          -1.239776611328125e-05
+        ],
+        [
+          "Exit",
+          -1.049041748046875e-05
+        ],
+        [
+          "`",
+          1.430511474609375e-05
+        ],
+        [
+          "**",
+          -0.22562026977539062
+        ],
+        [
+          " instead",
+          -0.032642364501953125
+        ],
+        [
+          " of",
+          -8.58306884765625e-06
+        ],
+        [
+          " raising",
+          -0.49837207794189453
+        ],
+        [
+          " an",
+          -0.0002346038818359375
+        ],
+        [
+          " exception",
+          -0.0012464523315429688
+        ],
+        [
+          " group",
+          -6.771087646484375e-05
+        ],
+        [
+          ".\n",
+          -0.013434410095214844
+        ],
+        [
+          "-",
+          -0.2519407272338867
+        ],
+        [
+          " **",
+          -0.000164031982421875
+        ],
+        [
+          "Task",
+          -0.5687332153320312
+        ],
+        [
+          " addition",
+          -0.5575122833251953
+        ],
+        [
+          " rules",
+          -1.168203353881836
+        ],
+        [
+          " during",
+          -0.7979135513305664
+        ],
+        [
+          " the",
+          -3.2572507858276367
+        ],
+        [
+          " `",
+          -1.3402204513549805
+        ],
+        [
+          "async",
+          -0.004517555236816406
+        ],
+        [
+          " with",
+          -1.621246337890625e-05
+        ],
+        [
+          "`:",
+          -0.00672149658203125
+        ],
+        [
+          "**\n",
+          -0.08894157409667969
+        ],
+        [
+          " ",
+          7.62939453125e-06
+        ],
+        [
+          " -",
+          1.9073486328125e-06
+        ],
+        [
+          " While",
+          -0.06808280944824219
+        ],
+        [
+          " awaiting",
+          -4.350831985473633
+        ],
+        [
+          ",",
+          -1.1620006561279297
+        ],
+        [
+          " **",
+          -0.006321907043457031
+        ],
+        [
+          "new",
+          -0.000812530517578125
+        ],
+        [
+          " tasks",
+          -3.814697265625e-06
+        ],
+        [
+          " may",
+          -0.00030612945556640625
+        ],
+        [
+          " still",
+          -0.038066864013671875
+        ],
+        [
+          " be",
+          1.1444091796875e-05
+        ],
+        [
+          " added",
+          6.67572021484375e-06
+        ],
+        [
+          "**",
+          -0.005639076232910156
+        ],
+        [
+          " (",
+          -0.6421175003051758
+        ],
+        [
+          "e",
+          -0.04149341583251953
+        ],
+        [
+          ".g",
+          -1.52587890625e-05
+        ],
+        [
+          ".,",
+          -2.47955322265625e-05
+        ],
+        [
+          " from",
+          -0.489105224609375
+        ],
+        [
+          " within",
+          -0.8542366027832031
+        ],
+        [
+          " a",
+          -1.9245223999023438
+        ],
+        [
+          " coroutine",
+          -0.12034225463867188
+        ],
+        [
+          " that",
+          -0.06423091888427734
+        ],
+        [
+          " receives",
+          -0.8541793823242188
+        ],
+        [
+          " the",
+          -0.019266128540039062
+        ],
+        [
+          " `",
+          -0.166351318359375
+        ],
+        [
+          "Task",
+          -0.12695598602294922
+        ],
+        [
+          "Group",
+          0.0
+        ],
+        [
+          "`",
+          -9.1552734375e-05
+        ],
+        [
+          " and",
+          -3.7920284271240234
+        ],
+        [
+          " calls",
+          -4.291534423828125e-05
+        ],
+        [
+          " `",
+          -0.00010967254638671875
+        ],
+        [
+          "tg",
+          -5.53131103515625e-05
+        ],
+        [
+          ".create",
+          0.0
+        ],
+        [
+          "_task",
+          -7.62939453125e-06
+        ],
+        [
+          "()`",
+          -1.52587890625e-05
+        ],
+        [
+          ").\n",
+          -0.0006952285766601562
+        ],
+        [
+          " ",
+          1.33514404296875e-05
+        ],
+        [
+          " -",
+          -2.86102294921875e-06
+        ],
+        [
+          " Once",
+          -1.4428510665893555
+        ],
+        [
+          " the",
+          -0.02292156219482422
+        ],
+        [
+          " **",
+          -0.13866901397705078
+        ],
+        [
+          "last",
+          -0.0029697418212890625
+        ],
+        [
+          " task",
+          -0.000156402587890625
+        ],
+        [
+          " has",
+          -0.18885517120361328
+        ],
+        [
+          " finished",
+          -1.811981201171875e-05
+        ],
+        [
+          "**",
+          -0.7913179397583008
+        ],
+        [
+          " and",
+          -4.9591064453125e-05
+        ],
+        [
+          " the",
+          -0.02605724334716797
+        ],
+        [
+          " **",
+          -1.0023040771484375
+        ],
+        [
+          "`",
+          -0.03955554962158203
+        ],
+        [
+          "async",
+          -3.62396240234375e-05
+        ],
+        [
+          " with",
+          -4.76837158203125e-06
+        ],
+        [
+          "`",
+          -1.1444091796875e-05
+        ],
+        [
+          " block",
+          -0.05302906036376953
+        ],
+        [
+          " is",
+          -0.02825641632080078
+        ],
+        [
+          " exited",
+          -0.07581615447998047
+        ],
+        [
+          "**,",
+          -0.011780738830566406
+        ],
+        [
+          " **",
+          -0.00046253204345703125
+        ],
+        [
+          "no",
+          -0.00011730194091796875
+        ],
+        [
+          " new",
+          -0.00035762786865234375
+        ],
+        [
+          " tasks",
+          2.86102294921875e-06
+        ],
+        [
+          " may",
+          -0.006155967712402344
+        ],
+        [
+          " be",
+          -1.239776611328125e-05
+        ],
+        [
+          " added",
+          -1.1444091796875e-05
+        ],
+        [
+          "**",
+          -0.00015926361083984375
+        ],
+        [
+          ".\n\n",
+          -0.04226398468017578
+        ],
+        [
+          "Sources",
+          -0.47277355194091797
+        ],
+        [
+          ":\n",
+          -0.38750171661376953
+        ],
+        [
+          "-",
+          8.58306884765625e-06
+        ],
+        [
+          " https",
+          -0.017141342163085938
+        ],
+        [
+          "://",
+          5.7220458984375e-06
+        ],
+        [
+          "docs",
+          -2.86102294921875e-06
+        ],
+        [
+          ".python",
+          -1.9073486328125e-06
+        ],
+        [
+          ".org",
+          -5.7220458984375e-06
+        ],
+        [
+          "/",
+          -9.5367431640625e-06
+        ],
+        [
+          "3",
+          8.58306884765625e-06
+        ],
+        [
+          "/library",
+          -0.0015964508056640625
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "async",
+          -2.86102294921875e-06
+        ],
+        [
+          "io",
+          -1.52587890625e-05
+        ],
+        [
+          "-task",
+          9.5367431640625e-07
+        ],
+        [
+          ".html",
+          -1.1444091796875e-05
+        ],
+        [
+          "#",
+          -0.00019168853759765625
+        ],
+        [
+          "async",
+          3.814697265625e-06
+        ],
+        [
+          "io",
+          1.621246337890625e-05
+        ],
+        [
+          ".Task",
+          -2.86102294921875e-06
+        ],
+        [
+          "Group",
+          2.86102294921875e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "Python 3.14\u2019s asyncio documentation describes **`asyncio.TaskGroup`** as **\u201cAn asynchronous context manager holding a group of tasks.\u201d** It was **added in Python 3.11**.\n\nKey points the docs state:\n\n- **Create tasks via the group:** Use **`TaskGroup.create_task()`** to add tasks to the group. Its signature **matches `asyncio.create_task()`**.  \n- **Awaiting is implicit on exit:** **All tasks in the group are awaited when the `async with` block exits**.\n- **When the group is inactive, `create_task()` fails:** If the task group is **inactive** (not yet entered, already finished, or shutting down), `create_task()` **closes the coroutine and raises `RuntimeError`** (noted as changed in 3.13/3.14).\n- **Structural concurrency / strong safety guarantees:**\n  - If the **first task fails** with an exception **other than `asyncio.CancelledError`**, the group **cancels the remaining tasks**.\n  - After all tasks finish, if any failed (with exceptions other than `CancelledError`), the failures are **combined into an `ExceptionGroup` or `BaseExceptionGroup` and raised**.\n  - If a task fails with **`KeyboardInterrupt` or `SystemExit`**, the group still cancels remaining tasks and waits, but then **re-raises the original `KeyboardInterrupt`/`SystemExit`** instead of raising an exception group.\n- **Task addition rules during the `async with`:**\n  - While awaiting, **new tasks may still be added** (e.g., from within a coroutine that receives the `TaskGroup` and calls `tg.create_task()`).\n  - Once the **last task has finished** and the **`async with` block is exited**, **no new tasks may be added**.\n\nSources:\n- https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.83,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.2591961791532695,
+      "profiling_data": {
+        "total_time": 4.550613182998859,
+        "llm_time": 2.97290838400113,
+        "energy_consumed_kwh": 9.512862973578773e-06,
+        "cpu_energy_kwh": 1.247695668028397e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 8.265167305550374e-06,
+        "emissions_kg_co2": 3.1460750168960247e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 17.493874859999778,
+    "llm_time": 10.157142158004717,
+    "energy_consumed_kwh": 3.577050005978983e-05,
+    "cpu_energy_kwh": 4.6822465597980506e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.1088253499991775e-05,
+    "emissions_kg_co2": 1.1829948238773575e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 5.53677432800032,
+      "llm_time": 2.3809738220024883,
+      "energy_consumed_kwh": 1.2438056914292373e-05,
+      "cpu_energy_kwh": 1.6248151309544534e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 1.0813241783337918e-05,
+      "emissions_kg_co2": 4.113489306580945e-06
+    },
+    "WebSearch": {
+      "total_time": 7.406487349000599,
+      "llm_time": 4.803259952001099,
+      "energy_consumed_kwh": 1.3819580171918685e-05,
+      "cpu_energy_kwh": 1.8097357608152007e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.2009844411103484e-05,
+      "emissions_kg_co2": 4.5703839152966035e-06
+    },
+    "Summary": {
+      "total_time": 4.550613182998859,
+      "llm_time": 2.97290838400113,
+      "energy_consumed_kwh": 9.512862973578773e-06,
+      "cpu_energy_kwh": 1.247695668028397e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 8.265167305550374e-06,
+      "emissions_kg_co2": 3.1460750168960247e-06
+    }
+  }
+}

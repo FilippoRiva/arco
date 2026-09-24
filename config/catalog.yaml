@@ -25,6 +25,30 @@ experiments:
       output_dir: output/benchmarks/sales-planned-gpt41-nano
     tags: [sales, planned, gpt-4.1-nano]
 
+  research-websearch-gpt41nano:
+    description: Web research workflow evaluated with GPT-4.1 nano against GPT-5.6 Luna ground truth.
+    workflow: websearch_researcher
+    generation:
+      config: config/run_config/research/benchmarks_generation/websearch_gpt-56-luna.yaml
+      prompts: data/prompts/research/prompts.json
+      output: data/benchmarks/research/websearch_researcher/benchmark.json
+    benchmark:
+      config: config/benchmark_config/research/gpt_4.1_nano_websearch.yaml
+      output_dir: output/benchmarks/research-websearch-gpt41nano
+    tags: [research, websearch, gpt-4.1-nano]
+
+  research-websearch-model-comparison:
+    description: Web research workflow evaluated with different models against GPT-5.6 Luna ground truth.
+    workflow: websearch_researcher
+    generation:
+      config: config/run_config/research/benchmarks_generation/websearch_gpt-56-luna.yaml
+      prompts: data/prompts/research/prompts.json
+      output: data/benchmarks/research/websearch_researcher/benchmark.json
+    benchmark:
+      config: config/benchmark_config/research/model_comparison_websearch.yaml
+      output_dir: output/benchmarks/research-websearch-model_comparison
+    tags: [research, websearch, gpt-4.1-nano, gpt-5.4-nano, deepseek-v4-flash]
+
   demo-planned-gpt41-nano:
     description: Small planned sales benchmark used for demonstrations.
     workflow: planned_sales

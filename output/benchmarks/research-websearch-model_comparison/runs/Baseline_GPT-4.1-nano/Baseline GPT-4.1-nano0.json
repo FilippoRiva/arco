@@ -1,0 +1,332 @@
+{
+  "prompt": "What is the difference between TCP and UDP?",
+  "run_id": "Baseline GPT-4.1-nano0",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"CommonKnowledge\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -8.65707261255011e-06
+        ],
+        [
+          "route",
+          0.0
+        ],
+        [
+          "\":",
+          -1.1517960956552997e-05
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Common",
+          -0.014182306826114655
+        ],
+        [
+          "Knowledge",
+          -4.4849443838757e-06
+        ],
+        [
+          "\"}",
+          -1.2664456789934775e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"CommonKnowledge\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0020318089392064,
+      "profiling_data": {
+        "total_time": 3.6951969510009803,
+        "llm_time": 0.9164728750001814,
+        "energy_consumed_kwh": 6.275614922669646e-06,
+        "cpu_energy_kwh": 8.19688497669705e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.455926424999941e-06,
+        "emissions_kg_co2": 2.07545881599546e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "CommonKnowledge",
+      "message": "{\"route\": \"CommonKnowledge\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -0.6380093693733215
+        ],
+        [
+          "route",
+          -1.6240566083070007e-06
+        ],
+        [
+          "\":",
+          -5.512236498361744e-07
+        ],
+        [
+          " \"",
+          -4.961759259458631e-06
+        ],
+        [
+          "Common",
+          -1.6240566083070007e-06
+        ],
+        [
+          "Knowledge",
+          -7.896309739408025e-07
+        ],
+        [
+          "\"}",
+          -4.36574100604048e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the common-knowledge and architecture specialist. \nYou have no tools. Answer stable questions from your knowled. \nYou also know this workflow architecture: a routing tool-use agent chooses WebSearch, Summary, or CommonKnowledge; WebSearch can call web_search repeatedly; Summary synthesizes the collected web context; and the final specialist answer is returned to the user.\nExplain that architecture when the user asks about it.\nDo not pretend to have performed web research.",
+        "response": "{\"route\": \"CommonKnowledge\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0954291274283245,
+      "profiling_data": {
+        "total_time": 2.4165804269996443,
+        "llm_time": 0.8371597879995534,
+        "energy_consumed_kwh": 5.890601558786513e-06,
+        "cpu_energy_kwh": 7.693491837856655e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.121252375000848e-06,
+        "emissions_kg_co2": 1.948127966318758e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 6.111777378000625,
+    "llm_time": 1.7536326629997347,
+    "energy_consumed_kwh": 1.2166216481456159e-05,
+    "cpu_energy_kwh": 1.5890376814553706e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 1.057717880000079e-05,
+    "emissions_kg_co2": 4.0235867823142175e-06
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 3.6951969510009803,
+      "llm_time": 0.9164728750001814,
+      "energy_consumed_kwh": 6.275614922669646e-06,
+      "cpu_energy_kwh": 8.19688497669705e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 5.455926424999941e-06,
+      "emissions_kg_co2": 2.07545881599546e-06
+    },
+    "CommonKnowledge": {
+      "total_time": 2.4165804269996443,
+      "llm_time": 0.8371597879995534,
+      "energy_consumed_kwh": 5.890601558786513e-06,
+      "cpu_energy_kwh": 7.693491837856655e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 5.121252375000848e-06,
+      "emissions_kg_co2": 1.948127966318758e-06
+    }
+  }
+}

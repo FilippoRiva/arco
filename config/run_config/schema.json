@@ -79,7 +79,7 @@
           "description": "Request provider-supported reasoning summaries or thinking output"
         },
         "reasoning_effort": {
-          "type": ["string", "null"],
+          "type": ["string", "none",  "null"],
           "description": "Provider-specific reasoning effort, for example low, medium, or high"
         },
         "reasoning_summary": {

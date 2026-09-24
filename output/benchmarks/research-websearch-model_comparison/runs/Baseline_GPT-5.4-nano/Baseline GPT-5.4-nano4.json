@@ -1,0 +1,848 @@
+{
+  "prompt": "Read the Wikipedia page about the Apollo 11 mission and tell me the exact date and time of the Moon landing.",
+  "run_id": "Baseline GPT-5.4-nano4",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.1444091796875e-05
+        ],
+        [
+          "route",
+          -1.430511474609375e-05
+        ],
+        [
+          "\":\"",
+          -0.0002288818359375
+        ],
+        [
+          "Web",
+          -0.0008792877197265625
+        ],
+        [
+          "Search",
+          -8.58306884765625e-06
+        ],
+        [
+          "\"}",
+          5.7220458984375e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0001894812468302,
+      "profiling_data": {
+        "total_time": 2.063806816999204,
+        "llm_time": 0.5314995210010238,
+        "energy_consumed_kwh": 4.915245205522585e-06,
+        "cpu_energy_kwh": 6.419456860770132e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.273299519445572e-06,
+        "emissions_kg_co2": 1.6255600638800183e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "Apollo 11\u2019s lunar landing (touchdown of the Lunar Module Eagle) occurred on **July 20, 1969 at 20:17:40 UTC**. Source: https://en.wikipedia.org/wiki/Apollo_11",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Apollo",
+          -0.5874204635620117
+        ],
+        [
+          " ",
+          -0.0001239776611328125
+        ],
+        [
+          "11",
+          4.76837158203125e-06
+        ],
+        [
+          "\u2019s",
+          -0.03185749053955078
+        ],
+        [
+          " lunar",
+          -1.236372947692871
+        ],
+        [
+          " landing",
+          -0.06442546844482422
+        ],
+        [
+          " (",
+          -0.31244945526123047
+        ],
+        [
+          "touch",
+          -1.0658149719238281
+        ],
+        [
+          "down",
+          -0.0010776519775390625
+        ],
+        [
+          " of",
+          -0.3746519088745117
+        ],
+        [
+          " the",
+          -0.0010519027709960938
+        ],
+        [
+          " Lunar",
+          -0.005347251892089844
+        ],
+        [
+          " Module",
+          0.0
+        ],
+        [
+          " Eagle",
+          -1.3926143646240234
+        ],
+        [
+          ")",
+          -0.12421035766601562
+        ],
+        [
+          " occurred",
+          -1.062333106994629
+        ],
+        [
+          " on",
+          -0.004658699035644531
+        ],
+        [
+          " **",
+          -2.09808349609375e-05
+        ],
+        [
+          "July",
+          -0.021266937255859375
+        ],
+        [
+          " ",
+          -5.7220458984375e-06
+        ],
+        [
+          "20",
+          1.430511474609375e-05
+        ],
+        [
+          ",",
+          -1.52587890625e-05
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "196",
+          5.7220458984375e-06
+        ],
+        [
+          "9",
+          8.58306884765625e-06
+        ],
+        [
+          " at",
+          -0.011928558349609375
+        ],
+        [
+          " ",
+          -8.869171142578125e-05
+        ],
+        [
+          "20",
+          9.5367431640625e-06
+        ],
+        [
+          ":",
+          -1.239776611328125e-05
+        ],
+        [
+          "17",
+          -2.86102294921875e-06
+        ],
+        [
+          ":",
+          -5.14984130859375e-05
+        ],
+        [
+          "40",
+          -2.47955322265625e-05
+        ],
+        [
+          " UTC",
+          -0.017083168029785156
+        ],
+        [
+          "**",
+          -0.008801460266113281
+        ],
+        [
+          ".",
+          -0.1444873809814453
+        ],
+        [
+          " Source",
+          -0.4307403564453125
+        ],
+        [
+          ":",
+          -0.0007677078247070312
+        ],
+        [
+          " https",
+          -3.473944664001465
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "en",
+          0.0
+        ],
+        [
+          ".wikipedia",
+          -1.049041748046875e-05
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/wiki",
+          -1.9073486328125e-06
+        ],
+        [
+          "/A",
+          8.58306884765625e-06
+        ],
+        [
+          "pollo",
+          9.5367431640625e-07
+        ],
+        [
+          "_",
+          -2.86102294921875e-06
+        ],
+        [
+          "11",
+          -3.337860107421875e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "Apollo 11\u2019s lunar landing (touchdown of the Lunar Module Eagle) occurred on **July 20, 1969 at 20:17:40 UTC**. Source: https://en.wikipedia.org/wiki/Apollo_11",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_OznnSqjS8SYmixktNbk7In47",
+            "name": "web_search",
+            "args": {
+              "query": "Wikipedia Apollo 11 Moon landing exact date and time",
+              "max_results": 5
+            },
+            "result": "[1] Apollo 11 - Wikipedia\nURL: https://en.wikipedia.org/wiki/Apollo_11\nSnippet: Apollo 11 (July 16-24, 1969) was the American spaceflight that first landed humans on the Moon, and the fifth crewed mission of NASA 's Apollo program. The mission was crewed by Commander Neil Armstrong, Command Module Pilot Michael Collins, and Lunar Module Pilot Edwin \"Buzz\" Aldrin, all of whom were on their second and final spaceflight.\n\n[2] Moon landing - Wikipedia\nURL: https://en.wikipedia.org/wiki/Moon_landing\nSnippet: A Moon landing (also known as a lunar landing) is the arrival of a crewed or robotic lander on the Moon. The first human-made object to touch the Moon was Luna 2 in 1959, [3] and the first crewed mission to land on the Moon was Apollo 11 in 1969.\n\n[3] Apollo 11 - NASA\nURL: https://www.nasa.gov/mission/apollo-11/\nSnippet: The primary objective of Apollo 11 was to complete a national goal set by President John F. Kennedy on May 25, 1961: perform a crewed lunar landing and return to Earth.\n\n[4] Apollo 11 - NASA\nURL: https://www.nasa.gov/wp-content/uploads/static/history/ap11ann/ap11events.html\nSnippet: Apollo 11 Record of Lunar Events 24 July 1969 ... *Eastern Daylight Time is one hour later than Eastern Standard Time. Similarly, Central Daylight Time is one hour later than Central Standard Time.\n\n[5] Apollo 11 - Simple English Wikipedia, the free encyclopedia\nURL: https://simple.wikipedia.org/wiki/Apollo_11\nSnippet: Apollo 11 was the first flight to send people to the moon. It was done by NASA, the American space group. It went up to space on July 16, 1969, carrying three astronauts: Neil Armstrong, Buzz Aldrin and Michael Collins. On July 20, 1969, Armstrong and Aldrin became the first humans to land on the moon, while Collins stayed in orbit around the Moon. The flight was part of the Space Race. It ...",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_RMGDI39QC0bVcGtrntJWxmC4",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://en.wikipedia.org/wiki/Apollo_11",
+              "max_chars": 12000
+            },
+            "result": "URL: https://en.wikipedia.org/wiki/Apollo_11\nTitle: Apollo 11 - Wikipedia\nContent:\nApollo 11 - Wikipedia Jump to content Main menu Main menu move to sidebar hide Navigation Main page Contents Current events Random article About Wikipedia Contact us Contribute Help Learn to edit Community portal Recent changes Upload file Special pages Search Search Appearance Donate Create account Log in Personal tools Donate Create account Log in Contents move to sidebar hide (Top) 1 Background 2 Personnel Toggle Personnel subsection 2.1 Prime crew 2.2 Backup crew 2.3 Support crew 2.4 Capsule communicators 2.5 Flight directors 2.6 Other key personnel 3 Preparations Toggle Preparations subsection 3.1 Insignia 3.2 Call signs 3.3 Mementos 3.4 Site selection 3.5 First-step decision 3.6 Pre-launch 4 Mission Toggle Mission subsection 4.1 Launch and flight to lunar orbit 4.2 Lunar descent 4.3 Landing 4.4 Lunar surface operations 4.5 Lunar ascent 4.6 Columbia in lunar orbit 4.7 Return 4.8 Splashdown and quarantine 5 Celebrations Toggle Celebrations subsection 5.1 World tour 6 Legacy Toggle Legacy subsection 6.1 Cultural significance 6.2 Spacecraft 6.3 Moon rocks 6.4 Experiment results 6.5 Moonwalk camera 6.6 Lunar Module Eagle memorabilia 6.7 Anniversary events 6.7.1 40th anniversary 6.7.2 50th anniversary 7 Films and documentaries 8 See also 9 References Toggle References subsection 9.1 Notes 9.2 Citations 9.3 Sources 10 External links Toggle External links subsection 10.1 Multimedia Toggle the table of contents Apollo 11 104 languages Afrikaans \u12a0\u121b\u122d\u129b Aragon\u00e9s \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0985\u09b8\u09ae\u09c0\u09af\u09bc\u09be Asturianu Az\u0259rbaycanca \u062a\u06c6\u0631\u06a9\u062c\u0647 Basa Bali \u0411\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0430\u044f (\u0442\u0430\u0440\u0430\u0448\u043a\u0435\u0432\u0456\u0446\u0430) \u0411\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0430\u044f \u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438 \u09ac\u09be\u0982\u09b2\u09be Brezhoneg Bosanski Catal\u00e0 Cebuano \u06a9\u0648\u0631\u062f\u06cc \u010ce\u0161tina \u0427\u04d1\u0432\u0430\u0448\u043b\u0430 Cymraeg Dansk Deutsch \u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac Esperanto Espa\u00f1ol Eesti Euskara \u0641\u0627\u0631\u0633\u06cc Suomi Fran\u00e7ais Frysk Gaeilge Galego \u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0 Gaelg Hausa \u05e2\u05d1\u05e8\u05d9\u05ea \u0939\u093f\u0928\u094d\u0926\u0940 Hrvatski Magyar \u0540\u0561\u0575\u0565\u0580\u0565\u0576 Bahasa Indonesia Ido \u00cdslenska Italiano \u65e5\u672c\u8a9e Jawa \u10e5\u10d0\u10e0\u10d7\u10e3\u10da\u10d8 \u049a\u0430\u0437\u0430\u049b\u0448\u0430 \u0c95\u0ca8\u0ccd\u0ca8\u0ca1 \ud55c\uad6d\uc5b4 \u06a9\u0672\u0634\u064f\u0631 Kurd\u00ee Latina Lombard Lietuvi\u0173 Latvie\u0161u Malagasy Minangkabau \u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0441\u043a\u0438 \u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02 \u092e\u0930\u093e\u0920\u0940 Bahasa Melayu \u1019\u103c\u1014\u103a\u1019\u102c\u1018\u102c\u101e\u102c Nederlands Norsk nynorsk Norsk bokm\u00e5l Occitan \u0b13\u0b21\u0b3c\u0b3f\u0b06 Polski Piemont\u00e8is \u067e\u0646\u062c\u0627\u0628\u06cc \u067e\u069a\u062a\u0648 Portugu\u00eas Rom\u00e2n\u0103 \u0420\u0443\u0441\u0441\u043a\u0438\u0439 \u0421\u0430\u0445\u0430 \u0442\u044b\u043b\u0430 Srpskohrvatski / \u0441\u0440\u043f\u0441\u043a\u043e\u0445\u0440\u0432\u0430\u0442\u0441\u043a\u0438 \u0dc3\u0dd2\u0d82\u0dc4\u0dbd Simple English Sloven\u010dina Sloven\u0161\u010dina Anar\u00e2\u0161kiel\u00e2 Shqip \u0421\u0440\u043f\u0441\u043a\u0438 / srpski Seeltersk Svenska Kiswahili \u0ba4\u0bae\u0bbf\u0bb4\u0bcd \u0e44\u0e17\u0e22 Tagalog T\u00fcrk\u00e7e Xitsonga \u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430 \u0627\u0631\u062f\u0648 O\u02bbzbekcha / \u045e\u0437\u0431\u0435\u043a\u0447\u0430 V\u00e8neto Ti\u1ebfng Vi\u1ec7t Winaray \u5434\u8bed \u05d9\u05d9\u05b4\u05d3\u05d9\u05e9 \u7cb5\u8a9e \u4e2d\u6587 Edit links Article Talk English Read View source View history Tools Tools move to sidebar hide Actions Read View source View history General What links here Related changes Upload file Permanent link Page information Cite this page Get shortened URL Switch to legacy parser Print/export Download as PDF Printable version In other projects Wikimedia Commons Wikiquote Wikidata item Appearance move to sidebar hide From Wikipedia, the free encyclopedia First crewed Moon landing (1969) \"First Moon landing\" and \"The Moon landing\" redirect here. For other crewed or uncrewed Moon landings, see Moon landing . This article is about the 1969 crewed lunar mission. For other uses, see Apollo 11 (disambiguation) . Apollo 11 Buzz Aldrin on the Moon in a photograph taken by Neil Armstrong , who can be seen in the visor reflection along with Earth, the Lunar Module Eagle , and the U.S. flag [ 1 ] Mission type Crewed lunar landing ( G ) Operator NASA COSPAR ID CSM: 1969-059A LM: 1969-059C SATCAT no. CSM: 4039 [ 2 ] LM: 4041 [ 3 ] Mission duration 8 days, 3 hours, 18 minutes, 35 seconds Spacecraft properties Spacecraft Apollo CSM -107 Apollo LM -5 Manufacturer CSM: North American Rockwell [ 4 ] LM: Grumman [ 4 ] Launch mass 109,646 lb (49,735 kg) [ 5 ] Landing mass 10,873 lb (4,932 kg) Crew Crew size 3 Members Neil Armstrong Michael Collins Buzz Aldrin Callsign CSM: Columbia LM: Eagle On surface: Tranquility Base Start of mission Launch date July 16, 1969, 13:32:00 ( 1969-07-16UTC13:32Z ) UTC (9:32:00 am EDT ) [ 6 ] Rocket Saturn V SA-506 Launch site Kennedy , LC \u2011 39A End of mission Recovered by USS Hornet Landing date July 24, 1969, 16:50:35 ( 1969-07-24UTC16:50:36Z ) UTC Landing site North Pacific Ocean ( 13\u00b019\u2032N 169\u00b09\u2032W \ufeff / \ufeff 13.317\u00b0N 169.150\u00b0W \ufeff / 13.317; -169.150 \ufeff ( Apollo 11 splashdown ) ) Orbital parameters Reference system Selenocentric Periselene altitude 100.9 km (54.5 nmi ; 62.7 mi) [ 7 ] Aposelene altitude 122.4 km (66.1 nmi; 76.1 mi) [ 7 ] Inclination 1.25\u00b0 [ 7 ] Period 2 hours [ 7 ] Epoch July 19, 1969, 21:44 UTC [ 7 ] Lunar orbiter Spacecraft component Apollo command and service module Orbital insertion July 19, 1969, 17:21:50 UTC [ 8 ] Orbital departure July 22, 1969, 04:55:42 UTC [ 9 ] Orbits 30 Lunar lander Spacecraft component Apollo Lunar Module Landing date July 20, 1969, 20:17:40 UTC [ 10 ] Return launch July 21, 1969, 17:54:00 UTC [ 11 ] Landing site Tranquility Base , Mare Tranquillitatis ( 0\u00b040\u203227\u2033N 23\u00b028\u203223\u2033E \ufeff / \ufeff 0.67416\u00b0N 23.47314\u00b0E \ufeff / 0.67416; 23.47314 ) [ 12 ] Sample mass 47.51 lb (21.55 kg) Surface EVAs 1 EVA duration 2 hours, 31 minutes, 40 seconds Docking with Lunar module Docking date July 16, 1969, 16:56:03 UTC [ 8 ] Undocking date July 20, 1969, 17:44:00 UTC [ 13 ] Time docked 96 hours, 47 minutes, 57 seconds Docking with Lunar module ascent stage Docking date July 21, 1969, 21:35:00 UTC [ 9 ] Undocking date July 21, 1969, 23:41:31 UTC [ 9 ] Time docked 2 hours, 6 minutes, 31 seconds Mission insignia Left to right: Armstrong , Collins , and Aldrin Apollo program \u2190 Apollo 10 Apollo 12 \u2192 Apollo 11 (July 16\u201324, 1969) was the American spaceflight that first landed humans on the Moon , and the fifth crewed mission of NASA 's Apollo program . The mission was crewed by Commander Neil Armstrong , Command Module Pilot Michael Collins , and Lunar Module Pilot Edwin \"Buzz\" Aldrin , all of whom were on their second and final spaceflight. Launched atop a Saturn V rocket from Kennedy Space Center in Florida on July 16 at 13:32 UTC , the Apollo spacecraft consisted of three parts: the command module (CM), which housed the three astronauts and was the only part to return to Earth; the service module (SM), which provided propulsion, electrical power, oxygen, and water to the command module; and the Lunar Module (LM), which had two stages\u2014a descent stage with a large engine and fuel tanks for landing on the Moon, and a lighter ascent stage containing a cabin for two astronauts and a small engine to return them to lunar orbit . After a three-day transit, Armstrong and Aldrin descended to the surface aboard the LM Eagle , landing in the Sea of Tranquility ( Mare Tranquillitatis ) on July 20 at 20:17 UTC while Collins remained in lunar orbit aboard the CM Columbia . Armstrong became the first human to walk on the Moon approximately six hours after landing, followed by Aldrin nineteen minutes later. Together they spent around two and a half hours walking on the surface, planting an American flag , speaking with President Richard Nixon who was in the White House , deploying scientific instruments, and collecting 21.5 kg (47.5 lb) of lunar material. After more than 21 hours on the surface, they rejoined Collins in lunar orbit, and the crew returned safely to Earth on July 24, splashing down in the Pacific Ocean . Apollo 11 was the culmination of the Space Race , a geopolitical competition between the United States and the Soviet Union rooted in Cold War rivalry. It fulfilled a national goal set by President John F. Kennedy in May 1961, who had challenged the United States to land a man on the Moon and return him safely before the end of the decade. The program overcame a severe setback with the fatal Apollo 1 launchpad fire in January 1967 and drew on technologies developed through the preceding Mercury and Gemini programs. The Soviet Union, despite early leads in spaceflight, was unable to match the Saturn V rocket, and its uncrewed lunar probe Luna 15 crashed on the Moon on July 21, while Neil Armstrong and Buzz Aldrin were still on the lunar surface. Armstrong's moonwalk was broadcast live to an estimated 600 million viewers, roughly one-fifth of the world's population, making it among the most-watched television events in history. Stepping onto the lunar surface, Armstrong declared: \" That's one small step for [a] man, one giant leap for mankind .\" Lunar samples returned by the mission led to the identification of three previously unrecognized minerals, and scientific instruments deployed on the surface continued returning data for years afterwards. The crew were honoured with ticker-tape parades , a world goodwill tour, and the Presidential Medal of Freedom . The command module Columbia is preserved at the National Air and Space Museum in Washington, D.C. , while the descent stage of Eagle remains on the lunar surface. Background In the late 1950s and early 1960s, the United States was engaged in the Cold War , a geopolitical rivalry with the Soviet Union . [ 14 ] On October 4, 1957, the Soviet Union launched Sputnik 1 , the first artificial satellite , surprising the world and fueling fears about Soviet technological and military capabilities. Its success demonstrated that the USSR could potentially deliver nuclear weapons over intercontinental distances , challenging American claims of military, economic, and technological superiority. [ 15 ] This incident sparked the Sputnik crisis and ignited the Space Race , as both superpowers sought to demonstrate superiority in spaceflight. [ 16 ] President Dwight D. Eisenhower responded to the challenge posed by Sputnik by creating the National Aeronautics and Space Administration (NASA), and initiating Project Mercury , [ 17 ] which aimed to place a man into Earth orbit . [ 18 ] The Soviets took the lead on April 12, 1961, when cosmonaut Yuri Gagarin became the first person in space and the first to orbit the Earth. [ 19 ] Nearly a month later, on May 5, 1961, Alan Shepard became the first American in space; his 15-minute flight was suborbital, not a full orbit. [ 20 ] Because the Soviet Union had launch vehicles with higher lift capacity, President John F. Kennedy, Eisenhower's successor, chose a challenge that exceeded the capabilities of the existing generation of rockets, so that both countries would be starting from an equal position. A crewed mission to the Moon would serve this purpose. [ 21 ] On May 25, 1961, Kennedy addressed the United States Congress on \"Urgent National Needs\" and declared: I believe that this nation should commit itself to achieving the goal, before this decade [1960s] is out, of landing a man on the Moon and returning him safely to the Earth. No single space project in this period will be more impressive to mankind, or more important for the long-range exploration of space; and none will be so difficult or expensive to accomplish. We propose to accelerate the development of the appropriate lunar space craft. We propose to develop alternate liquid and solid fuel boosters, much larger than any now being developed, until certain which is superior. We propose additional funds for other engine development and for unmanned explorations\u2014explorations which are particularly important for one purpose which this nation will never overlook: the survival of the man who first makes this daring flight. But in a very real sense, it will not be one man going to the Moon\u2014if we make this judgment affirmatively, it will be an entire nation. For all of us must work to put him there. \u2014 Kennedy's speech to Congress [ 22 ] On September 12, 1962, Kennedy delivered another speech before a crowd of about 40,000 people in the Rice University football stadium in Houston , Texas. [ 23 ] [ 24 ] A widely quoted refrain from the middle portion of the speech reads as follows: There is no strife, no prejudice, no national conflict in outer space as yet. Its hazards are hostile to us all. Its conquest deserves the best of all mankind, and its opportunity for peaceful cooperation may never come again. But why, some say, the Moon? Why choose this as our goal? And they may well ask, why climb the highest mountain? Why, \n\u2026 <page content truncated>",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.2469683549363304,
+      "profiling_data": {
+        "total_time": 5.564933349000057,
+        "llm_time": 2.5341000160005933,
+        "energy_consumed_kwh": 1.2609891356995093e-05,
+        "cpu_energy_kwh": 1.460426437554482e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.1149464919440612e-05,
+        "emissions_kg_co2": 4.170318049802704e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          2.86102294921875e-06
+        ],
+        [
+          "route",
+          1.1444091796875e-05
+        ],
+        [
+          "\":\"",
+          -6.198883056640625e-05
+        ],
+        [
+          "Summary",
+          -0.0069904327392578125
+        ],
+        [
+          "\"}",
+          -9.5367431640625e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0014088054612422,
+      "profiling_data": {
+        "total_time": 2.731866895001076,
+        "llm_time": 1.1467415329989308,
+        "energy_consumed_kwh": 1.2378909703488443e-05,
+        "cpu_energy_kwh": 8.354762701575444e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.1543433433330898e-05,
+        "emissions_kg_co2": 4.093928259318291e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "Apollo 11\u2019s Moon landing (Lunar Module **Eagle** touchdown) was on **July 20, 1969 at 20:17:40 UTC**.  \nSource: https://en.wikipedia.org/wiki/Apollo_11",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "Apollo",
+          -0.06744670867919922
+        ],
+        [
+          " ",
+          -7.62939453125e-06
+        ],
+        [
+          "11",
+          -1.33514404296875e-05
+        ],
+        [
+          "\u2019s",
+          -0.0033102035522460938
+        ],
+        [
+          " Moon",
+          -0.05603218078613281
+        ],
+        [
+          " landing",
+          -0.0005311965942382812
+        ],
+        [
+          " (",
+          -0.021897315979003906
+        ],
+        [
+          "L",
+          -0.20543384552001953
+        ],
+        [
+          "unar",
+          -1.33514404296875e-05
+        ],
+        [
+          " Module",
+          -5.7220458984375e-06
+        ],
+        [
+          " **",
+          -3.4904441833496094
+        ],
+        [
+          "E",
+          -0.0018129348754882812
+        ],
+        [
+          "agle",
+          1.9073486328125e-06
+        ],
+        [
+          "**",
+          -0.0064563751220703125
+        ],
+        [
+          " touchdown",
+          -0.07977104187011719
+        ],
+        [
+          ")",
+          -0.040584564208984375
+        ],
+        [
+          " was",
+          -0.1958160400390625
+        ],
+        [
+          " on",
+          -0.0031070709228515625
+        ],
+        [
+          " **",
+          -3.719329833984375e-05
+        ],
+        [
+          "July",
+          -0.0065765380859375
+        ],
+        [
+          " ",
+          1.621246337890625e-05
+        ],
+        [
+          "20",
+          -1.239776611328125e-05
+        ],
+        [
+          ",",
+          7.62939453125e-06
+        ],
+        [
+          " ",
+          1.71661376953125e-05
+        ],
+        [
+          "196",
+          2.86102294921875e-06
+        ],
+        [
+          "9",
+          1.1444091796875e-05
+        ],
+        [
+          " at",
+          -0.025177001953125
+        ],
+        [
+          " ",
+          -0.00048828125
+        ],
+        [
+          "20",
+          6.67572021484375e-06
+        ],
+        [
+          ":",
+          7.62939453125e-06
+        ],
+        [
+          "17",
+          1.621246337890625e-05
+        ],
+        [
+          ":",
+          1.239776611328125e-05
+        ],
+        [
+          "40",
+          1.621246337890625e-05
+        ],
+        [
+          " UTC",
+          -0.0036144256591796875
+        ],
+        [
+          "**",
+          -0.00019931793212890625
+        ],
+        [
+          ".",
+          -0.044849395751953125
+        ],
+        [
+          "  \n",
+          -1.0279979705810547
+        ],
+        [
+          "Source",
+          -1.33514404296875e-05
+        ],
+        [
+          ":",
+          -0.008898735046386719
+        ],
+        [
+          " https",
+          4.76837158203125e-06
+        ],
+        [
+          "://",
+          7.62939453125e-06
+        ],
+        [
+          "en",
+          5.7220458984375e-06
+        ],
+        [
+          ".wikipedia",
+          -4.76837158203125e-06
+        ],
+        [
+          ".org",
+          1.52587890625e-05
+        ],
+        [
+          "/wiki",
+          1.239776611328125e-05
+        ],
+        [
+          "/A",
+          -8.58306884765625e-06
+        ],
+        [
+          "pollo",
+          -2.86102294921875e-06
+        ],
+        [
+          "_",
+          7.62939453125e-06
+        ],
+        [
+          "11",
+          -8.58306884765625e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "Apollo 11\u2019s Moon landing (Lunar Module **Eagle** touchdown) was on **July 20, 1969 at 20:17:40 UTC**.  \nSource: https://en.wikipedia.org/wiki/Apollo_11",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.114011445438919,
+      "profiling_data": {
+        "total_time": 2.527923608000492,
+        "llm_time": 0.9438993570001912,
+        "energy_consumed_kwh": 6.231107816621178e-06,
+        "cpu_energy_kwh": 8.141608943998391e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.416946922221339e-06,
+        "emissions_kg_co2": 2.060739514897323e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 12.88853066900083,
+    "llm_time": 5.156240427000739,
+    "energy_consumed_kwh": 3.61351540826273e-05,
+    "cpu_energy_kwh": 3.7520092881888787e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.238314479443842e-05,
+    "emissions_kg_co2": 1.1950545887898336e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 4.79567371200028,
+      "llm_time": 1.6782410539999546,
+      "energy_consumed_kwh": 1.7294154909011028e-05,
+      "cpu_energy_kwh": 1.4774219562345575e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 1.581673295277647e-05,
+      "emissions_kg_co2": 5.71948832319831e-06
+    },
+    "WebSearch": {
+      "total_time": 5.564933349000057,
+      "llm_time": 2.5341000160005933,
+      "energy_consumed_kwh": 1.2609891356995093e-05,
+      "cpu_energy_kwh": 1.460426437554482e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.1149464919440612e-05,
+      "emissions_kg_co2": 4.170318049802704e-06
+    },
+    "Summary": {
+      "total_time": 2.527923608000492,
+      "llm_time": 0.9438993570001912,
+      "energy_consumed_kwh": 6.231107816621178e-06,
+      "cpu_energy_kwh": 8.141608943998391e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 5.416946922221339e-06,
+      "emissions_kg_co2": 2.060739514897323e-06
+    }
+  }
+}

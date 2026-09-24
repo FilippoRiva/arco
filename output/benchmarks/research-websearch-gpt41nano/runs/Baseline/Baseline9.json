@@ -1,0 +1,552 @@
+{
+  "prompt": "How does the ARCO research workflow decide whether to search the web or answer from general knowledge?",
+  "run_id": "Baseline9",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"CommonKnowledge\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.4974866644479334e-05
+        ],
+        [
+          "route",
+          0.0
+        ],
+        [
+          "\":",
+          -1.0325924449716695e-05
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Common",
+          -0.0011760591296479106
+        ],
+        [
+          "Knowledge",
+          -3.054500666621607e-06
+        ],
+        [
+          "\"}",
+          -9.088346359931165e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"CommonKnowledge\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.000172203861961,
+      "profiling_data": {
+        "total_time": 2.3457275049986492,
+        "llm_time": 0.7985434950005583,
+        "energy_consumed_kwh": 5.770170891604388e-06,
+        "cpu_energy_kwh": 7.533532777125208e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.0168176138918675e-06,
+        "emissions_kg_co2": 1.9082993769296202e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "CommonKnowledge",
+      "message": "The ARCO research workflow decides whether to search the web or answer from general knowledge based on the nature of the question. If the question requires current, specific, or source-based information, the workflow routes the query to WebSearch. If the question is stable, general knowledge that doesn't change frequently, or architecture-related, it routes to CommonKnowledge. The routing agent chooses the appropriate path based on these criteria, ensuring efficient and relevant responses.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.00038777425652369857
+        ],
+        [
+          " AR",
+          -2.1888679839321412e-05
+        ],
+        [
+          "CO",
+          -4.227250610711053e-05
+        ],
+        [
+          " research",
+          -1.771655115589965e-05
+        ],
+        [
+          " workflow",
+          -1.981667537620524e-06
+        ],
+        [
+          " decides",
+          -0.0234075915068388
+        ],
+        [
+          " whether",
+          -0.00044068231363780797
+        ],
+        [
+          " to",
+          -1.9361264946837764e-07
+        ],
+        [
+          " search",
+          -0.00017886889690998942
+        ],
+        [
+          " the",
+          -4.320199877838604e-07
+        ],
+        [
+          " web",
+          -2.451116051815916e-05
+        ],
+        [
+          " or",
+          -3.128163257315464e-07
+        ],
+        [
+          " answer",
+          -0.0012102338951081038
+        ],
+        [
+          " from",
+          -8.97155623533763e-05
+        ],
+        [
+          " general",
+          -0.0025080014020204544
+        ],
+        [
+          " knowledge",
+          -5.512236498361744e-07
+        ],
+        [
+          " based",
+          -0.0008034338243305683
+        ],
+        [
+          " on",
+          -8.65707261255011e-06
+        ],
+        [
+          " the",
+          -0.0006012882222421467
+        ],
+        [
+          " nature",
+          -0.28235387802124023
+        ],
+        [
+          " of",
+          -0.03364592790603638
+        ],
+        [
+          " the",
+          -0.011048289015889168
+        ],
+        [
+          " question",
+          -0.007452460005879402
+        ],
+        [
+          ".",
+          -0.06547931581735611
+        ],
+        [
+          " If",
+          -0.008672603406012058
+        ],
+        [
+          " the",
+          -0.0011966594029217958
+        ],
+        [
+          " question",
+          -0.006720347795635462
+        ],
+        [
+          " requires",
+          -0.0005299181793816388
+        ],
+        [
+          " current",
+          -0.010913528501987457
+        ],
+        [
+          ",",
+          -0.32204243540763855
+        ],
+        [
+          " specific",
+          -0.7961750626564026
+        ],
+        [
+          ",",
+          -0.5244352221488953
+        ],
+        [
+          " or",
+          -0.0003472633252386004
+        ],
+        [
+          " source",
+          -0.06712653487920761
+        ],
+        [
+          "-based",
+          -0.00023560250701848418
+        ],
+        [
+          " information",
+          -1.0087516784551553e-05
+        ],
+        [
+          ",",
+          -0.08414305001497269
+        ],
+        [
+          " the",
+          -0.38708704710006714
+        ],
+        [
+          " workflow",
+          -0.1687273383140564
+        ],
+        [
+          " routes",
+          -0.012968452647328377
+        ],
+        [
+          " the",
+          -0.18210387229919434
+        ],
+        [
+          " query",
+          -0.11440691351890564
+        ],
+        [
+          " to",
+          -0.0001899511698866263
+        ],
+        [
+          " Web",
+          -0.31668350100517273
+        ],
+        [
+          "Search",
+          -5.512236498361744e-07
+        ],
+        [
+          ".",
+          -0.6562927961349487
+        ],
+        [
+          " If",
+          -0.5808431506156921
+        ],
+        [
+          " the",
+          -0.0166701078414917
+        ],
+        [
+          " question",
+          -0.001193798496387899
+        ],
+        [
+          " is",
+          -0.24701407551765442
+        ],
+        [
+          " stable",
+          -0.5871759653091431
+        ],
+        [
+          ",",
+          -0.012726835906505585
+        ],
+        [
+          " general",
+          -0.5535539984703064
+        ],
+        [
+          " knowledge",
+          -0.22314569354057312
+        ],
+        [
+          " that",
+          -0.13071398437023163
+        ],
+        [
+          " doesn't",
+          -0.40937408804893494
+        ],
+        [
+          " change",
+          -0.6169165968894958
+        ],
+        [
+          " frequently",
+          -0.6120564937591553
+        ],
+        [
+          ",",
+          -0.021388119086623192
+        ],
+        [
+          " or",
+          -0.042675066739320755
+        ],
+        [
+          " architecture",
+          -0.8057909607887268
+        ],
+        [
+          "-related",
+          -0.0018578420858830214
+        ],
+        [
+          ",",
+          -0.005379137583076954
+        ],
+        [
+          " it",
+          -0.03833752125501633
+        ],
+        [
+          " routes",
+          -0.01747882179915905
+        ],
+        [
+          " to",
+          -0.3416888117790222
+        ],
+        [
+          " Common",
+          -0.011089913547039032
+        ],
+        [
+          "Knowledge",
+          -1.2664456789934775e-06
+        ],
+        [
+          ".",
+          -0.023683900013566017
+        ],
+        [
+          " The",
+          -0.6974387168884277
+        ],
+        [
+          " routing",
+          -0.37737005949020386
+        ],
+        [
+          " agent",
+          -0.01790606416761875
+        ],
+        [
+          " chooses",
+          -1.6724611520767212
+        ],
+        [
+          " the",
+          -0.19820481538772583
+        ],
+        [
+          " appropriate",
+          -0.10488217324018478
+        ],
+        [
+          " path",
+          -0.6163554787635803
+        ],
+        [
+          " based",
+          -0.8981834650039673
+        ],
+        [
+          " on",
+          -1.580929347255733e-05
+        ],
+        [
+          " these",
+          -0.5369794964790344
+        ],
+        [
+          " criteria",
+          -0.0660211369395256
+        ],
+        [
+          ",",
+          -0.8638313412666321
+        ],
+        [
+          " ensuring",
+          -0.08307233452796936
+        ],
+        [
+          " efficient",
+          -0.6630672812461853
+        ],
+        [
+          " and",
+          -0.016161173582077026
+        ],
+        [
+          " relevant",
+          -0.050690263509750366
+        ],
+        [
+          " responses",
+          -0.05772413685917854
+        ],
+        [
+          ".",
+          -0.0561128705739975
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the common-knowledge and architecture specialist. \nYou have no tools. Answer stable questions from your knowled. \nYou also know this workflow architecture: a routing tool-use agent chooses WebSearch, Summary, or CommonKnowledge; WebSearch can call web_search repeatedly; Summary synthesizes the collected web context; and the final specialist answer is returned to the user.\nExplain that architecture when the user asks about it.\nDo not pretend to have performed web research.",
+        "response": "The ARCO research workflow decides whether to search the web or answer from general knowledge based on the nature of the question. If the question requires current, specific, or source-based information, the workflow routes the query to WebSearch. If the question is stable, general knowledge that doesn't change frequently, or architecture-related, it routes to CommonKnowledge. The routing agent chooses the appropriate path based on these criteria, ensuring efficient and relevant responses.",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.75,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.2069995514991065,
+      "profiling_data": {
+        "total_time": 3.8817507139992813,
+        "llm_time": 2.29982413200014,
+        "energy_consumed_kwh": 1.0219649277600766e-05,
+        "cpu_energy_kwh": 1.0439009387060006e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 9.175748338894766e-06,
+        "emissions_kg_co2": 3.3798219697895704e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 6.2274782189979305,
+    "llm_time": 3.098367627000698,
+    "energy_consumed_kwh": 1.5989820169205153e-05,
+    "cpu_energy_kwh": 1.7972542164185214e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 1.4192565952786633e-05,
+    "emissions_kg_co2": 5.288121346719191e-06
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 2.3457275049986492,
+      "llm_time": 0.7985434950005583,
+      "energy_consumed_kwh": 5.770170891604388e-06,
+      "cpu_energy_kwh": 7.533532777125208e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 5.0168176138918675e-06,
+      "emissions_kg_co2": 1.9082993769296202e-06
+    },
+    "CommonKnowledge": {
+      "total_time": 3.8817507139992813,
+      "llm_time": 2.29982413200014,
+      "energy_consumed_kwh": 1.0219649277600766e-05,
+      "cpu_energy_kwh": 1.0439009387060006e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 9.175748338894766e-06,
+      "emissions_kg_co2": 3.3798219697895704e-06
+    }
+  }
+}

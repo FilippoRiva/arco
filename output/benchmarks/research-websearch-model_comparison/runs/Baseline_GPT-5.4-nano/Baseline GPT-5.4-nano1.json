@@ -1,0 +1,1170 @@
+{
+  "prompt": "What is the current price of a Tesla Model 3 in Germany?",
+  "run_id": "Baseline GPT-5.4-nano1",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "CommonKnowledge": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "ResearchRouter": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "Summary": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    },
+    "WebSearch": {
+      "provider": "openai",
+      "model": "gpt-5.4-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": true
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -1.1444091796875e-05
+        ],
+        [
+          "route",
+          0.0
+        ],
+        [
+          "\":\"",
+          -0.00015544891357421875
+        ],
+        [
+          "Web",
+          -5.7220458984375e-06
+        ],
+        [
+          "Search",
+          -8.58306884765625e-06
+        ],
+        [
+          "\"}",
+          -8.58306884765625e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000316306984007,
+      "profiling_data": {
+        "total_time": 2.222617502999128,
+        "llm_time": 0.6369540570012759,
+        "energy_consumed_kwh": 5.251944410106805e-06,
+        "cpu_energy_kwh": 6.855870184366498e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 4.566357391670156e-06,
+        "emissions_kg_co2": 1.7369125514217025e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "The Tesla Model 3 price in Germany is **from \u20ac45,970** (price shown as the local \u201cab\u201d-starting price, VAT included).  \n\nSource: Autohled.cz \u2014 *\u201cTesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac\u201d* (checked on **15.09.2026**): https://www.autohled.cz/de/a/tesla/model-3/cena",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.0983877182006836
+        ],
+        [
+          " Tesla",
+          -1.7023086547851562
+        ],
+        [
+          " Model",
+          -0.012944221496582031
+        ],
+        [
+          " ",
+          -1.52587890625e-05
+        ],
+        [
+          "3",
+          1.621246337890625e-05
+        ],
+        [
+          " price",
+          -1.3464126586914062
+        ],
+        [
+          " in",
+          -0.0012178421020507812
+        ],
+        [
+          " Germany",
+          -0.00040721893310546875
+        ],
+        [
+          " is",
+          -0.16244792938232422
+        ],
+        [
+          " **",
+          -0.057646751403808594
+        ],
+        [
+          "from",
+          -0.05962324142456055
+        ],
+        [
+          " \u20ac",
+          -0.0026216506958007812
+        ],
+        [
+          "45",
+          -0.0007982254028320312
+        ],
+        [
+          ",",
+          -0.0011854171752929688
+        ],
+        [
+          "970",
+          -1.33514404296875e-05
+        ],
+        [
+          "**",
+          -0.23847007751464844
+        ],
+        [
+          " (",
+          -0.008197784423828125
+        ],
+        [
+          "price",
+          -3.0134754180908203
+        ],
+        [
+          " shown",
+          -1.2194366455078125
+        ],
+        [
+          " as",
+          -0.20879554748535156
+        ],
+        [
+          " the",
+          -1.399688720703125
+        ],
+        [
+          " local",
+          -3.7667856216430664
+        ],
+        [
+          " \u201c",
+          -0.42590999603271484
+        ],
+        [
+          "ab",
+          -0.17381668090820312
+        ],
+        [
+          "\u201d-",
+          -0.9459562301635742
+        ],
+        [
+          "starting",
+          -0.10053730010986328
+        ],
+        [
+          " price",
+          -6.771087646484375e-05
+        ],
+        [
+          ",",
+          -0.2896852493286133
+        ],
+        [
+          " VAT",
+          -3.219776153564453
+        ],
+        [
+          " included",
+          -0.01203155517578125
+        ],
+        [
+          ").",
+          -0.24070453643798828
+        ],
+        [
+          "  \n\n",
+          -0.1663818359375
+        ],
+        [
+          "Source",
+          -0.02478790283203125
+        ],
+        [
+          ":",
+          -0.16055583953857422
+        ],
+        [
+          " Aut",
+          -0.1499319076538086
+        ],
+        [
+          "oh",
+          -9.5367431640625e-06
+        ],
+        [
+          "led",
+          -3.6716461181640625e-05
+        ],
+        [
+          ".cz",
+          -0.004076957702636719
+        ],
+        [
+          " \u2014",
+          -2.333139419555664
+        ],
+        [
+          " *",
+          -1.911102294921875
+        ],
+        [
+          "\u201c",
+          -0.0025472640991210938
+        ],
+        [
+          "Tesla",
+          -0.00017261505126953125
+        ],
+        [
+          " Model",
+          5.7220458984375e-06
+        ],
+        [
+          " ",
+          -9.5367431640625e-06
+        ],
+        [
+          "3",
+          2.86102294921875e-06
+        ],
+        [
+          " \u2013",
+          -0.0028448104858398438
+        ],
+        [
+          " Preis",
+          -3.814697265625e-06
+        ],
+        [
+          " in",
+          -1.430511474609375e-05
+        ],
+        [
+          " Deutschland",
+          4.76837158203125e-06
+        ],
+        [
+          " ab",
+          -1.621246337890625e-05
+        ],
+        [
+          " ",
+          1.1444091796875e-05
+        ],
+        [
+          "45",
+          -1.52587890625e-05
+        ],
+        [
+          ".",
+          1.621246337890625e-05
+        ],
+        [
+          "970",
+          -2.86102294921875e-06
+        ],
+        [
+          " \u20ac",
+          -9.441375732421875e-05
+        ],
+        [
+          "\u201d",
+          -4.76837158203125e-05
+        ],
+        [
+          "*",
+          -0.000118255615234375
+        ],
+        [
+          " (",
+          -0.0001277923583984375
+        ],
+        [
+          "checked",
+          -1.270756721496582
+        ],
+        [
+          " on",
+          -2.7052412033081055
+        ],
+        [
+          " **",
+          -0.13884735107421875
+        ],
+        [
+          "15",
+          -0.0017681121826171875
+        ],
+        [
+          ".",
+          -0.0001583099365234375
+        ],
+        [
+          "09",
+          8.58306884765625e-06
+        ],
+        [
+          ".",
+          1.621246337890625e-05
+        ],
+        [
+          "202",
+          8.58306884765625e-06
+        ],
+        [
+          "6",
+          7.62939453125e-06
+        ],
+        [
+          "**",
+          -0.6651859283447266
+        ],
+        [
+          "):",
+          -0.7870330810546875
+        ],
+        [
+          " https",
+          -5.14984130859375e-05
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "www",
+          -1.239776611328125e-05
+        ],
+        [
+          ".aut",
+          6.67572021484375e-06
+        ],
+        [
+          "oh",
+          7.62939453125e-06
+        ],
+        [
+          "led",
+          -1.430511474609375e-06
+        ],
+        [
+          ".cz",
+          -8.58306884765625e-06
+        ],
+        [
+          "/de",
+          -7.62939453125e-06
+        ],
+        [
+          "/a",
+          -1.049041748046875e-05
+        ],
+        [
+          "/",
+          -9.5367431640625e-06
+        ],
+        [
+          "tes",
+          5.7220458984375e-06
+        ],
+        [
+          "la",
+          5.7220458984375e-06
+        ],
+        [
+          "/model",
+          -2.86102294921875e-06
+        ],
+        [
+          "-",
+          -9.5367431640625e-06
+        ],
+        [
+          "3",
+          -1.52587890625e-05
+        ],
+        [
+          "/c",
+          -6.67572021484375e-06
+        ],
+        [
+          "ena",
+          4.76837158203125e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "The Tesla Model 3 price in Germany is **from \u20ac45,970** (price shown as the local \u201cab\u201d-starting price, VAT included).  \n\nSource: Autohled.cz \u2014 *\u201cTesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac\u201d* (checked on **15.09.2026**): https://www.autohled.cz/de/a/tesla/model-3/cena",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_tAJVNO35q1eAnlgLnDtUsuu0",
+            "name": "web_search",
+            "args": {
+              "query": "current price Tesla Model 3 Germany",
+              "max_results": 5
+            },
+            "result": "[1] Tesla Model 3 Standard Range Price in Germany with Specs 2026\nURL: https://www.autoswheeler.com/cars/tesla/tesla-model-3-standard-range-price-in-germany-75\nSnippet: Check the Tesla Model 3 Standard Range Price in Germany 2026 with full specs, features, range, release date & comparison. Updated daily at AutosWheeler.\n\n[2] Used Tesla Model 3 cars for sale in Germany | mobile.de\nURL: https://www.mobile.de/en/car/tesla/model-3\nSnippet: Find a used Tesla Model 3 on mobile.de Browse offers, compare prices & find your dream car safely. Check current deals on Germany's largest vehicle market\n\n[3] Tesla Model 3 Price in Germany 2026 \u2014 \u20ac52.500 Fair Value | 001 Index\nURL: https://001index.com/market-value/tesla-model-3-germany\nSnippet: The current fair market value of the Tesla Model 3 in Germany, adjusted for local pricing \u2014 broadly in line with the European average. Includes price trends, deal-score guidance, a depreciation forecast and negotiation range \u2014 generated by Nathaniel, our automotive intelligence engine. Fair market value \u20ac52.500 \u20ac43.500 - \u20ac61.500 typical 12-month trend -1.8% Market cooling Benchmark ...\n\n[4] Tesla Model 3: Modelle, Infos, Preise & Angebote | mobile.de\nURL: https://www.mobile.de/auto/tesla/model-3/serie/\nSnippet: Ist der Tesla Model 3 der richtige Wagen f\u00fcr dich? Hier findest du Bewertungen, Infos, Tests, technische Daten & Preise auf einen Blick Besuche mobile.de - Gr\u00f6\u00dfter Fahrzeugmarkt in DE\n\n[5] Tesla Model 3 - Preis in Deutschland ab 45.970 \u20ac | Autohled.cz\nURL: https://www.autohled.cz/de/a/tesla/model-3/cena\nSnippet: Aktueller Preis des Tesla Model 3 in Deutschland ab 45.970 \u20ac, verf\u00fcgbare Versionen und Link zur Preisquelle.",
+            "success": true
+          },
+          {
+            "iteration": 2,
+            "id": "call_9XW0MS2vJRxqPwjqYvdTHwkj",
+            "name": "web_search",
+            "args": {
+              "query": "Tesla Deutschland Model 3 Preis ab",
+              "max_results": 5
+            },
+            "result": "[1] Preisrutsch beim Tesla Model 3 - Einstieg jetzt ab 36.990 \u20ac\nURL: https://www.electricar-magazin.de/post/preisrutsch-beim-tesla-model-3-einstieg-jetzt-ab-36-990\nSnippet: Der US-Elektroautobauer Tesla senkt den Einstiegspreis f\u00fcr das \u00fcberarbeitete Model 3 in Deutschland deutlich: Die neue \u201eStandard\"-Variante ist ab 36.990 \u20ac bestellbar.\n\n[2] Tesla Model 3 - Preis in Deutschland ab 45.970 \u20ac | Autohled.cz\nURL: https://www.autohled.cz/de/a/tesla/model-3/cena\nSnippet: Aktueller Preis des Tesla Model 3 in Deutschland ab 45.970 \u20ac, verf\u00fcgbare Versionen und Link zur Preisquelle.\n\n[3] Tesla Model 3 (2026): alle Infos, Preise und Tests - AUTO BILD\nURL: https://www.autobild.de/marken-modelle/tesla/model-3/\nSnippet: Das Einstiegsmodell Model 3 Hinterradantrieb steht ab 36.990 Euro bei den H\u00e4ndlern. Dar\u00fcber rangiert eine reichweitenoptimierte Version mit Hinterradantrieb, die mindestens 44.990 Euro kostet....\n\n[4] Model 3 - Sportliche Elektrolimousine | Tesla Deutschland\nURL: https://www.tesla.com/de_de/model3\nSnippet: Erfahren Sie mehr \u00fcber das Model 3, eine mittelgro\u00dfe Elektrolimousine, die auf hohe Leistung zu einem erschwinglichen Preis ausgelegt ist und sich durch rasante Beschleunigung, maximale Reichweite und niedrige Betriebskosten auszeichnet.\n\n[5] Tesla Model 3 Preise, Leasing & Finanzierung\nURL: https://www.model3.info/de/preisrechner\nSnippet: Preise des Tesla Model 3 je Variante (ab 36.990 \u20ac), Leasing und Finanzierung - mit Rechner f\u00fcr Variante und monatliche Rate.",
+            "success": true
+          },
+          {
+            "iteration": 3,
+            "id": "call_2qmuWMVaAlbfgk92qXGfHani",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.tesla.com/de_de/model3",
+              "max_chars": 8000
+            },
+            "result": "Page fetch failed for 'https://www.tesla.com/de_de/model3': 403 Client Error: Forbidden for url: https://www.tesla.com/de_de/model3",
+            "success": true
+          },
+          {
+            "iteration": 4,
+            "id": "call_XZ1euSz0dkSxxJtaIt6UjRzm",
+            "name": "fetch_web_page",
+            "args": {
+              "url": "https://www.autohled.cz/de/a/tesla/model-3/cena",
+              "max_chars": 6000
+            },
+            "result": "URL: https://www.autohled.cz/de/a/tesla/model-3/cena\nTitle: Tesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac | Autohled.cz\nContent:\nTesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac | Autohled.cz AUTOHLED VERGLEICH MARKEN MAGAZIN Men\u00fc Tesla Model 3 Preis des Tesla Model 3 in Deutschland Zur\u00fcck zum Modell Tesla Model 3 Preis des Tesla Model 3 in Deutschland Wie viel kostet der Tesla Model 3 in Deutschland? Der Tesla Model 3 kostet in Deutschland laut aktueller lokaler Quelle ab 45.970 \u20ac. Preis\u00fcbersicht der verf\u00fcgbaren Versionen Ausstattung Motor Preis \u2014 \u2014 45.970 \u20ac Preisquelle und Aktualit\u00e4t Quelle: offizielle Website des Herstellers. Der Preisstand wurde am 15.09.2026 \u00fcberpr\u00fcft. Preisquelle \u00f6ffnen . Die angegebenen Preise verstehen sich inklusive Mehrwertsteuer. Auf dieser Seite wird ausschlie\u00dflich der f\u00fcr den deutschen Markt in Euro angegebene Preis verwendet; es handelt sich nicht um eine Umrechnung des tschechischen Preises. AUTOHLED Autohled Group s.r.o. Rybn\u00e1 716/24, Star\u00e9 m\u011bsto, 110 00 Praha 1, I\u010cO: 05729734, DI\u010c: CZ05729734 [email protected] Auto ausw\u00e4hlen und kaufen Katalog und Vergleich Hersteller Fahrzeugvergleich Magazin und Daten Magazin MCP f\u00fcr KI-Assistenten Autohled Fehler melden Facebook Instagram \u010cesky Polski Deutsch Italiano English 0 Vergleich",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.2,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.4015928049196191,
+      "profiling_data": {
+        "total_time": 8.095343584000148,
+        "llm_time": 3.9569199539982947,
+        "energy_consumed_kwh": 1.4529532580293839e-05,
+        "cpu_energy_kwh": 1.8996293941957452e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.2629903186098093e-05,
+        "emissions_kg_co2": 4.805177955889618e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\":\"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "{\"",
+          1.33514404296875e-05
+        ],
+        [
+          "route",
+          0.0
+        ],
+        [
+          "\":\"",
+          -6.866455078125e-05
+        ],
+        [
+          "Summary",
+          -0.00054168701171875
+        ],
+        [
+          "\"}",
+          -6.67572021484375e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\":\"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.000120742457241,
+      "profiling_data": {
+        "total_time": 2.4596899160005705,
+        "llm_time": 0.8756256999986363,
+        "energy_consumed_kwh": 6.013553524361337e-06,
+        "cpu_energy_kwh": 7.860356243628116e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.227517899998526e-06,
+        "emissions_kg_co2": 1.9887903944697327e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "The current price of the **Tesla Model 3 in Germany** is **from \u20ac45,970** (VAT included; \u201cab\u201d starting price).  \n\n**Source:** Autohled.cz \u2014 \u201cTesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac\u201d (price checked **15.09.2026**): https://www.autohled.cz/de/a/tesla/model-3/cena",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-5.4-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": true
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.5681829452514648
+        ],
+        [
+          " current",
+          -0.7381172180175781
+        ],
+        [
+          " price",
+          -1.0855646133422852
+        ],
+        [
+          " of",
+          -0.20854663848876953
+        ],
+        [
+          " the",
+          -0.033661842346191406
+        ],
+        [
+          " **",
+          -0.048605918884277344
+        ],
+        [
+          "Tesla",
+          -8.58306884765625e-06
+        ],
+        [
+          " Model",
+          5.7220458984375e-06
+        ],
+        [
+          " ",
+          7.62939453125e-06
+        ],
+        [
+          "3",
+          -1.52587890625e-05
+        ],
+        [
+          " in",
+          -3.719329833984375e-05
+        ],
+        [
+          " Germany",
+          0.0
+        ],
+        [
+          "**",
+          -0.1744222640991211
+        ],
+        [
+          " is",
+          -0.07009601593017578
+        ],
+        [
+          " **",
+          -0.20708274841308594
+        ],
+        [
+          "from",
+          -0.11223888397216797
+        ],
+        [
+          " \u20ac",
+          -0.00019550323486328125
+        ],
+        [
+          "45",
+          1.52587890625e-05
+        ],
+        [
+          ",",
+          -1.239776611328125e-05
+        ],
+        [
+          "970",
+          -7.62939453125e-06
+        ],
+        [
+          "**",
+          -0.0041713714599609375
+        ],
+        [
+          " (",
+          -0.031989097595214844
+        ],
+        [
+          "VAT",
+          -0.35918521881103516
+        ],
+        [
+          " included",
+          -0.0013341903686523438
+        ],
+        [
+          ";",
+          -0.17451763153076172
+        ],
+        [
+          " \u201c",
+          -0.17879962921142578
+        ],
+        [
+          "ab",
+          -0.00024700164794921875
+        ],
+        [
+          "\u201d",
+          -0.1638174057006836
+        ],
+        [
+          " starting",
+          -0.5090208053588867
+        ],
+        [
+          " price",
+          -0.00030803680419921875
+        ],
+        [
+          ").",
+          -1.1693143844604492
+        ],
+        [
+          "  \n\n",
+          -0.012963294982910156
+        ],
+        [
+          "**",
+          -0.3893461227416992
+        ],
+        [
+          "Source",
+          -0.006999015808105469
+        ],
+        [
+          ":**",
+          -0.025808334350585938
+        ],
+        [
+          " Aut",
+          -0.011313438415527344
+        ],
+        [
+          "oh",
+          0.0
+        ],
+        [
+          "led",
+          -1.0013580322265625e-05
+        ],
+        [
+          ".cz",
+          -8.58306884765625e-06
+        ],
+        [
+          " \u2014",
+          -1.1731338500976562
+        ],
+        [
+          " \u201c",
+          -0.027538299560546875
+        ],
+        [
+          "Tesla",
+          -7.724761962890625e-05
+        ],
+        [
+          " Model",
+          5.7220458984375e-06
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "3",
+          -5.7220458984375e-06
+        ],
+        [
+          " \u2013",
+          -0.0001277923583984375
+        ],
+        [
+          " Preis",
+          2.86102294921875e-06
+        ],
+        [
+          " in",
+          1.621246337890625e-05
+        ],
+        [
+          " Deutschland",
+          6.67572021484375e-06
+        ],
+        [
+          " ab",
+          2.86102294921875e-06
+        ],
+        [
+          " ",
+          -1.049041748046875e-05
+        ],
+        [
+          "45",
+          0.0
+        ],
+        [
+          ".",
+          -1.9073486328125e-05
+        ],
+        [
+          "970",
+          6.67572021484375e-06
+        ],
+        [
+          " \u20ac",
+          -0.0011234283447265625
+        ],
+        [
+          "\u201d",
+          -0.00031185150146484375
+        ],
+        [
+          " (",
+          -0.010263442993164062
+        ],
+        [
+          "price",
+          -0.6311216354370117
+        ],
+        [
+          " checked",
+          -0.0279083251953125
+        ],
+        [
+          " **",
+          -0.7866840362548828
+        ],
+        [
+          "15",
+          -0.00018405914306640625
+        ],
+        [
+          ".",
+          -0.0001201629638671875
+        ],
+        [
+          "09",
+          1.1444091796875e-05
+        ],
+        [
+          ".",
+          1.621246337890625e-05
+        ],
+        [
+          "202",
+          2.86102294921875e-06
+        ],
+        [
+          "6",
+          -1.239776611328125e-05
+        ],
+        [
+          "**",
+          -0.8438806533813477
+        ],
+        [
+          "):",
+          -0.048248291015625
+        ],
+        [
+          " https",
+          -0.000152587890625
+        ],
+        [
+          "://",
+          8.58306884765625e-06
+        ],
+        [
+          "www",
+          5.7220458984375e-06
+        ],
+        [
+          ".aut",
+          -1.239776611328125e-05
+        ],
+        [
+          "oh",
+          -8.58306884765625e-06
+        ],
+        [
+          "led",
+          -4.76837158203125e-07
+        ],
+        [
+          ".cz",
+          -3.814697265625e-06
+        ],
+        [
+          "/de",
+          0.0
+        ],
+        [
+          "/a",
+          4.76837158203125e-06
+        ],
+        [
+          "/",
+          1.621246337890625e-05
+        ],
+        [
+          "tes",
+          -8.58306884765625e-06
+        ],
+        [
+          "la",
+          -2.86102294921875e-06
+        ],
+        [
+          "/model",
+          -1.9073486328125e-06
+        ],
+        [
+          "-",
+          1.33514404296875e-05
+        ],
+        [
+          "3",
+          5.7220458984375e-06
+        ],
+        [
+          "/c",
+          -1.52587890625e-05
+        ],
+        [
+          "ena",
+          -6.67572021484375e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "The current price of the **Tesla Model 3 in Germany** is **from \u20ac45,970** (VAT included; \u201cab\u201d starting price).  \n\n**Source:** Autohled.cz \u2014 \u201cTesla Model 3 \u2013 Preis in Deutschland ab 45.970 \u20ac\u201d (price checked **15.09.2026**): https://www.autohled.cz/de/a/tesla/model-3/cena",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.18,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.1226891200294453,
+      "profiling_data": {
+        "total_time": 3.0846097539997572,
+        "llm_time": 1.5008768429997872,
+        "energy_consumed_kwh": 1.3366331810254586e-05,
+        "cpu_energy_kwh": 8.371361769235339e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.2529195633331053e-05,
+        "emissions_kg_co2": 4.420486523623776e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 15.862260756999603,
+    "llm_time": 6.970376553997994,
+    "energy_consumed_kwh": 3.916136232501657e-05,
+    "cpu_energy_kwh": 4.208388213918741e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.495297411109783e-05,
+    "emissions_kg_co2": 1.2951367425404831e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 4.682307418999699,
+      "llm_time": 1.5125797569999122,
+      "energy_consumed_kwh": 1.1265497934468143e-05,
+      "cpu_energy_kwh": 1.4716226427994612e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 9.793875291668681e-06,
+      "emissions_kg_co2": 3.725702945891435e-06
+    },
+    "WebSearch": {
+      "total_time": 8.095343584000148,
+      "llm_time": 3.9569199539982947,
+      "energy_consumed_kwh": 1.4529532580293839e-05,
+      "cpu_energy_kwh": 1.8996293941957452e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.2629903186098093e-05,
+      "emissions_kg_co2": 4.805177955889618e-06
+    },
+    "Summary": {
+      "total_time": 3.0846097539997572,
+      "llm_time": 1.5008768429997872,
+      "energy_consumed_kwh": 1.3366331810254586e-05,
+      "cpu_energy_kwh": 8.371361769235339e-07,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.2529195633331053e-05,
+      "emissions_kg_co2": 4.420486523623776e-06
+    }
+  }
+}

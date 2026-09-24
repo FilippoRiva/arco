@@ -1,0 +1,52 @@
+[
+  {
+    "id": 0,
+    "prompt": "What is the difference between TCP and UDP?",
+    "difficulty": 1
+  },
+  {
+    "id": 1,
+    "prompt": "What is the current price of a Tesla Model 3 in Germany?",
+    "difficulty": 2
+  },
+  {
+    "id": 2,
+    "prompt": "What does the Python 3.14 documentation say about asyncio.TaskGroup?",
+    "difficulty": 2
+  },
+  {
+    "id": 3,
+    "prompt": "When was Coca-Cola invented, who created it, and why?",
+    "difficulty": 2
+  },
+  {
+    "id": 4,
+    "prompt": "Read the Wikipedia page about the Apollo 11 mission and tell me the exact date and time of the Moon landing.",
+    "difficulty": 3
+  },
+  {
+    "id": 5,
+    "prompt": "Compare the official Python documentation and Real Python's explanation of decorators.",
+    "difficulty": 3
+  },
+  {
+    "id": 6,
+    "prompt": "What are the main differences between PostgreSQL 17 and PostgreSQL 18?",
+    "difficulty": 3
+  },
+  {
+    "id": 7,
+    "prompt": "What year was Coca-Cola invented, who created it, and what were Coca-Cola Company's sales last year?",
+    "difficulty": 3
+  },
+  {
+    "id": 8,
+    "prompt": "Search for information about prompt injection attacks and summarize the most authoritative sources.",
+    "difficulty": 4
+  },
+  {
+    "id": 9,
+    "prompt": "How does the ARCO research workflow decide whether to search the web or answer from general knowledge?",
+    "difficulty": 2
+  }
+]

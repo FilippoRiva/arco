@@ -1,0 +1,1556 @@
+{
+  "prompt": "What are the main differences between PostgreSQL 17 and PostgreSQL 18?",
+  "run_id": "Baseline6",
+  "agent_configs": {
+    "__default__": {
+      "provider": "openai",
+      "model": "gpt-4.1-nano",
+      "provider_judge": "openai",
+      "model_judge": "gpt-5.6-luna",
+      "n": 1,
+      "bon_parameter": "temperature",
+      "temp_min": 0.1,
+      "temp_max": 0.1,
+      "top_p_min": null,
+      "top_p_max": null,
+      "top_k_min": null,
+      "top_k_max": null,
+      "max_tokens": 2000,
+      "num_beams": 1,
+      "no_repeat_ngram_size": null,
+      "iterative_refinement_n": 1,
+      "enable_reasoning": false,
+      "reasoning_effort": null,
+      "reasoning_summary": null,
+      "reasoning_max_tokens": null,
+      "verbosity": null,
+      "enable_logprobs": true,
+      "enable_budget_controller": false
+    }
+  },
+  "enable_storage": false,
+  "save_dir": "./output",
+  "answers": [
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"WebSearch\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -2.4987974029500037e-05
+        ],
+        [
+          "route",
+          -1.9361264946837764e-07
+        ],
+        [
+          "\":",
+          -6.392202976712724e-06
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Web",
+          -3.5716304410016164e-05
+        ],
+        [
+          "Search",
+          -1.9361264946837764e-07
+        ],
+        [
+          "\"}",
+          -1.3856492842023727e-06
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"WebSearch\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0000098385278264,
+      "profiling_data": {
+        "total_time": 2.433073348000107,
+        "llm_time": 0.8500005850000889,
+        "energy_consumed_kwh": 5.9344537879327695e-06,
+        "cpu_energy_kwh": 7.744061101556909e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 5.160047677777079e-06,
+        "emissions_kg_co2": 1.9626306878375497e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "WebSearch",
+      "message": "{\n  \"route\": \"Summary\"\n}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "{\n",
+          -0.449171245098114
+        ],
+        [
+          " ",
+          -4.320199877838604e-07
+        ],
+        [
+          " \"",
+          -4.36574100604048e-06
+        ],
+        [
+          "route",
+          -3.292907877039397e-06
+        ],
+        [
+          "\":",
+          -7.896309739408025e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Summary",
+          -0.0014271405525505543
+        ],
+        [
+          "\"\n",
+          -0.002186426194384694
+        ],
+        [
+          "}",
+          -8.077528764260933e-05
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the web and academic research specialist.\nUse web_search for current facts, official documentation, news, and broad public-web research.\nUse fetch_web_page after web_search when exact page content is needed rather than relying on a snippet.\nSearch multiple times when different queries or source types are needed.\nPrefer primary and authoritative sources, preserve stable URLs, and do not invent facts.\nOnce enough evidence has been collected, provide a concise research result with the sources for the Summary agent.",
+        "response": "{\n  \"route\": \"Summary\"\n}",
+        "tool_calls": [
+          {
+            "iteration": 1,
+            "id": "call_FhjjxeuPtLcjG45mzLLLRu02",
+            "name": "web_search",
+            "args": {
+              "query": "Differences between PostgreSQL 17 and PostgreSQL 18"
+            },
+            "result": "[1] Benchmarking Postgres 17 vs 18 \u2014 PlanetScale\nURL: https://planetscale.com/blog/benchmarking-postgres-17-vs-18\nSnippet: Additionally, the delta between postgres 17 and 18 is much smaller. Below is an interactive visual comparing the Postgres 17 results for all instance types with the best performer on Postgres 18, workers. Click on the thumbnails to add or remove lines from the graph and compare various combinations. This is based on a 10-second sample rate.\n\n[2] Feature Matrix - PostgreSQL\nURL: https://www.postgresql.org/about/featurematrix/\nSnippet: Feature Matrix This table outlines which features were added in which version. To get more information about a feature, click the link or hover the mouse pointer over the text. Groups Backend Data Types, Functions, & Operators Indexing & Constraints SQL Data Definition Language (DDL) Performance JSON Partitioning & Inheritance Views & Materialized Views Replication Backup, Restore, & Data ...\n\n[3] Issue #620: Benchmarking Postgres 17 vs 18 \u2014 Postgres Weekly\nURL: https://postgresweekly.com/issues/620\nSnippet: Benchmarking Postgres 17 vs 18 \u2014 The author conducted a series of detailed performance benchmarks between Postgres 17 and 18, in some 96 combinations, and reassuringly finds that Postgres 18 gives us a nice performance bump, local disks rule, and tweaking your settings is still worthwhile. Ben Dicken (PlanetScale)\n\n[4] Comparing stats! PostgreSQL 18 against 17\nURL: https://www.cybertec-postgresql.com/en/comparing-stats-postgresql-18-against-17/\nSnippet: This blog compares the stats of PostgreSQL 18 and PostgreSQL17. It is a great read with some common questions answered. Read to know more.\n\n[5] PostgreSQL 17 vs 18: Side\u2011by\u2011Side Performance Wins in Real\u2011World ...\nURL: https://posetteconf.com/2026/talks/postgresql-17-vs-18-side-by-side-performance-wins-in-real-world-queries/\nSnippet: Simply upgrading PostgreSQL can make many everyday queries run faster, without any schema changes or application rewrites. In this talk, I'll do a side\u2011by\u2011side comparison of Postgres 17 and 18 using common query patterns that developers and operators see in real systems. For each example, I'll compare execution plans and runtimes to show where PostgreSQL 18 is faster and what planner ...",
+            "success": true
+          }
+        ]
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.02,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.051606910503468,
+      "profiling_data": {
+        "total_time": 4.4585002019994135,
+        "llm_time": 1.945826073999342,
+        "energy_consumed_kwh": 9.302808041202724e-06,
+        "cpu_energy_kwh": 1.215756013423967e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 8.087052027778757e-06,
+        "emissions_kg_co2": 3.0766060697704826e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "ResearchRouter",
+      "message": "{\"route\": \"Summary\"}",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "{\"",
+          -0.00014132341311778873
+        ],
+        [
+          "route",
+          -3.128163257315464e-07
+        ],
+        [
+          "\":",
+          -9.088346359931165e-07
+        ],
+        [
+          " \"",
+          0.0
+        ],
+        [
+          "Summary",
+          -0.0010646054288372397
+        ],
+        [
+          "\"}",
+          -7.896309739408025e-07
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the routing agent for a web-research workflow.\nThe workflow contains three specialist agents:\n- WebSearch: can search the public web and fetch pages; use it for current or source-based questions.\n- Summary: has no tools and synthesizes the web-search results already in the workflow context.\n- CommonKnowledge: has no tools and answers from general knowledge. It also understands this workflow's architecture and can explain it when asked.\n\nChoose exactly one route. Use WebSearch for requests needing current information or sources. After a web search, choose WebSearch again if more queries are needed, otherwise choose Summary. Use CommonKnowledge for stable general-knowledge or architecture questions.\n\nYou are only a router, not a tool executor. Do not call tools and do not emit tool-call syntax. In particular, never output `multi_tool_use.parallel`, `functions.*`, `recipient`, `tool_uses`, a list of queries, or any other orchestration format. Do not return multiple routes. Your entire response must be exactly one plain JSON object with one of the three allowed route values and no markdown fences or explanation:\n{\"route\": \"WebSearch\"}\n{\"route\": \"Summary\"}\n{\"route\": \"CommonKnowledge\"}",
+        "response": "{\"route\": \"Summary\"}",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 1.0,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.0002013436208883,
+      "profiling_data": {
+        "total_time": 3.3480593280000903,
+        "llm_time": 1.8097125100011908,
+        "energy_consumed_kwh": 7.396904134518111e-06,
+        "cpu_energy_kwh": 9.657631678513687e-07,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 6.431140966666742e-06,
+        "emissions_kg_co2": 2.4462893415595605e-06
+      },
+      "budget_controller_choice": "end"
+    },
+    {
+      "agent_id": "Summary",
+      "message": "The main differences between PostgreSQL 17 and PostgreSQL 18 are primarily related to performance improvements and feature enhancements. According to recent benchmarking and comparison sources:\n\n- PostgreSQL 18 offers a noticeable performance boost over version 17, with improvements observed in various real-world query scenarios. Upgrading to PostgreSQL 18 can make many everyday queries run faster without requiring schema changes or application rewrites.\n- The delta between the two versions is relatively small, but PostgreSQL 18 benefits from optimizations that enhance efficiency and speed.\n- Specific features added or improved in PostgreSQL 18 can be found in the official feature matrix, which details new capabilities and changes across versions.\n\nSources:\n- [PlanetScale Benchmarking Postgres 17 vs 18](https://planetscale.com/blog/benchmarking-postgres-17-vs-18)\n- [Cybertec PostgreSQL Stats Comparison](https://www.cybertec-postgresql.com/en/comparing-stats-postgresql-18-against-17/)\n- [Postgres Weekly Issue #620](https://postgresweekly.com/issues/620)\n- [Posette Conference Talk on Performance](https://posetteconf.com/2026/talks/postgresql-17-vs-18-side-by-side-performance-wins-in-real-world-queries/)\n\nIn summary, PostgreSQL 18 provides performance enhancements over 17, with minor feature updates, making it a recommended upgrade for better efficiency.",
+      "agent_config": {
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "provider_judge": "openai",
+        "model_judge": "gpt-5.6-luna",
+        "n": 1,
+        "bon_parameter": "temperature",
+        "temp_min": 0.1,
+        "temp_max": 0.1,
+        "top_p_min": null,
+        "top_p_max": null,
+        "top_k_min": null,
+        "top_k_max": null,
+        "max_tokens": 2000,
+        "num_beams": 1,
+        "no_repeat_ngram_size": null,
+        "iterative_refinement_n": 1,
+        "enable_reasoning": false,
+        "reasoning_effort": null,
+        "reasoning_summary": null,
+        "reasoning_max_tokens": null,
+        "verbosity": null,
+        "enable_logprobs": true,
+        "enable_budget_controller": false
+      },
+      "logprobs": [
+        [
+          "The",
+          -0.5272026658058167
+        ],
+        [
+          " main",
+          -0.019700095057487488
+        ],
+        [
+          " differences",
+          -1.3782830137643032e-05
+        ],
+        [
+          " between",
+          -1.5570885807392187e-05
+        ],
+        [
+          " Postgre",
+          -1.9361264946837764e-07
+        ],
+        [
+          "SQL",
+          -1.9361264946837764e-07
+        ],
+        [
+          " ",
+          -4.6087021473795176e-05
+        ],
+        [
+          "17",
+          -3.128163257315464e-07
+        ],
+        [
+          " and",
+          -2.339278580620885e-06
+        ],
+        [
+          " Postgre",
+          -1.4974866644479334e-05
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          " are",
+          -0.3758601248264313
+        ],
+        [
+          " primarily",
+          -0.2942696511745453
+        ],
+        [
+          " related",
+          -0.8523561358451843
+        ],
+        [
+          " to",
+          0.0
+        ],
+        [
+          " performance",
+          -0.0003631137660704553
+        ],
+        [
+          " improvements",
+          -0.023823712021112442
+        ],
+        [
+          " and",
+          -0.18022437393665314
+        ],
+        [
+          " feature",
+          -0.42488938570022583
+        ],
+        [
+          " enhancements",
+          -0.26169469952583313
+        ],
+        [
+          ".",
+          -0.017210885882377625
+        ],
+        [
+          " According",
+          -0.18632376194000244
+        ],
+        [
+          " to",
+          0.0
+        ],
+        [
+          " recent",
+          -0.1482667326927185
+        ],
+        [
+          " benchmarking",
+          -0.2986118793487549
+        ],
+        [
+          " and",
+          -0.02400575578212738
+        ],
+        [
+          " comparison",
+          -0.9598379731178284
+        ],
+        [
+          " sources",
+          -1.048858404159546
+        ],
+        [
+          ":\n\n",
+          -0.06335127353668213
+        ],
+        [
+          "-",
+          -0.3132626414299011
+        ],
+        [
+          " Postgre",
+          -0.016337575390934944
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "18",
+          -1.9361264946837764e-07
+        ],
+        [
+          " offers",
+          -0.20691034197807312
+        ],
+        [
+          " a",
+          -0.156413272023201
+        ],
+        [
+          " noticeable",
+          -0.5893974900245667
+        ],
+        [
+          " performance",
+          -2.165027217415627e-05
+        ],
+        [
+          " boost",
+          -0.16383203864097595
+        ],
+        [
+          " over",
+          -0.030062278732657433
+        ],
+        [
+          " version",
+          -0.660007655620575
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "17",
+          0.0
+        ],
+        [
+          ",",
+          -0.018035095185041428
+        ],
+        [
+          " with",
+          -0.4884599447250366
+        ],
+        [
+          " improvements",
+          -0.5944322943687439
+        ],
+        [
+          " observed",
+          -0.6088979244232178
+        ],
+        [
+          " in",
+          -0.2523595094680786
+        ],
+        [
+          " various",
+          -0.994035542011261
+        ],
+        [
+          " real",
+          -0.5465567708015442
+        ],
+        [
+          "-world",
+          -1.0280383548888494e-06
+        ],
+        [
+          " query",
+          -0.07141028344631195
+        ],
+        [
+          " scenarios",
+          -0.12746304273605347
+        ],
+        [
+          ".",
+          -0.6993390917778015
+        ],
+        [
+          " Up",
+          -0.3212414085865021
+        ],
+        [
+          "grading",
+          -0.0022012863773852587
+        ],
+        [
+          " to",
+          -0.5271822810173035
+        ],
+        [
+          " Postgre",
+          -0.24528107047080994
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          " can",
+          -0.0007890212000347674
+        ],
+        [
+          " make",
+          -0.7401819229125977
+        ],
+        [
+          " many",
+          -0.014102266170084476
+        ],
+        [
+          " everyday",
+          -0.21119660139083862
+        ],
+        [
+          " queries",
+          -0.0003025729674845934
+        ],
+        [
+          " run",
+          -0.11024346947669983
+        ],
+        [
+          " faster",
+          -9.253090865968261e-06
+        ],
+        [
+          " without",
+          -0.011263915337622166
+        ],
+        [
+          " requiring",
+          -0.25118425488471985
+        ],
+        [
+          " schema",
+          -0.01529854629188776
+        ],
+        [
+          " changes",
+          -0.05178827792406082
+        ],
+        [
+          " or",
+          -0.004653337877243757
+        ],
+        [
+          " application",
+          -0.003780831815674901
+        ],
+        [
+          " rew",
+          -0.0029010437428951263
+        ],
+        [
+          "rites",
+          0.0
+        ],
+        [
+          ".\n",
+          -0.4296925961971283
+        ],
+        [
+          "-",
+          -0.0004891689168289304
+        ],
+        [
+          " The",
+          -0.01997344009578228
+        ],
+        [
+          " delta",
+          -0.13627971708774567
+        ],
+        [
+          " between",
+          -0.2785353660583496
+        ],
+        [
+          " the",
+          -0.6616944670677185
+        ],
+        [
+          " two",
+          -0.002227098448202014
+        ],
+        [
+          " versions",
+          -0.000287795381154865
+        ],
+        [
+          " is",
+          -0.014509342610836029
+        ],
+        [
+          " relatively",
+          -0.0529814288020134
+        ],
+        [
+          " small",
+          -0.0002559753193054348
+        ],
+        [
+          ",",
+          -0.08350734412670135
+        ],
+        [
+          " but",
+          -0.13874752819538116
+        ],
+        [
+          " Postgre",
+          -0.25081291794776917
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          0.0
+        ],
+        [
+          "18",
+          -1.9361264946837764e-07
+        ],
+        [
+          " benefits",
+          -1.9361363649368286
+        ],
+        [
+          " from",
+          -8.590104698669165e-05
+        ],
+        [
+          " optim",
+          -0.43827298283576965
+        ],
+        [
+          "izations",
+          -3.128163257315464e-07
+        ],
+        [
+          " that",
+          -0.08002232015132904
+        ],
+        [
+          " enhance",
+          -0.18209891021251678
+        ],
+        [
+          " efficiency",
+          -1.1272059679031372
+        ],
+        [
+          " and",
+          -0.8388097286224365
+        ],
+        [
+          " speed",
+          -0.3689890205860138
+        ],
+        [
+          ".\n",
+          -0.11768694967031479
+        ],
+        [
+          "-",
+          -0.00010926496179308742
+        ],
+        [
+          " Specific",
+          -0.08217277377843857
+        ],
+        [
+          " features",
+          -1.1854676008224487
+        ],
+        [
+          " added",
+          -0.579608142375946
+        ],
+        [
+          " or",
+          -0.35075125098228455
+        ],
+        [
+          " improved",
+          -0.14671118557453156
+        ],
+        [
+          " in",
+          -0.06061699613928795
+        ],
+        [
+          " Postgre",
+          -0.07164355367422104
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          -2.951771421066951e-05
+        ],
+        [
+          "18",
+          -1.9361264946837764e-07
+        ],
+        [
+          " can",
+          -0.7144883275032043
+        ],
+        [
+          " be",
+          -0.07104438543319702
+        ],
+        [
+          " found",
+          -0.3156549036502838
+        ],
+        [
+          " in",
+          -0.0350402407348156
+        ],
+        [
+          " the",
+          -0.059140440076589584
+        ],
+        [
+          " official",
+          -0.29667627811431885
+        ],
+        [
+          " feature",
+          -0.019764719530940056
+        ],
+        [
+          " matrix",
+          -5.157039049663581e-05
+        ],
+        [
+          ",",
+          -0.05070193111896515
+        ],
+        [
+          " which",
+          -1.294671654701233
+        ],
+        [
+          " details",
+          -0.293607622385025
+        ],
+        [
+          " new",
+          -1.079046607017517
+        ],
+        [
+          " capabilities",
+          -0.9644439816474915
+        ],
+        [
+          " and",
+          -0.32961294054985046
+        ],
+        [
+          " changes",
+          -0.4804026484489441
+        ],
+        [
+          " across",
+          -1.6237597465515137
+        ],
+        [
+          " versions",
+          -0.06162947416305542
+        ],
+        [
+          ".\n\n",
+          -0.30148792266845703
+        ],
+        [
+          "Sources",
+          -0.3943888247013092
+        ],
+        [
+          ":\n",
+          -0.3811143636703491
+        ],
+        [
+          "-",
+          -0.2813015282154083
+        ],
+        [
+          " [",
+          -0.16320087015628815
+        ],
+        [
+          "Planet",
+          -0.027745123952627182
+        ],
+        [
+          "Scale",
+          -1.664371848164592e-05
+        ],
+        [
+          " Benchmark",
+          -0.4860738515853882
+        ],
+        [
+          "ing",
+          -0.031474094837903976
+        ],
+        [
+          " Post",
+          -0.23464736342430115
+        ],
+        [
+          "gres",
+          -3.523948907968588e-05
+        ],
+        [
+          " ",
+          -2.5776860184123507e-06
+        ],
+        [
+          "17",
+          -1.2664456789934775e-06
+        ],
+        [
+          " vs",
+          -1.9743012671824545e-05
+        ],
+        [
+          " ",
+          -9.615255839889869e-05
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "](",
+          -5.796184723294573e-06
+        ],
+        [
+          "https",
+          0.0
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "plan",
+          -4.36574100604048e-06
+        ],
+        [
+          "ets",
+          -1.9361264946837764e-07
+        ],
+        [
+          "cale",
+          -3.128163257315464e-07
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/blog",
+          0.0
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "benchmark",
+          -4.4849443838757e-06
+        ],
+        [
+          "ing",
+          -1.9361264946837764e-07
+        ],
+        [
+          "-post",
+          -4.320199877838604e-07
+        ],
+        [
+          "gres",
+          -5.319370302458992e-06
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "17",
+          -5.512236498361744e-07
+        ],
+        [
+          "-v",
+          0.0
+        ],
+        [
+          "s",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          ")\n",
+          -0.0007266097818501294
+        ],
+        [
+          "-",
+          -4.320199877838604e-07
+        ],
+        [
+          " [",
+          -7.896309739408025e-07
+        ],
+        [
+          "Cyber",
+          -0.18035537004470825
+        ],
+        [
+          "tec",
+          -0.0012357031228020787
+        ],
+        [
+          " Postgre",
+          -1.1438984870910645
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " Stats",
+          -0.26088616251945496
+        ],
+        [
+          " Comparison",
+          -0.0005604196921922266
+        ],
+        [
+          "](",
+          -2.935296834039036e-06
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "www",
+          -5.512236498361744e-07
+        ],
+        [
+          ".cy",
+          -5.512236498361744e-07
+        ],
+        [
+          "ber",
+          0.0
+        ],
+        [
+          "tec",
+          -4.320199877838604e-07
+        ],
+        [
+          "-post",
+          -1.9361264946837764e-07
+        ],
+        [
+          "gresql",
+          -4.4894986785948277e-05
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/en",
+          0.0
+        ],
+        [
+          "/com",
+          -1.9361264946837764e-07
+        ],
+        [
+          "paring",
+          -1.1472419600977446e-06
+        ],
+        [
+          "-st",
+          0.0
+        ],
+        [
+          "ats",
+          -1.9361264946837764e-07
+        ],
+        [
+          "-post",
+          0.0
+        ],
+        [
+          "gresql",
+          -3.531315314830863e-06
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "-ag",
+          -4.320199877838604e-07
+        ],
+        [
+          "ain",
+          -1.9361264946837764e-07
+        ],
+        [
+          "st",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "17",
+          0.0
+        ],
+        [
+          "/)\n",
+          -0.002858843421563506
+        ],
+        [
+          "-",
+          -6.704273118884885e-07
+        ],
+        [
+          " [",
+          -5.512236498361744e-07
+        ],
+        [
+          "Post",
+          -0.34911519289016724
+        ],
+        [
+          "gres",
+          -0.6336525082588196
+        ],
+        [
+          " Weekly",
+          -0.2820311486721039
+        ],
+        [
+          " Issue",
+          -0.11232923716306686
+        ],
+        [
+          " #",
+          -0.26558929681777954
+        ],
+        [
+          "620",
+          0.0
+        ],
+        [
+          "](",
+          -9.491498531133402e-06
+        ],
+        [
+          "https",
+          -3.128163257315464e-07
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "postgres",
+          -1.7120533811976202e-05
+        ],
+        [
+          "weekly",
+          -3.128163257315464e-07
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/issues",
+          -1.9361264946837764e-07
+        ],
+        [
+          "/",
+          0.0
+        ],
+        [
+          "620",
+          0.0
+        ],
+        [
+          ")\n",
+          -0.014346831478178501
+        ],
+        [
+          "-",
+          -0.00018732868193183094
+        ],
+        [
+          " [",
+          -2.5776860184123507e-06
+        ],
+        [
+          "Pos",
+          -0.1439620554447174
+        ],
+        [
+          "ette",
+          -0.019099712371826172
+        ],
+        [
+          " Conference",
+          -0.864247739315033
+        ],
+        [
+          " Talk",
+          -0.9022387266159058
+        ],
+        [
+          " on",
+          -0.4853769540786743
+        ],
+        [
+          " Performance",
+          -0.06781820207834244
+        ],
+        [
+          "](",
+          -0.06424164026975632
+        ],
+        [
+          "https",
+          0.0
+        ],
+        [
+          "://",
+          0.0
+        ],
+        [
+          "pos",
+          -2.8802491215174086e-05
+        ],
+        [
+          "ette",
+          -2.165027217415627e-05
+        ],
+        [
+          "conf",
+          -0.000556843588128686
+        ],
+        [
+          ".com",
+          0.0
+        ],
+        [
+          "/",
+          -1.2664456789934775e-06
+        ],
+        [
+          "202",
+          -1.9361264946837764e-07
+        ],
+        [
+          "6",
+          -4.320199877838604e-07
+        ],
+        [
+          "/t",
+          0.0
+        ],
+        [
+          "alk",
+          0.0
+        ],
+        [
+          "s",
+          0.0
+        ],
+        [
+          "/post",
+          0.0
+        ],
+        [
+          "gresql",
+          -2.1008713702030946e-06
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "17",
+          -3.128163257315464e-07
+        ],
+        [
+          "-v",
+          0.0
+        ],
+        [
+          "s",
+          0.0
+        ],
+        [
+          "-",
+          0.0
+        ],
+        [
+          "18",
+          0.0
+        ],
+        [
+          "-side",
+          -3.173704271830502e-06
+        ],
+        [
+          "-by",
+          -3.128163257315464e-07
+        ],
+        [
+          "-side",
+          -3.054500666621607e-06
+        ],
+        [
+          "-performance",
+          -3.128163257315464e-07
+        ],
+        [
+          "-w",
+          0.0
+        ],
+        [
+          "ins",
+          -6.869017852295656e-06
+        ],
+        [
+          "-in",
+          0.0
+        ],
+        [
+          "-real",
+          -1.9361264946837764e-07
+        ],
+        [
+          "-world",
+          -4.008129963040119e-06
+        ],
+        [
+          "-",
+          -2.5776860184123507e-06
+        ],
+        [
+          "queries",
+          -3.7697225252486533e-06
+        ],
+        [
+          "/",
+          -0.5187589526176453
+        ],
+        [
+          ")\n\n",
+          -0.001106279087252915
+        ],
+        [
+          "In",
+          -1.2562880516052246
+        ],
+        [
+          " summary",
+          -0.026325615122914314
+        ],
+        [
+          ",",
+          -0.0025523616932332516
+        ],
+        [
+          " Postgre",
+          -0.009139430709183216
+        ],
+        [
+          "SQL",
+          0.0
+        ],
+        [
+          " ",
+          -1.1472419600977446e-06
+        ],
+        [
+          "18",
+          -1.9361264946837764e-07
+        ],
+        [
+          " provides",
+          -0.41114211082458496
+        ],
+        [
+          " performance",
+          -0.2422640472650528
+        ],
+        [
+          " enhancements",
+          -0.8836688995361328
+        ],
+        [
+          " over",
+          -0.4370799958705902
+        ],
+        [
+          " ",
+          -0.7587095499038696
+        ],
+        [
+          "17",
+          -1.9361264946837764e-07
+        ],
+        [
+          ",",
+          -0.23700468242168427
+        ],
+        [
+          " with",
+          -0.26189589500427246
+        ],
+        [
+          " minor",
+          -1.62510347366333
+        ],
+        [
+          " feature",
+          -0.16136367619037628
+        ],
+        [
+          " updates",
+          -0.283779501914978
+        ],
+        [
+          ",",
+          -0.4402064085006714
+        ],
+        [
+          " making",
+          -0.04847097396850586
+        ],
+        [
+          " it",
+          -0.00209673005156219
+        ],
+        [
+          " a",
+          -0.4318827986717224
+        ],
+        [
+          " recommended",
+          -0.4380054473876953
+        ],
+        [
+          " upgrade",
+          -0.006569841410964727
+        ],
+        [
+          " for",
+          -0.0022256681695580482
+        ],
+        [
+          " better",
+          -0.48158833384513855
+        ],
+        [
+          " efficiency",
+          -0.3327180743217468
+        ],
+        [
+          ".",
+          -0.15742826461791992
+        ]
+      ],
+      "generation_params": null,
+      "agent_output": {
+        "role": "You are the research summary specialist.\nYou have no tools. Read the original user request and the complete web-search context from previous age. \nSynthesize a clear, accurate answer, distinguish sourced facts from uncertainty, and include the relevant source URLs.\nAnswer the user directly rather than describing your internal process.",
+        "response": "The main differences between PostgreSQL 17 and PostgreSQL 18 are primarily related to performance improvements and feature enhancements. According to recent benchmarking and comparison sources:\n\n- PostgreSQL 18 offers a noticeable performance boost over version 17, with improvements observed in various real-world query scenarios. Upgrading to PostgreSQL 18 can make many everyday queries run faster without requiring schema changes or application rewrites.\n- The delta between the two versions is relatively small, but PostgreSQL 18 benefits from optimizations that enhance efficiency and speed.\n- Specific features added or improved in PostgreSQL 18 can be found in the official feature matrix, which details new capabilities and changes across versions.\n\nSources:\n- [PlanetScale Benchmarking Postgres 17 vs 18](https://planetscale.com/blog/benchmarking-postgres-17-vs-18)\n- [Cybertec PostgreSQL Stats Comparison](https://www.cybertec-postgresql.com/en/comparing-stats-postgresql-18-against-17/)\n- [Postgres Weekly Issue #620](https://postgresweekly.com/issues/620)\n- [Posette Conference Talk on Performance](https://posetteconf.com/2026/talks/postgresql-17-vs-18-side-by-side-performance-wins-in-real-world-queries/)\n\nIn summary, PostgreSQL 18 provides performance enhancements over 17, with minor feature updates, making it a recommended upgrade for better efficiency.",
+        "tool_calls": []
+      },
+      "evaluation": null,
+      "gt_evaluation": {
+        "score": 0.12,
+        "success": true
+      },
+      "discarded_bon_answers": null,
+      "error": null,
+      "thinking": "",
+      "perplexity": 1.1866888594725968,
+      "profiling_data": {
+        "total_time": 5.926164931999665,
+        "llm_time": 4.343813677000071,
+        "energy_consumed_kwh": 1.3526499132688666e-05,
+        "cpu_energy_kwh": 1.4630459604721494e-06,
+        "gpu_energy_kwh": 0.0,
+        "ram_energy_kwh": 1.2063453172216517e-05,
+        "emissions_kg_co2": 4.47345674016453e-06
+      },
+      "budget_controller_choice": "end"
+    }
+  ],
+  "global_profiling_data": {
+    "total_time": 16.165797809999276,
+    "llm_time": 8.949352846000693,
+    "energy_consumed_kwh": 3.616066509634227e-05,
+    "cpu_energy_kwh": 4.4189712519031755e-06,
+    "gpu_energy_kwh": 0,
+    "ram_energy_kwh": 3.17416938444391e-05,
+    "emissions_kg_co2": 1.1958982839332123e-05
+  },
+  "agents_profiling_data": {
+    "ResearchRouter": {
+      "total_time": 5.7811326760001975,
+      "llm_time": 2.6597130950012797,
+      "energy_consumed_kwh": 1.333135792245088e-05,
+      "cpu_energy_kwh": 1.7401692780070596e-06,
+      "gpu_energy_kwh": 0,
+      "ram_energy_kwh": 1.159118864444382e-05,
+      "emissions_kg_co2": 4.40892002939711e-06
+    },
+    "WebSearch": {
+      "total_time": 4.4585002019994135,
+      "llm_time": 1.945826073999342,
+      "energy_consumed_kwh": 9.302808041202724e-06,
+      "cpu_energy_kwh": 1.215756013423967e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 8.087052027778757e-06,
+      "emissions_kg_co2": 3.0766060697704826e-06
+    },
+    "Summary": {
+      "total_time": 5.926164931999665,
+      "llm_time": 4.343813677000071,
+      "energy_consumed_kwh": 1.3526499132688666e-05,
+      "cpu_energy_kwh": 1.4630459604721494e-06,
+      "gpu_energy_kwh": 0.0,
+      "ram_energy_kwh": 1.2063453172216517e-05,
+      "emissions_kg_co2": 4.47345674016453e-06
+    }
+  }
+}

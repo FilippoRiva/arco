@@ -192,7 +192,9 @@ def fetch_web_page(url: str, max_chars: int = 12000) -> str:
         )
         response.raise_for_status()
     except requests.RequestException as exc:
-        logger.warning("Page fetch failed for %s: %s", url, exc)
+        # Return the failure to the agent so it can try another source, but do
+        # not print expected website blocks during normal benchmark runs.
+        logger.debug("Page fetch failed for %s: %s", url, exc)
         return f"Page fetch failed for {url!r}: {exc}"
 
     content_type = response.headers.get("content-type", "").lower()
@@ -207,7 +209,7 @@ def fetch_web_page(url: str, max_chars: int = 12000) -> str:
         parser.feed(response.text)
         parser.close()
     except (AssertionError, ValueError) as exc:
-        logger.warning("Could not parse page %s: %s", url, exc)
+        logger.debug("Could not parse page %s: %s", url, exc)
         return f"Page fetch failed for {url!r}: could not parse HTML"
 
     text = " ".join(" ".join(parser.parts).split())

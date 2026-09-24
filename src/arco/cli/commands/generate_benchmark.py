@@ -84,7 +84,9 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 console.print()
             console.print(
                 f"  [cyan]▶[/cyan] [{event['index'] + 1}/{event['total']}] "
-                f"{event['prompt'][:72]}"
+                f"{event['prompt'][:72]}" + "..."
+                if len(event["prompt"]) > 72
+                else ""
             )
         elif e == "prompt_done":
             console.print(

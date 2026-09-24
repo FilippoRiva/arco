@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./../../schema.json
+# =============================================================================
+# BENCHMARK GENERATION CONFIG
+# =============================================================================
+# The configuration used for benchmarks generation
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+global:
+  workflow: "websearch_researcher"
+  default_provider: "openai"
+  default_model: "gpt-5.6-luna"
+  enable_logprobs: false
+  enable_reasoning: false
+  reasoning_effort: none

@@ -102,7 +102,7 @@
     },
     "defaults": {
       "type": "object",
-      "description": "Per-agent configuration settings.",
+      "description": "Per-agent configuration default settings.",
       "additionalProperties": {
         "type": "object",
         "properties": {
@@ -110,7 +110,8 @@
             "type": "string",
             "enum": [
               "openai",
-              "ollama"
+              "ollama",
+              "openrouter"
             ],
             "description": "The AI model provider backend."
           },
@@ -221,7 +222,7 @@
               "properties": {
                 "provider": {
                   "type": "string",
-                  "enum": ["openai", "ollama"]
+                  "enum": ["openai", "ollama", "openrouter"]
                 },
                 "model": { "type": "string" },
                 "n": { "type": "integer", "minimum": 1 },
