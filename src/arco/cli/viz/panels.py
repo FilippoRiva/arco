@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from rich.console import Group, RenderableType
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.pretty import Pretty
 from rich.rule import Rule
@@ -123,14 +124,14 @@ def _verbose_token_summary(answer: Answer) -> Text:
 def render_answer_verbose(answer: Answer) -> RenderableType:
     """Render a readable, information-dense answer card for ``--verbose``."""
     sections = [
-        Text(answer.message or "No summary returned.", style="white"),
+        Markdown(answer.message or "No summary returned."),
         Rule("Run details", style="dim"),
         _verbose_metrics_table(answer),
         Rule("Agent output", style="dim"),
         Pretty(
             _verbose_output(answer.agent_output),
-            max_depth=3,
-            max_length=4,
+            max_depth=4,
+            max_length=6,
             indent_size=2,
         ),
         Rule("Token statistics", style="dim"),
@@ -198,21 +199,32 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
     )
 
 
-def render_answer(answer: Answer) -> Text:
-    """Render the normal run transcript as a compact, plain-text row."""
-    row = Text()
-    if answer.error:
-        row.append("✗ ", style="bold red")
-    else:
-        row.append("✓ ", style="bold green")
-    row.append(str(answer.agent_id), style="bold cyan")
-    if answer.message:
-        row.append("  ")
-        row.append(answer.message)
+def render_answer(answer: Answer) -> RenderableType:
+    """Render an agent answer as formatted Markdown in a terminal panel."""
+    sections: list[RenderableType] = [
+        Markdown(answer.message or "No summary returned."),
+    ]
+
     image_path = answer.agent_output.get("image_path")
     if image_path:
-        row.append("  image: ", style="dim")
-        row.append(_artifact_link(image_path))
+        sections.extend(
+            [
+                Text("Stored visualization", style="dim"),
+                _artifact_link(image_path),
+            ]
+        )
     if answer.error:
-        row.append(f"  ({answer.error})", style="red")
-    return row
+        sections.extend(
+            [
+                Text("Error", style="bold red"),
+                Text(answer.error, style="red"),
+            ]
+        )
+
+    return Panel(
+        Group(*sections),
+        title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
+        border_style="red" if answer.error else "cyan",
+        padding=(0, 1),
+        expand=True,
+    )
