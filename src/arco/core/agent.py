@@ -34,8 +34,15 @@ class Agent(ABC):
     :meth:`post_generation_hooks` and the :attr:`evaluator` property.
     """
 
-    def __init__(self):
-        self.type = AgentType(self.__class__.__name__)
+    def __init__(self, agent_name: str | AgentType | None = None):
+        """Initialize an agent with an optional distinct workflow name.
+
+        Most concrete agents use their class name. Generic agent classes that
+        are instantiated more than once can provide ``agent_name`` so their
+        answers and graph nodes remain distinguishable while their underlying
+        agent type remains the same class.
+        """
+        self.type = AgentType(agent_name or self.__class__.__name__)
 
     @property
     def name(self) -> str:

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+from collections.abc import Sequence
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any
 
@@ -273,6 +274,10 @@ class LLM:
             )
             self._chat_model = self._chat_model.model_copy(update={"logprobs": None})
             return self._chat_model.invoke(prompt)
+
+    def bind_tools(self, tools: Sequence[Any]) -> Any:
+        """Bind provider-native tools for a tool-use loop."""
+        return self._chat_model.bind_tools(tools)
 
     def invoke(self, prompt: str) -> LLMAnswer:
         """Send a prompt to the LLM and return the response.
