@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import yaml
 from rich.console import Console
 from rich.table import Table
 
@@ -27,6 +28,7 @@ class BenchmarkResult:
     runs: dict[str, pd.DataFrame] = field(default_factory=dict)
     states: dict[str, dict[str, State]] = field(default_factory=dict)
     dataset: BenchmarkDataset | None = None
+    analysis_df: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     @classmethod
     def load(cls, benchmark_dir: str) -> BenchmarkResult:
@@ -35,11 +37,11 @@ class BenchmarkResult:
         with open(bdir / "bench_metadata.json") as f:
             metadata = json.load(f)
 
-        summary_df = pd.read_csv(bdir / "summary.csv")
-
+        run_names = _load_run_names(bdir, metadata)
         runs_dir = bdir / "runs"
         runs: dict[str, pd.DataFrame] = {}
         states: dict[str, dict[str, State]] = {}
+        analysis_records: list[dict] = []
         if runs_dir.exists():
             nested_run_dirs = [path for path in runs_dir.iterdir() if path.is_dir()]
             if nested_run_dirs:
@@ -51,35 +53,80 @@ class BenchmarkResult:
             if not run_csv_paths:
                 raise ValueError(f"No per-run CSV files found under {runs_dir}")
             for csv_path in run_csv_paths:
-                run_name = csv_path.stem
+                file_run_name = csv_path.stem
+                run_name = run_names.get(file_run_name, file_run_name)
                 df = pd.read_csv(csv_path)
-                required_columns = {
-                    "entry_id",
-                    "run_id",
-                    "run_fingerprint",
-                    "state",
-                    "execution_trace",
-                }
+                required_columns = {"entry_id", "run_id"}
                 missing_columns = required_columns.difference(df.columns)
                 if missing_columns:
                     raise ValueError(
                         f"Unsupported benchmark CSV {csv_path}; missing columns: "
                         f"{', '.join(sorted(missing_columns))}"
                     )
+                if "state" not in df.columns and "execution_trace" not in df.columns:
+                    raise ValueError(
+                        f"Unsupported benchmark CSV {csv_path}; expected a serialized "
+                        "state or execution_trace column"
+                    )
 
-                df["trace"] = df["execution_trace"].apply(json.loads)
-                runs[run_name] = df
                 run_states: dict[str, State] = {}
                 for _, row in df.iterrows():
-                    state_data = json.loads(row["state"])
-                    run_states[str(row["run_id"])] = State.from_dict(state_data)
+                    state_data = _load_json_value(row.get("state"), default={})
+                    if state_data:
+                        state = State.from_dict(state_data)
+                        run_states[str(row["run_id"])] = state
+                        answers = [answer.to_dict() for answer in state.answers]
+                        state_prompt = state.prompt
+                        global_profile = state_data.get("global_profiling_data", {})
+                    else:
+                        state_prompt = row.get("prompt")
+                        global_profile = {}
+                        legacy_trace = _load_json_value(
+                            row.get("execution_trace"), default={"answers": []}
+                        )
+                        answers = legacy_trace.get("answers", [])
+
+                    changes = _load_json_value(row.get("changes"), default={})
+                    entry_id = _as_int(row["entry_id"])
+                    run_id = str(row["run_id"])
+                    for trace_index, answer in enumerate(answers):
+                        analysis_records.append(
+                            _analysis_record(
+                                answer=answer,
+                                run_name=run_name,
+                                entry_id=entry_id,
+                                run_id=run_id,
+                                run_fingerprint=row.get("run_fingerprint"),
+                                prompt=state_prompt,
+                                trace_index=trace_index,
+                                changes=changes,
+                                global_profile=global_profile,
+                            )
+                        )
+
                 if run_states:
                     states[run_name] = run_states
 
+        analysis_df = pd.DataFrame(analysis_records)
+        analysis_dir = bdir / "analysis"
+        analysis_dir.mkdir(parents=True, exist_ok=True)
+        parquet_path = analysis_dir / "benchmark.parquet"
+        analysis_df.to_parquet(parquet_path, index=False)
+        # Use the unified Parquet dataset as the canonical analysis source.
+        analysis_df = pd.read_parquet(parquet_path)
+        runs = _runs_from_analysis(analysis_df)
+        summary_df = _summary_from_analysis(analysis_df)
+
         dataset_path = metadata.get("dataset_path")
         dataset = None
-        if dataset_path and Path(dataset_path).exists():
-            dataset = BenchmarkDataset.from_json(dataset_path)
+        if dataset_path:
+            dataset_file = Path(dataset_path)
+            if not dataset_file.is_absolute():
+                dataset_file = bdir / dataset_file
+            if not dataset_file.exists():
+                dataset_file = bdir / "dataset.json"
+            if dataset_file.exists():
+                dataset = BenchmarkDataset.from_json(str(dataset_file))
 
         return cls(
             metadata=metadata,
@@ -88,7 +135,204 @@ class BenchmarkResult:
             runs=runs,
             states=states,
             dataset=dataset,
+            analysis_df=analysis_df,
         )
+
+
+def _load_json_value(value, *, default):
+    """Parse CSV JSON cells while tolerating already-decoded and null values."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return default
+    if isinstance(value, (dict, list)):
+        return value
+    if not isinstance(value, str) or not value:
+        return default
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return default
+
+
+def _as_int(value) -> int:
+    return int(value)
+
+
+def _load_run_names(benchmark_dir: Path, metadata: dict) -> dict[str, str]:
+    """Map safe flat CSV stems back to the names configured for each run."""
+    candidates = [metadata.get("benchmark_config_snapshot"), "benchmark_config.yaml"]
+    for candidate in candidates:
+        if not candidate:
+            continue
+        config_path = Path(candidate)
+        if not config_path.is_absolute():
+            config_path = benchmark_dir / config_path
+        if not config_path.exists():
+            config_path = benchmark_dir / Path(candidate).name
+        if not config_path.exists():
+            continue
+        with config_path.open(encoding="utf-8") as file:
+            config = yaml.safe_load(file) or {}
+        return {
+            str(run.get("name", "")).replace(" ", "_"): str(run.get("name", ""))
+            for run in config.get("runs", [])
+        }
+    return {}
+
+
+def _trace_answer(answer: dict) -> dict:
+    """Normalize serialized State answers and legacy trace answers."""
+    profile = answer.get("profiling_data") or {}
+    ground_truth = answer.get("gt_evaluation") or answer.get("evaluation_gt")
+    if isinstance(ground_truth, dict):
+        ground_truth = ground_truth.get("score")
+    if ground_truth is None:
+        ground_truth = answer.get("score")
+
+    return {
+        "agent_type": str(answer.get("agent_type", answer.get("agent_id", ""))),
+        "evaluation_gt": ground_truth,
+        "perplexity": answer.get("perplexity"),
+        "total_time": answer.get("total_time", profile.get("total_time")),
+        "llm_time": answer.get("llm_time", profile.get("llm_time")),
+        "energy_consumed_kwh": answer.get(
+            "energy_consumed_kwh", profile.get("energy_consumed_kwh")
+        ),
+        "cpu_energy_kwh": answer.get("cpu_energy_kwh", profile.get("cpu_energy_kwh")),
+        "gpu_energy_kwh": answer.get("gpu_energy_kwh", profile.get("gpu_energy_kwh")),
+        "ram_energy_kwh": answer.get("ram_energy_kwh", profile.get("ram_energy_kwh")),
+        "emissions_kg_co2": answer.get(
+            "emissions_kg_co2", profile.get("emissions_kg_co2")
+        ),
+        "error": answer.get("error"),
+    }
+
+
+def _analysis_record(
+    *,
+    answer: dict,
+    run_name: str,
+    entry_id: int,
+    run_id: str,
+    run_fingerprint,
+    prompt: str | None,
+    trace_index: int,
+    changes: dict,
+    global_profile: dict,
+) -> dict:
+    """Create a flat, typed row suitable for downstream analysis in Parquet."""
+    normalized = _trace_answer(answer)
+    evaluation = answer.get("gt_evaluation") or {}
+    best_of_n_evaluation = answer.get("evaluation") or {}
+    if not isinstance(evaluation, dict):
+        evaluation = {}
+    if not isinstance(best_of_n_evaluation, dict):
+        best_of_n_evaluation = {}
+    return {
+        "run": run_name,
+        "entry_id": entry_id,
+        "run_id": run_id,
+        "run_fingerprint": (
+            None if pd.isna(run_fingerprint) else str(run_fingerprint)
+        ),
+        "prompt": prompt,
+        "trace_index": trace_index,
+        "agent": normalized["agent_type"],
+        "message": answer.get("message"),
+        "score": normalized["evaluation_gt"],
+        "evaluation_success": evaluation.get("success"),
+        "best_of_n_score": best_of_n_evaluation.get("score"),
+        "perplexity": normalized["perplexity"],
+        "total_time": normalized["total_time"],
+        "llm_time": normalized["llm_time"],
+        "energy_consumed_kwh": normalized["energy_consumed_kwh"],
+        "cpu_energy_kwh": normalized["cpu_energy_kwh"],
+        "gpu_energy_kwh": normalized["gpu_energy_kwh"],
+        "ram_energy_kwh": normalized["ram_energy_kwh"],
+        "emissions_kg_co2": normalized["emissions_kg_co2"],
+        "error": normalized["error"],
+        "thinking": answer.get("thinking"),
+        "generation_params_json": json.dumps(
+            answer.get("generation_params"), ensure_ascii=False, default=str
+        ),
+        "logprobs_json": json.dumps(
+            answer.get("logprobs", []), ensure_ascii=False, default=str
+        ),
+        "answer_json": json.dumps(answer, ensure_ascii=False, default=str),
+        "global_total_time": global_profile.get("total_time"),
+        "global_llm_time": global_profile.get("llm_time"),
+        "agent_output_json": json.dumps(
+            answer.get("agent_output", {}), ensure_ascii=False, default=str
+        ),
+        "agent_config_json": json.dumps(
+            answer.get("agent_config", {}), ensure_ascii=False, default=str
+        ),
+        "changes_json": json.dumps(changes, ensure_ascii=False, sort_keys=True),
+    }
+
+
+def _runs_from_analysis(analysis_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Build the compatibility run views from the unified analysis table."""
+    runs: dict[str, pd.DataFrame] = {}
+    if analysis_df.empty:
+        return runs
+
+    for run_name, run_df in analysis_df.groupby("run", sort=False):
+        entries = []
+        for entry_id, entry_df in run_df.groupby("entry_id", sort=False):
+            entry_df = entry_df.sort_values("trace_index")
+            answers = [
+                {
+                    "agent_type": row.agent,
+                    "evaluation_gt": row.score,
+                    "perplexity": row.perplexity,
+                    "total_time": row.total_time,
+                    "llm_time": row.llm_time,
+                    "energy_consumed_kwh": row.energy_consumed_kwh,
+                    "cpu_energy_kwh": row.cpu_energy_kwh,
+                    "gpu_energy_kwh": row.gpu_energy_kwh,
+                    "ram_energy_kwh": row.ram_energy_kwh,
+                    "emissions_kg_co2": row.emissions_kg_co2,
+                    "error": row.error,
+                }
+                for row in entry_df.itertuples(index=False)
+            ]
+            entries.append(
+                {
+                    "entry_id": entry_id,
+                    "run_id": entry_df.iloc[0]["run_id"],
+                    "trace": {"answers": answers},
+                }
+            )
+        runs[str(run_name)] = pd.DataFrame(entries)
+    return runs
+
+
+def _summary_from_analysis(analysis_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the unified Parquet data into the former summary view."""
+    summary_rows = []
+    if analysis_df.empty:
+        return pd.DataFrame(summary_rows, columns=["name", "metrics_by_agent"])
+
+    metrics = {
+        "evaluation_gt": "score",
+        "perplexity": "perplexity",
+        "total_time": "total_time",
+        "llm_time": "llm_time",
+    }
+    for run_name, run_df in analysis_df.groupby("run", sort=False):
+        metrics_by_agent: dict[str, dict[str, float]] = defaultdict(dict)
+        for agent, agent_df in run_df.groupby("agent", sort=False):
+            for summary_metric, column in metrics.items():
+                values = agent_df[column].dropna()
+                if not values.empty:
+                    metrics_by_agent[str(agent)][summary_metric] = float(values.mean())
+        summary_rows.append(
+            {
+                "name": run_name,
+                "metrics_by_agent": json.dumps(dict(metrics_by_agent)),
+            }
+        )
+    return pd.DataFrame(summary_rows, columns=["name", "metrics_by_agent"])
 
 
 # ── Terminal output ──────────────────────────────────────────────────────
@@ -189,51 +433,41 @@ def print_trace_analysis(result: BenchmarkResult) -> None:
     dataset = result.dataset
     entries_by_id = {entry.id: entry for entry in dataset.entries}
     mismatches = []
-    for run_name, df in result.runs.items():
-        for _, row in df.iterrows():
-            # Benchmark entries are identified by entry_id, not necessarily by
-            # their position in the dataset list.
-            raw_entry_id = row["entry_id"]
-            try:
-                entry_id = int(raw_entry_id)
-            except (TypeError, ValueError):
-                continue
+    grouped_traces = result.analysis_df.groupby(["run", "entry_id"], sort=False)
+    for (run_name, raw_entry_id), trace_df in grouped_traces:
+        entry_id = int(raw_entry_id)
+        entry = entries_by_id.get(entry_id)
+        if entry is None:
+            continue
 
-            entry = entries_by_id.get(entry_id)
-            if entry is None:
-                continue
+        actual_agents = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
+        # Trace iteration yields TraceElement objects. Compare their
+        # agent_type values rather than comparing strings to objects.
+        expected_agents = [str(trace_element.agent_type) for trace_element in entry.trace]
 
-            actual_agents = [
-                str(answer["agent_type"])
-                for answer in row["trace"]["answers"]
-            ]
-            # Trace iteration yields TraceElement objects. Compare their
-            # agent_type values rather than comparing strings to objects.
-            expected_agents = [str(trace_element.agent_type) for trace_element in entry.trace]
-
-            divergence = None
-            for i, (actual, expected) in enumerate(zip(actual_agents, expected_agents)):
-                if actual != expected:
-                    divergence = (i, expected, actual)
-                    break
-            if divergence is None:
-                if len(actual_agents) < len(expected_agents):
-                    divergence = (
-                        len(actual_agents),
-                        expected_agents[len(actual_agents)],
-                        "(missing)",
-                    )
-                elif len(actual_agents) > len(expected_agents):
-                    divergence = (
-                        len(expected_agents),
-                        "(end)",
-                        actual_agents[len(expected_agents)],
-                    )
-
-            if divergence:
-                mismatches.append(
-                    (run_name, entry_id, divergence[0], divergence[1], divergence[2])
+        divergence = None
+        for i, (actual, expected) in enumerate(zip(actual_agents, expected_agents)):
+            if actual != expected:
+                divergence = (i, expected, actual)
+                break
+        if divergence is None:
+            if len(actual_agents) < len(expected_agents):
+                divergence = (
+                    len(actual_agents),
+                    expected_agents[len(actual_agents)],
+                    "(missing)",
                 )
+            elif len(actual_agents) > len(expected_agents):
+                divergence = (
+                    len(expected_agents),
+                    "(end)",
+                    actual_agents[len(expected_agents)],
+                )
+
+        if divergence:
+            mismatches.append(
+                (run_name, entry_id, divergence[0], divergence[1], divergence[2])
+            )
 
     if not mismatches:
         console.print("[green]✓[/green] All traces match ground truth.")
@@ -250,32 +484,49 @@ def print_trace_analysis(result: BenchmarkResult) -> None:
 def _output_dir(result: BenchmarkResult) -> Path:
     out = result.benchmark_dir / "analysis"
     out.mkdir(parents=True, exist_ok=True)
+    html_dir = out / "html"
+    png_dir = out / "png"
+    html_dir.mkdir(exist_ok=True)
+    png_dir.mkdir(exist_ok=True)
+
+    # Migrate plots generated by older analyzer versions into their new folders.
+    for path in out.glob("*.html"):
+        if path.name != "dashboard.html":
+            path.replace(html_dir / path.name)
+    for path in out.glob("*.png"):
+        path.replace(png_dir / path.name)
     return out
 
 
-def _flatten_traces(runs: dict[str, pd.DataFrame]) -> list[dict]:
-    records = []
-    for run_name, df in runs.items():
-        for _, row in df.iterrows():
-            for answer in row["trace"]["answers"]:
-                records.append(
-                    {
-                        "run": run_name,
-                        "entry": row["entry_id"],
-                        "agent": answer["agent_type"],
-                        "score": answer.get("evaluation_gt"),
-                        "ppl": answer.get("perplexity"),
-                        "total_time": answer.get("total_time"),
-                        "llm_time": answer.get("llm_time"),
-                        "energy": answer.get("energy_consumed_kwh"),
-                        "cpu_energy": answer.get("cpu_energy_kwh"),
-                        "gpu_energy": answer.get("gpu_energy_kwh"),
-                        "ram_energy": answer.get("ram_energy_kwh"),
-                        "emissions": answer.get("emissions_kg_co2"),
-                        "error": answer.get("error"),
-                    }
-                )
-    return records
+def _flatten_traces(analysis_df: pd.DataFrame) -> list[dict]:
+    """Return plot-ready rows from the canonical unified analysis table."""
+    if analysis_df.empty:
+        return []
+    plot_df = analysis_df.rename(
+        columns={
+            "entry_id": "entry",
+            "perplexity": "ppl",
+            "energy_consumed_kwh": "energy",
+            "emissions_kg_co2": "emissions",
+        }
+    )
+    return plot_df[
+        [
+            "run",
+            "entry",
+            "agent",
+            "score",
+            "ppl",
+            "total_time",
+            "llm_time",
+            "energy",
+            "cpu_energy_kwh",
+            "gpu_energy_kwh",
+            "ram_energy_kwh",
+            "emissions",
+            "error",
+        ]
+    ].to_dict(orient="records")
 
 
 _COLOR_SEQ = ["#0984e3", "#00b894", "#e17055", "#6c5ce7", "#fdcb6e", "#d63031"]
@@ -283,8 +534,14 @@ _COLOR_SEQ = ["#0984e3", "#00b894", "#e17055", "#6c5ce7", "#fdcb6e", "#d63031"]
 
 def _save_fig(fig: go.Figure, path: Path) -> None:
     fig.update_layout(height=400)
-    fig.write_html(path, include_plotlyjs="cdn", config={"displayModeBar": False})
-    png_path = path.with_suffix(".png")
+    html_dir = path.parent / "html"
+    png_dir = path.parent / "png"
+    html_dir.mkdir(parents=True, exist_ok=True)
+    png_dir.mkdir(parents=True, exist_ok=True)
+
+    html_path = html_dir / path.name
+    png_path = png_dir / path.with_suffix(".png").name
+    fig.write_html(html_path, include_plotlyjs="cdn", config={"displayModeBar": False})
     try:
         fig.write_image(png_path, scale=2)
     except Exception:  # noqa BLE001 - fine
@@ -294,7 +551,7 @@ def _save_fig(fig: go.Figure, path: Path) -> None:
 def plot_per_agent_scores(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     if df.empty or df["score"].isna().all():
         return None
@@ -322,7 +579,7 @@ def plot_per_agent_scores(
 def plot_per_agent_perplexity(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     if df.empty or df["ppl"].isna().all():
         return None
@@ -343,7 +600,7 @@ def plot_per_agent_perplexity(
 def plot_timing_breakdown(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     if df.empty or df["total_time"].isna().all():
         return None
@@ -388,7 +645,7 @@ def plot_timing_breakdown(
 def plot_energy_consumption(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     energy_columns = ["cpu_energy", "gpu_energy", "ram_energy"]
     if df.empty or not any(
@@ -425,7 +682,7 @@ def plot_energy_consumption(
 
 
 def plot_emissions(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     if df.empty or df["emissions"].isna().all():
         return None
@@ -449,7 +706,7 @@ def plot_emissions(result: BenchmarkResult, save: bool = True) -> go.Figure | No
 def plot_score_vs_energy(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     plot_df = df.dropna(subset=["score", "energy"])
     fig = px.scatter(
@@ -493,14 +750,13 @@ def plot_trace_completion(
         entry_ids.append(entry.id)
         expected = [str(element.agent_type) for element in entry.trace]
         fractions = []
-        for run_df in result.runs.values():
-            row = run_df[run_df["entry_id"] == entry.id]
-            if row.empty:
-                continue
-            actual = [
-                str(answer["agent_type"])
-                for answer in row.iloc[0]["trace"]["answers"]
-            ]
+        entry_rows = result.analysis_df[
+            result.analysis_df["entry_id"] == entry.id
+        ]
+        for _, trace_df in entry_rows.groupby("run", sort=False):
+            actual = (
+                trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
+            )
             correct = 0
             for exp, act in zip(expected, actual):
                 if exp == act:
@@ -525,32 +781,14 @@ def plot_trace_completion(
 
 
 def plot_run_comparison(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    df = result.summary_df
-    if len(df) < 2:
+    analysis_df = result.analysis_df.dropna(subset=["score"])
+    if analysis_df["run"].nunique() < 2:
         return None
 
-    run_names: list[str] = []
-    run_data: list[dict] = []
-    for _, r in df.iterrows():
-        metrics = json.loads(r["metrics_by_agent"])
-        run_names.append(r["name"])
-        run_data.append(metrics)
-
-    agents = sorted({a for m in run_data for a in m})
-    rows = []
-    for name, metrics in zip(run_names, run_data):
-        for agent in agents:
-            score = metrics.get(agent, {}).get("evaluation_gt")
-            if score is None:
-                continue
-            rows.append(
-                {
-                    "run": name,
-                    "agent": agent,
-                    "score": score,
-                }
-            )
-    plot_df = pd.DataFrame(rows)
+    plot_df = (
+        analysis_df.groupby(["run", "agent"], as_index=False)["score"]
+        .mean()
+    )
 
     fig = px.bar(
         plot_df,
@@ -570,7 +808,7 @@ def plot_run_comparison(result: BenchmarkResult, save: bool = True) -> go.Figure
 def plot_score_vs_latency(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records).dropna(subset=["score", "total_time"])
     if df.empty:
         return None
@@ -594,7 +832,7 @@ def plot_score_vs_latency(
 def plot_score_vs_perplexity(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records).dropna(subset=["score", "ppl"])
     if df.empty:
         return None
@@ -618,7 +856,7 @@ def plot_score_vs_perplexity(
 def plot_prompt_score_heatmap(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records).dropna(subset=["score"])
     if df.empty:
         return None
@@ -648,7 +886,7 @@ def plot_prompt_score_heatmap(
 def plot_score_latency_pareto(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records).dropna(subset=["score", "total_time"])
     if df.empty:
         return None
@@ -715,13 +953,14 @@ def plot_trace_exact_match(
         for entry in dataset.entries
     }
     rows = []
-    for run_name, run_df in result.runs.items():
-        for _, row in run_df.iterrows():
-            expected = expected_by_id.get(int(row["entry_id"]))
-            if expected is None:
-                continue
-            actual = [str(answer["agent_type"]) for answer in row["trace"]["answers"]]
-            rows.append({"run": run_name, "exact": actual == expected})
+    for (run_name, entry_id), trace_df in result.analysis_df.groupby(
+        ["run", "entry_id"], sort=False
+    ):
+        expected = expected_by_id.get(int(entry_id))
+        if expected is None:
+            continue
+        actual = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
+        rows.append({"run": run_name, "exact": actual == expected})
     if not rows:
         return None
     summary = pd.DataFrame(rows).groupby("run", as_index=False)["exact"].mean()
@@ -749,12 +988,13 @@ def plot_trace_transitions(
     result: BenchmarkResult, save: bool = True
 ) -> go.Figure | None:
     transitions: dict[tuple[str, str], int] = defaultdict(int)
-    for run_df in result.runs.values():
-        for _, row in run_df.iterrows():
-            agents = [str(answer["agent_type"]) for answer in row["trace"]["answers"]]
-            path = ["START", *agents, "END"]
-            for source, target in pairwise(path):
-                transitions[(source, target)] += 1
+    for _, trace_df in result.analysis_df.groupby(
+        ["run", "entry_id"], sort=False
+    ):
+        agents = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
+        path = ["START", *agents, "END"]
+        for source, target in pairwise(path):
+            transitions[(source, target)] += 1
     if not transitions:
         return None
     labels = sorted({node for transition in transitions for node in transition})
@@ -776,7 +1016,7 @@ def plot_trace_transitions(
 
 
 def plot_error_rate(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    records = _flatten_traces(result.runs)
+    records = _flatten_traces(result.analysis_df)
     df = pd.DataFrame(records)
     if df.empty or "error" not in df:
         return None
@@ -943,7 +1183,10 @@ def analyze_benchmark(benchmark_dir: str) -> BenchmarkResult:
     print_trace_analysis(result)
 
     out_dir = _output_dir(result)
-    console.print(f"\n[bold cyan]Generated plots[/bold cyan]  [dim]{out_dir}[/dim]")
+    console.print(
+        f"\n[bold cyan]Generated plots[/bold cyan]  "
+        f"[dim]{out_dir / 'html'} · {out_dir / 'png'}[/dim]"
+    )
 
     plot_fns = [
         ("per_agent_scores", plot_per_agent_scores),
@@ -965,9 +1208,16 @@ def analyze_benchmark(benchmark_dir: str) -> BenchmarkResult:
     for name, fn in plot_fns:
         fig = fn(result)
         if fig is not None:
-            console.print(f"  [green]✓[/green] {name}.html + {name}.png")
+            png_path = out_dir / "png" / f"{name}.png"
+            if png_path.exists():
+                console.print(f"  [green]✓[/green] html/{name}.html + png/{name}.png")
+            else:
+                console.print(
+                    f"  [green]✓[/green] html/{name}.html "
+                    "[dim](PNG skipped: image renderer unavailable)[/dim]"
+                )
         else:
-            console.print(f"  [dim]– {name}.html (skipped: no data)[/dim]")
+            console.print(f"  [dim]– html/{name}.html (skipped: no data)[/dim]")
 
     dashboard_html = build_dashboard(result)
     dashboard_path = out_dir / "dashboard.html"
