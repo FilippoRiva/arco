@@ -138,7 +138,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
     def __init__(self, data_dir: str | None = None):
         super().__init__()
         self.schema: DatabaseSchema = DatabaseSchema.from_data_dir(
-            data_dir or "./data/datasets/sales"
+            data_dir or "./data/sales"
         )
 
     @property

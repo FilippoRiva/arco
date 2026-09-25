@@ -1,3 +1,4 @@
+import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -47,12 +48,16 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     status = console.status("[bold cyan]Loading benchmark[/bold cyan]")
     status.start()
-    from arco.cli.viz import display, printer
+    from arco.cli.viz import printer
     from arco.core import ExperimentCatalog
     from arco.data.benchmark_dataset import BenchmarkSummary
     from arco.tools.bench import benchmark_from_config
 
     status.stop()
+
+    from rich.live import Live
+
+    from arco.cli.viz.status import RunStatusPanel
 
     if args.experiment:
         experiment = ExperimentCatalog.load().get(args.experiment)
@@ -81,6 +86,8 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     console.print(f"  Output      [dim]{save_dir}[/dim]")
     console.print()
 
+    workflow_status = None
+    workflow_live = None
     generator = benchmark_from_config(
         config_path=config_path,
         dataset_path=dataset_path,
@@ -148,9 +155,46 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 f"  Metadata  [dim]{_event['metadata_path']}[/dim]"
             )
         elif event == "workflow_event":
-            display.display_workflow_event(
-                _event["workflow_event"], verbose=args.verbose
-            )
+            update = _event["workflow_event"]
+            workflow_event = update["event"]
+            if workflow_event == "started":
+                if workflow_live is not None:
+                    workflow_status.stop()
+                    workflow_live.__exit__(None, None, None)
+                workflow_status = RunStatusPanel(compact=True)
+                workflow_live = Live(
+                    workflow_status, refresh_per_second=8, screen=False
+                )
+                workflow_live.__enter__()
+                workflow_status.set("Starting run")
+            elif workflow_event in {"check_connection", "node_started", "node_finished"}:
+                if workflow_live is None:
+                    workflow_status = RunStatusPanel(compact=True)
+                    workflow_live = Live(
+                        workflow_status, refresh_per_second=8, screen=False
+                    )
+                    workflow_live.__enter__()
+                if workflow_event == "check_connection":
+                    workflow_status.set("Checking models")
+                elif workflow_event == "node_started":
+                    node = update.get("node", "agent")
+                    workflow_status.set(str(node), time.time())
+                    workflow_status.active_node = str(node)
+                else:
+                    state = update.get("state")
+                    answer = state.get_last_answer() if state is not None else None
+                    if answer is not None:
+                        workflow_status.set(f"{answer.agent_id} completed")
+            elif workflow_event == "error":
+                console.print(f"[red]✗[/red] {update.get('message', 'Workflow error')}")
+                if workflow_live is not None:
+                    workflow_status.stop()
+                    workflow_live.__exit__(None, None, None)
+                    workflow_status = workflow_live = None
+            elif workflow_event == "completed" and workflow_live is not None:
+                workflow_status.stop()
+                workflow_live.__exit__(None, None, None)
+                workflow_status = workflow_live = None
         elif event == "test_case_start":
             console.print()
             console.print(
@@ -172,3 +216,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             console.print(f"[red]✗[/red] {_event['message']}")
         elif event == "test_case_evaluation_stop":
             status.stop()
+
+    if workflow_live is not None:
+        workflow_status.stop()
+        workflow_live.__exit__(None, None, None)

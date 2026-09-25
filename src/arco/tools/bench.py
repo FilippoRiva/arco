@@ -235,9 +235,11 @@ def benchmark_from_config(
     }
 
     default_config = Config.from_yaml(str(config_snapshot))
-    # Benchmarks should not create artifacts unless explicitly requested.
+    # Storage is opt-in when unspecified; disable CodeCarbon for benchmark runs
+    # so they do not create energy-tracking output directories.
     if default_config.enable_storage is None:
         default_config = default_config.set(enable_storage=False)
+    default_config = default_config.set(enable_codecarbon=False)
     workflow = WorkflowFactory.get(config=default_config)
     benchmark_dataset = BenchmarkDataset.from_json(str(dataset_snapshot))
     if len(benchmark_dataset) == 0:

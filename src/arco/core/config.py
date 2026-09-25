@@ -109,7 +109,7 @@ class Config:
     default_provider_judge: Literal["openai", "ollama", "openrouter"] = "openai"
     default_model_judge: str = "gpt-4o-mini"
     ollama_url: str = "http://localhost:11434"
-    data_dir: str = "./data/datasets/sales"
+    data_dir: str = "./data/sales"
     enable_storage: bool | None = None
     save_dir: str = "./output"
     enable_codecarbon: bool = False
