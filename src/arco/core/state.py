@@ -159,14 +159,28 @@ class State:
         agent_configs: dict[AgentType, AgentConfig] = {}
         answers = []
         for agent_type in state.agent_configs:
-            agent_configs[agent_type] = AgentConfig.from_dict(
+            typed_agent = AgentType(agent_type)
+            agent_configs[typed_agent] = AgentConfig.from_dict(
                 dictionary["agent_configs"][agent_type]
             )
         for answer in dictionary["answers"]:
             answers.append(Answer.from_dict(answer))
         params = dict(dictionary)
         params["agent_configs"] = MappingProxyType(agent_configs)
-        params["answers"] = answers
+        params["answers"] = tuple(answers)
+        if dictionary.get("global_profiling_data") is not None:
+            params["global_profiling_data"] = ProfilingData(
+                **dictionary["global_profiling_data"]
+            )
+        if dictionary.get("agents_profiling_data") is not None:
+            params["agents_profiling_data"] = MappingProxyType(
+                {
+                    AgentType(agent_type): ProfilingData(**profiling_data)
+                    for agent_type, profiling_data in dictionary[
+                        "agents_profiling_data"
+                    ].items()
+                }
+            )
         return cls(**params)
 
     def save(self, save_dir: Path):

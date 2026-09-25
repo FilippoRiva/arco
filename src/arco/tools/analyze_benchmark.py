@@ -41,22 +41,38 @@ class BenchmarkResult:
         runs: dict[str, pd.DataFrame] = {}
         states: dict[str, dict[str, State]] = {}
         if runs_dir.exists():
-            for run_dir in runs_dir.iterdir():
-                if not run_dir.is_dir():
-                    continue
-                run_name = run_dir.name
-                csv_path = run_dir / f"{run_name}.csv"
-                if csv_path.exists():
-                    df = pd.read_csv(csv_path)
-                    df["trace"] = df["execution_trace"].apply(json.loads)
-                    runs[run_name] = df
+            nested_run_dirs = [path for path in runs_dir.iterdir() if path.is_dir()]
+            if nested_run_dirs:
+                raise ValueError(
+                    "Per-run subdirectories are not supported; expected flat CSV "
+                    f"files directly under {runs_dir}"
+                )
+            run_csv_paths = sorted(runs_dir.glob("*.csv"))
+            if not run_csv_paths:
+                raise ValueError(f"No per-run CSV files found under {runs_dir}")
+            for csv_path in run_csv_paths:
+                run_name = csv_path.stem
+                df = pd.read_csv(csv_path)
+                required_columns = {
+                    "entry_id",
+                    "run_id",
+                    "run_fingerprint",
+                    "state",
+                    "execution_trace",
+                }
+                missing_columns = required_columns.difference(df.columns)
+                if missing_columns:
+                    raise ValueError(
+                        f"Unsupported benchmark CSV {csv_path}; missing columns: "
+                        f"{', '.join(sorted(missing_columns))}"
+                    )
 
+                df["trace"] = df["execution_trace"].apply(json.loads)
+                runs[run_name] = df
                 run_states: dict[str, State] = {}
-                for state_file in sorted(run_dir.glob("*.json")):
-                    if state_file.stem == run_name:
-                        continue
-                    with open(state_file) as f:
-                        run_states[state_file.stem] = State.from_dict(json.load(f))
+                for _, row in df.iterrows():
+                    state_data = json.loads(row["state"])
+                    run_states[str(row["run_id"])] = State.from_dict(state_data)
                 if run_states:
                     states[run_name] = run_states
 

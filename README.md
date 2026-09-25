@@ -93,7 +93,7 @@ in the current shell, use:
 
 ```bash
 source scripts/activate_arco.sh
-arco run -c config/run_config/planned.yaml
+arco run -c config/sales/run/planned.yaml
 ```
 
 
@@ -262,7 +262,7 @@ Options
 ```bash
 --dataset -d # Path to the benchmark ground-truth dataset (required)
 --config -c  # Path to the benchmark configuration YAML file (required)
---save-dir   # Directory where benchmark results are stored (default: ./output/benchmarks)
+--save-dir   # Base directory for benchmark results (default: ./output/benchmarks; one experiment directory is created beneath it)
 --id         # Custom identifier for the benchmark run
 --verbose -v # Enable detailed visualization of agent executions
 ```
@@ -276,8 +276,14 @@ arco-cli benchmark \
     --save-dir output/results
 ```
 
-Benchmark results are automatically saved as a series of CSV/json files
-containing execution metrics, evaluations, and profiling information.
+Benchmark results are saved under `<output-dir>/<experiment-name>/`, alongside
+snapshots of the benchmark configuration and dataset used. Each run has one CSV
+directly inside `runs/`, with a `changes` column describing
+the run's configuration overrides and a complete serialized state for each
+benchmark entry. Completed entries are checkpointed as the run progresses;
+rerunning resumes matching cached entries and only evaluates missing ones.
+The benchmark runner stores metadata but leaves metric aggregation to the
+analyzer.
 
 Refer to [Benchmark Configuration Files](docs/benchmark_config.md) for writing benchmark
 configuration files. You can also run a catalog-managed experiment with:

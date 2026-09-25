@@ -1,0 +1,119 @@
+[
+  {
+    "prompt": "Show me the sales in Nov 2021, Sales trend for Nov 2021, with date as x and sales value as y",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Retriever"
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "SELECT\n    s.Sold_Date AS date,\n    SUM(s.Total_Sale_Value) AS sales_value\nFROM sales AS s\nWHERE s.Sold_Date >= DATE '2021-11-01'\n  AND s.Sold_Date < DATE '2021-12-01'\nGROUP BY s.Sold_Date\nORDER BY s.Sold_Date;",
+          "data_str": "date,sales_value\n2021-11-01,12189.589919626713\n2021-11-02,12946.209929466248\n2021-11-03,11030.389963328838\n2021-11-04,15082.06994882226\n2021-11-05,22844.579923331738\n2021-11-06,17849.039922714233\n2021-11-07,13095.019962877035\n2021-11-08,12484.549912184477\n2021-11-09,11814.849947959185\n2021-11-10,13338.799962162971\n2021-11-11,18651.919908225536\n2021-11-12,20851.529951006174\n2021-11-13,18360.19993790984\n2021-11-14,13220.839949697256\n2021-11-15,12458.48994421959\n2021-11-16,12231.529932588339\n2021-11-17,13483.629962950945\n2021-11-18,15048.099881589413\n2021-11-19,21971.92992401123\n2021-11-20,18252.069955140352\n2021-11-21,13697.579933464527\n2021-11-22,12316.969940394163\n2021-11-23,16716.979915082455\n2021-11-25,52004.59993702173\n2021-11-26,28608.549953997135\n2021-11-27,21168.689921855927\n2021-11-28,15602.529922038317\n2021-11-29,14708.539965838194\n2021-11-30,17954.64996343851\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Analyzer"
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "Total sales for the 29 dates reported in November 2021 were **$499,984.43**. Daily sales fluctuated, ranging from **$11,030.39 on Nov 3** to a peak of **$52,004.60 on Nov 25**; no value was provided for Nov 24."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Visualizer"
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "date",
+            "y_axis": "sales_value",
+            "title": "Sales Trend \u2014 November 2021",
+            "df_columns": "date, sales_value"
+          },
+          "chart_code": "x_data = data_df[\"date\"]\ny_data = data_df[\"sales_value\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, y_data)\nplt.xlabel(\"date\")\nplt.ylabel(\"sales_value\")\nplt.title(\"Sales Trend \u2014 November 2021\")\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "End"
+        }
+      }
+    ],
+    "id": 0,
+    "difficulty": 2
+  },
+  {
+    "prompt": "Show the 12 months of 2023 with total revenue and total units sold. Show then a line chart showing monthly revenue trends for 2023",
+    "trace": [
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Retriever"
+        }
+      },
+      {
+        "agent_type": "Retriever",
+        "data": {
+          "sql": "WITH months AS (\n    SELECT CAST(month_start AS DATE) AS month_start\n    FROM generate_series(\n        DATE '2023-01-01',\n        DATE '2023-12-01',\n        INTERVAL '1 month'\n    ) AS t(month_start)\n),\nmonthly_sales AS (\n    SELECT\n        DATE_TRUNC('month', s.Sold_Date)::DATE AS month_start,\n        SUM(s.Total_Sale_Value) AS total_revenue,\n        SUM(s.Qty_Sold) AS total_units_sold\n    FROM sales AS s\n    WHERE s.Sold_Date >= DATE '2023-01-01'\n      AND s.Sold_Date < DATE '2024-01-01'\n    GROUP BY DATE_TRUNC('month', s.Sold_Date)::DATE\n)\nSELECT\n    m.month_start,\n    COALESCE(ROUND(ms.total_revenue, 2), 0) AS total_revenue,\n    COALESCE(ms.total_units_sold, 0) AS total_units_sold\nFROM months AS m\nLEFT JOIN monthly_sales AS ms\n    ON m.month_start = ms.month_start\nORDER BY m.month_start;",
+          "data_str": "month_start,total_revenue,total_units_sold\n2023-01-01,434172.81,33653.0\n2023-02-01,411762.72,31545.0\n2023-03-01,423070.84,32460.0\n2023-04-01,384479.68,30199.0\n2023-05-01,381326.43,31154.0\n2023-06-01,364806.74,29082.0\n2023-07-01,353284.21,27932.0\n2023-08-01,401061.54,31903.0\n2023-09-01,422554.97,31847.0\n2023-10-01,454231.06,38208.0\n2023-11-01,511104.29,41043.0\n2023-12-01,874263.67,60941.0\n"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Analyzer"
+        }
+      },
+      {
+        "agent_type": "Analyzer",
+        "data": {
+          "analysis": "| Month 2023 | Total revenue | Units sold |\n|---|---:|---:|\n| Jan | $434,172.81 | 33,653 |\n| Feb | $411,762.72 | 31,545 |\n| Mar | $423,070.84 | 32,460 |\n| Apr | $384,479.68 | 30,199 |\n| May | $381,326.43 | 31,154 |\n| Jun | $364,806.74 | 29,082 |\n| Jul | $353,284.21 | 27,932 |\n| Aug | $401,061.54 | 31,903 |\n| Sep | $422,554.97 | 31,847 |\n| Oct | $454,231.06 | 38,208 |\n| Nov | $511,104.29 | 41,043 |\n| Dec | $874,263.67 | 60,941 |\n\nRevenue was lowest in July and highest in December."
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "Visualizer"
+        }
+      },
+      {
+        "agent_type": "Visualizer",
+        "data": {
+          "chart_config": {
+            "chart_type": "line",
+            "x_axis": "month_start",
+            "y_axes": [
+              "total_revenue",
+              "total_units_sold"
+            ],
+            "title": "Monthly Revenue and Units Sold in 2023",
+            "df_columns": "month_start, total_revenue, total_units_sold"
+          },
+          "chart_code": "x_data = data_df[\"month_start\"]\n\nplt.figure(figsize=(10, 6))\nplt.plot(x_data, data_df[\"total_revenue\"], marker=\"o\", label=\"total_revenue\")\nplt.plot(x_data, data_df[\"total_units_sold\"], marker=\"o\", label=\"total_units_sold\")\nplt.xlabel(\"month_start\")\nplt.ylabel(\"Value\")\nplt.title(\"Monthly Revenue and Units Sold in 2023\")\nplt.legend()\nplt.grid(True, alpha=0.3)\nplt.tight_layout()\nplt.show()"
+        }
+      },
+      {
+        "agent_type": "Planner",
+        "data": {
+          "choice": "End"
+        }
+      }
+    ],
+    "id": 1,
+    "difficulty": 2
+  }
+]

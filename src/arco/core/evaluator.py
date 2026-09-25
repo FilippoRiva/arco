@@ -196,7 +196,8 @@ def evaluate_state_with_benchmark_entry(
     """
     from arco.data import BenchmarkSummary
 
-    correct_path = 0
+    correct_prefix_length = 0
+    trace_diverged = False
     ppls: list[float | None] = []
     agents: list[AgentType] = []
     scores: list[float] = []
@@ -204,15 +205,15 @@ def evaluate_state_with_benchmark_entry(
     new_answers: list[Answer] = []
 
     for idx, answer in enumerate(state.answers):
-        if idx > len(entry.trace) - 1:
+        if idx >= len(entry.trace) or trace_diverged:
             new_answers.append(answer)
             continue
         correct_trace = entry.trace[idx]
-        if answer.agent_id == correct_trace.agent_type:
-            correct_path += 1
-        else:
+        if answer.agent_id != correct_trace.agent_type:
+            trace_diverged = True
             new_answers.append(answer)
             continue
+        correct_prefix_length += 1
 
         evaluator = evaluators.get(answer.agent_id)
         if evaluator is not None:
@@ -230,7 +231,9 @@ def evaluate_state_with_benchmark_entry(
         else:
             new_answers.append(answer)
 
-    completion_percentage = correct_path / len(entry.trace) if entry.trace else 0.0
+    completion_percentage = (
+        correct_prefix_length / len(entry.trace) if entry.trace else 0.0
+    )
 
     summary = BenchmarkSummary(
         completion_percentage=completion_percentage,

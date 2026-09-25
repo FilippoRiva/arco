@@ -55,14 +55,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         prompts_path = args.prompts
         output_path = args.output
 
-    visualization_logic = _collect_state
-    if args.verbose:
-        from functools import partial
-
-        from arco.cli.viz.display import display_workflow
-
-        visualization_logic = partial(display_workflow, verbose=True)
-
     if args.experiment:
         console.print(f"  Experiment  [cyan]{args.experiment}[/cyan]")
     console.print(f"  Config      [dim]{config_path}[/dim]")
@@ -74,7 +66,6 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
         config_path=config_path,
         prompts_path=prompts_path,
         save_path=output_path,
-        run_visualization_logic=visualization_logic,
     ):
         e = event["event"]
         if e == "started":
@@ -88,6 +79,10 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 if len(event["prompt"]) > 72
                 else ""
             )
+        elif e == "workflow_event":
+            from arco.cli.viz.display import display_workflow_event
+
+            display_workflow_event(event["workflow_event"], verbose=args.verbose)
         elif e == "prompt_done":
             console.print(
                 f"    [green]✓[/green] trace completed · {event['trace_len']} step(s)"
@@ -100,11 +95,3 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 f"[bold green]✓ Complete[/bold green]  {event['entries']} entries"
             )
             console.print(f"  Saved to [dim]{event['path']}[/dim]")
-
-
-def _collect_state(events):
-    state = None
-    for event in events:
-        if event.get("event") == "completed":
-            state = event.get("state")
-    return state

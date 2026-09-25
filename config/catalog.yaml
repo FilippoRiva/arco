@@ -1,62 +1,26 @@
-# Named experiment definitions used by generate-benchmark, benchmark, and analysis.
+# Named experiment definitions used by benchmark generation, execution, and analysis.
 # Paths are relative to the repository root.
 experiments:
-  sales-planned-deepseek4flash:
-    description: Planned sales workflow evaluated with deepseek v4 flash
-    workflow: planned_sales
-    generation:
-      config: config/run_config/sales/benchmarks_generation/planned.yaml
-      prompts: data/prompts/sales/demo_prompts.json
-      output: data/benchmarks/demo/planned_ground_truth.json
-    benchmark:
-      config: config/benchmark_config/sales/planned_deepseek_v4_flash.yaml
-      output_dir: output/benchmarks/sales-planned-deepseek4flash
-    tags: [sales, planned, deepseek-v4-flash]
-
-  sales-planned-gpt41-nano:
-    description: Planned sales workflow evaluated with GPT-4.1 nano.
-    workflow: planned_sales
-    generation:
-      config: config/run_config/sales/benchmarks_generation/planned.yaml
-      prompts: data/prompts/sales/prompts.json
-      output: data/benchmarks/sales/planned_ground_truth.json
-    benchmark:
-      config: config/benchmark_config/sales/gpt_4.1_nano_planned.yaml
-      output_dir: output/benchmarks/sales-planned-gpt41-nano
-    tags: [sales, planned, gpt-4.1-nano]
-
-  research-websearch-gpt41nano:
-    description: Web research workflow evaluated with GPT-4.1 nano against GPT-5.6 Luna ground truth.
-    workflow: websearch_researcher
-    generation:
-      config: config/run_config/research/benchmarks_generation/websearch_gpt-56-luna.yaml
-      prompts: data/prompts/research/prompts.json
-      output: data/benchmarks/research/websearch_researcher/benchmark.json
-    benchmark:
-      config: config/benchmark_config/research/gpt_4.1_nano_websearch.yaml
-      output_dir: output/benchmarks/research-websearch-gpt41nano
-    tags: [research, websearch, gpt-4.1-nano]
-
-  research-websearch-model-comparison:
-    description: Web research workflow evaluated with different models against GPT-5.6 Luna ground truth.
-    workflow: websearch_researcher
-    generation:
-      config: config/run_config/research/benchmarks_generation/websearch_gpt-56-luna.yaml
-      prompts: data/prompts/research/prompts.json
-      output: data/benchmarks/research/websearch_researcher/benchmark.json
-    benchmark:
-      config: config/benchmark_config/research/model_comparison_websearch.yaml
-      output_dir: output/benchmarks/research-websearch-model_comparison
-    tags: [research, websearch, gpt-4.1-nano, gpt-5.4-nano, deepseek-v4-flash]
-
   demo-planned-gpt41-nano:
     description: Small planned sales benchmark used for demonstrations.
     workflow: planned_sales
     generation:
-      config: config/run_config/demo/benchmarks_generation/demo_run_config.yaml
-      prompts: data/prompts/sales/demo_prompts.json
-      output: data/benchmarks/demo/planned_ground_truth.json
+      config: config/sales/run/bench_gen_planned.yaml
+      prompts: config/sales/bench/prompts/prompts_demo.json
+      output: config/sales/bench/data/benchmark_demo.json
     benchmark:
-      config: config/benchmark_config/demo/demo_benchmark_config.yaml
+      config: config/sales/bench/demo.yaml
       output_dir: output/benchmarks/demo-planned-gpt41-nano
     tags: [demo, sales, planned]
+
+  research-websearch-model-comparison:
+    description: Web research workflow model comparison benchmark.
+    workflow: websearch_researcher
+    generation:
+      config: config/research/run/bench_gen_websearch.yaml
+      prompts: config/research/bench/prompts/prompts.json
+      output: config/research/bench/data/benchmark_websearch.json
+    benchmark:
+      config: config/research/bench/model_comparison_websearch.yaml
+      output_dir: output/benchmarks/research-websearch-model-comparison
+    tags: [research, websearch, model-comparison]

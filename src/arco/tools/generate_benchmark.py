@@ -1,5 +1,4 @@
 import json
-from collections.abc import Callable
 from pathlib import Path
 
 from arco import workflows
@@ -11,7 +10,6 @@ def generate_benchmark(
     config_path: str,
     prompts_path: str,
     save_path: str,
-    run_visualization_logic: Callable,
 ):
     """Generate a benchmark dataset by running a workflow on each prompt.
 
@@ -21,8 +19,6 @@ def generate_benchmark(
             Each entry must have a ``"prompt"`` string and may include a
             ``"difficulty"`` integer (defaults to 1).
         save_path: Path where the generated benchmark JSON will be written.
-        run_visualization_logic: Callable that receives ``workflow.stream(config=…)``
-            and returns the final :class:`~arco.core.State`.
     """
     workflows.load_workflows()
 
@@ -66,13 +62,21 @@ def generate_benchmark(
         }
 
         config = default_config.update_prompt(prompt)
-        resulting_state = run_visualization_logic(workflow.stream(config=config))
+        resulting_state = None
+        workflow_errors: list[str] = []
+        for workflow_event in workflow.stream(config=config):
+            if workflow_event["event"] == "error":
+                workflow_errors.append(str(workflow_event.get("message", "Unknown error")))
+            elif workflow_event["event"] == "completed":
+                resulting_state = workflow_event.get("state")
+            yield {"event": "workflow_event", "workflow_event": workflow_event}
 
-        if resulting_state is None:
+        if resulting_state is None or workflow_errors:
             yield {
                 "event": "prompt_error",
                 "index": entry_id,
-                "message": "Workflow returned None",
+                "message": "; ".join(workflow_errors)
+                or "Workflow returned no final state",
             }
             continue
 

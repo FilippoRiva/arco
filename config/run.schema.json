@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ArcoConfig",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "workflow": {
+          "type": "string",
+          "description": "Unique identifier for the workflow that should be executed in this benchmark run"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The execution instruction or query passed to the agent system."
+        },
+        "run_id": {
+          "type": "string",
+          "description": "Unique identifier for this specific execution. Ignore to auto-generate a unique ID, or set a fixed string to enable reproducible caching behavior."
+        },
+        "enable_budget_controller": {
+          "type": "boolean",
+          "description": "Toggle to determine if the arco budget controller is enabled. Defaults to true",
+          "default": "true"
+        },
+        "default_provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "ollama",
+            "openrouter"
+          ],
+          "description": "The AI model provider backend."
+        },
+        "default_model": {
+          "type": "string",
+          "description": "The specific model identifier."
+        },
+        "default_provider_judge": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "ollama",
+            "openrouter"
+          ],
+          "description": "The AI model provider backend for the LLM judges."
+        },
+        "default_model_judge": {
+          "type": "string",
+          "description": "The specific model identifier for the LLM judges."
+        },
+        "ollama_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The base URL for local Ollama instances. Needed if provider is ollama"
+        },
+        "data_dir": {
+          "type": "string",
+          "default": "./data/datasets/sales",
+          "description": "Directory containing the parquet datasets and *_schema.yaml files used by data-aware agents."
+        },
+        "enable_storage": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": null,
+          "description": "Persist final workflow state and generated visualization images under save_dir/storage. If omitted, interactive runs enable it and benchmarks disable it."
+        },
+        "save_dir": {
+          "type": "string",
+          "default": "./output",
+          "description": "Directory path where output artifacts and execution metrics will be saved. This path is used also for codecarbon results"
+        },
+        "enable_codecarbon": {
+          "type": "boolean",
+          "description": "Toggle to enable codecarbon consumption measurements. The output dir is set with the save_dir option"
+        },
+        "enable_reasoning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Request provider-supported reasoning summaries or thinking output"
+        },
+        "reasoning_effort": {
+          "type": ["string", "null"],
+          "description": "Provider-specific reasoning effort, for example low, medium, or high"
+        },
+        "reasoning_summary": {
+          "type": ["string", "null"],
+          "description": "OpenAI Responses reasoning summary mode, for example auto or detailed"
+        },
+        "reasoning_max_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Direct reasoning-token budget where supported"
+        },
+        "verbosity": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Visible response verbosity where supported"
+        },
+        "enable_logprobs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Request token log probabilities where supported by the selected API/model"
+        }
+      },
+      "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",
+      "required": [
+        "workflow"
+      ]
+    },
+    "agents": {
+      "type": "object",
+      "description": "Per-agent configuration settings.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "ollama",
+              "openrouter"
+            ],
+            "description": "The AI model provider backend."
+          },
+          "model": {
+            "type": "string",
+            "description": "The specific model identifier."
+          },
+          "n": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of completions to generate."
+          },
+          "bon_param": {
+            "type": "string",
+            "enum": [
+              "temperature",
+              "top_k",
+              "top_p"
+            ],
+            "description": "Best-of-N selection parameter."
+          },
+          "temp_min": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 2.0,
+            "description": "Minimum sampling temperature limit."
+          },
+          "temp_max": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 2.0,
+            "description": "Maximum sampling temperature limit."
+          },
+          "iterative_refinement_n": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of iterative refinement generations (optional)."
+          },
+          "enable_reasoning": {
+            "type": "boolean",
+            "description": "Request provider-native reasoning output for this agent"
+          },
+          "reasoning_effort": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasoning_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasoning_max_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "verbosity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enable_logprobs": {
+            "type": "boolean",
+            "description": "Request token log probabilities where supported"
+          },
+          "top_p_min": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Minimum top_p (nucleus sampling) threshold limit."
+          },
+          "top_p_max": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Maximum top_p (nucleus sampling) threshold limit."
+          },
+          "top_k_min": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Minimum top_k token cutoff pool limit."
+          },
+          "top_k_max": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum top_k token cutoff pool limit."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Maximum number of tokens the agent should output at each generation"
+          },
+          "use_cache": {
+            "type": "boolean",
+            "description": "Toggle to enable or disable query caching for this agent."
+          },
+          "cache_mode": {
+            "type": "string",
+            "enum": [
+              "read",
+              "r",
+              "write",
+              "w",
+              "read_write",
+              "rw"
+            ],
+            "description": "Behavior mode for the cache with this agent."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Master toggle to enable or disable this component entirely."
+          },
+          "eval": {
+            "type": "string",
+            "enum": [
+              "default"
+            ],
+            "description": "The evaluation system used by the agent to perform best-of-n selection"
+          }
+        },
+        "description": "Dictionary of dynamic, named agent definitions (e.g., Retriever, Analyzer). All internal keys are optional, allowing individual agents to selectively override the global defaults or customize their own sampling boundaries, caching rules, and evaluation setups.",
+        "required": []
+      }
+    }
+  },
+  "required": [
+    "global"
+  ]
+}

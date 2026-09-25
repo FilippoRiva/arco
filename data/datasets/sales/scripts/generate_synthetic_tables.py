@@ -2,7 +2,7 @@
 Generate synthetic products.parquet and stores.parquet tables
 that join with Store_Sales_Price_Elasticity_Promotions_Data.parquet.
 
-Run once: py data/generate_synthetic_tables.py
+Run once: python data/datasets/sales/scripts/generate_synthetic_tables.py
 """
 
 import os
@@ -12,9 +12,7 @@ import numpy as np
 import pandas as pd
 
 RNG = np.random.default_rng(seed=42)
-DATA_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "../datasets/sales")
-)
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SALES_PATH = os.path.join(DATA_DIR, "Store_Sales_Price_Elasticity_Promotions_Data.parquet")
 
 # ── Load keys from existing sales data ──────────────────────────────────────

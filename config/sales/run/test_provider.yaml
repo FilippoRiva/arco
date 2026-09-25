@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./../../../run.schema.json
+# =============================================================================
+# TEST PROVIDER-MODEL GLOBAL PARAMETERS
+# =============================================================================
+# Test for the provider and model parameters
+
+global:
+  run_id: "test_provider"
+  workflow: "planned_sales"
+  prompt: "Show me the sales in Nov 2021, with date as x and sales value as y"
+  default_provider: openrouter
+  default_model: deepseek/deepseek-v4-flash-0731

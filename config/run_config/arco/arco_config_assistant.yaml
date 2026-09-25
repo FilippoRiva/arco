@@ -1,8 +1,0 @@
-# yaml-language-server: $schema=./../schema.json
-
-global:
-  workflow: arco_config_assistant
-  default_provider: openai
-  default_model: gpt-5.6-luna
-  enable_reasoning: true
-  reasoning_effort: medium

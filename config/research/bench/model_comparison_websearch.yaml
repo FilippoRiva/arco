@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=./../../bench.schema.json
+# Benchmark configuration comparing smaller research-agent models.
+global:
+  workflow: "websearch_researcher"
+  default_provider: openai
+  default_model: gpt-4.1-nano
+  default_provider_judge: openai
+  default_model_judge: gpt-5.6-luna
+  #enable_reasoning: false
+  #reasoning_effort: none
+  #enable_logprobs: false
+  #enable_budget_controller: false
+  enable_storage: false
+  enable_codecarbon: true
+
+defaults: {}
+
+runs:
+  - name: Baseline GPT-4.1-nano
+    description: Standard GPT-4.1 nano research-agent configuration
+    changes:
+      CommonKnowledge:
+        provider: openai
+        model: gpt-4.1-nano
+      ResearchRouter:
+        provider: openai
+        model: gpt-4.1-nano
+      Summary:
+        provider: openai
+        model: gpt-4.1-nano
+      WebSearch:
+        provider: openai
+        model: gpt-4.1-nano
+  - name: Baseline Deepseek-v4-flash
+    description: Standard Deepseek-v4-flash research-agent configuration
+    changes:
+      CommonKnowledge:
+        provider: openrouter
+        model: deepseek/deepseek-v4-flash-0731
+      ResearchRouter:
+        provider: openrouter
+        model: deepseek/deepseek-v4-flash-0731
+      Summary:
+        provider: openrouter
+        model: deepseek/deepseek-v4-flash-0731
+      WebSearch:
+        provider: openrouter
+        model: deepseek/deepseek-v4-flash-0731
+  - name: Baseline GPT-5.4-nano
+    description: Standard GPT-5.4 nano research-agent configuration
+    changes:
+      CommonKnowledge:
+        provider: openai
+        model: gpt-5.4-nano
+      ResearchRouter:
+        provider: openai
+        model: gpt-5.4-nano
+      Summary:
+        provider: openai
+        model: gpt-5.4-nano
+      WebSearch:
+        provider: openai
+        model: gpt-5.4-nano

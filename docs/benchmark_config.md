@@ -1,6 +1,6 @@
 # Benchmark Config Reference
 
-Configuration reference for `arco-cli benchmark` configs. A config file has three top-level sections: [`global`](#global) (required), [`defaults`](#defaults) (optional), and [`runs`](#runs) (required).
+Configuration reference for `arco benchmark` configs. The shared IDE-validation schema is `config/bench.schema.json`. A config file has three top-level sections: [`global`](#global) (required), [`defaults`](#defaults) (optional), and [`runs`](#runs) (required).
 
 ```yaml
 global:

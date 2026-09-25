@@ -105,4 +105,4 @@ agents:
 - `bon_param` selects which sampling dimension (`temperature`, `top_k`, or `top_p`) is varied across the `n` completions for best-of-N generation; pair it with the matching `*_min`/`*_max` bounds (e.g. `bon_param: temperature` with `temp_min`/`temp_max`).
 - When `provider: ollama` is set (globally or per agent), `ollama_url` must be provided at the global level.
 - Per-agent settings override `global` settings only for that agent; any field left unset falls back to the global value.
-- A `schema.json` file is provided in the `./config/run_config/`  folder that can be used by a YAML language server to check configuration correctness
+- The shared `config/run.schema.json` file can be used by a YAML language server to check run configuration correctness.

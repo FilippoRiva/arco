@@ -16,6 +16,35 @@ if TYPE_CHECKING:
     from arco.core import Answer, State
 
 
+def display_workflow_event(update: dict[str, Any], *, verbose: bool = False) -> None:
+    """Render one workflow event in a frontend-controlled execution loop.
+
+    Benchmark and benchmark-generation services forward neutral workflow
+    events; this function keeps Rich presentation in the CLI layer.
+    """
+    event_type = update.get("event")
+    if event_type == "node_started":
+        if verbose:
+            from arco.cli.console import console
+
+            console.print(f"[dim]Starting {update.get('node', 'agent')}…[/dim]")
+    elif event_type == "node_finished":
+        from arco.cli.console import console
+
+        state = update.get("state")
+        answer = state.get_last_answer() if state is not None else None
+        if answer is not None:
+            console.print(
+                render_answer_verbose(answer) if verbose else render_answer(answer)
+            )
+            if not verbose:
+                console.print()
+    elif event_type == "error":
+        from arco.cli.console import console
+
+        console.print(f"[red]✗[/red] {update.get('message', 'Workflow error')}")
+
+
 def display_workflow_compact(events: Generator[dict[str, Any]]) -> State | None:
     status = RunStatusPanel(compact=True)
 

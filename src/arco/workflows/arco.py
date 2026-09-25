@@ -161,7 +161,7 @@ class ArcoConfigAssistant(Workflow):
 
     workflow_id = "arco_config_assistant"
     description = "Interactively inspect and edit ARCO configuration files."
-    default_config_path = "config/run_config/arco/arco_config_assistant.yaml"
+    default_config_path = "config/arco/run/arco_config_assistant.yaml"
 
     def initialize(self, config: Config, graph: Graph) -> None:
         from arco.agents import ToolUseAgent
@@ -181,7 +181,7 @@ Use write_config_file only for new files. It refuses to overwrite existing
 files. Use edit_config_file for precise changes to existing files.
 
 Before editing:
-1. Inspect the predefined yaml schemas at the root of config/run_config and config/benchmark_config folders
+1. Inspect the shared schemas at config/run.schema.json and config/bench.schema.json
 1. Inspect the relevant files with read_config_file.
 2. Inspect nearby project structure with project_shell when useful.
 3. Make the smallest exact edit needed with edit_config_file.
@@ -210,6 +210,6 @@ __all__ = [
     "ArcoConfigAssistant",
     "edit_config_file",
     "project_shell",
-    "write_config_file",
     "read_config_file",
+    "write_config_file",
 ]

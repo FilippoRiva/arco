@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./../../run.schema.json
+# =============================================================================
+# BENCHMARK GENERATION CONFIG
+# =============================================================================
+# The configuration used for benchmarks generation
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+global:
+  run_id: "planned_benchmark_generation"
+  workflow: "planned_sales"
+  default_provider: "openai"
+  default_model: "gpt-6-luna"
+  enable_logprobs: false
+  enable_reasoning: true
+  reasoning_effort: "medium"
+  enable_storage: true
