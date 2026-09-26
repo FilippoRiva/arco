@@ -43,7 +43,6 @@ def generate_benchmark(
     # Benchmark-data generation should not create image or CodeCarbon artifacts.
     if default_config.enable_storage is None:
         default_config = default_config.set(enable_storage=False)
-    default_config = default_config.set(enable_codecarbon=False)
     workflow = WorkflowFactory.get(config=default_config)
 
     prompts_len = len(prompts)
@@ -67,7 +66,9 @@ def generate_benchmark(
         workflow_errors: list[str] = []
         for workflow_event in workflow.stream(config=config):
             if workflow_event["event"] == "error":
-                workflow_errors.append(str(workflow_event.get("message", "Unknown error")))
+                workflow_errors.append(
+                    str(workflow_event.get("message", "Unknown error"))
+                )
             elif workflow_event["event"] == "completed":
                 resulting_state = workflow_event.get("state")
             yield {"event": "workflow_event", "workflow_event": workflow_event}

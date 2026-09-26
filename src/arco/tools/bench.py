@@ -46,9 +46,9 @@ def _prepare_input_snapshot(source: str, destination: Path) -> tuple[Path, bool]
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     if destination.exists():
-        if source_path.is_file() and hashlib.sha256(source_path.read_bytes()).digest() != (
-            hashlib.sha256(destination.read_bytes()).digest()
-        ):
+        if source_path.is_file() and hashlib.sha256(
+            source_path.read_bytes()
+        ).digest() != (hashlib.sha256(destination.read_bytes()).digest()):
             raise ValueError(
                 f"Benchmark input {source_path} differs from the existing snapshot "
                 f"{destination}. Use a new benchmark name or remove the old output "
@@ -158,9 +158,7 @@ def _load_checkpoint(
         except (TypeError, ValueError) as exc:
             raise ValueError(f"Invalid entry_id in checkpoint {csv_path}") from exc
         if entry_id not in expected_entry_ids:
-            raise ValueError(
-                f"Unexpected entry_id {entry_id} in checkpoint {csv_path}"
-            )
+            raise ValueError(f"Unexpected entry_id {entry_id} in checkpoint {csv_path}")
         if entry_id in completed:
             raise ValueError(f"Duplicate entry_id {entry_id} in checkpoint {csv_path}")
         if str(row["run_fingerprint"]) != fingerprint:
@@ -239,7 +237,6 @@ def benchmark_from_config(
     # so they do not create energy-tracking output directories.
     if default_config.enable_storage is None:
         default_config = default_config.set(enable_storage=False)
-    default_config = default_config.set(enable_codecarbon=False)
     workflow = WorkflowFactory.get(config=default_config)
     benchmark_dataset = BenchmarkDataset.from_json(str(dataset_snapshot))
     if len(benchmark_dataset) == 0:
@@ -355,7 +352,6 @@ def benchmark_from_config(
     }
 
 
-
 def benchmark(
     workflow: Workflow,
     name: str,
@@ -386,7 +382,9 @@ def benchmark(
         workflow_errors: list[str] = []
         for workflow_event in workflow.stream(config=updated_config):
             if workflow_event["event"] == "error":
-                workflow_errors.append(str(workflow_event.get("message", "Unknown error")))
+                workflow_errors.append(
+                    str(workflow_event.get("message", "Unknown error"))
+                )
             elif workflow_event["event"] == "completed":
                 resulting_state = workflow_event.get("state")
             yield {"event": "workflow_event", "workflow_event": workflow_event}
