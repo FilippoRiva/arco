@@ -1,9 +1,12 @@
 import json
 import logging
+import os
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass
+from html import escape
 from itertools import pairwise
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import plotly.express as px
@@ -12,7 +15,7 @@ import yaml
 from rich.console import Console
 from rich.table import Table
 
-from arco.core import State
+from arco.core import Answer, State
 from arco.data import BenchmarkDataset
 
 logger = logging.getLogger(__name__)
@@ -24,11 +27,10 @@ class BenchmarkResult:
 
     metadata: dict
     benchmark_dir: Path
-    summary_df: pd.DataFrame
-    runs: dict[str, pd.DataFrame] = field(default_factory=dict)
-    states: dict[str, dict[str, State]] = field(default_factory=dict)
-    dataset: BenchmarkDataset | None = None
-    analysis_df: pd.DataFrame = field(default_factory=pd.DataFrame)
+    answer_analysis_df: pd.DataFrame
+    run_analysis_df: pd.DataFrame
+    _states: dict[str, dict[str, State]]
+    benchmark_dataset: BenchmarkDataset | None = None
 
     @classmethod
     def load(cls, benchmark_dir: str) -> BenchmarkResult:
@@ -39,84 +41,71 @@ class BenchmarkResult:
 
         run_names = _load_run_names(bdir, metadata)
         runs_dir = bdir / "runs"
-        runs: dict[str, pd.DataFrame] = {}
+
+        # Check folder
+        if not runs_dir.exists():
+            raise ValueError("No runs directory available for this benchmark")
+        run_csv_paths = sorted(runs_dir.glob("*.csv"))
+        if not run_csv_paths:
+            raise ValueError(f"No per-run CSV files found under {runs_dir}")
+
+        # Build the answer_analysis_df and extract states
+        answer_analysis_records: list[dict] = []
         states: dict[str, dict[str, State]] = {}
-        analysis_records: list[dict] = []
-        if runs_dir.exists():
-            nested_run_dirs = [path for path in runs_dir.iterdir() if path.is_dir()]
-            if nested_run_dirs:
+        for csv_path in run_csv_paths:
+            # check csv
+            file_run_name = csv_path.stem
+            run_name = run_names.get(file_run_name, file_run_name)
+            df = pd.read_csv(csv_path)
+            required_columns = {"entry_id", "run_id", "state", "changes"}
+            missing_columns = required_columns.difference(df.columns)
+            if missing_columns:
                 raise ValueError(
-                    "Per-run subdirectories are not supported; expected flat CSV "
-                    f"files directly under {runs_dir}"
+                    f"Unsupported benchmark CSV {csv_path}; missing columns: "
+                    f"{', '.join(sorted(missing_columns))}"
                 )
-            run_csv_paths = sorted(runs_dir.glob("*.csv"))
-            if not run_csv_paths:
-                raise ValueError(f"No per-run CSV files found under {runs_dir}")
-            for csv_path in run_csv_paths:
-                file_run_name = csv_path.stem
-                run_name = run_names.get(file_run_name, file_run_name)
-                df = pd.read_csv(csv_path)
-                required_columns = {"entry_id", "run_id"}
-                missing_columns = required_columns.difference(df.columns)
-                if missing_columns:
-                    raise ValueError(
-                        f"Unsupported benchmark CSV {csv_path}; missing columns: "
-                        f"{', '.join(sorted(missing_columns))}"
-                    )
-                if "state" not in df.columns and "execution_trace" not in df.columns:
-                    raise ValueError(
-                        f"Unsupported benchmark CSV {csv_path}; expected a serialized "
-                        "state or execution_trace column"
-                    )
 
-                run_states: dict[str, State] = {}
-                for _, row in df.iterrows():
-                    state_data = _load_json_value(row.get("state"), default={})
-                    if state_data:
-                        state = State.from_dict(state_data)
-                        run_states[str(row["run_id"])] = state
-                        answers = [answer.to_dict() for answer in state.answers]
-                        state_prompt = state.prompt
-                        global_profile = state_data.get("global_profiling_data", {})
-                    else:
-                        state_prompt = row.get("prompt")
-                        global_profile = {}
-                        legacy_trace = _load_json_value(
-                            row.get("execution_trace"), default={"answers": []}
+            # get run info and build analysis_df rows
+            run_states: dict[str, State] = {}
+            for _, row in df.iterrows():
+                entry_id = int(row["entry_id"])  # pyright: ignore
+                run_id = str(row["run_id"])
+                # state
+                state = State.from_dict(_load_json_dict(row.get("state"), default={}))
+                # changes
+                changes = _load_json_dict(row.get("changes"), default={})
+
+                for trace_index, answer in enumerate(
+                    state.answers
+                ):  # one entry per answer
+                    answer_analysis_records.append(
+                        _answer_analysis_record(
+                            entry_id=entry_id,
+                            run_id=run_id,
+                            trace_index=trace_index,
+                            answer=answer,
+                            changes=changes,
+                            run_name=run_name,
                         )
-                        answers = legacy_trace.get("answers", [])
+                    )
 
-                    changes = _load_json_value(row.get("changes"), default={})
-                    entry_id = _as_int(row["entry_id"])
-                    run_id = str(row["run_id"])
-                    for trace_index, answer in enumerate(answers):
-                        analysis_records.append(
-                            _analysis_record(
-                                answer=answer,
-                                run_name=run_name,
-                                entry_id=entry_id,
-                                run_id=run_id,
-                                run_fingerprint=row.get("run_fingerprint"),
-                                prompt=state_prompt,
-                                trace_index=trace_index,
-                                changes=changes,
-                                global_profile=global_profile,
-                            )
-                        )
+                # store each state in a convenient dict
+                run_states[str(row["run_id"])] = state
 
-                if run_states:
-                    states[run_name] = run_states
+            if run_states:
+                states[run_name] = run_states
 
-        analysis_df = pd.DataFrame(analysis_records)
+        answer_analysis_df = pd.DataFrame(answer_analysis_records)
         analysis_dir = bdir / "analysis"
         analysis_dir.mkdir(parents=True, exist_ok=True)
         parquet_path = analysis_dir / "benchmark.parquet"
-        analysis_df.to_parquet(parquet_path, index=False)
-        # Use the unified Parquet dataset as the canonical analysis source.
-        analysis_df = pd.read_parquet(parquet_path)
-        runs = _runs_from_analysis(analysis_df)
-        summary_df = _summary_from_analysis(analysis_df)
+        answer_analysis_df.to_parquet(parquet_path, index=False)
+        answer_analysis_df = pd.read_parquet(parquet_path)
 
+        # Build the run_analysis_df
+        run_analysis_df = _build_run_analysis_df(answer_analysis_df)
+
+        # Load the dataset
         dataset_path = metadata.get("dataset_path")
         dataset = None
         if dataset_path:
@@ -131,30 +120,23 @@ class BenchmarkResult:
         return cls(
             metadata=metadata,
             benchmark_dir=bdir,
-            summary_df=summary_df,
-            runs=runs,
-            states=states,
-            dataset=dataset,
-            analysis_df=analysis_df,
+            answer_analysis_df=answer_analysis_df,
+            run_analysis_df=run_analysis_df,
+            benchmark_dataset=dataset,
+            _states=states,
         )
 
 
-def _load_json_value(value, *, default):
-    """Parse CSV JSON cells while tolerating already-decoded and null values."""
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return default
-    if isinstance(value, (dict, list)):
+def _load_json_dict(value: Any, *, default: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(value, dict):
         return value
-    if not isinstance(value, str) or not value:
+    if not isinstance(value, str) or not value.strip():
         return default
     try:
-        return json.loads(value)
+        parsed = json.loads(value)
     except json.JSONDecodeError:
         return default
-
-
-def _as_int(value) -> int:
-    return int(value)
+    return parsed if isinstance(parsed, dict) else default
 
 
 def _load_run_names(benchmark_dir: Path, metadata: dict) -> dict[str, str]:
@@ -179,153 +161,66 @@ def _load_run_names(benchmark_dir: Path, metadata: dict) -> dict[str, str]:
     return {}
 
 
-def _trace_answer(answer: dict) -> dict:
-    """Normalize serialized State answers and legacy trace answers."""
-    profile = answer.get("profiling_data") or {}
-    ground_truth = answer.get("gt_evaluation") or answer.get("evaluation_gt")
-    if isinstance(ground_truth, dict):
-        ground_truth = ground_truth.get("score")
-    if ground_truth is None:
-        ground_truth = answer.get("score")
-
-    return {
-        "agent_type": str(answer.get("agent_type", answer.get("agent_id", ""))),
-        "evaluation_gt": ground_truth,
-        "perplexity": answer.get("perplexity"),
-        "total_time": answer.get("total_time", profile.get("total_time")),
-        "llm_time": answer.get("llm_time", profile.get("llm_time")),
-        "energy_consumed_kwh": answer.get(
-            "energy_consumed_kwh", profile.get("energy_consumed_kwh")
-        ),
-        "cpu_energy_kwh": answer.get("cpu_energy_kwh", profile.get("cpu_energy_kwh")),
-        "gpu_energy_kwh": answer.get("gpu_energy_kwh", profile.get("gpu_energy_kwh")),
-        "ram_energy_kwh": answer.get("ram_energy_kwh", profile.get("ram_energy_kwh")),
-        "emissions_kg_co2": answer.get(
-            "emissions_kg_co2", profile.get("emissions_kg_co2")
-        ),
-        "error": answer.get("error"),
-    }
-
-
-def _analysis_record(
+def _answer_analysis_record(
     *,
-    answer: dict,
+    answer: Answer,
     run_name: str,
-    entry_id: int,
     run_id: str,
-    run_fingerprint,
-    prompt: str | None,
     trace_index: int,
+    entry_id: int,
     changes: dict,
-    global_profile: dict,
 ) -> dict:
     """Create a flat, typed row suitable for downstream analysis in Parquet."""
-    normalized = _trace_answer(answer)
-    evaluation = answer.get("gt_evaluation") or {}
-    best_of_n_evaluation = answer.get("evaluation") or {}
-    if not isinstance(evaluation, dict):
-        evaluation = {}
-    if not isinstance(best_of_n_evaluation, dict):
-        best_of_n_evaluation = {}
+    profile = answer.profiling_data
+
     return {
-        "run": run_name,
-        "entry_id": entry_id,
-        "run_id": run_id,
-        "run_fingerprint": (
-            None if pd.isna(run_fingerprint) else str(run_fingerprint)
+        "run_name": run_name,  # benchmark run name
+        "entry_id": entry_id,  # prompt_id
+        "run_id": run_id,  # specific run id
+        "trace_index": trace_index,  # answer number
+        "agent": answer.agent_id,
+        "message": answer.message,
+        "score": answer.gt_evaluation.score if answer.gt_evaluation else None,
+        "score_success": answer.gt_evaluation.success
+        if answer.gt_evaluation
+        else False,
+        "best_of_n_score": answer.evaluation.score if answer.evaluation else None,
+        "best_of_n_success": answer.evaluation.success if answer.evaluation else False,
+        "perplexity": answer.perplexity if answer.perplexity is not None else None,
+        "thinking": answer.thinking,
+        "error": answer.error,
+        "agent_output": json.dumps(
+            answer.agent_output, ensure_ascii=False, sort_keys=True
         ),
-        "prompt": prompt,
-        "trace_index": trace_index,
-        "agent": normalized["agent_type"],
-        "message": answer.get("message"),
-        "score": normalized["evaluation_gt"],
-        "evaluation_success": evaluation.get("success"),
-        "best_of_n_score": best_of_n_evaluation.get("score"),
-        "perplexity": normalized["perplexity"],
-        "total_time": normalized["total_time"],
-        "llm_time": normalized["llm_time"],
-        "energy_consumed_kwh": normalized["energy_consumed_kwh"],
-        "cpu_energy_kwh": normalized["cpu_energy_kwh"],
-        "gpu_energy_kwh": normalized["gpu_energy_kwh"],
-        "ram_energy_kwh": normalized["ram_energy_kwh"],
-        "emissions_kg_co2": normalized["emissions_kg_co2"],
-        "error": normalized["error"],
-        "thinking": answer.get("thinking"),
-        "generation_params_json": json.dumps(
-            answer.get("generation_params"), ensure_ascii=False, default=str
+        "agent_config": json.dumps(
+            asdict(answer.agent_config), ensure_ascii=False, sort_keys=True
         ),
-        "logprobs_json": json.dumps(
-            answer.get("logprobs", []), ensure_ascii=False, default=str
-        ),
-        "answer_json": json.dumps(answer, ensure_ascii=False, default=str),
-        "global_total_time": global_profile.get("total_time"),
-        "global_llm_time": global_profile.get("llm_time"),
-        "agent_output_json": json.dumps(
-            answer.get("agent_output", {}), ensure_ascii=False, default=str
-        ),
-        "agent_config_json": json.dumps(
-            answer.get("agent_config", {}), ensure_ascii=False, default=str
-        ),
-        "changes_json": json.dumps(changes, ensure_ascii=False, sort_keys=True),
+        "changes": json.dumps(changes, ensure_ascii=False, sort_keys=True),
+        **profile.as_dict(),
     }
 
 
-def _runs_from_analysis(analysis_df: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    """Build the compatibility run views from the unified analysis table."""
-    runs: dict[str, pd.DataFrame] = {}
-    if analysis_df.empty:
-        return runs
-
-    for run_name, run_df in analysis_df.groupby("run", sort=False):
-        entries = []
-        for entry_id, entry_df in run_df.groupby("entry_id", sort=False):
-            entry_df = entry_df.sort_values("trace_index")
-            answers = [
-                {
-                    "agent_type": row.agent,
-                    "evaluation_gt": row.score,
-                    "perplexity": row.perplexity,
-                    "total_time": row.total_time,
-                    "llm_time": row.llm_time,
-                    "energy_consumed_kwh": row.energy_consumed_kwh,
-                    "cpu_energy_kwh": row.cpu_energy_kwh,
-                    "gpu_energy_kwh": row.gpu_energy_kwh,
-                    "ram_energy_kwh": row.ram_energy_kwh,
-                    "emissions_kg_co2": row.emissions_kg_co2,
-                    "error": row.error,
-                }
-                for row in entry_df.itertuples(index=False)
-            ]
-            entries.append(
-                {
-                    "entry_id": entry_id,
-                    "run_id": entry_df.iloc[0]["run_id"],
-                    "trace": {"answers": answers},
-                }
-            )
-        runs[str(run_name)] = pd.DataFrame(entries)
-    return runs
-
-
-def _summary_from_analysis(analysis_df: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate the unified Parquet data into the former summary view."""
+def _build_run_analysis_df(analysis_df: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate the unified Parquet data into the a run-level aggregated view."""
     summary_rows = []
     if analysis_df.empty:
         return pd.DataFrame(summary_rows, columns=["name", "metrics_by_agent"])
 
-    metrics = {
+    aggregated_metrics = {
         "evaluation_gt": "score",
         "perplexity": "perplexity",
         "total_time": "total_time",
         "llm_time": "llm_time",
     }
-    for run_name, run_df in analysis_df.groupby("run", sort=False):
+    for run_name, run_df in analysis_df.groupby("run_name", sort=False):
         metrics_by_agent: dict[str, dict[str, float]] = defaultdict(dict)
+
         for agent, agent_df in run_df.groupby("agent", sort=False):
-            for summary_metric, column in metrics.items():
+            for summary_metric, column in aggregated_metrics.items():
                 values = agent_df[column].dropna()
                 if not values.empty:
                     metrics_by_agent[str(agent)][summary_metric] = float(values.mean())
+
         summary_rows.append(
             {
                 "name": run_name,
@@ -359,180 +254,14 @@ def _rich_table(title: str, columns: list[str], rows: list[tuple]) -> None:
     console.print(table)
 
 
-def print_overview(result: BenchmarkResult) -> None:
-    df = result.summary_df
-    rows = []
-    for _, r in df.iterrows():
-        metrics = json.loads(r["metrics_by_agent"])
-        all_scores = [
-            m["evaluation_gt"] for m in metrics.values() if "evaluation_gt" in m
-        ]
-        all_ppl = [m["perplexity"] for m in metrics.values() if "perplexity" in m]
-        all_time = [m["total_time"] for m in metrics.values() if "total_time" in m]
-        rows.append(
-            (
-                r["name"],
-                f"{sum(all_scores) / len(all_scores):.3f}" if all_scores else "\u2014",
-                f"{sum(all_ppl) / len(all_ppl):.3f}" if all_ppl else "\u2014",
-                f"{sum(all_time):.2f}s" if all_time else "\u2014",
-            )
-        )
-    _rich_table(
-        "Benchmark Overview", ["Run", "Avg Score", "Avg PPL", "Total Time"], rows
-    )
-
-
-def print_agent_breakdown(result: BenchmarkResult) -> None:
-    df = result.summary_df
-    agent_metrics: dict[str, dict[str, list[float]]] = defaultdict(
-        lambda: defaultdict(list)
-    )
-
-    for _, r in df.iterrows():
-        metrics = json.loads(r["metrics_by_agent"])
-        for agent, m in metrics.items():
-            for key in ("evaluation_gt", "perplexity", "total_time", "llm_time"):
-                if key in m:
-                    agent_metrics[agent][key].append(m[key])
-
-    rows = []
-    for agent in sorted(agent_metrics):
-        m = agent_metrics[agent]
-        score = (
-            f"{sum(m['evaluation_gt']) / len(m['evaluation_gt']):.3f}"
-            if "evaluation_gt" in m
-            else "\u2014"
-        )
-        ppl = (
-            f"{sum(m['perplexity']) / len(m['perplexity']):.3f}"
-            if "perplexity" in m
-            else "\u2014"
-        )
-        t = (
-            f"{sum(m['total_time']) / len(m['total_time']):.2f}s"
-            if "total_time" in m
-            else "\u2014"
-        )
-        lt = (
-            f"{sum(m['llm_time']) / len(m['llm_time']):.2f}s"
-            if "llm_time" in m
-            else "\u2014"
-        )
-        rows.append((agent, score, ppl, t, lt))
-
-    _rich_table(
-        "Per-Agent Averages", ["Agent", "Score", "PPL", "Total Time", "LLM Time"], rows
-    )
-
-
-def print_trace_analysis(result: BenchmarkResult) -> None:
-    if result.dataset is None:
-        console.print("[dim]No dataset in metadata — skipping trace analysis[/dim]")
-        return
-
-    dataset = result.dataset
-    entries_by_id = {entry.id: entry for entry in dataset.entries}
-    mismatches = []
-    grouped_traces = result.analysis_df.groupby(["run", "entry_id"], sort=False)
-    for (run_name, raw_entry_id), trace_df in grouped_traces:
-        entry_id = int(raw_entry_id)
-        entry = entries_by_id.get(entry_id)
-        if entry is None:
-            continue
-
-        actual_agents = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
-        # Trace iteration yields TraceElement objects. Compare their
-        # agent_type values rather than comparing strings to objects.
-        expected_agents = [str(trace_element.agent_type) for trace_element in entry.trace]
-
-        divergence = None
-        for i, (actual, expected) in enumerate(zip(actual_agents, expected_agents)):
-            if actual != expected:
-                divergence = (i, expected, actual)
-                break
-        if divergence is None:
-            if len(actual_agents) < len(expected_agents):
-                divergence = (
-                    len(actual_agents),
-                    expected_agents[len(actual_agents)],
-                    "(missing)",
-                )
-            elif len(actual_agents) > len(expected_agents):
-                divergence = (
-                    len(expected_agents),
-                    "(end)",
-                    actual_agents[len(expected_agents)],
-                )
-
-        if divergence:
-            mismatches.append(
-                (run_name, entry_id, divergence[0], divergence[1], divergence[2])
-            )
-
-    if not mismatches:
-        console.print("[green]✓[/green] All traces match ground truth.")
-        return
-
-    _rich_table(
-        "Trace Divergences", ["Run", "Entry", "Step", "Expected", "Got"], mismatches
-    )
-
-
 # ── Plotly plots ─────────────────────────────────────────────────────────
 
 
-def _output_dir(result: BenchmarkResult) -> Path:
-    out = result.benchmark_dir / "analysis"
-    out.mkdir(parents=True, exist_ok=True)
-    html_dir = out / "html"
-    png_dir = out / "png"
-    html_dir.mkdir(exist_ok=True)
-    png_dir.mkdir(exist_ok=True)
-
-    # Migrate plots generated by older analyzer versions into their new folders.
-    for path in out.glob("*.html"):
-        if path.name != "dashboard.html":
-            path.replace(html_dir / path.name)
-    for path in out.glob("*.png"):
-        path.replace(png_dir / path.name)
-    return out
-
-
-def _flatten_traces(analysis_df: pd.DataFrame) -> list[dict]:
-    """Return plot-ready rows from the canonical unified analysis table."""
-    if analysis_df.empty:
-        return []
-    plot_df = analysis_df.rename(
-        columns={
-            "entry_id": "entry",
-            "perplexity": "ppl",
-            "energy_consumed_kwh": "energy",
-            "emissions_kg_co2": "emissions",
-        }
-    )
-    return plot_df[
-        [
-            "run",
-            "entry",
-            "agent",
-            "score",
-            "ppl",
-            "total_time",
-            "llm_time",
-            "energy",
-            "cpu_energy_kwh",
-            "gpu_energy_kwh",
-            "ram_energy_kwh",
-            "emissions",
-            "error",
-        ]
-    ].to_dict(orient="records")
-
-
 _COLOR_SEQ = ["#0984e3", "#00b894", "#e17055", "#6c5ce7", "#fdcb6e", "#d63031"]
+_AGENT_LABEL_COLORS = ["#3f6b7a", "#5e7651", "#8a6744", "#725e83"]
 
 
-def _save_fig(fig: go.Figure, path: Path) -> None:
+def save_plot(fig: go.Figure, path: Path) -> go.Figure:
     fig.update_layout(height=400)
     html_dir = path.parent / "html"
     png_dir = path.parent / "png"
@@ -546,179 +275,335 @@ def _save_fig(fig: go.Figure, path: Path) -> None:
         fig.write_image(png_path, scale=2)
     except Exception:  # noqa BLE001 - fine
         pass  # kaleido/Chrome not available — PNG skipped
+    return fig
 
 
-def plot_per_agent_scores(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    if df.empty or df["score"].isna().all():
+def plot_per_agent_scores(result: BenchmarkResult) -> go.Figure | None:
+    if result.answer_analysis_df.empty:
         return None
     fig = px.box(
-        df,
+        result.answer_analysis_df,
         x="agent",
         y="score",
-        color="agent",
+        color="run_name",
         color_discrete_sequence=_COLOR_SEQ,
-        points="all",
-        hover_data=["run", "entry"],
-        title="Per-Agent Score Distribution",
+        points="outliers",
+        hover_data=["run_name", "entry_id"],
+        title="Per-Agent Score Distribution by Run",
     )
     fig.update_layout(
+        boxmode="group",
         xaxis_title="Agent",
         yaxis_title="Ground-truth score",
         yaxis_range=[0, 1.05],
-        showlegend=False,
     )
-    if save:
-        _save_fig(fig, _output_dir(result) / "per_agent_scores.html")
     return fig
 
 
-def plot_per_agent_perplexity(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    if df.empty or df["ppl"].isna().all():
+def plot_per_agent_perplexity(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
+    if df.empty or df["perplexity"].isna().all():
         return None
     fig = px.box(
         df,
         x="agent",
-        y="ppl",
-        color="agent",
+        y="perplexity",
+        color="run_name",
         color_discrete_sequence=_COLOR_SEQ,
-        title="Per-Agent Perplexity Distribution",
+        points="outliers",
+        hover_data=["run_name", "entry_id"],
+        title="Per-Agent Perplexity Distribution by Run",
     )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Perplexity", showlegend=False)
-    if save:
-        _save_fig(fig, _output_dir(result) / "per_agent_perplexity.html")
+    fig.update_layout(
+        boxmode="group",
+        xaxis_title="Agent",
+        yaxis_title="Perplexity",
+    )
     return fig
 
 
-def plot_timing_breakdown(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    if df.empty or df["total_time"].isna().all():
+def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
+    title = "Paired Score Improvement vs Baseline"
+    df = result.answer_analysis_df
+    if df.empty:
+        df = pd.DataFrame(columns=["run_name", "agent", "entry_id", "score"])
+    else:
+        df = df.dropna(subset=["score"]).copy()
+        df["run_name"] = df["run_name"].fillna("Unknown run").astype(str)
+        df["agent"] = df["agent"].fillna("Unknown agent").astype(str)
+
+    baseline_mask = df["run_name"].str.strip().str.casefold() == "baseline"
+    if not baseline_mask.any():
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No Baseline run provided",
+            showarrow=False,
+            font={"size": 14, "color": "#636e72"},
+            x=0.5,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+        )
+        fig.update_layout(
+            title=title,
+            xaxis_title="Agent",
+            yaxis_title="Score change vs baseline",
+        )
+        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+        return fig
+
+    df.loc[baseline_mask, "run_name"] = "Baseline"
+    score_by_entry = df.groupby(
+        ["run_name", "agent", "entry_id"], as_index=False, sort=False
+    )["score"].mean()
+    is_baseline = score_by_entry["run_name"] == "Baseline"
+    baseline_scores = score_by_entry[is_baseline][
+        ["agent", "entry_id", "score"]
+    ].rename(columns={"score": "baseline_score"})
+    candidate_scores = score_by_entry[~is_baseline]
+    paired = candidate_scores.merge(
+        baseline_scores,
+        on=["agent", "entry_id"],
+        how="inner",
+    )
+    if paired.empty:
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No paired score entries found",
+            showarrow=False,
+            font={"size": 14, "color": "#636e72"},
+            x=0.5,
+            y=0.5,
+            xref="paper",
+            yref="paper",
+        )
+        fig.update_layout(
+            title=title,
+            xaxis_title="Agent",
+            yaxis_title="Score change vs baseline",
+        )
+        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+        return fig
+
+    paired["score_delta"] = paired["score"] - paired["baseline_score"]
+    summary = paired.groupby(["run_name", "agent"], as_index=False, sort=False).agg(
+        mean_improvement=("score_delta", "mean"),
+        paired_entry_count=("score_delta", "size"),
+        run_mean_score=("score", "mean"),
+        baseline_mean_score=("baseline_score", "mean"),
+    )
+    summary["label"] = summary["mean_improvement"].map(
+        lambda value: "0.000" if value == 0 else f"{value:+.3f}"
+    )
+    fig = px.bar(
+        summary,
+        x="agent",
+        y="mean_improvement",
+        color="run_name",
+        text="label",
+        barmode="group",
+        color_discrete_sequence=_COLOR_SEQ,
+        hover_data={
+            "run_name": True,
+            "paired_entry_count": True,
+            "run_mean_score": ":.3f",
+            "baseline_mean_score": ":.3f",
+            "mean_improvement": ":+.3f",
+            "label": False,
+        },
+        title=title,
+    )
+    fig.update_traces(textposition="outside", cliponaxis=False)
+    fig.update_layout(
+        barmode="group",
+        xaxis_title="Agent",
+        yaxis_title="Score change vs baseline",
+    )
+    fig.add_hline(y=0, line_dash="dash", line_color="#636e72")
+    fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+    return fig
+
+
+def plot_timing_breakdown(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
+    if df.empty:
         return None
 
-    grouped = df.groupby("agent")
     rows: list[dict] = []
-    for agent, values in grouped:
+    for (run_name, agent), values in df.groupby(["run_name", "agent"], sort=False):
         for metric in ("total_time", "llm_time"):
             series = values[metric].dropna()
             if series.empty:
                 continue
+            median = series.median()
+            p90 = series.quantile(0.9)
             rows.append(
                 {
-                    "agent": agent,
+                    "run_name": str(run_name),
+                    "agent": str(agent),
                     "metric": metric,
-                    "median": series.median(),
-                    "p90": series.quantile(0.9),
-                    "p90_error": max(series.quantile(0.9) - series.median(), 0),
+                    "median": median,
+                    "p90": p90,
+                    "p90_error": max(p90 - median, 0),
                 }
             )
     if not rows:
         return None
 
     plot_df = pd.DataFrame(rows)
-    fig = px.bar(
-        plot_df,
-        x="agent",
-        y="median",
-        color="metric",
-        barmode="group",
-        error_y="p90_error",
-        color_discrete_map={"total_time": "#74b9ff", "llm_time": "#0984e3"},
-        title="Median Timing Breakdown per Agent (p90 error bars)",
-        hover_data={"median": ":.3f", "p90": ":.3f"},
-    )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Seconds")
-    if save:
-        _save_fig(fig, _output_dir(result) / "timing_breakdown.html")
-    return fig
-
-
-def plot_energy_consumption(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    energy_columns = ["cpu_energy", "gpu_energy", "ram_energy"]
-    if df.empty or not any(
-        column in df and df[column].notna().any() for column in energy_columns
+    fig = go.Figure()
+    for metric, label, color in (
+        ("total_time", "Total time", "#74b9ff"),
+        ("llm_time", "LLM time", "#0984e3"),
     ):
-        return None
-
-    agg = df.groupby("agent")[energy_columns].mean().reset_index()
-    melted = agg.melt(
-        id_vars=["agent"],
-        value_vars=energy_columns,
-        var_name="metric",
-        value_name="kwh",
-    ).dropna(subset=["kwh"])
-    melted["wh"] = melted["kwh"] * 1000
-    fig = px.bar(
-        melted,
-        x="agent",
-        y="wh",
-        color="metric",
+        metric_df = plot_df[plot_df["metric"] == metric]
+        if metric_df.empty:
+            continue
+        fig.add_trace(
+            go.Bar(
+                x=[metric_df["run_name"].tolist(), metric_df["agent"].tolist()],
+                y=metric_df["median"],
+                name=label,
+                marker_color=color,
+                error_y={"type": "data", "array": metric_df["p90_error"]},
+                customdata=metric_df[["run_name", "agent", "p90"]].to_numpy(),
+                hovertemplate=(
+                    "Run: %{customdata[0]}<br>"
+                    "Agent: %{customdata[1]}<br>"
+                    "Median: %{y:.3f} s<br>"
+                    "p90: %{customdata[2]:.3f} s<extra>%{fullData.name}</extra>"
+                ),
+            )
+        )
+    fig.update_layout(
         barmode="group",
-        color_discrete_map={
-            "cpu_energy": "#00b894",
-            "gpu_energy": "#e17055",
-            "ram_energy": "#0984e3",
-        },
-        title="Mean Energy Consumption per Agent",
-        hover_data={"wh": ":.4f", "kwh": ":.6f"},
+        title="Median Timing Breakdown per Run and Agent (p90 error bars)",
+        xaxis_title="Run / Agent",
+        yaxis_title="Seconds",
     )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Mean energy (Wh)")
-    if save:
-        _save_fig(fig, _output_dir(result) / "energy_consumption.html")
     return fig
 
 
-def plot_emissions(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    if df.empty or df["emissions"].isna().all():
+def plot_energy_consumption(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
+    energy_columns = ["cpu_energy_kwh", "gpu_energy_kwh", "ram_energy_kwh"]
+    if df.empty:
         return None
-    agg = df.groupby("agent", as_index=False)["emissions"].mean()
-    agg["grams_co2"] = agg["emissions"] * 1000
+
+    energy_df = df.copy()
+    energy_df["cumulative_energy_kwh"] = energy_df[energy_columns].sum(
+        axis=1, min_count=1
+    )
+    energy_df = energy_df.dropna(subset=["cumulative_energy_kwh"])
+    if energy_df.empty:
+        return None
+
+    energy_df["run_name"] = energy_df["run_name"].fillna("Unknown run").astype(str)
+    means = energy_df.groupby(["run_name", "agent"], as_index=False, sort=False).agg(
+        cumulative_energy_kwh=("cumulative_energy_kwh", "mean")
+    )
+    means["energy_wh"] = means["cumulative_energy_kwh"] * 1000
+    fig = px.bar(
+        means,
+        x="agent",
+        y="energy_wh",
+        color="run_name",
+        barmode="group",
+        color_discrete_sequence=_COLOR_SEQ,
+        title="Mean Cumulative Energy Consumption by Run and Agent",
+        hover_data={
+            "run_name": True,
+            "cumulative_energy_kwh": ":.6f",
+            "energy_wh": ":.4f",
+        },
+    )
+    fig.update_layout(xaxis_title="Agent", yaxis_title="Mean cumulative energy (Wh)")
+    return fig
+
+
+def plot_mean_energy_by_run(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
+    energy_columns = ["cpu_energy_kwh", "gpu_energy_kwh", "ram_energy_kwh"]
+    if df.empty:
+        return None
+
+    energy_df = df.copy()
+    energy_df["cumulative_energy_kwh"] = energy_df[energy_columns].sum(
+        axis=1, min_count=1
+    )
+    energy_df = energy_df.dropna(subset=["cumulative_energy_kwh"])
+    if energy_df.empty:
+        return None
+
+    energy_df["run_name"] = energy_df["run_name"].fillna("Unknown run").astype(str)
+    energy_df["agent"] = energy_df["agent"].fillna("Unknown agent").astype(str)
+    agent_means = energy_df.groupby(
+        ["run_name", "agent"], as_index=False, sort=False
+    ).agg(agent_mean_energy_kwh=("cumulative_energy_kwh", "mean"))
+    means = agent_means.groupby("run_name", as_index=False, sort=False).agg(
+        cumulative_energy_kwh=("agent_mean_energy_kwh", "sum"),
+        agent_count=("agent", "nunique"),
+    )
+    means["energy_wh"] = means["cumulative_energy_kwh"] * 1000
+    fig = px.bar(
+        means,
+        x="run_name",
+        y="energy_wh",
+        color="run_name",
+        color_discrete_sequence=_COLOR_SEQ,
+        title="Sum of Mean Agent Energy Consumption by Run",
+        hover_data={
+            "cumulative_energy_kwh": ":.6f",
+            "energy_wh": ":.4f",
+            "agent_count": True,
+        },
+    )
+    fig.update_layout(
+        xaxis_title="Run",
+        yaxis_title="Sum of agent mean energy (Wh)",
+        showlegend=False,
+    )
+    return fig
+
+
+def plot_emissions(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
+    if df.empty or df["emissions_kg_co2"].isna().all():
+        return None
+    emission_df = df.copy()
+    emission_df["run_name"] = emission_df["run_name"].fillna("Unknown run").astype(str)
+    agg = emission_df.groupby(["run_name", "agent"], as_index=False, sort=False)[
+        "emissions_kg_co2"
+    ].mean()
+    agg["grams_co2"] = agg["emissions_kg_co2"] * 1000
     fig = px.bar(
         agg,
         x="agent",
         y="grams_co2",
-        color="agent",
+        color="run_name",
+        barmode="group",
         color_discrete_sequence=_COLOR_SEQ,
-        title="Mean CO₂ Emissions per Agent",
-        hover_data={"grams_co2": ":.4f", "emissions": ":.6f"},
+        title="Mean CO₂ Emissions by Run and Agent",
+        hover_data={
+            "run_name": True,
+            "grams_co2": ":.4f",
+            "emissions_kg_co2": ":.6f",
+        },
     )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Mean emissions (g CO₂)", showlegend=False)
-    if save:
-        _save_fig(fig, _output_dir(result) / "emissions.html")
+    fig.update_layout(xaxis_title="Agent", yaxis_title="Mean emissions (g CO₂)")
     return fig
 
 
-def plot_score_vs_energy(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
-    plot_df = df.dropna(subset=["score", "energy"])
-    fig = px.scatter(
-        plot_df,
-        x="energy",
-        y="score",
-        color="agent",
-        hover_data=["run", "entry", "agent", "total_time", "emissions"],
-        color_discrete_sequence=_COLOR_SEQ,
-        title="Score vs Energy Consumption",
-    )
+def plot_score_vs_energy(result: BenchmarkResult) -> go.Figure:
+    df = result.answer_analysis_df
+    if df.empty:
+        plot_df = pd.DataFrame(
+            columns=["run_name", "agent", "score", "energy_consumed_kwh"]
+        )
+    else:
+        plot_df = df.dropna(subset=["score", "energy_consumed_kwh"]).copy()
     if plot_df.empty:
+        fig = go.Figure()
         fig.add_annotation(
             text="No energy data collected",
             showarrow=False,
@@ -728,172 +613,172 @@ def plot_score_vs_energy(
             xref="paper",
             yref="paper",
         )
-    fig.update_layout(
-        xaxis_title="Energy consumed (kWh)", yaxis_title="Ground-truth score"
+        fig.update_layout(
+            title="Quality / Energy Pareto Frontier per Agent",
+            xaxis_title="Mean energy consumed (kWh)",
+            yaxis_title="Mean score",
+        )
+        fig.update_yaxes(range=[0, 1.05])
+        return fig
+
+    plot_df["run_name"] = plot_df["run_name"].fillna("Unknown run").astype(str)
+    plot_df["agent"] = plot_df["agent"].fillna("Unknown agent").astype(str)
+    grouped = plot_df.groupby(["run_name", "agent"], as_index=False)[
+        ["score", "energy_consumed_kwh"]
+    ].mean()
+    grouped["pareto"] = False
+    for agent, agent_rows in grouped.groupby("agent", sort=False):
+        pareto_indices = []
+        for index, row in agent_rows.iterrows():
+            dominated = (
+                (agent_rows["score"] >= row["score"])
+                & (agent_rows["energy_consumed_kwh"] <= row["energy_consumed_kwh"])
+                & (
+                    (agent_rows["score"] > row["score"])
+                    | (agent_rows["energy_consumed_kwh"] < row["energy_consumed_kwh"])
+                )
+            ).any()
+            if not dominated:
+                pareto_indices.append(index)
+        grouped.loc[pareto_indices, "pareto"] = True
+
+    fig = px.scatter(
+        grouped,
+        x="energy_consumed_kwh",
+        y="score",
+        color="agent",
+        symbol="pareto",
+        hover_data=["run_name"],
+        color_discrete_sequence=_COLOR_SEQ,
+        title="Quality / Energy Pareto Frontier per Agent",
     )
-    fig.update_yaxes(range=[0, 1.05])
-    if save:
-        _save_fig(fig, _output_dir(result) / "score_vs_energy.html")
-    return fig
-
-
-def plot_trace_completion(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    dataset = result.dataset
-    if dataset is None:
-        return None
-
-    entry_ids: list[int] = []
-    completions: list[float] = []
-    for entry in dataset.entries:
-        entry_ids.append(entry.id)
-        expected = [str(element.agent_type) for element in entry.trace]
-        fractions = []
-        entry_rows = result.analysis_df[
-            result.analysis_df["entry_id"] == entry.id
-        ]
-        for _, trace_df in entry_rows.groupby("run", sort=False):
-            actual = (
-                trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
+    for color_index, (agent, agent_rows) in enumerate(grouped.groupby("agent")):
+        frontier = agent_rows[agent_rows["pareto"]].sort_values("energy_consumed_kwh")
+        if len(frontier) < 2:
+            continue
+        fig.add_trace(
+            go.Scatter(
+                x=frontier["energy_consumed_kwh"],
+                y=frontier["score"],
+                mode="lines",
+                line={"color": _COLOR_SEQ[color_index % len(_COLOR_SEQ)], "width": 2},
+                name=f"{agent} frontier",
+                hoverinfo="skip",
+                showlegend=True,
             )
-            correct = 0
-            for exp, act in zip(expected, actual):
-                if exp == act:
-                    correct += 1
-                else:
-                    break
-            fractions.append(correct / len(expected) if expected else 1.0)
-        completions.append(sum(fractions) / len(fractions) if fractions else 0)
-
-    colors = ["#00b894" if c == 1.0 else "#e17055" for c in completions]
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=entry_ids, y=completions, marker_color=colors))
+        )
     fig.update_layout(
-        title="Trace Completion per Test Case",
-        xaxis_title="Entry ID",
-        yaxis_title="Avg trace completion rate",
-        yaxis_range=[0, 1.1],
+        xaxis_title="Mean energy consumed (kWh)", yaxis_title="Mean score"
     )
-    if save:
-        _save_fig(fig, _output_dir(result) / "trace_completion.html")
+    fig.update_yaxes(range=[0, 1.05])
     return fig
 
 
-def plot_run_comparison(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    analysis_df = result.analysis_df.dropna(subset=["score"])
-    if analysis_df["run"].nunique() < 2:
+def plot_score_vs_perplexity(result: BenchmarkResult) -> go.Figure | None:
+    if result.answer_analysis_df.empty:
         return None
-
-    plot_df = (
-        analysis_df.groupby(["run", "agent"], as_index=False)["score"]
-        .mean()
-    )
-
-    fig = px.bar(
-        plot_df,
-        x="agent",
-        y="score",
-        color="run",
-        barmode="group",
-        color_discrete_sequence=_COLOR_SEQ,
-        title="Per-Agent Score Comparison Across Runs",
-    )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Mean evaluation_gt")
-    if save:
-        _save_fig(fig, _output_dir(result) / "run_comparison.html")
-    return fig
-
-
-def plot_score_vs_latency(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records).dropna(subset=["score", "total_time"])
+    df = result.answer_analysis_df.dropna(subset=["score", "perplexity"]).copy()
     if df.empty:
         return None
-    fig = px.scatter(
-        df,
-        x="total_time",
-        y="score",
-        color="agent",
-        symbol="run",
-        hover_data=["entry", "run", "ppl", "energy"],
-        color_discrete_sequence=_COLOR_SEQ,
-        title="Score vs Latency",
+
+    df["agent"] = df["agent"].fillna("Unknown agent").astype(str)
+    df["run_name"] = df["run_name"].fillna("Unknown run").astype(str)
+    run_df = df.groupby(["run_name", "agent"], as_index=False, sort=False).agg(
+        avg_score=("score", "mean"),
+        avg_perplexity=("perplexity", "mean"),
+        entry_count=("entry_id", "nunique"),
     )
-    fig.update_layout(xaxis_title="Agent time (s)", yaxis_title="Ground-truth score")
+    run_symbols = [
+        "circle",
+        "square",
+        "diamond",
+        "cross",
+        "x",
+        "triangle-up",
+        "triangle-down",
+        "star",
+        "hexagon",
+        "pentagon",
+    ]
+    symbol_by_run = {
+        run_name: run_symbols[index % len(run_symbols)]
+        for index, run_name in enumerate(run_df["run_name"].drop_duplicates())
+    }
+
+    fig = go.Figure()
+    for color_index, (agent, agent_df) in enumerate(
+        run_df.groupby("agent", sort=False)
+    ):
+        customdata = agent_df[["run_name", "entry_count"]].to_numpy()
+        fig.add_trace(
+            go.Scatter(
+                x=agent_df["avg_perplexity"],
+                y=agent_df["avg_score"],
+                mode="markers",
+                name=agent,
+                legendgroup=agent,
+                marker={
+                    "color": _COLOR_SEQ[color_index % len(_COLOR_SEQ)],
+                    "symbol": [symbol_by_run[name] for name in agent_df["run_name"]],
+                    "size": 12,
+                    "opacity": 0.8,
+                },
+                customdata=customdata,
+                hovertemplate=(
+                    "Agent: %{fullData.name}<br>"
+                    "Run: %{customdata[0]}<br>"
+                    "Entries: %{customdata[1]}<br>"
+                    "Avg perplexity: %{x:.4g}<br>"
+                    "Avg score: %{y:.3f}<extra></extra>"
+                ),
+            )
+        )
+
+    fig.update_layout(
+        title="Average Run Score vs Average Run Perplexity per Agent",
+        xaxis_title="Average run perplexity",
+        yaxis_title="Average run score",
+        legend={
+            "title": {"text": "Agent (click to toggle)"},
+            "groupclick": "togglegroup",
+        },
+    )
     fig.update_yaxes(range=[0, 1.05])
-    if save:
-        _save_fig(fig, _output_dir(result) / "score_vs_latency.html")
     return fig
 
 
-def plot_score_vs_perplexity(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records).dropna(subset=["score", "ppl"])
-    if df.empty:
+def plot_prompt_score_heatmap(result: BenchmarkResult) -> go.Figure | None:
+    if result.answer_analysis_df.empty:
         return None
-    fig = px.scatter(
-        df,
-        x="ppl",
-        y="score",
-        color="agent",
-        symbol="run",
-        hover_data=["entry", "run", "total_time"],
-        color_discrete_sequence=_COLOR_SEQ,
-        title="Score vs Perplexity",
-    )
-    fig.update_layout(xaxis_title="Perplexity", yaxis_title="Ground-truth score")
-    fig.update_yaxes(range=[0, 1.05])
-    if save:
-        _save_fig(fig, _output_dir(result) / "score_vs_perplexity.html")
-    return fig
-
-
-def plot_prompt_score_heatmap(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records).dropna(subset=["score"])
+    df = result.answer_analysis_df.dropna(subset=["score"])
     if df.empty:
         return None
     scores = (
-        df.groupby(["run", "entry"], as_index=False)["score"]
+        df.groupby(["run_name", "entry_id"], as_index=False)["score"]
         .mean()
-        .pivot(index="run", columns="entry", values="score")
+        .pivot(index="run_name", columns="entry_id", values="score")
     )
-    observed_min = float(scores.min().min())
-    # Scale the palette to the observed worst score through the perfect score
-    # so differences in a high-performing benchmark remain visible.
-    color_min = observed_min if observed_min < 1 else 0.99
     fig = px.imshow(
         scores,
         aspect="auto",
         color_continuous_scale="RdYlGn",
-        zmin=color_min,
+        zmin=0,
         zmax=1,
         labels={"x": "Prompt entry", "y": "Run", "color": "Score"},
         title="Per-Prompt Score Heatmap",
     )
-    if save:
-        _save_fig(fig, _output_dir(result) / "prompt_score_heatmap.html")
     return fig
 
 
-def plot_score_latency_pareto(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records).dropna(subset=["score", "total_time"])
+def plot_score_latency_pareto(result: BenchmarkResult) -> go.Figure | None:
+    if result.answer_analysis_df.empty:
+        return None
+    df = result.answer_analysis_df.dropna(subset=["score", "total_time"])
     if df.empty:
         return None
-    grouped = (
-        df.groupby(["run", "agent"], as_index=False)[["score", "total_time", "energy"]]
-        .mean()
-    )
+    grouped = df.groupby(["run_name", "agent"], as_index=False)[
+        ["score", "total_time", "energy_consumed_kwh"]
+    ].mean()
     grouped["pareto"] = False
     for agent, agent_rows in grouped.groupby("agent"):
         pareto_indices = []
@@ -916,7 +801,7 @@ def plot_score_latency_pareto(
         y="score",
         color="agent",
         symbol="pareto",
-        hover_data=["run", "energy"],
+        hover_data=["run_name", "energy_consumed_kwh"],
         color_discrete_sequence=_COLOR_SEQ,
         title="Quality / Latency Pareto Frontier per Agent",
     )
@@ -937,59 +822,51 @@ def plot_score_latency_pareto(
         )
     fig.update_layout(xaxis_title="Mean agent time (s)", yaxis_title="Mean score")
     fig.update_yaxes(range=[0, 1.05])
-    if save:
-        _save_fig(fig, _output_dir(result) / "score_latency_pareto.html")
     return fig
 
 
-def plot_trace_exact_match(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
-    dataset = result.dataset
-    if dataset is None:
+def plot_trace_exact_match(result: BenchmarkResult) -> go.Figure | None:
+    dataset = result.benchmark_dataset
+    if dataset is None or result.answer_analysis_df.empty:
         return None
     expected_by_id = {
         entry.id: [str(element.agent_type) for element in entry.trace]
         for entry in dataset.entries
     }
     rows = []
-    for (run_name, entry_id), trace_df in result.analysis_df.groupby(
-        ["run", "entry_id"], sort=False
+    for (run_name, _run_id, entry_id), trace_df in result.answer_analysis_df.groupby(
+        ["run_name", "run_id", "entry_id"], sort=False
     ):
-        expected = expected_by_id.get(int(entry_id))
+        expected = expected_by_id.get(int(str(entry_id)))
         if expected is None:
             continue
         actual = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
-        rows.append({"run": run_name, "exact": actual == expected})
+        rows.append({"run_name": run_name, "exact": actual == expected})
     if not rows:
         return None
-    summary = pd.DataFrame(rows).groupby("run", as_index=False)["exact"].mean()
+    summary = pd.DataFrame(rows).groupby("run_name", as_index=False)["exact"].mean()
     summary["percent"] = summary["exact"] * 100
-    observed_min = float(summary["percent"].min())
-    color_min = observed_min if observed_min < 100 else 99
     fig = px.bar(
         summary,
-        x="run",
+        x="run_name",
         y="percent",
         color="percent",
-        range_color=[color_min, 100],
+        range_color=[0, 100],
         color_continuous_scale="RdYlGn",
         title="Exact Workflow Trace Match Rate",
         hover_data={"percent": ":.1f"},
     )
     fig.update_layout(xaxis_title="Run", yaxis_title="Exact matches (%)")
     fig.update_yaxes(range=[0, 100])
-    if save:
-        _save_fig(fig, _output_dir(result) / "trace_exact_match.html")
     return fig
 
 
-def plot_trace_transitions(
-    result: BenchmarkResult, save: bool = True
-) -> go.Figure | None:
+def plot_trace_transitions(result: BenchmarkResult) -> go.Figure | None:
+    if result.answer_analysis_df.empty:
+        return None
     transitions: dict[tuple[str, str], int] = defaultdict(int)
-    for _, trace_df in result.analysis_df.groupby(
-        ["run", "entry_id"], sort=False
+    for _, trace_df in result.answer_analysis_df.groupby(
+        ["run_name", "run_id", "entry_id"], sort=False
     ):
         agents = trace_df.sort_values("trace_index")["agent"].astype(str).tolist()
         path = ["START", *agents, "END"]
@@ -1010,34 +887,136 @@ def plot_trace_transitions(
         )
     )
     fig.update_layout(title="Observed Workflow Transitions")
-    if save:
-        _save_fig(fig, _output_dir(result) / "trace_transitions.html")
     return fig
 
 
-def plot_error_rate(result: BenchmarkResult, save: bool = True) -> go.Figure | None:
-    records = _flatten_traces(result.analysis_df)
-    df = pd.DataFrame(records)
+def plot_error_rate(result: BenchmarkResult) -> go.Figure | None:
+    df = result.answer_analysis_df
     if df.empty or "error" not in df:
         return None
-    df["failed"] = df["error"].notna() & df["error"].ne("")
-    summary = df.groupby("agent", as_index=False)["failed"].mean()
-    summary["percent"] = summary["failed"] * 100
-    if summary["percent"].max() == 0:
-        return None
+
+    error_df = df[["run_name", "agent", "error"]].copy()
+    error_df["run_name"] = error_df["run_name"].fillna("Unknown run").astype(str)
+    error_df["agent"] = error_df["agent"].fillna("Unknown agent").astype(str)
+    error_df["failed"] = error_df["error"].notna() & error_df["error"].ne("")
+    summary = error_df.groupby(["run_name", "agent"], as_index=False, sort=False).agg(
+        failed_count=("failed", "sum"),
+        answer_count=("failed", "size"),
+    )
+    summary["percent"] = summary["failed_count"] / summary["answer_count"] * 100
+    summary["zero_label"] = summary["percent"].map(
+        lambda value: "0%" if value == 0 else ""
+    )
+    y_max = max(float(summary["percent"].max()) * 1.15, 1.0)
     fig = px.bar(
         summary,
         x="agent",
         y="percent",
-        color="agent",
+        color="run_name",
+        barmode="group",
+        text="zero_label",
         color_discrete_sequence=_COLOR_SEQ,
-        title="Agent Error Rate",
-        hover_data={"percent": ":.1f"},
+        title="Agent Error Rate by Run",
+        hover_data={
+            "run_name": True,
+            "failed_count": True,
+            "answer_count": True,
+            "percent": ":.1f",
+            "zero_label": False,
+        },
     )
-    fig.update_layout(xaxis_title="Agent", yaxis_title="Errors (%)", showlegend=False)
-    if save:
-        _save_fig(fig, _output_dir(result) / "error_rate.html")
+    fig.update_traces(textposition="outside", cliponaxis=False)
+    fig.update_layout(xaxis_title="Agent", yaxis_title="Errors (%)")
+    fig.update_yaxes(range=[0, y_max])
     return fig
+
+
+def _display_dataset_path(dataset_path: str | None, benchmark_dir: Path) -> str:
+    if not dataset_path:
+        return "not available"
+
+    path = Path(dataset_path).expanduser()
+    if not path.is_absolute():
+        benchmark_path = benchmark_dir / path
+        working_path = Path.cwd() / path
+        path = (
+            benchmark_path
+            if benchmark_path.exists() or not working_path.exists()
+            else working_path
+        )
+
+    resolved_path = path.resolve()
+    project_parent = Path.cwd().resolve().parent
+    try:
+        display_path = resolved_path.relative_to(project_parent)
+    except ValueError:
+        display_path = Path(os.path.relpath(resolved_path, start=project_parent))
+    return display_path.as_posix()
+
+
+def _run_changes_html(analysis_df: pd.DataFrame) -> str:
+    if analysis_df.empty or "run_name" not in analysis_df:
+        return ""
+
+    parsed_runs: list[tuple[str, list[dict[str, Any]]]] = []
+    all_agents: set[str] = set()
+    for run_name, run_df in analysis_df.groupby("run_name", sort=False, dropna=False):
+        display_name = "Unknown run" if pd.isna(run_name) else str(run_name)
+        change_sets_by_json: dict[str, dict[str, Any]] = {}
+        if "changes" in run_df:
+            for value in run_df["changes"].dropna():
+                changes = _load_json_dict(value, default={})
+                key = json.dumps(
+                    changes, sort_keys=True, ensure_ascii=False, default=str
+                )
+                change_sets_by_json[key] = changes
+                all_agents.update(str(agent) for agent in changes)
+        parsed_runs.append((display_name, list(change_sets_by_json.values()) or [{}]))
+
+    agent_colors = {
+        agent: _AGENT_LABEL_COLORS[index % len(_AGENT_LABEL_COLORS)]
+        for index, agent in enumerate(sorted(all_agents))
+    }
+    run_items: list[str] = []
+    for run_name, run_change_sets in parsed_runs:
+        rendered_sets = []
+        for index, changes in enumerate(run_change_sets, start=1):
+            if not changes:
+                rendered_sets.append('<p class="no-changes">No changes</p>')
+                continue
+            agent_items = []
+            for agent, agent_changes in changes.items():
+                if isinstance(agent_changes, dict):
+                    parameters = "".join(
+                        "<li>"
+                        f'<span class="parameter-name">{escape(str(key))}</span>'
+                        f" = {escape(str(value))}</li>"
+                        for key, value in agent_changes.items()
+                    )
+                else:
+                    parameters = f"<li>{escape(str(agent_changes))}</li>"
+                agent_name = str(agent)
+                agent_color = agent_colors[agent_name]
+                agent_items.append(
+                    f'<div class="agent-change"><h4 style="color:{agent_color}">'
+                    f"{escape(agent_name)}</h4><ul>{parameters}</ul></div>"
+                )
+            set_label = (
+                f'<h4 class="change-set-title">Change set {index}</h4>'
+                if len(run_change_sets) > 1
+                else ""
+            )
+            rendered_sets.append(f"{set_label}{''.join(agent_items)}")
+        run_items.append(
+            f'<article class="run-item"><h3>{escape(run_name)}</h3>'
+            f"{''.join(rendered_sets)}</article>"
+        )
+
+    return (
+        '<details class="section run-summary">'
+        '<summary class="section-title">Runs and changes</summary>'
+        f'<div class="run-list">{"".join(run_items)}</div></details>'
+    )
 
 
 # ── Dashboard ────────────────────────────────────────────────────────────
@@ -1055,23 +1034,84 @@ _DASHBOARD_TEMPLATE = """<!DOCTYPE html>
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           background: #f5f6fa; color: #2d3436; padding: 24px; }}
   h1 {{ font-size: 1.5rem; margin-bottom: 4px; }}
-  .meta {{ color: #636e72; font-size: 0.9rem; margin-bottom: 28px; }}
+  .meta {{ color: #636e72; font-size: 0.9rem; margin-bottom: 16px; }}
+  .run-list {{ display: flex; flex-direction: column; gap: 8px; }}
+  .run-item {{ min-width: 0; padding: 8px 0; border-bottom: 1px solid #dfe6e9; }}
+  .run-item h3 {{ font-size: 0.95rem; margin-bottom: 4px; }}
+  .agent-change {{ margin: 4px 0 0 12px; }}
+  .agent-change h4 {{ font-size: 0.85rem; font-weight: 600; }}
+  .agent-change ul {{ list-style: none; margin: 2px 0 0 12px; }}
+  .agent-change li {{ font-size: 0.82rem; line-height: 1.4; }}
+  .parameter-name {{ font-family: ui-monospace, monospace; }}
+  .change-set-title {{ font-size: 0.85rem; margin: 4px 0; color: #636e72; }}
+  .no-changes {{ margin-left: 12px; color: #636e72; font-style: italic; }}
   .section {{ margin-bottom: 32px; }}
   .section-title {{ font-size: 1.2rem; margin-bottom: 12px; padding-bottom: 8px;
-                    border-bottom: 2px solid #dfe6e9; color: #2d3436; }}
-  .grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
-  .full {{ grid-column: 1 / -1; }}
+                    border-bottom: 2px solid #dfe6e9; color: #2d3436; cursor: pointer; }}
+  .grid {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }}
   .card {{ background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-           padding: 8px; overflow: hidden; }}
-  .card h2 {{ font-size: 1rem; padding: 8px 12px 0; color: #636e72; }}
+           padding: 8px; overflow: hidden; min-width: 0; position: relative; }}
+  .card.expanded {{ grid-column: 1 / -1; }}
+  .expand-button {{ position: absolute; top: 10px; right: 10px; z-index: 2;
+                    width: 28px; height: 28px; display: grid; place-items: center;
+                    cursor: pointer; border: 1px solid #dfe6e9; border-radius: 4px;
+                    background: rgba(255,255,255,0.92); color: #2d3436; padding: 2px;
+                    opacity: 0.75; pointer-events: auto;
+                    transition: opacity 0.15s ease; }}
+  .card:hover .expand-button, .card:focus-within .expand-button {{ opacity: 1; }}
+  .expand-button svg {{ display: block; }}
+  .expand-button:hover {{ background: #f5f6fa; }}
+  .expand-button:focus-visible {{ outline: 2px solid #0984e3; outline-offset: 2px; }}
+  .section-title {{ -webkit-user-select: none; user-select: none; }}
   .card .js-plotly-plot {{ min-height: 380px !important; }}
   @media (max-width: 900px) {{ .grid {{ grid-template-columns: 1fr; }} }}
 </style>
 </head>
 <body>
   <h1>Benchmark: {title}</h1>
-  <div class="meta">Runtime: {runtime:.1f}s &middot; {dataset_line}</div>
+  <div class="meta">Runtime: {runtime:.1f}s &middot; {dataset_line} &middot; {dataset_size_line}</div>
+{run_summary}
 {sections}
+<script>
+  document.querySelectorAll('details.section').forEach((section) => {{
+    section.addEventListener('toggle', () => {{
+      if (!section.open || !window.Plotly) return;
+      section.querySelectorAll('.js-plotly-plot').forEach((plot) => {{
+        requestAnimationFrame(() => Plotly.Plots.resize(plot));
+      }});
+    }});
+  }});
+  const plotWidthObserver = new ResizeObserver((entries) => {{
+    entries.forEach((entry) => {{
+      const width = Math.floor(entry.contentRect.width);
+      if (width <= 0 || !window.Plotly) return;
+      if (entry.target.dataset.plotWidth === String(width)) return;
+      entry.target.dataset.plotWidth = String(width);
+      entry.target.querySelectorAll('.js-plotly-plot').forEach((plot) => {{
+        Plotly.relayout(plot, {{width, autosize: false}});
+      }});
+    }});
+  }});
+  document.querySelectorAll('.card').forEach((card) => {{
+    plotWidthObserver.observe(card);
+  }});
+  document.querySelectorAll('.expand-button').forEach((button) => {{
+    button.addEventListener('click', () => {{
+      const card = button.closest('.card');
+      const plot = card.querySelector('.js-plotly-plot');
+      if (!plot || !window.Plotly) return;
+      const expanded = !card.classList.contains('expanded');
+      const normalHeight = Number(plot.dataset.normalHeight || plot.layout.height || 450);
+      plot.dataset.normalHeight = String(normalHeight);
+      card.classList.toggle('expanded', expanded);
+      button.title = expanded ? 'Restore size' : 'Expand';
+      button.setAttribute('aria-label', button.title);
+      Plotly.relayout(plot, {{
+        height: expanded ? normalHeight * 2 : normalHeight
+      }}).then(() => requestAnimationFrame(() => Plotly.Plots.resize(plot)));
+    }});
+  }});
+</script>
 </body>
 </html>"""
 
@@ -1079,50 +1119,73 @@ _DASHBOARD_TEMPLATE = """<!DOCTYPE html>
 def build_dashboard(result: BenchmarkResult) -> str:
     meta = result.metadata
     title = Path(meta["benchmark_run"]).name
-    dataset_line = f"Dataset: {meta.get('dataset_path', 'not available')}"
+    dataset_path = _display_dataset_path(meta.get("dataset_path"), result.benchmark_dir)
+    dataset_line = f"Dataset: {escape(dataset_path)}"
+    if result.benchmark_dataset is None:
+        dataset_size_line = "Dataset size: unavailable"
+    else:
+        entry_count = len(result.benchmark_dataset.entries)
+        entry_label = "entry" if entry_count == 1 else "entries"
+        dataset_size_line = f"Dataset size: {entry_count} {entry_label}"
+    run_summary = _run_changes_html(result.answer_analysis_df)
 
     sections: list[tuple[str, list[tuple[str, go.Figure | None, bool]]]] = [
         (
             "Quality",
             [
-                ("Scores", plot_per_agent_scores(result, save=False), False),
-                ("Perplexity", plot_per_agent_perplexity(result, save=False), False),
-                ("Prompt Scores", plot_prompt_score_heatmap(result, save=False), True),
-                ("Score vs Perplexity", plot_score_vs_perplexity(result, save=False), False),
+                ("Scores", plot_per_agent_scores(result), True),
+                (
+                    "Paired Score Improvement",
+                    plot_score_improvement_vs_baseline(result),
+                    True,
+                ),
+                ("Perplexity", plot_per_agent_perplexity(result), True),
+                ("Prompt Scores", plot_prompt_score_heatmap(result), True),
+                (
+                    "Score vs Perplexity",
+                    plot_score_vs_perplexity(result),
+                    True,
+                ),
             ],
         ),
         (
-            "Efficiency",
+            "Latency",
             [
-                ("Timing Breakdown", plot_timing_breakdown(result, save=False), False),
-                ("Score vs Latency", plot_score_vs_latency(result, save=False), False),
-                ("Quality / Latency Pareto", plot_score_latency_pareto(result, save=False), False),
-                ("Run Comparison", plot_run_comparison(result, save=False), True),
+                ("Timing Breakdown", plot_timing_breakdown(result), False),
+                (
+                    "Quality / Latency Pareto",
+                    plot_score_latency_pareto(result),
+                    False,
+                ),
             ],
         ),
         (
-            "Sustainability",
+            "Energy",
             [
-                ("Energy Consumption", plot_energy_consumption(result, save=False), False),
-                ("CO₂ Emissions", plot_emissions(result, save=False), False),
-                ("Score vs Energy", plot_score_vs_energy(result, save=False), False),
+                (
+                    "Energy Consumption",
+                    plot_energy_consumption(result),
+                    False,
+                ),
+                ("CO₂ Emissions", plot_emissions(result), False),
+                ("Energy by Run", plot_mean_energy_by_run(result), False),
+                ("Score vs Energy", plot_score_vs_energy(result), False),
             ],
         ),
         (
             "Workflow behavior",
             [
                 (
-                    "Trace Completion",
-                    plot_trace_completion(result, save=False),
+                    "Exact Trace Match",
+                    plot_trace_exact_match(result),
                     False,
                 ),
                 (
-                    "Exact Trace Match",
-                    plot_trace_exact_match(result, save=False),
-                    False,
+                    "Workflow Transitions",
+                    plot_trace_transitions(result),
+                    True,
                 ),
-                ("Workflow Transitions", plot_trace_transitions(result, save=False), True),
-                ("Error Rate", plot_error_rate(result, save=False), False),
+                ("Agent Error Rate by Run", plot_error_rate(result), False),
             ],
         ),
     ]
@@ -1130,28 +1193,37 @@ def build_dashboard(result: BenchmarkResult) -> str:
     section_html: list[str] = []
     for section_name, plots in sections:
         cards: list[str] = []
-        for name, fig, full_width in plots:
+        for name, fig, _ in plots:
             if fig is None:
                 continue
+            # Keep the Plotly figure title as the card's only chart heading.
+            fig.update_layout(autosize=True)
             div = fig.to_html(
                 full_html=False,
                 include_plotlyjs=False,
-                config={"displayModeBar": False},
+                config={"displayModeBar": False, "responsive": True},
             )
-            card_class = "card full" if full_width else "card"
             cards.append(
-                f'      <div class="{card_class}"><h2>{name}</h2>{div}</div>'
+                f'      <div class="card">'
+                f'<button class="expand-button" type="button" aria-label="Expand" title="Expand">'
+                f'<svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" '
+                f'fill="none" stroke="currentColor" stroke-width="1.5">'
+                f'<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>'
+                f"</svg></button>{div}</div>"
             )
         if cards:
             section_html.append(
-                f'  <section class="section"><h2 class="section-title">{section_name}</h2>'
-                f'<div class="grid">{"\n".join(cards)}</div></section>'
+                f'  <details class="section" open>'
+                f'<summary class="section-title">{section_name}</summary>'
+                f'<div class="grid">{"\n".join(cards)}</div></details>'
             )
 
     html = _DASHBOARD_TEMPLATE.format(
         title=title,
         runtime=meta["total_runtime"],
         dataset_line=dataset_line,
+        dataset_size_line=dataset_size_line,
+        run_summary=run_summary,
         sections="\n".join(section_html),
     )
     return html
@@ -1161,14 +1233,16 @@ def build_dashboard(result: BenchmarkResult) -> str:
 
 
 def analyze_benchmark(benchmark_dir: str) -> BenchmarkResult:
-    """Load benchmark data, print tables, generate plots and dashboard.
+    """Load benchmark data, generate plots and dashboard.
 
     Returns the :class:`BenchmarkResult` for programmatic use (e.g. from a notebook).
     """
     result = BenchmarkResult.load(benchmark_dir)
     meta = result.metadata
 
-    console.print(f"[bold cyan]Benchmark:[/bold cyan] {Path(meta['benchmark_run']).name}")
+    console.print(
+        f"[bold cyan]Benchmark:[/bold cyan] {Path(meta['benchmark_run']).name}"
+    )
     console.print(f"  Runtime  {meta['total_runtime']:.1f}s")
     if meta.get("dataset_path"):
         console.print(f"  Dataset  [dim]{meta['dataset_path']}[/dim]")
@@ -1176,51 +1250,11 @@ def analyze_benchmark(benchmark_dir: str) -> BenchmarkResult:
         console.print(f"  Experiment  [cyan]{meta['experiment'].get('id')}[/cyan]")
     console.print()
 
-    print_overview(result)
-    console.print()
-    print_agent_breakdown(result)
-    console.print()
-    print_trace_analysis(result)
-
-    out_dir = _output_dir(result)
-    console.print(
-        f"\n[bold cyan]Generated plots[/bold cyan]  "
-        f"[dim]{out_dir / 'html'} · {out_dir / 'png'}[/dim]"
-    )
-
-    plot_fns = [
-        ("per_agent_scores", plot_per_agent_scores),
-        ("per_agent_perplexity", plot_per_agent_perplexity),
-        ("timing_breakdown", plot_timing_breakdown),
-        ("energy_consumption", plot_energy_consumption),
-        ("emissions", plot_emissions),
-        ("score_vs_energy", plot_score_vs_energy),
-        ("score_vs_latency", plot_score_vs_latency),
-        ("score_vs_perplexity", plot_score_vs_perplexity),
-        ("prompt_score_heatmap", plot_prompt_score_heatmap),
-        ("score_latency_pareto", plot_score_latency_pareto),
-        ("trace_completion", plot_trace_completion),
-        ("trace_exact_match", plot_trace_exact_match),
-        ("trace_transitions", plot_trace_transitions),
-        ("error_rate", plot_error_rate),
-        ("run_comparison", plot_run_comparison),
-    ]
-    for name, fn in plot_fns:
-        fig = fn(result)
-        if fig is not None:
-            png_path = out_dir / "png" / f"{name}.png"
-            if png_path.exists():
-                console.print(f"  [green]✓[/green] html/{name}.html + png/{name}.png")
-            else:
-                console.print(
-                    f"  [green]✓[/green] html/{name}.html "
-                    "[dim](PNG skipped: image renderer unavailable)[/dim]"
-                )
-        else:
-            console.print(f"  [dim]– html/{name}.html (skipped: no data)[/dim]")
+    out = result.benchmark_dir / "analysis"
+    out.mkdir(parents=True, exist_ok=True)
 
     dashboard_html = build_dashboard(result)
-    dashboard_path = out_dir / "dashboard.html"
+    dashboard_path = out / "dashboard.html"
     dashboard_path.write_text(dashboard_html)
     console.print("  [green]✓[/green] dashboard.html")
 
@@ -1234,19 +1268,15 @@ __all__ = [
     "plot_emissions",
     "plot_energy_consumption",
     "plot_error_rate",
+    "plot_mean_energy_by_run",
     "plot_per_agent_perplexity",
     "plot_per_agent_scores",
     "plot_prompt_score_heatmap",
-    "plot_run_comparison",
+    "plot_score_improvement_vs_baseline",
     "plot_score_latency_pareto",
     "plot_score_vs_energy",
-    "plot_score_vs_latency",
     "plot_score_vs_perplexity",
     "plot_timing_breakdown",
-    "plot_trace_completion",
     "plot_trace_exact_match",
     "plot_trace_transitions",
-    "print_agent_breakdown",
-    "print_overview",
-    "print_trace_analysis",
 ]

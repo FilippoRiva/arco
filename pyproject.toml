@@ -57,7 +57,7 @@ visualization = ["kaleido>=1.1.0"]
 # --- Development-dependencies ---
 # These groups are intended to be needed only for local development and test-notebooks. 
 [dependency-groups]
-dev = ["ruff>=0.16.0", "pre-commit>=4.6.1"]
+dev = ["ruff>=0.16.0", "pre-commit>=4.6.1", "pandas-stubs>=3.0.0"]
 test = ["pytest>=9.0.3", "pytest-cov>=7.1.0"]
 notebooks = ["ipykernel>=7.2.0", "scipy"]
 

@@ -45,7 +45,7 @@ runs:
         temp_min: 0.2
       Visualizer:
         temp_min: 0.2
-  - name: Temperature (high  - 1.2)
+  - name: Temperature (high  - 1.5)
     description: Temperature test on high temperature settings
     changes:
       Retriever:
