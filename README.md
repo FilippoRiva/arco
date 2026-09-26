@@ -1,31 +1,22 @@
 # ARCO framework
 
-An agentic workflow profiling framework compatible with any
-workflow built using our `Agent` and `Evaluator` abstraction.
+ARCO is an agentic workflow profiling framework for workflows built with its
+`Agent` and `Evaluator` abstractions. It supports **OpenAI**, **OpenRouter**,
+and **Ollama** backends, and provides:
 
-Compatible with **OpenAI**, **OpenRouter** and **Ollama** backends.
+- Best-of-N generation and iterative refinement
+- Per-agent timing, energy, and emissions profiling through CodeCarbon
+- Benchmark generation, execution, and analysis tools
+- Interactive browsing of saved workflow states
 
-It provides:
+## System requirements
 
-- Single agent **Best-of-N** support
-- **Iterative refinement** integration
-- Local **Energy and Emissions** profiling through CodeCarbon
-- **Performance** profiling through a proper benchmarking interface
+Depending on the workflows and models you use, you may also need:
 
----
-
-## System Requirements
-
-Depending on the agents and models you use, you may also need:
-
-- An available LLM backend:
-  - OpenAI / OpenRouter API access (for OpenAI-based agents)
-  - Ollama installed and running locally (for local models)
-- A compatible environment for profiling:
-  - CodeCarbon supports CPU/GPU/RAM energy tracking
-  - GPU monitoring requires compatible hardware and drivers
-
----
+- Access to an LLM backend: OpenAI or OpenRouter credentials, or a running
+  Ollama service
+- Compatible hardware and drivers for GPU energy monitoring; CPU, RAM, and
+  emissions tracking are supported by CodeCarbon
 
 ## Installation
 
@@ -38,326 +29,283 @@ cd arco
 
 ### 2. Install ARCO
 
-> **Requirements:** This project uses [UV](https://docs.astral.sh/uv/) as its
-> package manager. If you don't have it yet, install it with
-> `curl -LsSf https://astral.sh/uv/install.sh | sh`
-> or follow the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/).
-
-UV will automatically create a virtual environment and sync all dependencies:
+ARCO uses [UV](https://docs.astral.sh/uv/). Install it with
+`curl -LsSf https://astral.sh/uv/install.sh | sh` or follow the
+[UV installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+Then sync the project dependencies:
 
 ```bash
 uv sync
 ```
 
-To use the sales workflows make sure to install the optional dependencies by :
+To install the optional dependencies used by the sales workflows:
 
 ```bash
 uv sync --extra sales
 ```
 
-### 3. Verify Installation
+To install all the dependencies use: 
 
-After installation, verify that the CLI is available:
+```bash
+uv sync --all-extras
+```
+
+### 3. Verify the installation
 
 ```bash
 uv run arco --help
 ```
 
-You should see the available ARCO commands.
-
-To invoke the command directly without repeating `uv run`, activate the
-project's virtual environment first:
+During development, run commands through `uv run` or activate the project's
+environment to avoid it:
 
 ```bash
 source .venv/bin/activate
 arco --help
-arco run
 ```
 
-The activation only applies to the current shell. To install ARCO as a
-standalone editable command available from any shell, use:
+### 4. Configure an LLM provider
 
-```bash
-uv tool install --editable .
-uv tool update-shell
-```
-
-Restart your shell afterwards, then run:
-
-```bash
-arco run
-```
-
-To load both the virtual environment and keyring credentials with one command
-in the current shell, use:
-
-```bash
-source scripts/activate_arco.sh
-arco run -c config/sales/run/planned.yaml
-```
-
-
-Use the virtual-environment approach when developing ARCO, since changes are
-immediately available after `uv sync`. Use `uv tool install --editable .` when
-you want `arco` available globally while still reflecting source changes.
-
-### Artifact storage defaults
-
-Interactive `arco run` executions save workflow state and generated
-visualization images by default under `./output/storage`. Benchmark commands
-leave storage disabled by default to avoid producing an image for every test
-case. Set `enable_storage: true` or `enable_storage: false` explicitly in a
-configuration to override these mode-specific defaults.
-
-### 4. Provider setup
-
-#### Ollama Setup [Optional]
-
-If you plan to use local models (which is needed for a proper profiling of your
-agents), install Ollama and make sure the service is running:
-
-```bash
-systemctl status ollama
-```
-
-Then pull the desired model:
-
-```bash
-ollama pull <model-name>
-```
-
-#### OpenAI Setup [Optional]
-
-For OpenAI-based agents, export the `OPENAI_API_KEY` environment variable
-containing your API key:
+For OpenAI, export an API key:
 
 ```bash
 export OPENAI_API_KEY=<your-api-key>
 ```
 
-#### OpenRouter Setup [Optional]
-
-For OpenRouter-based agents, export the `OPENROUTER_API_KEY` environment
-variable containing your API key:
+For OpenRouter:
 
 ```bash
 export OPENROUTER_API_KEY=<your-api-key>
 ```
 
-#### API key management [Optional]
-
-If you have the `secret-tool` command installed you can store your keys using : 
+For Ollama, install and start Ollama, then pull a model:
 
 ```bash
-secret-tool store --label="<your-openai-key-label>" app arco provider openai
-secret-tool store --label="<your-openrouter-key-label>" app arco provider openrouter
+systemctl status ollama
+ollama pull <model-name>
 ```
 
-If you store them with these exacts names you can load by sourcing the `load_env_from_keyring.sh` script:
+If `secret-tool` is installed, credentials can be stored in the keyring:
 
 ```bash
-source load_env_from_keyring.sh
+secret-tool store --label="OpenAI key" app arco provider openai
+secret-tool store --label="OpenRouter key" app arco provider openrouter
 ```
 
----
+Load credentials stored with those attributes using:
+
+```bash
+source scripts/load_env_from_keyring.sh
+```
+
+An alternative is sourcing the script that activates the project virtual-environment 
+and loads the keyring credential in one go:
+
+```bash
+source scripts/activate_arco.sh
+```
 
 ## Usage
 
-The entire functionality of this framework is exposed through the `arco`
-command-line tool.
+The `arco` CLI provides six commands:
 
-ARCO provides four main sub-commands:
-
-- `arco run` - execute a single agent workflow
-- `arco benchmark` - evaluate multiple configurations against a benchmark dataset
-- `arco generate-benchmark` - produce a benchmark dataset from a list of prompts
-- `arco analyze-benchmark` - analyze benchmark outputs and produce HTML visuals
-
----
+- `arco run` — execute one workflow
+- `arco generate-benchmark` — generate a ground-truth dataset from prompts
+- `arco benchmark` — execute benchmark runs against a dataset
+- `arco analyze-benchmark` — analyze benchmark output and generate HTML pages
+- `arco experiments` — list or inspect catalog experiments
+- `arco storage` — browse saved workflow states
 
 ### `arco run`
 
-Executes a single ARCO workflow
+Run a workflow interactively, or pass a run configuration:
 
 ```bash
 arco run
+arco run --config config/sales/run/planned.yaml
 ```
 
-Options
+Options:
 
-```bash
---config -c  # Path to the ARCO configuration YAML file
---verbose -v # Display additional execution information, including agent
-             # configuration and metrics
-```
+- `--config`, `-c`: run-configuration YAML; without it, ARCO prompts you to
+  select a workflow
+- `--verbose`, `-v`: show agent configuration and detailed execution metrics
+- `--log {DEBUG,INFO,WARNING,ERROR}`: set ARCO's internal log level (default:
+  `INFO`)
 
-Example
-
-```bash
-arco run -c configs/example.yaml -v
-```
-
-Refer to [Run Configuration Files](docs/run_config.md) for writing run
-configuration files.
+See [Run Configuration](docs/run_config.md) for configuration details.
 
 ### `arco generate-benchmark`
 
-Produces a benchmark dataset (.json) by running a workflow configuration against
-each prompt in a provided list.
+Run a workflow for each prompt and save the resulting ground-truth dataset:
 
 ```bash
 arco generate-benchmark \
-    --config <path-to-run-config.yaml> \
-    --prompts <path-to-prompts.json> \
-    --output <path-to-benchmark.json>
+  --config config/sales/run/bench_gen_planned.yaml \
+  --prompts config/sales/bench/prompts/prompts_demo.json \
+  --output /tmp/sales-ground-truth.json
 ```
 
-Options
+Options:
 
-```bash
---config  -c  # Path to the YAML run-configuration file used to generate the benchmark
---prompts -p  # Path to a JSON file containing a list of prompt strings
---output  -o  # Path where the generated benchmark dataset will be saved
---verbose -v  # Show detailed agent output during execution
+- `--config`, `-c`: run-configuration YAML
+- `--prompts`, `-p`: JSON file containing a list of prompt strings or prompt
+  objects
+- `--output`, `-o`: destination for the generated dataset
+- `--experiment`: use the generation config, prompts, and output path from a
+  catalog experiment instead of passing the three paths
+- `--verbose`, `-v`: show detailed agent output
+
+A prompt file will be a dictionary containing an entry_id, a difficulty value and the prompt itself:
+```json
+[
+  {"id": 10, "prompt": "Show sales for November 2021", "difficulty": 2},
+]
 ```
 
-Example
+Each successful prompt produces a dataset entry with its ID, prompt,
+difficulty, and expected workflow trace. An evaluator may include structured
+ground-truth data in each trace element. See [Run Configuration](docs/run_config.md)
+for benchmark generation settings.
+
+For a catalog-managed experiment:
 
 ```bash
-arco generate-benchmark \
-    -c configs/example.yaml \
-    -p datasets/prompts.json \
-    -o datasets/sales_gt.json
-```
-
-As `arco run` does this scripts runs with run-configuration YAML files.
-Refer to [Run Configuration Files](docs/run_config.md) for writing run
-configuration files. Generally an extremely powerful model should be used
-for benchmark generation.
-
-The list of prompts json file should only contain a json list as : `['prompt_1','prompt_2',...,'prompt_n']`.
-
-The generated JSON contains one entry per prompt, each with the agent's trace,
-output, and metadata — ready to use as a ground-truth dataset for `arco benchmark`.
-
-For catalog-managed experiments, the equivalent command is:
-
-```bash
-arco generate-benchmark --experiment sales-planned-gpt41-nano
+arco generate-benchmark --experiment demo-planned-gpt41-nano
 ```
 
 ### `arco benchmark`
 
-Runs a benchmark suite by executing multiple ARCO configurations against a
-ground-truth dataset.
+Execute each configured run against a ground-truth dataset:
 
 ```bash
 arco benchmark \
-    --dataset <path-to-dataset.json> \
-    --config <path-to-benchmark.yaml>
+  --dataset config/sales/bench/data/benchmark_demo.json \
+  --config config/sales/bench/demo.yaml \
+  --save-dir output/benchmarks
 ```
 
-Options
+Options:
+
+- `--dataset`, `-d`: ground-truth dataset JSON (required unless using
+  `--experiment`)
+- `--config`, `-c`: benchmark-configuration YAML (required unless using
+  `--experiment`)
+- `--experiment`: use the dataset, config, and output directory from a catalog
+  experiment
+- `--save-dir`: base output directory (default: `./output/benchmarks` for
+  direct runs)
+- `--id`: benchmark output directory name; by default the config filename stem
+  is used for direct runs
+- `--verbose`, `-v`: show detailed agent output
+- `--log {DEBUG,INFO,WARNING,ERROR}`: set ARCO's internal log level (default:
+  `INFO`)
+
+For example, run the catalog experiment with:
 
 ```bash
---dataset -d # Path to the benchmark ground-truth dataset (required)
---config -c  # Path to the benchmark configuration YAML file (required)
---save-dir   # Base directory for benchmark results (default: ./output/benchmarks; one experiment directory is created beneath it)
---id         # Custom identifier for the benchmark run
---verbose -v # Enable detailed visualization of agent executions
+arco benchmark --experiment demo-planned-gpt41-nano
 ```
 
-Example
+Benchmark results are written under `<save-dir>/<id>/`. The directory contains
+snapshots of the benchmark config and dataset, metadata, and a `runs/` folder
+with one CSV per configured run. Each completed entry is checkpointed with its
+full serialized state; rerunning with the same inputs resumes from matching
+checkpoints and processes missing entries.
+
+See [Benchmark Configuration](docs/benchmark_config.md) for config details.
+
+### `arco analyze-benchmark`
+
+Analyze an existing benchmark output directory containing
+`bench_metadata.json`:
 
 ```bash
-arco-cli benchmark \
-    -d datasets/sales_gt.json \
-    -c benchmarks/config.yaml \
-    --save-dir output/results
+arco analyze-benchmark output/benchmarks/demo-planned-gpt41-nano
 ```
 
-Benchmark results are saved under `<output-dir>/<experiment-name>/`, alongside
-snapshots of the benchmark configuration and dataset used. Each run has one CSV
-directly inside `runs/`, with a `changes` column describing
-the run's configuration overrides and a complete serialized state for each
-benchmark entry. Completed entries are checkpointed as the run progresses;
-rerunning resumes matching cached entries and only evaluates missing ones.
-The benchmark runner stores metadata but leaves metric aggregation to the
-analyzer.
-
-Refer to [Benchmark Configuration Files](docs/benchmark_config.md) for writing benchmark
-configuration files. You can also run a catalog-managed experiment with:
+Or analyze a catalog experiment's configured output directory:
 
 ```bash
-arco benchmark --experiment sales-planned-gpt41-nano
+arco analyze-benchmark --experiment demo-planned-gpt41-nano
 ```
 
-See [Experiment Catalogs](docs/experiments.md) for the full generation,
-benchmarking, and analysis workflow.
+The command writes HTML output under `<benchmark-dir>/analysis/`:
 
-List catalog-managed experiments with:
+- `dashboard.html` — interactive benchmark plots and comparisons
+- `Output Visualizer.html` — choose a run and entry ID to compare the observed
+  agent trace and state against the dataset's expected trace
+
+### `arco experiments`
+
+List experiments in the default `config/catalog.yaml` catalog:
 
 ```bash
 arco experiments
 ```
 
-Browse saved workflow states interactively with newest states first:
+Inspect an individual experiment's description, workflow, configs, dataset,
+benchmark runs, and output status:
+
+```bash
+arco experiments demo-planned-gpt41-nano
+```
+
+Use `--catalog <path>` to list or inspect experiments in another catalog file.
+See [Experiment Catalogs](docs/experiments.md) for the catalog format and
+workflow.
+
+### `arco storage`
+
+Browse saved workflow states, newest first:
 
 ```bash
 arco storage
 ```
 
-Use `↑`/`↓` to select a state, `Enter` to open it, `d` to delete the
-selected state, `D` to delete all storage, `←` or `Backspace` to return to the
-list, and `q` to quit. Delete actions ask for a `y`/`n` confirmation. A
-specific state can be opened directly:
+The default storage directory is `./output/storage`. Use `--storage-dir <path>`
+to select a different directory, or open a specific state directly:
 
 ```bash
-arco storage --run-id <run-id>
+arco storage --storage-dir output/storage --run-id <run-id>
 ```
 
-### `arco analyze-benchmark`
+In the interactive browser, use `↑`/`↓` to select a state, `Enter` to open it,
+`d` to delete the selected state, `D` to delete all stored states, `←` or
+`Backspace` to return to the list, and `q` to quit. Delete actions require
+confirmation.
 
-Analyzes benchmark outputs and produces HTML visualizations.
+### Artifact storage defaults
 
-```bash
-arco analyze-benchmark <benchmark-output-dir>
+Interactive `arco run` executions persist workflow states and generated
+visualization images under `<save_dir>/storage` by default (`./output/storage`
+when `save_dir` is not set). Benchmark and benchmark-generation commands leave
+storage disabled by default to avoid saving artifacts for every prompt. Set
+`global.enable_storage: true` or `false` in the relevant YAML to override the
+default.
+
+## Energy and emissions profiling (CodeCarbon)
+
+CodeCarbon is controlled by the `enable_codecarbon` field in the configuration's
+`global` section. It defaults to `false`; enable it with:
+
+```yaml
+global:
+  enable_codecarbon: true
+  save_dir: ./output
 ```
 
-Arguments
+ARCO collects CPU, GPU, and RAM energy use and estimated CO₂ emissions for the
+full agent step, including non-LLM work. LLM-call duration is tracked separately.
+The metrics are attached to each agent's profiling data; verbose `arco run`
+output and benchmark summaries expose them, and benchmark output can be explored
+in the analysis dashboard. Benchmark configs use the same global setting, so
+CodeCarbon profiling can be enabled for benchmark runs as well. The `save_dir`
+setting controls ARCO's output/artifact location.
 
-```bash
-benchmark_dir  # Path to the benchmark output directory containing bench_metadata.json
-```
-
-Examples
-
-```bash
-arco analyze-benchmark output/benchmarks/my-experiment
-arco analyze-benchmark --experiment sales-planned-gpt41-nano
-```
-
-This command reads the benchmark metadata and generates an HTML report with
-interactive charts comparing execution metrics across configurations.
-
----
-
-## Energy and emissions [CodeCarbon]
-
-To fully exploit the benchmarking capability of ARCO, the
-`enable_codecarbon: true` in the `run:` block of the YAML
-configuration file should be set.
-
-Energy usage and CO₂ emissions will be measured per-LLM-call and saved in
-`run_metadata.json` alongside each run's artifacts.
-
----
-
-## Output Examples
+## Output example
 
 ![Benchmark analysis dashboard](docs/benchmark_analysis/dashboard.png)
 
-A sample benchmark analysis dashboard generated from a real benchmark run using
-`arco analyze-benchmark`. Open the interactive HTML version at
-[docs/benchmark_analysis/dashboard.html](docs/benchmark_analysis/dashboard.html)
-to explore per-agent scores, timing breakdowns, energy consumption, and more.
+A sample benchmark dashboard generated by `arco analyze-benchmark` is also
+available as [interactive HTML](docs/benchmark_analysis/dashboard.html).
