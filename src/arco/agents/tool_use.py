@@ -63,6 +63,12 @@ class ToolUseAgent(Agent):
         self.tools = tuple(tools)
         self.max_tool_iterations = max_tool_iterations
         self._tools_by_name = {self._tool_name(tool): tool for tool in self.tools}
+        logger.debug(
+            "%s initialized with %d tool(s), max_tool_iterations=%d",
+            self.name,
+            len(self.tools),
+            self.max_tool_iterations,
+        )
 
     @staticmethod
     def _tool_name(tool: ToolLike) -> str:
@@ -75,8 +81,13 @@ class ToolUseAgent(Agent):
     def _execute_tool(self, name: str, args: Any) -> tuple[str, bool]:
         tool = self._tools_by_name.get(name)
         if tool is None:
+            logger.debug("%s requested unknown tool %s", self.name, name)
             return f"Unknown tool: {name}", False
 
+        argument_summary = (
+            f"keys={list(args)}" if isinstance(args, dict) else type(args).__name__
+        )
+        logger.debug("%s executing tool %s (%s)", self.name, name, argument_summary)
         try:
             if isinstance(tool, BaseTool):
                 result = tool.invoke(args)
@@ -84,9 +95,16 @@ class ToolUseAgent(Agent):
                 result = tool(**args)
             else:
                 result = tool(args)
-            return _json_text(result), True
+            result_text = _json_text(result)
+            logger.debug(
+                "%s tool %s completed successfully (result length: %d characters)",
+                self.name,
+                name,
+                len(result_text),
+            )
+            return result_text, True
         except Exception as exc:  # Tools must return errors to the model.
-            logger.exception("Tool %s failed", name)
+            logger.exception("%s tool %s failed", self.name, name)
             return f"Tool {name} failed: {exc!s}", False
 
     def core(self, state: State, llm: LLM) -> State:
@@ -94,7 +112,14 @@ class ToolUseAgent(Agent):
             {
                 "agent": str(answer.agent_id),
                 "message": answer.message,
-                "output": answer.agent_output,
+                # Agent instructions and tool traces are internal execution
+                # details, not useful downstream context. Keep the actual
+                # result fields so specialist agents can build on prior work.
+                "output": {
+                    key: value
+                    for key, value in answer.agent_output.items()
+                    if key not in {"role", "tool_calls"}
+                },
                 "error": answer.error,
             }
             for answer in state.answers
@@ -103,6 +128,13 @@ class ToolUseAgent(Agent):
             f"USER REQUEST:\n{state.prompt}\n\n"
             "WORKFLOW CONTEXT FROM PREVIOUS AGENTS:\n"
             f"{json.dumps(context, ensure_ascii=False, default=str)}"
+        )
+        logger.debug(
+            "%s starting tool-use turn (prompt length: %d, prior answers: %d, tools: %d)",
+            self.name,
+            len(state.prompt),
+            len(context),
+            len(self.tools),
         )
         messages: list[Any] = [
             SystemMessage(content=self.role),
@@ -113,6 +145,13 @@ class ToolUseAgent(Agent):
 
         bound_llm = llm.bind_tools(self.tools)
         for iteration in range(self.max_tool_iterations):
+            logger.debug(
+                "%s invoking model for tool-use iteration %d/%d (%d message(s))",
+                self.name,
+                iteration + 1,
+                self.max_tool_iterations,
+                len(messages),
+            )
             response = bound_llm.invoke(messages)
             if not isinstance(response, AIMessage):
                 raise TypeError(
@@ -121,8 +160,19 @@ class ToolUseAgent(Agent):
             final_response = response
             tool_calls = response.tool_calls
             messages.append(response)
+            logger.debug(
+                "%s received %d tool call(s) on iteration %d",
+                self.name,
+                len(tool_calls),
+                iteration + 1,
+            )
 
             if not tool_calls:
+                logger.debug(
+                    "%s completed without further tool calls after iteration %d",
+                    self.name,
+                    iteration + 1,
+                )
                 break
 
             for call_index, tool_call in enumerate(tool_calls):
@@ -130,6 +180,14 @@ class ToolUseAgent(Agent):
                 args = tool_call.get("args", {})
                 tool_call_id = str(
                     tool_call.get("id") or f"tool_call_{iteration}_{call_index}"
+                )
+                logger.debug(
+                    "%s executing tool call %d/%d: %s (id=%s)",
+                    self.name,
+                    call_index + 1,
+                    len(tool_calls),
+                    name,
+                    tool_call_id,
                 )
                 result, success = self._execute_tool(name, args)
                 tool_trace.append(
@@ -151,6 +209,11 @@ class ToolUseAgent(Agent):
                     )
                 )
         else:
+            logger.debug(
+                "%s reached the tool iteration limit (%d); requesting final synthesis",
+                self.name,
+                self.max_tool_iterations,
+            )
             # The model used all available tool iterations. Give it one final
             # chance to synthesize the results already collected instead of
             # failing the whole agent execution. Binding an empty tool list
@@ -179,6 +242,12 @@ class ToolUseAgent(Agent):
         from arco.core.llm_tools import LLMAnswer
 
         answer = LLMAnswer(final_response)
+        logger.debug(
+            "%s produced final response (length: %d characters, tool calls: %d)",
+            self.name,
+            len(answer.text),
+            len(tool_trace),
+        )
         output = {
             "role": self.role,
             "response": answer.text,
