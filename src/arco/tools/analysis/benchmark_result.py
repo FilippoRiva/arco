@@ -92,9 +92,6 @@ class BenchmarkResult:
         answer_analysis_df = pd.DataFrame(answer_analysis_records)
         analysis_dir = bdir / "analysis"
         analysis_dir.mkdir(parents=True, exist_ok=True)
-        parquet_path = analysis_dir / "benchmark.parquet"
-        answer_analysis_df.to_parquet(parquet_path, index=False)
-        answer_analysis_df = pd.read_parquet(parquet_path)
 
         # Build the run_analysis_df
         run_analysis_df = _build_run_analysis_df(answer_analysis_df)

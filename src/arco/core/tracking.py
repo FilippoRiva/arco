@@ -61,7 +61,6 @@ class LLMCallAccumulator(BaseCallbackHandler):
         ``ram_energy_kwh``, and ``emissions_kg_co2``.
     """
 
-    _save_dir: str | None = None
     _enabled: bool = False
 
     def __init__(self, name: str):
@@ -73,16 +72,8 @@ class LLMCallAccumulator(BaseCallbackHandler):
         self._starts: dict[str, float | int] = {}
         self._cc_tracker: OfflineEmissionsTracker | None = None
         self.total_time: float | int = 0.0
-        self._cc_output_dir: str | None = (
-            os.path.join(LLMCallAccumulator._save_dir, name)
-            if LLMCallAccumulator._save_dir
-            else None
-        )
         self._enabled: bool = LLMCallAccumulator._enabled
         self.energy_dict: dict[str, float | int] = defaultdict(float)
-
-        if self._cc_output_dir:
-            os.makedirs(self._cc_output_dir, exist_ok=True)
 
     @staticmethod
     def enable(save_dir: str) -> None:
@@ -90,7 +81,6 @@ class LLMCallAccumulator(BaseCallbackHandler):
 
         :param save_dir: Base directory for CodeCarbon output files.
         """
-        LLMCallAccumulator._save_dir = save_dir
         LLMCallAccumulator._enabled = True
 
     def _start_cc_tracker(self) -> None:
@@ -102,7 +92,6 @@ class LLMCallAccumulator(BaseCallbackHandler):
             project_name="llm_invoke",
             country_iso_code="ITA",
             region="Lombardy",
-            output_dir=self._cc_output_dir,
             save_to_file=False,
             measure_power_secs=1,
             log_level="error",
