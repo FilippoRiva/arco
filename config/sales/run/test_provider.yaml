@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./../../../run.schema.json
+# yaml-language-server: $schema=./../../run.schema.json
 # =============================================================================
 # TEST PROVIDER-MODEL GLOBAL PARAMETERS
 # =============================================================================

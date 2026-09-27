@@ -82,11 +82,17 @@
           "description": "Request provider-supported reasoning summaries or thinking output"
         },
         "reasoning_effort": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Provider-specific reasoning effort, for example low, medium, or high"
         },
         "reasoning_summary": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "OpenAI Responses reasoning summary mode, for example auto or detailed"
         },
         "reasoning_max_tokens": {
@@ -223,33 +229,6 @@
           "max_tokens": {
             "type": "integer",
             "description": "Maximum number of tokens the agent should output at each generation"
-          },
-          "use_cache": {
-            "type": "boolean",
-            "description": "Toggle to enable or disable query caching for this agent."
-          },
-          "cache_mode": {
-            "type": "string",
-            "enum": [
-              "read",
-              "r",
-              "write",
-              "w",
-              "read_write",
-              "rw"
-            ],
-            "description": "Behavior mode for the cache with this agent."
-          },
-          "enabled": {
-            "type": "boolean",
-            "description": "Master toggle to enable or disable this component entirely."
-          },
-          "eval": {
-            "type": "string",
-            "enum": [
-              "default"
-            ],
-            "description": "The evaluation system used by the agent to perform best-of-n selection"
           }
         },
         "description": "Dictionary of dynamic, named agent definitions (e.g., Retriever, Analyzer). All internal keys are optional, allowing individual agents to selectively override the global defaults or customize their own sampling boundaries, caching rules, and evaluation setups.",

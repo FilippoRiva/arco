@@ -103,9 +103,9 @@ def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
         fig.update_layout(
             title=title,
             xaxis_title="Agent",
-            yaxis_title="Score change vs baseline",
+            yaxis_title="Score change vs baseline (percentage points)",
         )
-        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True, tickformat=".0%")
         return fig
 
     df.loc[baseline_mask, "run_name"] = "Baseline"
@@ -136,9 +136,9 @@ def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
         fig.update_layout(
             title=title,
             xaxis_title="Agent",
-            yaxis_title="Score change vs baseline",
+            yaxis_title="Score change vs baseline (percentage points)",
         )
-        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+        fig.update_yaxes(range=[-1.05, 1.05], zeroline=True, tickformat=".0%")
         return fig
 
     paired["score_delta"] = paired["score"] - paired["baseline_score"]
@@ -148,9 +148,7 @@ def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
         run_mean_score=("score", "mean"),
         baseline_mean_score=("baseline_score", "mean"),
     )
-    summary["label"] = summary["mean_improvement"].map(
-        lambda value: "0.000" if value == 0 else f"{value:+.3f}"
-    )
+    summary["label"] = summary["mean_improvement"].map(lambda value: f"{value:+.1%}")
     fig = px.bar(
         summary,
         x="agent",
@@ -162,9 +160,9 @@ def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
         hover_data={
             "run_name": True,
             "paired_entry_count": True,
-            "run_mean_score": ":.3f",
-            "baseline_mean_score": ":.3f",
-            "mean_improvement": ":+.3f",
+            "run_mean_score": ":.1%",
+            "baseline_mean_score": ":.1%",
+            "mean_improvement": ":+.1%",
             "label": False,
         },
         title=title,
@@ -173,10 +171,10 @@ def plot_score_improvement_vs_baseline(result: BenchmarkResult) -> go.Figure:
     fig.update_layout(
         barmode="group",
         xaxis_title="Agent",
-        yaxis_title="Score change vs baseline",
+        yaxis_title="Score change vs baseline (percentage points)",
     )
     fig.add_hline(y=0, line_dash="dash", line_color="#636e72")
-    fig.update_yaxes(range=[-1.05, 1.05], zeroline=True)
+    fig.update_yaxes(range=[-1.05, 1.05], zeroline=True, tickformat=".0%")
     return fig
 
 

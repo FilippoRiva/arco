@@ -56,7 +56,10 @@
           "description": "Directory containing the parquet datasets and *_schema.yaml files used by data-aware agents."
         },
         "enable_storage": {
-          "type": ["boolean", "null"],
+          "type": [
+            "boolean",
+            "null"
+          ],
           "default": null,
           "description": "Persist final workflow state and generated visualization images under save_dir/storage. If omitted, benchmark commands disable it."
         },
@@ -75,20 +78,32 @@
           "description": "Request provider-supported reasoning summaries or thinking output"
         },
         "reasoning_effort": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Provider-specific reasoning effort, for example low, medium, or high"
         },
         "reasoning_summary": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "OpenAI Responses reasoning summary mode, for example auto or detailed"
         },
         "reasoning_max_tokens": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 1,
           "description": "Direct reasoning-token budget where supported"
         },
         "verbosity": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Visible response verbosity where supported"
         },
         "enable_logprobs": {
@@ -154,10 +169,31 @@
             "type": "boolean",
             "description": "Request provider-native reasoning output for this agent"
           },
-          "reasoning_effort": { "type": ["string", "null"] },
-          "reasoning_summary": { "type": ["string", "null"] },
-          "reasoning_max_tokens": { "type": ["integer", "null"], "minimum": 1 },
-          "verbosity": { "type": ["string", "null"] },
+          "reasoning_effort": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasoning_summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasoning_max_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "verbosity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "enable_logprobs": {
             "type": "boolean",
             "description": "Request token log probabilities where supported"
@@ -222,47 +258,100 @@
               "properties": {
                 "provider": {
                   "type": "string",
-                  "enum": ["openai", "ollama", "openrouter"]
+                  "enum": [
+                    "openai",
+                    "ollama",
+                    "openrouter"
+                  ]
                 },
-                "model": { "type": "string" },
-                "n": { "type": "integer", "minimum": 1 },
+                "model": {
+                  "type": "string"
+                },
+                "n": {
+                  "type": "integer",
+                  "minimum": 1
+                },
                 "bon_param": {
                   "type": "string",
-                  "enum": ["temperature", "top_k", "top_p"]
+                  "enum": [
+                    "temperature",
+                    "top_k",
+                    "top_p"
+                  ]
                 },
-                "temp_min": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-                "temp_max": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
-                "iterative_refinement_n": { "type": "integer", "minimum": 1 },
-                "enable_reasoning": { "type": "boolean" },
-                "reasoning_effort": { "type": ["string", "null"] },
-                "reasoning_summary": { "type": ["string", "null"] },
-                "reasoning_max_tokens": { "type": ["integer", "null"], "minimum": 1 },
-                "verbosity": { "type": ["string", "null"] },
-                "top_p_min": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-                "top_p_max": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
-                "top_k_min": { "type": "integer", "minimum": 1 },
-                "top_k_max": { "type": "integer", "minimum": 1 },
+                "temp_min": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 2.0
+                },
+                "temp_max": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 2.0
+                },
+                "iterative_refinement_n": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "enable_reasoning": {
+                  "type": "boolean"
+                },
+                "reasoning_effort": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reasoning_summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reasoning_max_tokens": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                },
+                "verbosity": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "top_p_min": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "top_p_max": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "top_k_min": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "top_k_max": {
+                  "type": "integer",
+                  "minimum": 1
+                },
                 "max_tokens": {
                   "type": "integer",
                   "minimum": 1,
                   "description": "Maximum output tokens for this agent."
-                },
-                "use_cache": { "type": "boolean" },
-                "cache_mode": {
-                  "type": "string",
-                  "enum": ["read", "r", "write", "w", "read_write", "rw"]
-                },
-                "enabled": { "type": "boolean" },
-                "eval": {
-                  "type": "string",
-                  "enum": ["default"]
                 }
               },
               "additionalProperties": false
             }
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       }
     }
   },
