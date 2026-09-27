@@ -181,13 +181,13 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     if config.prompt is None:
         console.print()
-        user_input = console.input("[bold cyan]User prompt >[/bold cyan] ")
+        user_input = console.input("[bold cyan] > [/bold cyan] ")
         console.print()
         config = config.update_prompt(user_input)
         workflow.config = config
     else:
         console.print()
-        console.print(f"[bold cyan]User prompt >[/bold cyan] {config.prompt}")
+        console.print(f"[bold cyan] >[/bold cyan] {config.prompt}")
         console.print()
 
     if args.verbose:
