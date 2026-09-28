@@ -6,32 +6,30 @@ functions for creating LLM instances, and utilities for JSON parsing
 and response extraction used across evaluators and agents.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import re
 from collections.abc import Sequence
+from functools import lru_cache
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any
 
-import requests
-from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage
-from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
-
 from .tracking import LLMCallAccumulator
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
+    from langchain_core.messages import AIMessage
+
+    from .agent_config import AgentConfig
 
 # Global parameters
 OLLAMA_REQUEST_TIMEOUT: int = 600
 OLLAMA_URL: str = "http://localhost:11434"
 
 DEFAULT_LLM_ACC = LLMCallAccumulator("None")
-
-if TYPE_CHECKING:
-    from .agent_config import AgentConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -173,41 +171,43 @@ class LLMAnswer:
         return self.extract_fenced_content()
 
 
-class _OpenRouterChatOpenAI(ChatOpenAI):
-    """ChatOpenAI adapter that preserves OpenRouter reasoning fields.
+@lru_cache(maxsize=1)
+def _openrouter_chat_model_class() -> Any:
+    """Load the OpenRouter ChatOpenAI adapter only when requested."""
+    from langchain_openai import ChatOpenAI
 
-    OpenRouter returns reasoning on the assistant message using fields that
-    the standard OpenAI message converter intentionally drops. Preserve those
-    fields as ``reasoning_content`` so the common extractor can consume them.
-    """
+    class OpenRouterChatOpenAI(ChatOpenAI):
+        """Preserve OpenRouter reasoning fields dropped by ChatOpenAI."""
 
-    def _create_chat_result(self, response, generation_info=None):
-        result = super()._create_chat_result(response, generation_info)
-        response_dict = (
-            response
-            if isinstance(response, dict)
-            else response.model_dump(exclude_none=False, warnings=False)
-        )
-
-        for choice, generation in zip(
-            response_dict.get("choices", []), result.generations, strict=False
-        ):
-            raw_message = choice.get("message", {})
-            reasoning = (
-                raw_message.get("reasoning")
-                or raw_message.get("reasoning_content")
-                or raw_message.get("reasoning_details")
+        def _create_chat_result(self, response, generation_info=None):
+            result = super()._create_chat_result(response, generation_info)
+            response_dict = (
+                response
+                if isinstance(response, dict)
+                else response.model_dump(exclude_none=False, warnings=False)
             )
-            if reasoning:
-                generation.message.additional_kwargs["reasoning_content"] = (
-                    _reasoning_value_to_text(reasoning)
-                )
-                if raw_message.get("reasoning_details"):
-                    generation.message.additional_kwargs["reasoning_details"] = (
-                        raw_message["reasoning_details"]
-                    )
 
-        return result
+            for choice, generation in zip(
+                response_dict.get("choices", []), result.generations, strict=False
+            ):
+                raw_message = choice.get("message", {})
+                reasoning = (
+                    raw_message.get("reasoning")
+                    or raw_message.get("reasoning_content")
+                    or raw_message.get("reasoning_details")
+                )
+                if reasoning:
+                    generation.message.additional_kwargs["reasoning_content"] = (
+                        _reasoning_value_to_text(reasoning)
+                    )
+                    if raw_message.get("reasoning_details"):
+                        generation.message.additional_kwargs["reasoning_details"] = (
+                            raw_message["reasoning_details"]
+                        )
+
+            return result
+
+    return OpenRouterChatOpenAI
 
 
 class LLM:
@@ -398,6 +398,8 @@ def get_llm(
         ``OPENROUTER_API_KEY`` environment variable is not set.
     """
     if provider.lower() == "openai":
+        from langchain_openai import ChatOpenAI
+
         openai_kwargs = {
             "model": model,
             "streaming": streaming,
@@ -448,6 +450,9 @@ def get_llm(
             )
         chat_model = ChatOpenAI(**openai_kwargs)
     elif provider.lower() == "openrouter":
+        from pydantic import SecretStr
+
+        openrouter_chat_model = _openrouter_chat_model_class()
         api_key = os.environ.get("OPENROUTER_API_KEY")
         if not api_key:
             raise ValueError(
@@ -480,7 +485,7 @@ def get_llm(
             else:
                 reasoning_config["effort"] = reasoning_effort or "medium"
             openrouter_extra_body["reasoning"] = reasoning_config
-        chat_model = _OpenRouterChatOpenAI(
+        chat_model = openrouter_chat_model(
             model=model,
             api_key=SecretStr(api_key),
             base_url=openrouter_url,
@@ -496,6 +501,8 @@ def get_llm(
             extra_body=openrouter_extra_body,
         )
     else:
+        from langchain_ollama import ChatOllama
+
         kwargs = {
             "model": model,
             "base_url": OLLAMA_URL,
@@ -580,6 +587,8 @@ def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
     :returns: A tuple ``(available, message)`` where *available* is
         ``True`` if the model was found and *message* describes the result.
     """
+    import requests
+
     if provider in ("openai", "openrouter"):
         import openai
 

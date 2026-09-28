@@ -6,17 +6,20 @@ for each LLM ``.invoke()`` call.  :func:`initialize_tracking` is called
 once per workflow run to enable CodeCarbon integration.
 """
 
+from __future__ import annotations
+
 import os
 import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from codecarbon import OfflineEmissionsTracker
+
     from .config import Config
 
 import logging
 from collections import defaultdict
 
-from codecarbon import OfflineEmissionsTracker
 from langchain_core.callbacks import BaseCallbackHandler
 
 logging.getLogger("codecarbon").setLevel(logging.ERROR)
@@ -86,6 +89,8 @@ class LLMCallAccumulator(BaseCallbackHandler):
     def _start_cc_tracker(self) -> None:
         if not self._enabled or self._cc_tracker is not None:
             return
+        from codecarbon import OfflineEmissionsTracker
+
         # Milan is represented by Italy/Lombardy. Offline tracking avoids
         # CodeCarbon's repeated cloud/geolocation network lookups.
         self._cc_tracker = OfflineEmissionsTracker(  # type: ignore[call-arg]

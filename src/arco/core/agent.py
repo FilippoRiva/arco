@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import difflib
 import logging
 import math
@@ -8,17 +10,15 @@ from dataclasses import replace as dataclass_replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from . import llm_tools
 from .agent_type import AgentType
 from .evaluator import Evaluator
 from .exceptions import AgentException
-from .llm_tools import LLMAnswer
 from .profiling_data import ProfilingData
 from .state import State
 
 if TYPE_CHECKING:
     from .config import AgentConfig
-    from .llm_tools import LLM
+    from .llm_tools import LLM, LLMAnswer
     from .tracking import LLMCallAccumulator
 
 logger = logging.getLogger(__name__)
@@ -162,7 +162,7 @@ class Agent(ABC):
         agent_t0 = time.perf_counter()
 
         # Get llm call time accumulator for profiling
-        from .llm_tools import LLMCallAccumulator
+        from .tracking import LLMCallAccumulator
 
         llm_acc = LLMCallAccumulator(self.type)
         # Start before agent logic so DB access, parsing, code execution, and
@@ -274,7 +274,9 @@ class Agent(ABC):
     ) -> list[State]:
         # Instantiate LLM
         logger.debug("Starting greedy execution")
-        llm = llm_tools.get_llm_from_config(agent_config=config, llm_acc=llm_acc)
+        from .llm_tools import get_llm_from_config
+
+        llm = get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
         # Run inference
         result: State = self.core(state, llm)
@@ -291,6 +293,8 @@ class Agent(ABC):
     ) -> list[State]:
         # Initialize results and their scores
         logger.debug("Starting best-of-n execution")
+        from .llm_tools import get_llm
+
         results = []
 
         if config.provider is None or config.model is None:
@@ -298,7 +302,7 @@ class Agent(ABC):
 
         # Generate results
         for i, (temp, top_p, top_k) in enumerate(config.get_candidate_params()):
-            llm = llm_tools.get_llm(
+            llm = get_llm(
                 # Variable
                 temperature=temp,
                 top_p=top_p,

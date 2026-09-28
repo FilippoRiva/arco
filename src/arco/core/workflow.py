@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import time
@@ -6,19 +8,18 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from langchain_core.messages import AIMessageChunk
-from langgraph.graph.state import CompiledStateGraph, RunnableConfig
-
-from . import llm_tools, tracking
 from .agent import Agent
 from .agent_type import AgentType
 from .config import Config
 from .exceptions import AgentException
-from .graph import Graph
 from .state import State
 
 if TYPE_CHECKING:
+    from langchain_core.messages import AIMessageChunk
+    from langgraph.graph.state import CompiledStateGraph
+
     from .evaluator import Evaluator
+    from .graph import Graph
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,10 @@ class Workflow(ABC):
         Yields dicts with keys ``event``, ``state``, ``node``, etc.
         Terminal event types: ``"completed"`` (with ``state``) or ``"error"``.
         """
+        from langgraph.graph.state import RunnableConfig
+
+        from . import llm_tools, tracking
+
         if config:
             self.config = config
         # A direct workflow/notebook invocation is interactive by default.
@@ -198,6 +203,8 @@ class Workflow(ABC):
 
     def _initialize(self, config: Config) -> CompiledStateGraph:
         """Build and compile the LangGraph from the subclass's :meth:`initialize`."""
+        from .graph import Graph
+
         graph = Graph()
         self.initialize(config, graph)
         self._agent_list.update(graph.get_agents())
