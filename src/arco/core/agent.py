@@ -11,14 +11,14 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from .agent_type import AgentType
-from .evaluator import Evaluator
 from .exceptions import AgentException
 from .profiling_data import ProfilingData
-from .state import State
 
 if TYPE_CHECKING:
     from .config import AgentConfig
+    from .evaluator import Evaluator
     from .llm_tools import LLM, LLMAnswer
+    from .state import State
     from .tracking import LLMCallAccumulator
 
 logger = logging.getLogger(__name__)

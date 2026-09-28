@@ -2,8 +2,8 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, field, fields, replace
 from typing import Any, Literal, Self
 
-from .agent import AgentType
 from .agent_config import AgentConfig
+from .agent_type import AgentType
 from .evaluator import Evaluation
 from .profiling_data import ProfilingData
 
