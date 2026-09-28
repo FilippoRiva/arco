@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 from arco.core.agent import Agent
 from arco.core.agent_type import AgentType
+from arco.core.answer import AnswerDraft
 from arco.evaluators import OrchestratorEvaluator
 
 if TYPE_CHECKING:
@@ -108,7 +109,7 @@ No explanations. Just the agent's name."""
     def evaluator(self) -> Evaluator:
         return OrchestratorEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         last_orchestrator_answer: Answer | None = state.get_last_answer(
             AgentType("Orchestrator")
         )
@@ -163,12 +164,9 @@ No explanations. Just the agent's name."""
         matched_agent = matched_agent.capitalize()
 
         logger.info(f"Agent choice : {matched_agent}")
-        return self.answer(
-            state,
+        return AnswerDraft(
             message=f"The chosen agent is {matched_agent}",
             output={"agent_choice": matched_agent},
-            logprobs=orchestrator_response.logprobs,
-            thinking=orchestrator_response.reasoning,
         )
 
 

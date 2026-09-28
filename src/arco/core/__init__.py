@@ -12,6 +12,7 @@ __all__ = [
     "AgentException",
     "AgentType",
     "Answer",
+    "AnswerDraft",
     "Config",
     "ConfigException",
     "Evaluation",
@@ -42,6 +43,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "AgentException": ("exceptions", "AgentException"),
     "AgentType": ("agent_type", "AgentType"),
     "Answer": ("answer", "Answer"),
+    "AnswerDraft": ("answer", "AnswerDraft"),
     "Config": ("config", "Config"),
     "ConfigException": ("exceptions", "ConfigException"),
     "Evaluation": ("evaluator", "Evaluation"),
@@ -111,7 +113,7 @@ if TYPE_CHECKING:
     from .agent import Agent
     from .agent_config import AgentConfig
     from .agent_type import AgentType
-    from .answer import Answer
+    from .answer import Answer, AnswerDraft
     from .config import Config
     from .evaluator import Evaluation, Evaluator, evaluate_state_with_benchmark_entry
     from .exceptions import (

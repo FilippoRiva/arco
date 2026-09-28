@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from arco.core.agent import Agent
 from arco.core.agent_type import AgentType
+from arco.core.answer import AnswerDraft
 from arco.core.exceptions import AgentException
 from arco.core.llm_tools import get_llm
 from arco.data import DatabaseSchema, normalize_dataframe_values
@@ -152,7 +153,7 @@ name used by any candidate. Prefer lowercase_with_underscores.
     def evaluator(self) -> Evaluator:
         return RetrieverEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         import duckdb
         import pandas as pd
 
@@ -171,8 +172,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
                 prompt=state.prompt,
             )
             response = llm.invoke(formatted_prompt)
-            logprobs_relevant_tables = response.logprobs
-
             name_map = {table.name.lower(): table.name for table in self.schema.tables}
             selected = []
             for token in response.text.strip().split(","):
@@ -185,7 +184,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
             schema_context = self.schema.get_full_schema_str(table_names=selected)
             logger.debug(f"table selection has run. Selected tables are {selected}")
         else:
-            logprobs_relevant_tables = []
             schema_context = self.schema.get_full_schema_str()
             logger.debug("No need for table selection.")
 
@@ -197,7 +195,6 @@ name used by any candidate. Prefer lowercase_with_underscores.
         response = llm.invoke(formatted_prompt)
         sql_query = response.extract_sql()
         logger.info(f"Query : {sql_query}")
-        logprobs_gen_sql = response.logprobs
 
         # Execute the query and answer
         output = None
@@ -228,13 +225,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             message = "Couldn't retrieve the data."
             error = f"Attribute Error : {e!s}"
             logger.warning("Failed: The Query failed")
-        return self.answer(
-            state,
+        return AnswerDraft(
             message=message,
             error=error,
-            output=output,
-            logprobs=logprobs_relevant_tables + logprobs_gen_sql,
-            thinking=response.reasoning,
+            output=output or {},
         )
 
     def post_generation_hooks(

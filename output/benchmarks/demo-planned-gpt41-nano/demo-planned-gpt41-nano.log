@@ -1,0 +1,83 @@
+17:27:32 [INFO   ] arco.core.tracking: Initialized codecarbon tracking
+17:27:34 [INFO   ] codecarbon: offline tracker init
+17:27:34 [WARNING] codecarbon: Multiple instances of codecarbon are allowed to run at the same time.
+17:27:34 [INFO   ] codecarbon: [setup] RAM Tracking...
+17:27:34 [INFO   ] codecarbon: [setup] CPU Tracking...
+17:27:34 [INFO   ] codecarbon: [setup] GPU Tracking...
+17:27:34 [WARNING] codecarbon: 	RAPL - Permission denied reading RAPL file /sys/class/powercap/intel-rapl/subsystem/intel-rapl/intel-rapl:0/energy_uj. You can grant read permission with: sudo chmod -R a+r /sys/class/powercap/*
+17:27:34 [INFO   ] codecarbon: Tracking Nvidia GPUs via PyNVML
+17:27:35 [WARNING] codecarbon: No CPU tracking mode found. Falling back on estimation based on TDP for CPU. 
+ Linux OS detected: Please ensure RAPL files exist, and are readable, at /sys/class/powercap/intel-rapl/subsystem to measure CPU
+
+17:27:35 [INFO   ] codecarbon: CPU Model on constant consumption mode: AMD Ryzen 5 3600 6-Core Processor
+17:27:35 [WARNING] codecarbon: No CPU tracking mode found. Falling back on CPU load mode.
+17:27:35 [INFO   ] codecarbon: The below tracking methods have been set up:
+                RAM Tracking Method: RAM power estimation model
+                CPU Tracking Method: cpu_load
+                GPU Tracking Method: pynvml
+            
+17:27:35 [INFO   ] codecarbon: >>> Tracker's metadata:
+17:27:35 [INFO   ] codecarbon:   Platform system: Linux-7.2.7-arch1-1-x86_64-with-glibc2.44
+17:27:35 [INFO   ] codecarbon:   Python version: 3.14.7
+17:27:35 [INFO   ] codecarbon:   CodeCarbon version: 3.3.1
+17:27:35 [INFO   ] codecarbon:   Available RAM : 15.539 GB
+17:27:35 [INFO   ] codecarbon:   CPU count: 12 thread(s) in 1 physical CPU(s)
+17:27:35 [INFO   ] codecarbon:   CPU model: AMD Ryzen 5 3600 6-Core Processor
+17:27:35 [INFO   ] codecarbon:   GPU count: 1
+17:27:35 [INFO   ] codecarbon:   GPU model: 1 x NVIDIA GeForce RTX 3060
+17:27:35 [INFO   ] codecarbon: Energy consumed for RAM : 0.000000 kWh. RAM Power : 10.0 W
+17:27:35 [INFO   ] codecarbon: Monitoring GPUs with indices: [0] out of 1 total GPUs
+17:27:35 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000000 kWh. Total GPU Power : 0.0 W
+17:27:35 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000000 kWh, power : 6.614257812500002 W
+17:27:35 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000000 kWh
+17:27:35 [INFO   ] codecarbon: 0.000000 kWh of electricity and 0.000000 L of water were used since the beginning.
+17:27:36 [INFO   ] codecarbon: Energy consumed for RAM : 0.000003 kWh. RAM Power : 10.0 W
+17:27:36 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000006 kWh. Total GPU Power : 23.516554188123813 W
+17:27:36 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000002 kWh, power : 6.500000000000002 W
+17:27:36 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000002 kWh
+17:27:36 [INFO   ] codecarbon: 0.000011 kWh of electricity and 0.000000 L of water were used since the beginning.
+17:27:37 [INFO   ] arco.agents.planner: Choice: Retriever
+17:27:37 [INFO   ] codecarbon: Energy consumed for RAM : 0.000006 kWh. RAM Power : 10.0 W
+17:27:37 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000013 kWh. Total GPU Power : 23.614138400004755 W
+17:27:37 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000002 kWh, power : 6.500239616 W
+17:27:37 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000004 kWh
+17:27:37 [INFO   ] codecarbon: 0.000022 kWh of electricity and 0.000000 L of water were used since the beginning.
+17:27:37 [INFO   ] codecarbon: offline tracker init
+17:27:37 [WARNING] codecarbon: Multiple instances of codecarbon are allowed to run at the same time.
+17:27:37 [INFO   ] codecarbon: Monitoring GPUs with indices: [0] out of 1 total GPUs
+17:27:37 [INFO   ] codecarbon: >>> Tracker's metadata:
+17:27:37 [INFO   ] codecarbon:   Platform system: Linux-7.2.7-arch1-1-x86_64-with-glibc2.44
+17:27:37 [INFO   ] codecarbon:   Python version: 3.14.7
+17:27:37 [INFO   ] codecarbon:   CodeCarbon version: 3.3.1
+17:27:37 [INFO   ] codecarbon:   Available RAM : 15.539 GB
+17:27:37 [INFO   ] codecarbon:   CPU count: 12 thread(s) in 1 physical CPU(s)
+17:27:37 [INFO   ] codecarbon:   CPU model: AMD Ryzen 5 3600 6-Core Processor
+17:27:37 [INFO   ] codecarbon:   GPU count: 1
+17:27:37 [INFO   ] codecarbon:   GPU model: 1 x NVIDIA GeForce RTX 3060
+17:27:37 [INFO   ] codecarbon: Energy consumed for RAM : 0.000000 kWh. RAM Power : 10.0 W
+17:27:37 [INFO   ] codecarbon: Monitoring GPUs with indices: [0] out of 1 total GPUs
+17:27:37 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000000 kWh. Total GPU Power : 0.0 W
+17:27:37 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000000 kWh, power : 6.545553248 W
+17:27:37 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000000 kWh
+17:27:37 [INFO   ] codecarbon: 0.000000 kWh of electricity and 0.000000 L of water were used since the beginning.
+17:27:38 [INFO   ] codecarbon: Energy consumed for RAM : 0.000003 kWh. RAM Power : 10.0 W
+17:27:38 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000007 kWh. Total GPU Power : 24.846931615262633 W
+17:27:38 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000002 kWh, power : 6.504983264 W
+17:27:38 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000002 kWh
+17:27:38 [INFO   ] codecarbon: 0.000012 kWh of electricity and 0.000000 L of water were used since the beginning.
+17:27:39 [INFO   ] arco.agents.retriever: Query : SELECT 
+    s.Sold_Date AS date,
+    SUM(s.Total_Sale_Value) AS total_sales
+FROM 
+    sales s
+WHERE 
+    s.Sold_Date BETWEEN DATE '2021-11-01' AND DATE '2021-11-30'
+GROUP BY 
+    s.Sold_Date
+ORDER BY 
+    s.Sold_Date;
+17:27:39 [INFO   ] codecarbon: Energy consumed for RAM : 0.000005 kWh. RAM Power : 10.0 W
+17:27:39 [INFO   ] codecarbon: Energy consumed for all GPUs : 0.000013 kWh. Total GPU Power : 23.833933018882384 W
+17:27:39 [INFO   ] codecarbon: Delta energy consumed for CPU with cpu_load : 0.000002 kWh, power : 6.5053308125000004 W
+17:27:39 [INFO   ] codecarbon: Energy consumed for All CPU : 0.000004 kWh
+17:27:39 [INFO   ] codecarbon: 0.000022 kWh of electricity and 0.000000 L of water were used since the beginning.

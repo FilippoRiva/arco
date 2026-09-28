@@ -41,7 +41,7 @@ evaluation, timing, optional CodeCarbon tracking, and attaching profiling data.
 ```python
 from typing import TYPE_CHECKING
 
-from arco.core import Agent, Evaluator
+from arco.core import Agent, AnswerDraft, Evaluator
 from my_project.evaluators import AnswerEvaluator
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ class AnswerAgent(Agent):
     def evaluator(self) -> Evaluator:
         return AnswerEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         response = llm.invoke(
             "Answer the user's question in a JSON object with an `answer` field.\n"
             f"Question: {state.prompt}"
@@ -63,13 +63,7 @@ class AnswerAgent(Agent):
         output = response.extract_json()
         message = str(output.get("answer", response.text))
 
-        return self.answer(
-            state,
-            message=message,
-            output=output,
-            logprobs=response.logprobs,
-            thinking=response.reasoning,
-        )
+        return AnswerDraft(message=message, output=output)
 ```
 
 ### Agent implementation notes
@@ -78,8 +72,9 @@ class AnswerAgent(Agent):
   Use `llm.invoke(...)`; its response wrapper exposes `.text`,
   `.extract_json()`, `.extract_json_list()`, `.extract_sql()`, `.logprobs`, and
   `.reasoning`.
-- Return the result of `self.answer(...)`. It appends an `Answer` to the state
-  and fills in the current agent ID and agent configuration automatically.
+- Return an `AnswerDraft` containing the answer message, structured output,
+  and optional error. The framework converts it into a complete `Answer`,
+  attaching the agent ID, configuration, LLM metadata, token usage, and profiling.
 - Put downstream-consumable structured values in `output`; use `message` for a
   readable summary. The next agent can access prior answers with
   `state.get_last_answer()` or `state.get_last_answer(AgentType("AnswerAgent"))`.

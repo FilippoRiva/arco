@@ -4,6 +4,7 @@ import pandas as pd
 
 from arco.core.agent import Agent
 from arco.core.agent_type import AgentType
+from arco.core.answer import AnswerDraft
 from arco.core.exceptions import AgentException
 from arco.evaluators import AnalyzerEvaluator
 
@@ -67,7 +68,7 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
     def evaluator(self) -> Evaluator:
         return AnalyzerEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         last_retriever_answer: Answer | None = state.get_last_answer(
             AgentType("Retriever")
         )
@@ -92,12 +93,9 @@ Provide a direct, concise answer in natural language (2-3 sentences). Focus only
         logger.info(
             f"Analysis result (logprobs : {len(result.logprobs) > 0}): {result.text}"
         )
-        return self.answer(
-            state,
+        return AnswerDraft(
             message=f"{result.text}",
             output={"analysis": result.text},
-            logprobs=result.logprobs,
-            thinking=result.reasoning,
         )
 
 

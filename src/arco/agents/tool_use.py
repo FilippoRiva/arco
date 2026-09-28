@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from langchain_core.tools import BaseTool
 
 from arco.core.agent import Agent
+from arco.core.answer import AnswerDraft
 from arco.core.evaluator import Evaluator
 from arco.evaluators import ToolUseEvaluator
 
@@ -109,7 +110,7 @@ class ToolUseAgent(Agent):
             logger.exception("%s tool %s failed", self.name, name)
             return f"Tool {name} failed: {exc!s}", False
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         context = [
             {
                 "agent": str(answer.agent_id),
@@ -255,12 +256,9 @@ class ToolUseAgent(Agent):
             "response": answer.text,
             "tool_calls": tool_trace,
         }
-        return self.answer(
-            state,
+        return AnswerDraft(
             message=answer.text,
             output=output,
-            logprobs=answer.logprobs,
-            thinking=answer.reasoning,
         )
 
 

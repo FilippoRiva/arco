@@ -109,16 +109,39 @@ def _verbose_metrics_table(answer: Answer) -> Table:
 
 
 def _verbose_token_summary(answer: Answer) -> Text:
-    if not answer.logprobs:
-        return Text("No token log probabilities returned.", style="dim")
-    numeric = [float(logprob) for _, logprob in answer.logprobs]
-    average = sum(numeric) / len(numeric)
-    return Text(
-        f"{len(answer.logprobs)} tokens  ·  average logprob {average:.4f}  ·  "
-        f"perplexity {answer.perplexity:.3f}"
-        if answer.perplexity is not None
-        else f"{len(answer.logprobs)} tokens  ·  average logprob {average:.4f}"
-    )
+    parts = []
+    if answer.input_token_count is not None:
+        parts.append(f"Input {answer.input_token_count} tokens")
+    if answer.output_token_count is not None:
+        parts.append(f"Output {answer.output_token_count} tokens")
+        llm_time = answer.profiling_data.llm_time
+        if llm_time is not None and llm_time > 0:
+            tokens_per_second = answer.output_token_count / llm_time
+            parts.append(f"{tokens_per_second:.1f} output tokens/s")
+    total_tokens = answer.total_token_count
+    if (
+        total_tokens is None
+        and answer.input_token_count is not None
+        and answer.output_token_count is not None
+    ):
+        total_tokens = answer.input_token_count + answer.output_token_count
+    if total_tokens is not None:
+        parts.append(f"Total {total_tokens} tokens")
+    if answer.cache_read_token_count is not None:
+        parts.append(f"Cache read {answer.cache_read_token_count} tokens")
+    if answer.cache_creation_token_count is not None:
+        parts.append(f"Cache creation {answer.cache_creation_token_count} tokens")
+    if answer.reasoning_token_count is not None:
+        parts.append(f"Reasoning {answer.reasoning_token_count} tokens")
+    if answer.logprobs:
+        numeric = [float(logprob) for _, logprob in answer.logprobs]
+        average = sum(numeric) / len(numeric)
+        parts.append(f"Average logprob {average:.4f}")
+    if answer.perplexity is not None:
+        parts.append(f"Perplexity {answer.perplexity:.3f}")
+    if not parts:
+        return Text("No token usage or log-probability data returned.", style="dim")
+    return Text("  ·  ".join(parts))
 
 
 def render_answer_verbose(answer: Answer) -> RenderableType:

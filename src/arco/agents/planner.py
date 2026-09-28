@@ -3,6 +3,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from arco.core.agent import Agent
+from arco.core.answer import AnswerDraft
 from arco.evaluators import PlannerEvaluator
 
 if TYPE_CHECKING:
@@ -79,7 +80,7 @@ No explanations. No markdown. Just the JSON array.
     def evaluator(self) -> Evaluator:
         return PlannerEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         last_planner = state.get_last_answer(self.type)
 
         if last_planner is None:
@@ -97,12 +98,9 @@ No explanations. No markdown. Just the JSON array.
 
             logger.info(f"Choice: {choice}")
 
-            return self.answer(
-                state,
+            return AnswerDraft(
                 message=f"My proposed plan is - {', '.join(a.capitalize() for a in plan)}",
                 output={"agent_choice": choice, "plan": remaining},
-                logprobs=response.logprobs,
-                thinking=response.reasoning,
             )
 
         # --- SUBSEQUENT INVOCATIONS: consume from plan ---
@@ -134,17 +132,14 @@ No explanations. No markdown. Just the JSON array.
 
         if not remaining:
             logger.info("Workflow complete")
-            return self.answer(
-                state,
+            return AnswerDraft(
                 message="Workflow complete",
                 output={"agent_choice": "End", "plan": []},
-                thinking=last_planner.thinking,
             )
 
         choice = remaining[0].capitalize()
         logger.info(f"Choice from previous plan: {choice}")
-        return self.answer(
-            state,
+        return AnswerDraft(
             message=f"The next agent should be {choice}",
             output={"agent_choice": choice, "plan": remaining[1:]},
         )

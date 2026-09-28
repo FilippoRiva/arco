@@ -19,7 +19,19 @@ from functools import lru_cache
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any
 
-from .tracking import LLMCallAccumulator
+from .tracking import (
+    LLMCallAccumulator,
+    TokenUsage,
+)
+from .tracking import (
+    extract_logprobs as _extract_logprobs,
+)
+from .tracking import (
+    extract_reasoning as _extract_reasoning,
+)
+from .tracking import (
+    reasoning_value_to_text as _reasoning_value_to_text,
+)
 
 if TYPE_CHECKING:
     from langchain_core.language_models import BaseChatModel
@@ -50,41 +62,8 @@ def _message_text(response: AIMessage) -> str:
     return str(content)
 
 
-def _reasoning_value_to_text(value: Any) -> str:
-    """Normalise provider-specific reasoning fields to text."""
-    if isinstance(value, str):
-        return value
-    if isinstance(value, list):
-        return "\n".join(
-            text for item in value for text in [_reasoning_value_to_text(item)] if text
-        )
-    if isinstance(value, dict):
-        for key in ("text", "reasoning", "reasoning_content", "summary"):
-            if key in value:
-                text = _reasoning_value_to_text(value[key])
-                if text:
-                    return text
-    return ""
-
-
-def _extract_reasoning(response: AIMessage) -> str:
-    """Extract reasoning from OpenAI, Ollama, and OpenRouter message shapes."""
-    parts: list[str] = []
-    for block in getattr(response, "content_blocks", []) or []:
-        if isinstance(block, dict) and block.get("type") == "reasoning":
-            text = _reasoning_value_to_text(
-                block.get("reasoning") or block.get("summary")
-            )
-            if text:
-                parts.append(text)
-
-    additional_kwargs = getattr(response, "additional_kwargs", {}) or {}
-    for key in ("reasoning_content", "reasoning"):
-        text = _reasoning_value_to_text(additional_kwargs.get(key))
-        if text and text not in parts:
-            parts.append(text)
-
-    return "\n".join(parts)
+def _extract_token_info(response: AIMessage) -> TokenUsage | None:
+    return TokenUsage.from_usage_metadata(response.usage_metadata)
 
 
 def _log_raw_response(response: AIMessage) -> None:
@@ -111,12 +90,25 @@ class LLMAnswer:
     :ivar text: The raw response text.
     :ivar logprobs: Token-level log probabilities as ``(token, logprob)``
         tuples, or ``None`` if not available.
+    :ivar input_token_count: Provider-reported input token count.
+    :ivar output_token_count: Provider-reported output token count.
+    :ivar total_token_count: Provider-reported total token count.
+    :ivar cache_creation_token_count: Input tokens written to the provider cache.
+    :ivar cache_read_token_count: Input tokens read from the provider cache.
+    :ivar reasoning_token_count: Reasoning tokens included in the output.
     """
 
     def __init__(self, response: AIMessage):
         self.text: str = _message_text(response)
         self.logprobs: list[tuple[str, float | int]] = _extract_logprobs(response)
         self.reasoning: str = _extract_reasoning(response)
+        token_usage = _extract_token_info(response) or TokenUsage()
+        self.input_token_count = token_usage.input_tokens
+        self.output_token_count = token_usage.output_tokens
+        self.total_token_count = token_usage.total_tokens
+        self.cache_creation_token_count = token_usage.cache_creation_tokens
+        self.cache_read_token_count = token_usage.cache_read_tokens
+        self.reasoning_token_count = token_usage.reasoning_tokens
         logger.debug("Reasoning output: %s", self.reasoning)
 
     def extract_fenced_content(self) -> str:
@@ -529,53 +521,6 @@ def get_llm(
             kwargs["no_repeat_ngram_size"] = no_repeat_ngram_size
         chat_model = ChatOllama(**kwargs)
     return LLM(base_chat_model=chat_model)
-
-
-def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]]:
-    metadata = message.response_metadata
-    if "logprobs" in metadata and metadata["logprobs"] is not None:
-        logprobs_data = metadata["logprobs"]
-
-        # OPENAI / OPENROUTER
-        if isinstance(logprobs_data, dict) and "content" in logprobs_data:
-            content_logprobs = logprobs_data.get("content") or []
-            token_logprob_tuple_list = [
-                (token_info.get("token"), token_info.get("logprob"))
-                for token_info in content_logprobs
-                if "logprob" in token_info
-            ]
-
-            if "deepseek" in metadata["model_name"]:
-                think_end = "</think>"
-                end_token = "<｜end▁of▁sentence｜>"  # Cleaned spacing
-                tokens = [item[0] for item in token_logprob_tuple_list]
-                start_idx = 0
-                if think_end in tokens:
-                    start_idx = tokens.index(think_end) + 1
-                end_idx = len(token_logprob_tuple_list)
-                if end_token in tokens:
-                    end_idx = tokens.index(end_token)
-                token_logprob_tuple_list = token_logprob_tuple_list[start_idx:end_idx]
-
-            return token_logprob_tuple_list
-        # OLLAMA
-        elif isinstance(logprobs_data, list) and len(logprobs_data) > 0:
-            if "gemma4" in metadata["model"]:
-                # manually excluding thinking tokens
-                end_token = "<channel|>"
-                tokens = [logprobs_data[i]["token"] for i in range(len(logprobs_data))]
-                end_of_thinking_token_index = tokens.index(end_token)
-                return [
-                    (logprobs_data[i]["token"], logprobs_data[i]["logprob"])
-                    for i in range(end_of_thinking_token_index + 1, len(logprobs_data))
-                ]
-
-            return [
-                (logprobs_data[i]["token"], logprobs_data[i]["logprob"])
-                for i in range(len(logprobs_data))
-            ]
-
-    return []
 
 
 _MODEL_CATALOG_TTL_SECONDS = 15 * 60

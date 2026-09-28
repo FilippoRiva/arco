@@ -9,6 +9,24 @@ from .profiling_data import ProfilingData
 
 
 @dataclass(frozen=True, slots=True)
+class AnswerDraft:
+    """Agent-produced answer content before framework metadata is attached.
+
+    Agents should return this lightweight value from :meth:`Agent.core`.
+    The framework turns it into an :class:`Answer`, adding agent identity,
+    configuration, LLM metadata, profiling, and token usage.
+
+    :ivar message: Human-readable summary of the agent's output.
+    :ivar output: Structured output consumed by downstream agents.
+    :ivar error: Optional error description for an unsuccessful result.
+    """
+
+    message: str = ""
+    output: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Answer:
     """Container for a single agent's output within a workflow run.
 
@@ -31,6 +49,12 @@ class Answer:
     :ivar generation_params: Actual sampling parameters used for this
           candidate, when it was generated as part of best-of-N.
     :ivar perplexity: Perplexity computed from the logprobs.
+    :ivar input_token_count: Input tokens consumed during the agent step.
+    :ivar output_token_count: Output tokens generated during the agent step.
+    :ivar total_token_count: Total input and output tokens used during the step.
+    :ivar cache_creation_token_count: Input tokens written to the provider cache.
+    :ivar cache_read_token_count: Input tokens read from the provider cache.
+    :ivar reasoning_token_count: Reasoning tokens included in the output.
     :ivar profiling_data: Timing and energy profiling data for this step.
     :ivar budget_controller_choice: Whether the budget controller decided
           to accept (``"end"``) or re-execute (``"rollback"``).
@@ -50,6 +74,12 @@ class Answer:
     perplexity: float | None = None
     profiling_data: ProfilingData = field(default_factory=ProfilingData)
     budget_controller_choice: Literal["rollback", "end"] = "end"
+    input_token_count: int | None = None
+    output_token_count: int | None = None
+    total_token_count: int | None = None
+    cache_creation_token_count: int | None = None
+    cache_read_token_count: int | None = None
+    reasoning_token_count: int | None = None
 
     def to_dict(self) -> dict:
         """Serialize the answer to a JSON-compatible dict.

@@ -6,15 +6,17 @@ import math
 import sys
 import time
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 from dataclasses import replace as dataclass_replace
 from types import MappingProxyType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from .agent_type import AgentType
 from .exceptions import AgentException
 from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
+    from .answer import AnswerDraft
     from .config import AgentConfig
     from .evaluator import Evaluator
     from .llm_tools import LLM, LLMAnswer
@@ -22,6 +24,9 @@ if TYPE_CHECKING:
     from .tracking import LLMCallAccumulator
 
 logger = logging.getLogger(__name__)
+_ACTIVE_LLM_ACCUMULATOR: ContextVar[Any | None] = ContextVar(
+    "arco_active_llm_accumulator", default=None
+)
 
 
 class Agent(ABC):
@@ -59,58 +64,43 @@ class Agent(ABC):
         return None
 
     @abstractmethod
-    def core(self, state: State, llm: LLM) -> State:
-        """Implement the agent's core logic.
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
+        """Produce the agent's answer content.
 
-        This is the only method a subclass must implement. It receives the
-        current :class:`State` and an :class:`LLM` instance and returns an
-        updated state with the agent's output appended.
+        Subclasses implement this method and return an :class:`AnswerDraft`.
+        The framework wraps the draft in a complete :class:`Answer`, attaching
+        agent configuration and execution metadata before adding it to *state*.
 
         :param state: The current workflow state.
         :param llm: The LLM instance to use for inference.
-        :returns: Updated :class:`State` with a new :class:`Answer` appended.
+        :returns: The agent-produced answer content and structured output.
         """
         ...
 
-    def answer(
-        self,
-        state: State,
-        *,
-        message: str = "",
-        output: dict | None = None,
-        error: str | None = None,
-        logprobs: list[tuple[str, float | int]] | None = None,
-        thinking: str | None = None,
-    ) -> State:
-        """Build an :class:`Answer` and append it to *state*.
+    def _run_core_and_populate_answer(self, state: State, llm: LLM) -> State:
+        """Run ``core`` and let the framework finalize its answer draft."""
+        from .answer import Answer, AnswerDraft
 
-        The answer's ``agent_id`` and ``agent_config`` are filled in
-        automatically from the agent's type and the state's config.
-
-        :param state: The current state.
-        :param message: Human-readable summary of the agent's output.
-        :param output: Structured output for downstream agents.
-        :param error: Error message if the agent failed.
-        :param logprobs: Token-level log probabilities from the LLM.
-        :param thinking: Provider-native reasoning summary or thinking output.
-        :returns: A new state with the answer appended.
-        """
-        from .answer import Answer
-
-        if logprobs is None:
-            logprobs = []
-
-        return state.add_answer(
-            Answer(
-                agent_id=self.type,
-                agent_config=state.get_agent_config(self.type),
-                message=message,
-                agent_output=output or {},
-                error=error,
-                logprobs=logprobs,
-                thinking=thinking,
+        draft = self.core(state, llm)
+        if not isinstance(draft, AnswerDraft):
+            raise TypeError(
+                f"{self.__class__.__name__}.core() must return AnswerDraft; "
+                f"received {type(draft).__name__}"
             )
+
+        llm_acc = _ACTIVE_LLM_ACCUMULATOR.get()
+        logprobs = getattr(llm_acc, "last_logprobs", []) if llm_acc else []
+        thinking = getattr(llm_acc, "last_reasoning", None) if llm_acc else None
+        answer = Answer(
+            agent_id=self.type,
+            agent_config=state.get_agent_config(self.type),
+            message=draft.message,
+            agent_output=draft.output,
+            error=draft.error,
+            logprobs=logprobs,
+            thinking=thinking,
         )
+        return state.add_answer(answer)
 
     def post_generation_hooks(
         self, results: list[State], llm_acc: LLMCallAccumulator, config: AgentConfig
@@ -168,6 +158,7 @@ class Agent(ABC):
         # Start before agent logic so DB access, parsing, code execution, and
         # agents that do not call an LLM still receive energy profiling data.
         llm_acc.start()
+        active_accumulator_token = _ACTIVE_LLM_ACCUMULATOR.set(llm_acc)
 
         try:
             ###
@@ -201,7 +192,10 @@ class Agent(ABC):
         finally:
             # CodeCarbon is scoped to the complete agent step, including any
             # best-of-N judge calls, rather than to every individual LLM call.
-            llm_acc.finish()
+            try:
+                llm_acc.finish()
+            finally:
+                _ACTIVE_LLM_ACCUMULATOR.reset(active_accumulator_token)
 
         ###
         # Profiling
@@ -216,6 +210,28 @@ class Agent(ABC):
             f"Logging {self.type} profiling data. Codecarbon dict: {llm_acc.energy_dict}"
         )
         best_result = best_result.set_profiling_data(profiling_data, self.type)
+        answer = best_result.get_last_answer(self.type)
+        if answer is not None:
+            usage = llm_acc.token_usage
+            token_counts = {
+                "input_token_count": usage.input_tokens,
+                "output_token_count": usage.output_tokens,
+                "total_token_count": usage.total_tokens,
+                "cache_creation_token_count": usage.cache_creation_tokens,
+                "cache_read_token_count": usage.cache_read_tokens,
+                "reasoning_token_count": usage.reasoning_tokens,
+            }
+            for key, count in token_counts.items():
+                existing_count = getattr(answer, key)
+                if count is not None and existing_count is not None:
+                    token_counts[key] = max(count, existing_count)
+            token_counts = {
+                key: count for key, count in token_counts.items() if count is not None
+            }
+            if token_counts:
+                best_result = best_result.replace_last_answer(
+                    answer.set(**token_counts)
+                )
 
         return best_result
 
@@ -279,7 +295,8 @@ class Agent(ABC):
         llm = get_llm_from_config(agent_config=config, llm_acc=llm_acc)
 
         # Run inference
-        result: State = self.core(state, llm)
+        llm_acc.reset_response_metadata()
+        result: State = self._run_core_and_populate_answer(state, llm)
         if config.iterative_refinement_n > 1:
             result = self._apply_iterative_refinement(
                 state=result,
@@ -322,7 +339,8 @@ class Agent(ABC):
                 enable_logprobs=bool(config.enable_logprobs),
             )
 
-            result: State = self.core(state, llm)
+            llm_acc.reset_response_metadata()
+            result: State = self._run_core_and_populate_answer(state, llm)
             if config.iterative_refinement_n > 1:
                 result = self._apply_iterative_refinement(
                     state=result,
@@ -354,7 +372,10 @@ class Agent(ABC):
             previous_answer = loop_state.get_last_answer(self.type)
             llm.execution_error = previous_answer.error if previous_answer else None
 
-            loop_state = self.core(loop_state, llm)
+            active_accumulator = _ACTIVE_LLM_ACCUMULATOR.get()
+            if active_accumulator is not None:
+                active_accumulator.reset_response_metadata()
+            loop_state = self._run_core_and_populate_answer(loop_state, llm)
             current_output: LLMAnswer | None = llm.last_answer
             current_answer = loop_state.get_last_answer(self.type)
             current_error = current_answer.error if current_answer else None

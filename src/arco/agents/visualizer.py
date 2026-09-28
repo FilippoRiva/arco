@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from arco.core.agent import Agent
 from arco.core.agent_type import AgentType
+from arco.core.answer import AnswerDraft
 from arco.core.exceptions import AgentException
 from arco.evaluators import VisualizerEvaluator
 
@@ -173,7 +174,7 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
     def evaluator(self) -> Evaluator:
         return VisualizerEvaluator()
 
-    def core(self, state: State, llm: LLM) -> State:
+    def core(self, state: State, llm: LLM) -> AnswerDraft:
         last_retriever_answer = state.get_last_answer(AgentType("Retriever"))
         if (
             last_retriever_answer is None
@@ -203,7 +204,6 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         chart_config = response.extract_json() or _FALLBACK_CHART_CONFIG
         chart_config.update({"df_columns": data_columns})
         logger.info(f"Chart config : {chart_config}")
-        logprobs_chart_config = response.logprobs
 
         # Generate chart code
         chart_spec = Visualizer._format_chart_spec(chart_config)
@@ -211,7 +211,6 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
         response = llm.invoke(formatted_prompt)
         code = response.extract_python()
         logger.info(f"Code : {code}")
-        logprobs_code = response.logprobs
 
         # --- Validate by executing in a headless namespace (no display) ---
         exec_code = (
@@ -245,21 +244,15 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
             output["image_path"] = str(chart_path)
 
         if exec_error:
-            return self.answer(
-                state,
+            return AnswerDraft(
                 message="The generated visualization couldn't be completed",
                 output=output,
-                logprobs=logprobs_code + logprobs_chart_config,
                 error=exec_error,
-                thinking=response.reasoning,
             )
 
-        return self.answer(
-            state,
+        return AnswerDraft(
             message="Visualization generated",
             output=output,
-            logprobs=logprobs_code + logprobs_chart_config,
-            thinking=response.reasoning,
         )
 
 
