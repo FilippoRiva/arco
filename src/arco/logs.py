@@ -53,4 +53,3 @@ def initialize(run_id: str, log_dir: str | Path = "./logs", level: str | None = 
         "PIL",
     ):
         logging.getLogger(lib).setLevel(logging.WARNING)
-    logging.getLogger("codecarbon").setLevel(logging.ERROR)

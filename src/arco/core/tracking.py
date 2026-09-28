@@ -8,7 +8,6 @@ once per workflow run to enable CodeCarbon integration.
 
 from __future__ import annotations
 
-import os
 import time
 from typing import TYPE_CHECKING
 
@@ -22,24 +21,44 @@ from collections import defaultdict
 
 from langchain_core.callbacks import BaseCallbackHandler
 
-logging.getLogger("codecarbon").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
+
+
+def _configure_codecarbon_logger() -> None:
+    """Route CodeCarbon records to ARCO's run log instead of the console."""
+    codecarbon_logger = logging.getLogger("codecarbon")
+    root_file_handler = next(
+        (
+            handler
+            for handler in reversed(logging.getLogger().handlers)
+            if isinstance(handler, logging.FileHandler)
+        ),
+        None,
+    )
+    if root_file_handler is None:
+        # Outside an ARCO CLI run, keep CodeCarbon quiet unless it reports errors.
+        codecarbon_logger.setLevel(logging.ERROR)
+        return
+
+    # CodeCarbon installs its own StreamHandler and sets propagate=False. Attach
+    # the active ARCO file handler directly and discard CodeCarbon's console one.
+    codecarbon_logger.handlers[:] = [root_file_handler]
+    codecarbon_logger.setLevel(logging.INFO)
+    codecarbon_logger.propagate = False
 
 
 def initialize_tracking(config: Config) -> None:
     """Enable CodeCarbon energy tracking for a workflow run.
 
-    Does nothing if ``config.enable_codecarbon`` is ``False``.
-    Creates the CodeCarbon output directory and enables tracking on
-    all subsequently created :class:`LLMCallAccumulator` instances.
+    Does nothing if ``config.enable_codecarbon`` is ``False``. When enabled,
+    turns on tracking for subsequently created :class:`LLMCallAccumulator`
+    instances.
 
     :param config: The workflow configuration.
     """
     if not config.enable_codecarbon:
         return
-    codecarbon_dir = os.path.join(config.save_dir or "./output", "codecarbon")
-    os.makedirs(codecarbon_dir, exist_ok=True)
-    LLMCallAccumulator.enable(codecarbon_dir)
+    LLMCallAccumulator.enable()
     logger.info("Initialized codecarbon tracking")
 
 
@@ -79,11 +98,8 @@ class LLMCallAccumulator(BaseCallbackHandler):
         self.energy_dict: dict[str, float | int] = defaultdict(float)
 
     @staticmethod
-    def enable(save_dir: str) -> None:
-        """Globally enable CodeCarbon tracking for all new accumulators.
-
-        :param save_dir: Base directory for CodeCarbon output files.
-        """
+    def enable() -> None:
+        """Globally enable CodeCarbon tracking for all new accumulators."""
         LLMCallAccumulator._enabled = True
 
     def _start_cc_tracker(self) -> None:
@@ -91,17 +107,22 @@ class LLMCallAccumulator(BaseCallbackHandler):
             return
         from codecarbon import OfflineEmissionsTracker
 
+        _configure_codecarbon_logger()
         # Milan is represented by Italy/Lombardy. Offline tracking avoids
         # CodeCarbon's repeated cloud/geolocation network lookups.
-        self._cc_tracker = OfflineEmissionsTracker(  # type: ignore[call-arg]
-            project_name="llm_invoke",
-            country_iso_code="ITA",
-            region="Lombardy",
-            save_to_file=False,
-            measure_power_secs=1,
-            log_level="error",
-            allow_multiple_runs=True,
-        )
+        try:
+            self._cc_tracker = OfflineEmissionsTracker(  # type: ignore[call-arg]
+                project_name="llm_invoke",
+                country_iso_code="ITA",
+                region="Lombardy",
+                save_to_file=False,
+                measure_power_secs=1,
+                log_level="error",
+                allow_multiple_runs=True,
+            )
+        finally:
+            # CodeCarbon reconfigures its logger inside the tracker constructor.
+            _configure_codecarbon_logger()
         self._cc_tracker.start()
 
     def start(self) -> None:
