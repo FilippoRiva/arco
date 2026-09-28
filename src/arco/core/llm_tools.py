@@ -8,11 +8,13 @@ and response extraction used across evaluators and agents.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
 import re
-from collections.abc import Sequence
+import time
+from collections.abc import Iterable, Sequence
 from functools import lru_cache
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any
@@ -576,75 +578,137 @@ def _extract_logprobs(message: AIMessage) -> list[tuple[str, float | int]]:
     return []
 
 
-def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
-    """Check whether the configured LLM provider is reachable and the model exists.
+_MODEL_CATALOG_TTL_SECONDS = 15 * 60
+_OPENAI_BASE_URL = "https://api.openai.com/v1"
+_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
-    For OpenAI / OpenRouter, queries the models API.  For Ollama, queries
-    the local ``/api/tags`` endpoint.
 
-    :param provider: The provider name (``'openai'``, ``'openrouter'``, or ``'ollama'``).
-    :param model: The model ID to look up.
-    :returns: A tuple ``(available, message)`` where *available* is
-        ``True`` if the model was found and *message* describes the result.
-    """
-    import requests
+class _ModelAvailabilityError(Exception):
+    """A provider's model catalog could not be loaded."""
 
-    if provider in ("openai", "openrouter"):
+
+@lru_cache(maxsize=32)
+def _fetch_provider_model_catalog(
+    provider: str,
+    endpoint: str,
+    credential_fingerprint: str,
+    ttl_bucket: int,
+) -> frozenset[str]:
+    """Fetch one provider's full model catalog, cached for at most 15 minutes."""
+    if provider in {"openai", "openrouter"}:
         import openai
 
+        env_var = "OPENROUTER_API_KEY" if provider == "openrouter" else "OPENAI_API_KEY"
+        api_key = os.environ.get(env_var)
+        if not api_key:
+            raise _ModelAvailabilityError(
+                f"Missing API key for {provider}. Set the {env_var} environment variable."
+            )
+        if hashlib.sha256(api_key.encode()).hexdigest() != credential_fingerprint:
+            raise _ModelAvailabilityError(
+                f"The {provider} API key changed while checking model availability."
+            )
+
         try:
-            api_key = os.environ.get(
-                "OPENROUTER_API_KEY" if provider == "openrouter" else "OPENAI_API_KEY"
-            )
-            if not api_key:
-                error_message = f"Missing API key for {provider}. Set the {'OPENROUTER_API_KEY' if provider == 'openrouter' else 'OPENAI_API_KEY'} environment variable."
-                logger.error(error_message)
-                return False, error_message
+            if provider == "openrouter":
+                client = openai.OpenAI(api_key=api_key, timeout=5.0, base_url=endpoint)
+            else:
+                client = openai.OpenAI(api_key=api_key, timeout=5.0)
+            return frozenset(model.id for model in client.models.list())
+        except openai.OpenAIError as exc:
+            raise _ModelAvailabilityError(
+                f"{provider} connection failed: {exc}"
+            ) from exc
+        except ValueError as exc:
+            raise _ModelAvailabilityError(
+                f"{provider} connection failed: {exc}"
+            ) from exc
 
-            models = []
-            if provider == "openai":
-                models = openai.OpenAI(api_key=api_key, timeout=5.0).models.list()
-            elif provider == "openrouter":
-                models = openai.OpenAI(
-                    api_key=api_key,
-                    timeout=5.0,
-                    base_url="https://openrouter.ai/api/v1",
-                ).models.list()
+    import requests
 
-            models = [provider_model.id for provider_model in models]
-            if model not in models:
-                raise ValueError(
-                    f"The requested model is not available: '{model}'. Available models are {models}"
-                )
-            return True, f"Connection to {provider} succeeded."
-        except openai.OpenAIError as e:
-            error_message = f"{provider} connection failed: {e}"
-            logger.error(error_message)
-            return False, error_message
-        except ValueError as e:
-            error_message = f"{provider} connection failed: {e}"
-            logger.error(error_message)
-            return False, error_message
-
-    # Ollama
     try:
-        base = OLLAMA_URL.rstrip("/")
-        resp = requests.get(f"{base}/api/tags", timeout=5.0)
-        resp.raise_for_status()
-        models = [model.get("model").split(":")[0] for model in resp.json()["models"]]
-        if model.split(":")[0] not in models:
-            raise ValueError(
-                f"The requested model is not available: '{model}'. Available models are {models}"
+        response = requests.get(f"{endpoint}/api/tags", timeout=5.0)
+        response.raise_for_status()
+        model_data = response.json()["models"]
+        return frozenset(
+            model["model"].split(":")[0]
+            for model in model_data
+            if isinstance(model, dict) and isinstance(model.get("model"), str)
+        )
+    except requests.RequestException as exc:
+        raise _ModelAvailabilityError(f"{provider} connection failed: {exc}") from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise _ModelAvailabilityError(
+            f"{provider} returned an invalid model catalog: {exc}"
+        ) from exc
+
+
+def _model_catalog_ttl_bucket() -> int:
+    return int(time.monotonic() // _MODEL_CATALOG_TTL_SECONDS)
+
+
+def _get_provider_model_catalog(provider: str) -> frozenset[str]:
+    provider = provider.lower()
+    if provider in {"openai", "openrouter"}:
+        env_var = "OPENROUTER_API_KEY" if provider == "openrouter" else "OPENAI_API_KEY"
+        api_key = os.environ.get(env_var)
+        if not api_key:
+            raise _ModelAvailabilityError(
+                f"Missing API key for {provider}. Set the {env_var} environment variable."
             )
-        return True, f"Connection to {provider} succeeded."
-    except requests.RequestException as e:
-        error_message = f"{provider} connection failed: {e}"
-        logger.error(error_message)
-        return False, error_message
-    except ValueError as e:
-        error_message = f"{provider} connection failed: {e}"
-        logger.error(error_message)
-        return False, error_message
+        credential_fingerprint = hashlib.sha256(api_key.encode()).hexdigest()
+        endpoint = (
+            _OPENROUTER_BASE_URL if provider == "openrouter" else _OPENAI_BASE_URL
+        )
+    else:
+        endpoint = OLLAMA_URL.rstrip("/")
+        credential_fingerprint = ""
+
+    ttl_bucket = _model_catalog_ttl_bucket()
+    return _fetch_provider_model_catalog(
+        provider, endpoint, credential_fingerprint, ttl_bucket
+    )
+
+
+def check_models_availability(
+    requested_models: Iterable[tuple[str, str]],
+) -> tuple[bool, str]:
+    """Check multiple provider/model pairs with one cached catalog request per provider."""
+    models_by_provider: dict[str, set[str]] = {}
+    for provider, model in requested_models:
+        models_by_provider.setdefault(provider.lower(), set()).add(model)
+
+    if not models_by_provider:
+        return True, "No model checks requested."
+
+    for provider, requested in sorted(models_by_provider.items()):
+        try:
+            catalog = _get_provider_model_catalog(provider)
+        except _ModelAvailabilityError as exc:
+            logger.error("%s", exc)
+            return False, str(exc)
+
+        if provider == "ollama":
+            requested = {model.split(":")[0] for model in requested}
+        missing = sorted(requested.difference(catalog))
+        if missing:
+            message = (
+                f"{provider} connection failed: requested model(s) not available: "
+                f"{', '.join(missing)}. Available models are {sorted(catalog)}"
+            )
+            logger.error("%s", message)
+            return False, message
+
+    checked_providers = ", ".join(sorted(models_by_provider))
+    return True, f"Connection checks succeeded for {checked_providers}."
+
+
+def check_model_availability(provider: str, model: str) -> tuple[bool, str]:
+    """Check a single model using the shared provider-catalog cache."""
+    available, message = check_models_availability(((provider, model),))
+    if available:
+        return True, f"Connection to {provider.lower()} succeeded."
+    return False, message
 
 
 def fill_json_schema(
@@ -700,6 +764,7 @@ __all__ = [
     "LLM",
     "LLMAnswer",
     "check_model_availability",
+    "check_models_availability",
     "compute_weighted_score",
     "fill_json_schema",
     "get_llm",

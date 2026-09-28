@@ -28,6 +28,7 @@ __all__ = [
     "Workflow",
     "WorkflowFactory",
     "check_model_availability",
+    "check_models_availability",
     "evaluate_state_with_benchmark_entry",
     "get_llm",
     "get_llm_from_config",
@@ -57,6 +58,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "Workflow": ("workflow", "Workflow"),
     "WorkflowFactory": ("workflow", "WorkflowFactory"),
     "check_model_availability": ("llm_tools", "check_model_availability"),
+    "check_models_availability": ("llm_tools", "check_models_availability"),
     "evaluate_state_with_benchmark_entry": (
         "evaluator",
         "evaluate_state_with_benchmark_entry",
@@ -124,6 +126,7 @@ if TYPE_CHECKING:
         LLM,
         LLMAnswer,
         check_model_availability,
+        check_models_availability,
         get_llm,
         get_llm_from_config,
     )

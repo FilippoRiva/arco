@@ -108,15 +108,12 @@ class Workflow(ABC):
                 for agent_config in self.config.agent_configs.values()
             ],
         ]
-        unique_models = list(set(requested_models))
+        unique_models = sorted(set(requested_models))
         yield {"event": "check_connection", "models": unique_models}
-        for provider, model in unique_models:
-            reachable, message = llm_tools.check_model_availability(
-                provider=provider, model=model
-            )
-            if not reachable:
-                yield {"event": "error", "message": message}
-                return None
+        reachable, message = llm_tools.check_models_availability(unique_models)
+        if not reachable:
+            yield {"event": "error", "message": message}
+            return None
 
         _run_t0 = time.perf_counter()
 
