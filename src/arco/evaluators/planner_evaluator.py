@@ -1,6 +1,8 @@
 import logging
 
-from arco.core import Answer, Evaluation, Evaluator, State
+from arco.core.answer import Answer
+from arco.core.evaluator import Evaluation, Evaluator
+from arco.core.state import State
 
 logger = logging.getLogger(__name__)
 

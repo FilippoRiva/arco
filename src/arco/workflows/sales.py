@@ -1,16 +1,17 @@
 from typing import TYPE_CHECKING, override
 
-from arco.core import Workflow
+from arco.core.workflow import Workflow
 
 if TYPE_CHECKING:
-    from arco.core import Agent, Config, Graph, State
+    from arco.core.agent import Agent
+    from arco.core.config import Config
+    from arco.core.graph import Graph
+    from arco.core.state import State
 
 
 class StrictSales(Workflow):
     workflow_id = "strict_sales"
-    description = (
-        "Runs the sales pipeline in a fixed order: retrieval, analysis, then visualization."
-    )
+    description = "Runs the sales pipeline in a fixed order: retrieval, analysis, then visualization."
 
     @override
     def initialize(self, config: Config, graph: Graph):
@@ -39,8 +40,8 @@ def _instrument_orchestrated_graph(
     graph: Graph, orchestrating_agent: Agent, data_dir: str
 ):
     from arco.agents import Analyzer, Retriever, Visualizer
-    from arco.core import State  # noqa: F401 - needed by langgraph
     from arco.core.graph import END
+    from arco.core.state import State  # noqa: F401 - needed by langgraph
 
     retriever = Retriever(data_dir=data_dir)
     analyzer = Analyzer()

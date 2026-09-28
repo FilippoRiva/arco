@@ -1,14 +1,18 @@
 import json
 from typing import TYPE_CHECKING, Any
 
-from arco.core import AgentType, Answer, Evaluation, Evaluator, LLMAnswer, llm_tools
+from arco.core.agent_type import AgentType
+from arco.core.answer import Answer
+from arco.core.evaluator import Evaluation, Evaluator
 from arco.core.llm_tools import (
+    LLMAnswer,
     compute_weighted_score,
     fill_json_schema,
+    get_llm,
 )
 
 if TYPE_CHECKING:
-    from arco.core import State
+    from arco.core.state import State
 
 import logging
 
@@ -175,9 +179,7 @@ Return ONLY valid JSON:
         extra_args = {}
         if llm_accumulator:
             extra_args.update({"llm_accumulator": llm_accumulator})
-        llm = llm_tools.get_llm(
-            provider=judge_provider, model=judge_model, **extra_args
-        )
+        llm = get_llm(provider=judge_provider, model=judge_model, **extra_args)
 
         last_visualizer_answer: Answer | None = state.get_last_answer(
             AgentType("Visualizer")
@@ -231,7 +233,7 @@ Return ONLY valid JSON:
             gt_config: Expected chart configuration dict.
             gt_code: Expected chart code string.
         """
-        llm = llm_tools.get_llm(provider=judge_provider, model=judge_model)
+        llm = get_llm(provider=judge_provider, model=judge_model)
         gt_config = gt_data["chart_config"]
         gt_code = gt_data["chart_code"]
 

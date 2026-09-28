@@ -274,7 +274,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     from rich.table import Table
 
     from arco.cli.console import console
-    from arco.core import ExperimentCatalog
+    from arco.core.experiment import ExperimentCatalog
 
     try:
         catalog = ExperimentCatalog.load(args.catalog)

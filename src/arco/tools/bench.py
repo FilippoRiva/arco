@@ -11,13 +11,10 @@ from typing import Any
 import pandas as pd
 
 from arco import workflows
-from arco.core import (
-    Config,
-    State,
-    Workflow,
-    WorkflowFactory,
-    evaluate_state_with_benchmark_entry,
-)
+from arco.core.config import Config
+from arco.core.evaluator import evaluate_state_with_benchmark_entry
+from arco.core.state import State
+from arco.core.workflow import Workflow, WorkflowFactory
 from arco.data import BenchmarkDataset
 from arco.logs import initialize as init_logging
 

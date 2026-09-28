@@ -26,7 +26,7 @@ def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
 
 def handle(args: Namespace, parser: ArgumentParser) -> None:
     from arco.cli.console import console
-    from arco.core import ExperimentCatalog
+    from arco.core.experiment import ExperimentCatalog
     from arco.tools.analyze_benchmark import analyze_benchmark
 
     if args.experiment:
@@ -45,9 +45,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     try:
         analyze_benchmark(benchmark_dir)
         dashboard_path = (
-            Path(benchmark_dir).expanduser().resolve()
-            / "analysis"
-            / "dashboard.html"
+            Path(benchmark_dir).expanduser().resolve() / "analysis" / "dashboard.html"
         )
         console.print()
         console.print("[bold green]✓ Analysis complete[/bold green]")

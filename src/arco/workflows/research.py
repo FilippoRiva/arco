@@ -12,10 +12,12 @@ from urllib.parse import parse_qs, unquote, urlparse
 import requests
 from langchain_core.tools import tool
 
-from arco.core import AgentType, Workflow
+from arco.core.agent_type import AgentType
+from arco.core.workflow import Workflow
 
 if TYPE_CHECKING:
-    from arco.core import Config, Graph
+    from arco.core.config import Config
+    from arco.core.graph import Graph
 
 from arco.core.graph import END
 

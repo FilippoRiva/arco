@@ -11,7 +11,8 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from arco.core import Answer, State
+from arco.core.answer import Answer
+from arco.core.state import State
 from arco.data import BenchmarkDataset
 
 

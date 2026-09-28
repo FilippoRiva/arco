@@ -2,11 +2,13 @@ import json
 import logging
 from typing import TYPE_CHECKING
 
-from arco.core import Agent
+from arco.core.agent import Agent
 from arco.evaluators import PlannerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import LLM, Evaluator, State
+    from arco.core.evaluator import Evaluator
+    from arco.core.llm_tools import LLM
+    from arco.core.state import State
 
 _VALID_AGENTS = {"retriever", "analyzer", "visualizer"}
 

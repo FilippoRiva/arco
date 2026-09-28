@@ -12,16 +12,10 @@ def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
     parser = subparsers.add_parser(
         "benchmark", help="Benchmarks a workflow on a benchmark dataset"
     )
-    parser.add_argument(
-        "--dataset", "-d", help="Path to benchmark dataset JSON"
-    )
-    parser.add_argument(
-        "--config", "-c", help="Path to benchmark_config.yaml"
-    )
+    parser.add_argument("--dataset", "-d", help="Path to benchmark dataset JSON")
+    parser.add_argument("--config", "-c", help="Path to benchmark_config.yaml")
     parser.add_argument("--experiment", help="Experiment ID from config/catalog.yaml")
-    parser.add_argument(
-        "--save-dir", default=None, help="Output directory"
-    )
+    parser.add_argument("--save-dir", default=None, help="Output directory")
     parser.add_argument("--id", type=str, default=None, help="ID of this benchmark")
     parser.add_argument(
         "--verbose",
@@ -49,7 +43,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
     status = console.status("[bold cyan]Loading benchmark[/bold cyan]")
     status.start()
     from arco.cli.viz import printer
-    from arco.core import ExperimentCatalog
+    from arco.core.experiment import ExperimentCatalog
     from arco.data.benchmark_dataset import BenchmarkSummary
     from arco.tools.bench import benchmark_from_config
 
@@ -151,9 +145,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
             console.print(
                 f"[green]✓[/green] Benchmark complete  [dim]{_event['output_dir']}[/dim]"
             )
-            console.print(
-                f"  Metadata  [dim]{_event['metadata_path']}[/dim]"
-            )
+            console.print(f"  Metadata  [dim]{_event['metadata_path']}[/dim]")
         elif event == "workflow_event":
             update = _event["workflow_event"]
             workflow_event = update["event"]
@@ -167,7 +159,11 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
                 )
                 workflow_live.__enter__()
                 workflow_status.set("Starting run")
-            elif workflow_event in {"check_connection", "node_started", "node_finished"}:
+            elif workflow_event in {
+                "check_connection",
+                "node_started",
+                "node_finished",
+            }:
                 if workflow_live is None:
                     workflow_status = RunStatusPanel(compact=True)
                     workflow_live = Live(

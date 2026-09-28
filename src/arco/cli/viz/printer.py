@@ -8,10 +8,10 @@ from rich.table import Table
 from rich.text import Text
 
 from arco.cli.console import console
-from arco.core import Config
+from arco.core.config import Config
 
 if TYPE_CHECKING:
-    from arco.core import Workflow
+    from arco.core.workflow import Workflow
     from arco.data import BenchmarkSummary
 
 

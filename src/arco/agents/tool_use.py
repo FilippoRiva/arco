@@ -10,11 +10,13 @@ from typing import TYPE_CHECKING, Any
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import BaseTool
 
-from arco.core import Agent, Evaluator
+from arco.core.agent import Agent
+from arco.core.evaluator import Evaluator
 from arco.evaluators import ToolUseEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import LLM, State
+    from arco.core.llm_tools import LLM
+    from arco.core.state import State
 
 logger = logging.getLogger(__name__)
 

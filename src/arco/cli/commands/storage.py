@@ -18,7 +18,7 @@ from rich.console import RenderableType
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace, _SubParsersAction
 
-    from arco.core import State
+    from arco.core.state import State
 
 
 @contextmanager
@@ -50,7 +50,7 @@ def register(subparsers: _SubParsersAction[ArgumentParser]) -> ArgumentParser:
 
 
 def _load_states(storage_dir: Path) -> list[tuple[Path, State]]:
-    from arco.core import State
+    from arco.core.state import State
 
     states: list[tuple[Path, State]] = []
     for path in storage_dir.glob("*.json"):

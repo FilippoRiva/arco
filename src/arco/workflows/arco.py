@@ -9,11 +9,12 @@ from typing import TYPE_CHECKING
 
 from langchain_core.tools import tool
 
-from arco.core import Workflow
 from arco.core.graph import END
+from arco.core.workflow import Workflow
 
 if TYPE_CHECKING:
-    from arco.core import Config, Graph
+    from arco.core.config import Config
+    from arco.core.graph import Graph
 
 
 _PROJECT_ROOT = Path.cwd().resolve()

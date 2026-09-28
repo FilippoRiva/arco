@@ -8,8 +8,10 @@ from .profiling_data import ProfilingData
 
 if TYPE_CHECKING:
     from ..data.benchmark_dataset import BenchmarkEntry, BenchmarkSummary
-    from . import AgentConfig, Answer, State
+    from .agent_config import AgentConfig
     from .agent_type import AgentType
+    from .answer import Answer
+    from .state import State
     from .tracking import LLMCallAccumulator
 
 logger = logging.getLogger(__name__)

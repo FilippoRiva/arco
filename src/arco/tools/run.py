@@ -3,11 +3,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from arco import workflows
-from arco.core import Config, WorkflowFactory
+from arco.core.config import Config
+from arco.core.workflow import WorkflowFactory
 from arco.logs import initialize as init_logging
 
 if TYPE_CHECKING:
-    from arco.core import Workflow
+    from arco.core.workflow import Workflow
 
 
 def initialize_workflow(

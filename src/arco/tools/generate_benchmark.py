@@ -2,7 +2,8 @@ import json
 from pathlib import Path
 
 from arco import workflows
-from arco.core import Config, WorkflowFactory
+from arco.core.config import Config
+from arco.core.workflow import WorkflowFactory
 from arco.data import BenchmarkDataset, BenchmarkEntry, Trace, TraceElement
 
 

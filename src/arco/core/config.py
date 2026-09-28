@@ -11,7 +11,7 @@ import yaml
 from .agent_config import AgentConfig
 
 if TYPE_CHECKING:
-    from . import AgentType
+    from .agent_type import AgentType
 
 logger = logging.getLogger(__name__)
 

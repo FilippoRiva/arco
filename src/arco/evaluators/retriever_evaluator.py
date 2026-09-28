@@ -4,7 +4,11 @@ from typing import cast
 
 import pandas as pd
 
-from arco.core import AgentException, AgentType, Answer, Evaluation, Evaluator, State
+from arco.core.agent_type import AgentType
+from arco.core.answer import Answer
+from arco.core.evaluator import Evaluation, Evaluator
+from arco.core.exceptions import AgentException
+from arco.core.state import State
 from arco.data import normalize_dataframe_values
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,8 @@ from arco.cli.viz.panels import (
 from arco.cli.viz.status import RunStatusPanel
 
 if TYPE_CHECKING:
-    from arco.core import Answer, State
+    from arco.core.answer import Answer
+    from arco.core.state import State
 
 
 def display_workflow_event(update: dict[str, Any], *, verbose: bool = False) -> None:

@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any, Self
 
-from arco.core import AgentType
+from arco.core.agent_type import AgentType
 from arco.core.profiling_data import ProfilingData
 
 logger = logging.getLogger(__name__)

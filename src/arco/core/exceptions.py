@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from . import AgentType
+    from .agent_type import AgentType
 
 
 class AgentException(Exception):

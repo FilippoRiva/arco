@@ -18,7 +18,7 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from arco.core import Answer
+    from arco.core.answer import Answer
 
 
 # ── helpers ──────────────────────────────────────────────────────────────

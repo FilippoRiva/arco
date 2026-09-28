@@ -8,7 +8,7 @@ from rich.rule import Rule
 from rich.table import Table
 from rich.text import Text
 
-from arco.core import Answer
+from arco.core.answer import Answer
 
 
 def _artifact_link(path: str) -> Text:

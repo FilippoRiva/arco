@@ -1,11 +1,15 @@
 import logging
 from typing import Any
 
-from arco.core import AgentType, Answer, Evaluation, Evaluator, State, get_llm
+from arco.core.agent_type import AgentType
+from arco.core.answer import Answer
+from arco.core.evaluator import Evaluation, Evaluator
 from arco.core.llm_tools import (
     compute_weighted_score,
     fill_json_schema,
+    get_llm,
 )
+from arco.core.state import State
 
 logger = logging.getLogger(__name__)
 

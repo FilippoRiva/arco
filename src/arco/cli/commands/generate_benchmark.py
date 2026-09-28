@@ -1,8 +1,6 @@
 import time
 from typing import TYPE_CHECKING
 
-from arco.core import workflow
-
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace, _SubParsersAction
 
@@ -40,7 +38,7 @@ def handle(args: Namespace, parser: ArgumentParser) -> None:
 
     from arco.cli.console import console
     from arco.cli.viz.status import RunStatusPanel
-    from arco.core import ExperimentCatalog
+    from arco.core.experiment import ExperimentCatalog
     from arco.tools.generate_benchmark import generate_benchmark
 
     console.print("\n[bold cyan]Generate benchmark dataset[/bold cyan]\n")

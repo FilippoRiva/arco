@@ -5,11 +5,15 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from arco.core import Agent, AgentException, AgentType
+from arco.core.agent import Agent
+from arco.core.agent_type import AgentType
+from arco.core.exceptions import AgentException
 from arco.evaluators import VisualizerEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import LLM, Evaluator, State
+    from arco.core.evaluator import Evaluator
+    from arco.core.llm_tools import LLM
+    from arco.core.state import State
 
 logger = logging.getLogger(__name__)
 

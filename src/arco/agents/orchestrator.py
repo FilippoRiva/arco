@@ -1,11 +1,15 @@
 import difflib
 from typing import TYPE_CHECKING
 
-from arco.core import Agent, AgentType
+from arco.core.agent import Agent
+from arco.core.agent_type import AgentType
 from arco.evaluators import OrchestratorEvaluator
 
 if TYPE_CHECKING:
-    from arco.core import LLM, Answer, Evaluator, State
+    from arco.core.answer import Answer
+    from arco.core.evaluator import Evaluator
+    from arco.core.llm_tools import LLM
+    from arco.core.state import State
 
 import logging
 
