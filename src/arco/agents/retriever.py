@@ -188,6 +188,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
             logger.debug("No need for table selection.")
 
         # --- Generate and execute SQL ---
+        self.emit_event(
+            "state",
+            message="Generating queries",
+        )
         formatted_prompt = Retriever._SQL_GENERATION_PROMPT.format(
             prompt=state.prompt,
             schema_context=schema_context,
@@ -200,6 +204,10 @@ name used by any candidate. Prefer lowercase_with_underscores.
         output = None
         error = None
         try:
+            self.emit_event(
+                "state",
+                message="Querying the database",
+            )
             result_df: pd.DataFrame = con.execute(sql_query).df()
             result_str = result_df.to_csv(index=False)
 

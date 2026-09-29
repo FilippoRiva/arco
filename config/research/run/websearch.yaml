@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=./../../run.schema.json
+# Default interactive configuration for the web-search workflow.
+
+global:
+  workflow: "websearch_researcher"
+  token_stream_agents:
+    - CommonKnowledge
+    - Summary

@@ -96,6 +96,8 @@ class Config:
     :ivar reasoning_max_tokens: Optional direct reasoning-token budget.
     :ivar verbosity: Provider-specific visible response verbosity.
     :ivar enable_logprobs: Whether to request token log probabilities when supported.
+    :ivar token_stream_agents: Agent names whose output tokens may be exposed by
+          the workflow stream. Empty by default to keep all intermediate tokens private.
     :ivar agent_configs: Per-agent configuration dict, keyed by :class:`AgentType`.
     :ivar config_path: Path to the YAML file this config was loaded from.
     """
@@ -122,12 +124,18 @@ class Config:
     verbosity: str | None = None
     # Request token log probabilities where the selected API/model supports it.
     enable_logprobs: bool = True
+    # Token streaming is opt-in so intermediate prompts and generated content
+    # remain private unless a workflow configuration explicitly allows it.
+    token_stream_agents: frozenset[str] = field(default_factory=frozenset)
     agent_configs: Mapping[AgentType, AgentConfig] = field(
         default_factory=lambda: MappingProxyType({})
     )
     config_path: str | None = None
 
     def __post_init__(self):
+        object.__setattr__(
+            self, "token_stream_agents", frozenset(self.token_stream_agents)
+        )
         if "__default__" not in self.agent_configs:
             default_agent_config = AgentConfig.from_config(self)
             agent_configs = {

@@ -54,6 +54,42 @@ class Agent(ABC):
         """Return the agent type name (e.g. ``"Retriever"``)."""
         return self.type
 
+    def emit_event(
+        self,
+        event: str,
+        *,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+    ) -> None:
+        """Emit a custom LangGraph stream event.
+
+        Event emission is best-effort so agents can still be invoked directly
+        outside a LangGraph stream, such as in tests or notebooks.
+
+        :param event: Application-defined event kind, such as ``"state"`` or
+            ``"tool_started"``.
+        :param message: Optional human-readable message.
+        :param data: Optional JSON-serializable event payload.
+        """
+        try:
+            from langgraph.config import get_stream_writer
+
+            writer = get_stream_writer()
+        except (ImportError, RuntimeError):
+            return
+
+        payload: dict[str, Any] = {
+            "event": "agent_progress",
+            "agent": str(self.name),
+            "kind": event,
+        }
+        if message is not None:
+            payload["message"] = message
+        if data is not None:
+            payload["data"] = data
+
+        writer(payload)
+
     @property
     def evaluator(self) -> Evaluator | None:
         """Return the evaluator for best-of-N selection and GT evaluation.

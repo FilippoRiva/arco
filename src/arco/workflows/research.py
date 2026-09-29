@@ -230,6 +230,7 @@ class WebSearchResearcher(Workflow):
     """Route a request through web research, summarization, or knowledge."""
 
     workflow_id = "websearch_researcher"
+    default_config_path = "config/research/run/websearch.yaml"
     description = (
         "Uses tool-calling agents to research the web, summarize sources, "
         "or answer from general knowledge."

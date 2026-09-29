@@ -131,7 +131,7 @@ class Workflow(ABC):
             for chunk in self.graph.stream(
                 input_state,
                 config=graph_config,
-                stream_mode=["tasks", "updates", "messages"],
+                stream_mode=["tasks", "updates", "messages", "custom"],
                 version="v2",
             ):
                 stream_type: str
@@ -153,10 +153,15 @@ class Workflow(ABC):
                         "node": node_name,
                         "state": current_state,
                     }
+                elif stream_type == "custom" and isinstance(data, dict):
+                    yield data
                 elif stream_type == "messages":
                     metadata: dict
                     message_chunk: AIMessageChunk
                     message_chunk, metadata = data
+                    node = metadata.get("langgraph_node")
+                    if node not in self.config.token_stream_agents:
+                        continue
                     logger.debug(
                         "STREAM MESSAGE ... type=%s content=%r content_blocks=%r "
                         "additional_kwargs=%r metadata=%r",
@@ -168,7 +173,7 @@ class Workflow(ABC):
                     )
                     yield {
                         "event": "token",
-                        "node": metadata.get("langgraph_node"),
+                        "node": node,
                         "content": llm_tools._message_text(message_chunk),
                         "reasoning": llm_tools._extract_reasoning(message_chunk),
                     }

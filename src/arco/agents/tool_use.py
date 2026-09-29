@@ -192,6 +192,16 @@ class ToolUseAgent(Agent):
                     name,
                     tool_call_id,
                 )
+                self.emit_event(
+                    "tool_started",
+                    message=f"Calling {name or 'unknown tool'}",
+                    data={
+                        "tool": name,
+                        "args": args,
+                        "iteration": iteration + 1,
+                        "call_index": call_index + 1,
+                    },
+                )
                 result, success = self._execute_tool(name, args)
                 tool_trace.append(
                     {

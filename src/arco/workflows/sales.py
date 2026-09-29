@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 class StrictSales(Workflow):
     workflow_id = "strict_sales"
     description = "Runs the sales pipeline in a fixed order: retrieval, analysis, then visualization."
+    default_config_path = "config/sales/run/strict.yaml"
 
     @override
     def initialize(self, config: Config, graph: Graph):
@@ -80,6 +81,7 @@ def _instrument_orchestrated_graph(
 
 class OrchestratedSales(Workflow):
     workflow_id = "orchestrated_sales"
+    default_config_path = "config/sales/run/orchestrated.yaml"
     description = (
         "Uses an LLM orchestrator to choose the next sales-analysis agent dynamically."
     )
@@ -98,6 +100,7 @@ class OrchestratedSales(Workflow):
 
 class PlannedSales(Workflow):
     workflow_id = "planned_sales"
+    default_config_path = "config/sales/run/planned.yaml"
     description = (
         "Uses an upfront LLM-generated plan to run the required sales-analysis agents."
     )

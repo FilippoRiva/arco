@@ -6,3 +6,5 @@ global:
   default_model: gpt-5.6-luna
   enable_reasoning: true
   reasoning_effort: medium
+  token_stream_agents:
+    - ConfigAssistant

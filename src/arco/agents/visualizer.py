@@ -188,6 +188,11 @@ Return ONLY the Python code. No markdown formatting. No code fences. No explanat
 
         data_df = last_retriever_answer.agent_output["data_df"]
 
+        self.emit_event(
+            "state",
+            message="Generating Visuals",
+        )
+
         # Extract chart configuration
         data_columns = ", ".join(str(c) for c in data_df.columns)
         formatted_prompt = Visualizer._CHART_CONFIGURATION_PROMPT.format(

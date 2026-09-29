@@ -144,10 +144,21 @@ def _verbose_token_summary(answer: Answer) -> Text:
     return Text("  ·  ".join(parts))
 
 
-def render_answer_verbose(answer: Answer) -> RenderableType:
-    """Render a readable, information-dense answer card for ``--verbose``."""
+def render_answer_verbose(
+    answer: Answer,
+    *,
+    include_message: bool = True,
+    include_agent: bool = True,
+) -> RenderableType:
+    """Render a readable, information-dense answer card for ``--verbose``.
+
+    ``include_message=False`` is used when the answer was already displayed
+    through token streaming.
+    """
     sections = [
-        Markdown(answer.message or "No summary returned."),
+        Markdown(answer.message or "No summary returned.")
+        if include_message
+        else Text("Output streamed above.", style="dim"),
         Rule("Run details", style="dim"),
         _verbose_metrics_table(answer),
         Rule("Agent output", style="dim"),
@@ -213,7 +224,7 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
         Text("\n"),
         Panel(
             Group(*sections),
-            title=f"[bold cyan]{answer.agent_id}[/bold cyan]",
+            title=(f"[bold cyan]{answer.agent_id}[/bold cyan]" if include_agent else None),
             subtitle_align="right",
             border_style="red" if answer.error else "cyan",
             padding=(1, 2),
@@ -222,16 +233,31 @@ def render_answer_verbose(answer: Answer) -> RenderableType:
     )
 
 
-def render_answer(answer: Answer) -> RenderableType:
-    """Render the normal run transcript without wrapping it in a panel."""
-    renderables: list[RenderableType] = []
-    if answer.error:
-        icon = Text("✗ ", style="bold red")
-    else:
-        icon = Text("✓ ", style="bold green")
-    renderables.append(icon + Text(str(answer.agent_id), style="bold cyan"))
+def render_streamed_output(content: str) -> RenderableType:
+    """Render completed token output so it remains visible after Live exits."""
+    return Markdown(content or "No output returned.")
 
-    if answer.message:
+
+def render_answer(
+    answer: Answer,
+    *,
+    include_message: bool = True,
+    include_agent: bool = True,
+) -> RenderableType:
+    """Render the normal run transcript without wrapping it in a panel.
+
+    ``include_message=False`` prevents an answer from being displayed twice
+    after its content has already been streamed token by token.
+    """
+    renderables: list[RenderableType] = []
+    if include_agent:
+        if answer.error:
+            icon = Text("✗ ", style="bold red")
+        else:
+            icon = Text("✓ ", style="bold green")
+        renderables.append(icon + Text(str(answer.agent_id), style="bold cyan"))
+
+    if include_message and answer.message:
         renderables.extend([Text("  "), Markdown(answer.message)])
 
     image_path = answer.agent_output.get("image_path")

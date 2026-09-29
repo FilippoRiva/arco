@@ -1,6 +1,7 @@
 import time
 
 from rich.console import Group, RenderableType
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.spinner import Spinner
 from rich.table import Table
@@ -16,6 +17,7 @@ class RunStatusPanel:
         self.spinner: Spinner = Spinner("dots")
         self.stopped: bool = False
         self.stream_buffer: str = ""
+        self.tool_events: list[Text] = []
         self.active_node: str = ""
 
     def start(self):
@@ -28,8 +30,21 @@ class RunStatusPanel:
         self.status = status
         self.node_start_time = start_time
 
+    def set_state(self, state: str):
+        """Update the live status text while preserving the node timer."""
+        self.status = state
+
     def append_stream(self, text: str):
         self.stream_buffer += text
+
+    def append_tool_event(self, event: Text):
+        """Add a persistent tool activity line for the active node."""
+        self.tool_events.append(event)
+
+    def clear_activity(self):
+        self.stream_buffer = ""
+        self.tool_events.clear()
+        self.active_node = ""
 
     def clear_stream(self):
         self.stream_buffer = ""
@@ -55,9 +70,20 @@ class RunStatusPanel:
             grid.add_column()
             grid.add_column()
             grid.add_row(self.spinner, line)
-            return grid
+            live_content: list[RenderableType] = [grid]
+            if self.tool_events:
+                live_content.append(Text(""))
+                live_content.extend(self.tool_events)
+            if self.stream_buffer:
+                live_content.extend(
+                    [
+                        Text(""),
+                        Markdown(self.stream_buffer),
+                    ]
+                )
+            return Group(*live_content)
 
-        lines: list[str | Spinner | Text] = []
+        lines: list[RenderableType] = []
 
         text = f"[yellow]{self.status}[/yellow]"
 
@@ -72,9 +98,7 @@ class RunStatusPanel:
 
         if self.stream_buffer:
             lines.append("")
-            lines.append(
-                Text(self.stream_buffer, overflow="fold", no_wrap=False, style="dim")
-            )
+            lines.append(Markdown(self.stream_buffer))
 
         return Panel(
             Group(*lines),

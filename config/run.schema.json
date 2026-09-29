@@ -114,6 +114,14 @@
           "type": "boolean",
           "default": true,
           "description": "Request token log probabilities where supported by the selected API/model"
+        },
+        "token_stream_agents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Agent names whose generated tokens may be exposed in the workflow stream. Omit or leave empty to disable token streaming."
         }
       },
       "description": "Global execution parameters, provider credentials, caching rules, and runtime environmental toggles used by the agent infrastructure.",

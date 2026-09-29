@@ -9,12 +9,20 @@ from rich.text import Text
 from arco.cli.viz.panels import (
     render_answer,
     render_answer_verbose,
+    render_streamed_output,
 )
 from arco.cli.viz.status import RunStatusPanel
 
 if TYPE_CHECKING:
     from arco.core.answer import Answer
     from arco.core.state import State
+
+
+def _format_tool_parameters(parameters: Any) -> str:
+    """Format tool arguments as a compact, readable call signature."""
+    if isinstance(parameters, dict):
+        return ", ".join(f"{key}={value!r}" for key, value in parameters.items())
+    return repr(parameters)
 
 
 def display_workflow_event(update: dict[str, Any], *, verbose: bool = False) -> None:
@@ -75,10 +83,11 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
     :param verbose: Whether if we want verbose visualization or not
     :return: The final resulting state
     """
-    # Keep progress itself minimal in both modes; verbose details are shown
-    # in the completed agent cards below.
+    # Keep non-streaming progress minimal; token-streamed output is rendered
+    # in the live status view and preserved when the agent completes.
     status = RunStatusPanel(compact=True)
     last_state = None
+    streamed_nodes: set[str] = set()
 
     live = Live(status, refresh_per_second=8, screen=False)
     live.__enter__()
@@ -92,17 +101,95 @@ def display_workflow(events: Generator[dict[str, Any]], verbose=False) -> State 
         elif event_type == "node_started":
             start_time = time.time()
             node = update["node"]
-            status.set(node if not verbose else f"{node} is running ", start_time)
+            status.clear_activity()
+            status.set(f"{node}", start_time)
             status.active_node = node
+        elif event_type == "token":
+            node = str(update.get("node", "agent"))
+            content = update.get("content", "")
+            if content:
+                status.active_node = node
+                status.append_stream(content)
+                streamed_nodes.add(node)
+        elif event_type == "agent_progress":
+            agent = str(update.get("agent", "agent"))
+            message = update.get("message") or "Working"
+            if update.get("kind") == "state":
+                status.set_state(f"{agent} · {message}")
+            elif update.get("kind") == "tool_started":
+                event_data = update.get("data") or {}
+                tool = event_data.get("tool")
+                parameters = event_data.get("args")
+                message = update.get("message") or tool or "Tool started"
+                if parameters is not None:
+                    parameter_text = _format_tool_parameters(parameters)
+                    if len(parameter_text) > 500:
+                        parameter_text = parameter_text[:497] + "..."
+                    message = f"{message}({parameter_text})"
+                status.append_tool_event(
+                    Text("⚙ ", style="bold yellow")
+                    + Text(agent, style="bold cyan")
+                    + Text(f" · {message}", style="yellow")
+                )
         elif event_type == "node_finished":
-            status.clear_stream()
+            streamed_output = status.stream_buffer
+            tool_events = list(status.tool_events)
+            status.clear_activity()
             last_state = update["state"]
             last_answer: Answer = last_state.get_last_answer()
-            live.console.print(
-                render_answer_verbose(last_answer)
-                if verbose
-                else render_answer(last_answer)
-            )
+            agent_name = str(last_answer.agent_id)
+            was_streamed = agent_name in streamed_nodes
+
+            heading_printed = False
+            if tool_events:
+                live.console.print(
+                    Text("✓ ", style="bold green") + Text(agent_name, style="bold cyan")
+                )
+                live.console.print()
+                for tool_event in tool_events:
+                    live.console.print(tool_event)
+                live.console.print()
+                heading_printed = True
+
+            if streamed_output and was_streamed:
+                if not heading_printed:
+                    live.console.print(
+                        Text("✓ ", style="bold green")
+                        + Text(agent_name, style="bold cyan")
+                    )
+                    live.console.print()
+                live.console.print(render_streamed_output(streamed_output))
+                if verbose:
+                    live.console.print(
+                        render_answer_verbose(
+                            last_answer,
+                            include_message=False,
+                            include_agent=False,
+                        )
+                    )
+                elif last_answer.error or last_answer.agent_output.get("image_path"):
+                    live.console.print(
+                        render_answer(
+                            last_answer,
+                            include_message=False,
+                            include_agent=False,
+                        )
+                    )
+            elif tool_events:
+                live.console.print(
+                    render_answer_verbose(
+                        last_answer,
+                        include_agent=False,
+                    )
+                    if verbose
+                    else render_answer(last_answer, include_agent=False)
+                )
+            else:
+                live.console.print(
+                    render_answer_verbose(last_answer)
+                    if verbose
+                    else render_answer(last_answer)
+                )
             if not verbose:
                 live.console.print()
 
